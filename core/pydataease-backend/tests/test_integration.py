@@ -29,6 +29,7 @@ from app.services.dataset_service import get_dataset_service
 from app.services.datasource_service import get_datasource_service
 from app.services.export_service import get_export_service
 from app.services.share_service import get_share_service
+from app.services.menu_service import get_menu_service
 from app.services.system_service import get_system_service
 from app.services.task_service import get_task_service
 from app.services.visualization_service import get_visualization_service
@@ -39,6 +40,7 @@ from tests.test_dataset_routes import FakeDatasetService
 from tests.test_datasource_routes import FakeDatasourceService
 from tests.test_export_routes import FakeExportService
 from tests.test_share_routes import FakeShareService
+from tests.test_system_routes import FakeMenuService
 from tests.test_system_routes import FakeSystemService
 from tests.test_task_routes import FakeTaskService
 from tests.test_visualization_routes import FakeVisualizationService
@@ -77,6 +79,7 @@ def integrated_fakes() -> Generator[dict[str, object], None, None]:
         get_share_service: lambda: services["share"],
         get_export_service: lambda: services["export"],
         get_system_service: lambda: services["system"],
+        get_menu_service: lambda: FakeMenuService(),
         get_task_service: lambda: services["task"],
     }
     app.dependency_overrides.update(overrides)

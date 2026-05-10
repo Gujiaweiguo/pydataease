@@ -8,7 +8,9 @@ from httpx import AsyncClient
 from jose import jwt
 
 from app.main import app
+from app.schemas.menu import MenuMeta, MenuVO
 from app.schemas.system import MenuTreeNodeResponse
+from app.services.menu_service import MenuService, get_menu_service
 from app.services.system_service import SystemService, get_system_service
 from app.settings.config import get_settings
 
@@ -76,6 +78,31 @@ class FakeSystemService:
         return []
 
 
+class FakeMenuService:
+    async def get_menu_tree(self) -> list[MenuVO]:
+        return [
+            MenuVO(
+                path="/system",
+                component=None,
+                hidden=False,
+                name="system",
+                inLayout=True,
+                meta=MenuMeta(title="system", icon="system"),
+                children=[
+                    MenuVO(
+                        path="datasource",
+                        component="system/datasource",
+                        hidden=False,
+                        name="datasource",
+                        inLayout=True,
+                        meta=MenuMeta(title="datasource", icon="datasource"),
+                        children=[],
+                    ),
+                ],
+            ),
+        ]
+
+
 @pytest.fixture
 def auth_headers() -> dict[str, str]:
     return {"X-DE-TOKEN": _build_token(uid=7, oid=9)}
@@ -85,8 +112,10 @@ def auth_headers() -> dict[str, str]:
 def fake_service() -> Generator[FakeSystemService, None, None]:
     svc = FakeSystemService()
     app.dependency_overrides[get_system_service] = lambda: svc
+    app.dependency_overrides[get_menu_service] = lambda: FakeMenuService()
     yield svc
     _ = app.dependency_overrides.pop(get_system_service, None)
+    _ = app.dependency_overrides.pop(get_menu_service, None)
 
 
 @pytest.mark.asyncio

@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends
 from app.dependencies.auth import get_current_user
 from app.schemas.auth import TokenUser
 from app.schemas.system import OnlineMapSaveRequest
+from app.services.menu_service import MenuService, get_menu_service
 from app.services.system_service import SystemService, get_system_service
 
 router = APIRouter(tags=["system"])
@@ -37,9 +38,10 @@ async def request_timeout(
 @router.get("/menu/query")
 async def query_menus(
     _: TokenUser = Depends(get_current_user),
-    service: SystemService = Depends(get_system_service),
-) -> object:
-    return await service.query_menus()
+    service: MenuService = Depends(get_menu_service),
+) -> list[dict]:
+    tree = await service.get_menu_tree()
+    return [vo.model_dump() for vo in tree]
 
 
 @router.get("/font/listFont")

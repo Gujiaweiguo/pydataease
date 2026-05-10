@@ -31,3 +31,28 @@ async def get_sys_parameter_ui():
 @router.get("/setting/authentication/status")
 async def get_authentication_status():
     return False
+
+
+@router.get("/sysParameter/shareBase")
+async def get_share_base():
+    return {"disable": True, "peRequire": False}
+
+
+@router.get("/typeface/defaultFont")
+async def get_default_font():
+    return []
+
+
+@router.get("/typeface/listFont")
+async def get_list_font():
+    return []
+
+
+@router.get("/templateMarket/searchRecommend")
+async def get_template_market_search_recommend():
+    return {"baseUrl": "", "contents": []}
+
+
+@router.post("/dataVisualization/interactiveTree")
+async def get_interactive_tree():
+    return {"dashboard": [], "dataV": [], "dataset": [], "datasource": []}

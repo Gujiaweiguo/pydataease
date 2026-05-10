@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import pytest
 
+from app.services.menu_service import get_menu_service
 from app.services.system_service import get_system_service
+from tests.test_system_routes import FakeMenuService
 from tests.test_system_routes import FakeSystemService
 
 
@@ -10,6 +12,7 @@ from tests.test_system_routes import FakeSystemService
 def fake_service(install_override) -> FakeSystemService:
     service = FakeSystemService()
     install_override(get_system_service, service)
+    install_override(get_menu_service, FakeMenuService())
     return service
 
 
