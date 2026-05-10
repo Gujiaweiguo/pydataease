@@ -66,6 +66,36 @@ async def get_interactive_tree():
     }
 
 
+@router.get("/license/validate")
+async def validate_license():
+    return {"status": "valid", "license": "community", "edition": "Community Edition", "serialNo": "", "remark": "", "expired": False}
+
+
+@router.get("/license/version")
+async def get_license_version():
+    return {"version": "2.10", "type": "community"}
+
+
+@router.get("/aiBase/findTargetUrl")
+async def find_ai_target_url():
+    return {"url": "", "enable": False}
+
+
+@router.get("/sysParameter/sqlbot")
+async def get_sqlbot_settings():
+    return {"enable": False, "url": ""}
+
+
+@router.get("/msg-center/count")
+async def get_msg_count():
+    return 0
+
+
+@router.post("/store/query")
+async def query_store():
+    return []
+
+
 @router.get("/dekey")
 async def get_dekey():
     return get_dekey_response()
