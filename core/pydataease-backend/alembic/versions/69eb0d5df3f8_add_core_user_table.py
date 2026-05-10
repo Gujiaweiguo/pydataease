@@ -60,7 +60,7 @@ def upgrade() -> None:
                 "id": 1,
                 "account": "admin",
                 "name": "Administrator",
-                "password": "$2b$12$4PaHzdr/0AXWlW2TvJ7ZtOFKzFwwcO71xP8aXl16rYPDVu/rs24uG",
+                "password": "$2b$12$obykRE0U5dPsTV6QXaIvGeO.iFNOHVwIQ1NqxNou5U640WOkbbKdW",
                 "enable": True,
                 "oid": 1,
                 "origin": 0,

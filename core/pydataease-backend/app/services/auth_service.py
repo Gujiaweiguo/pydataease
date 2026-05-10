@@ -11,7 +11,7 @@ from app.repositories.user_repo import UserRepository
 from app.schemas.login import LoginRequest, TokenResponse
 from app.settings.config import get_settings
 from app.utils.password_utils import derive_jwt_secret, verify_password
-from app.utils.rsa_utils import decrypt_rsa, get_public_key_pem
+from app.utils.rsa_utils import decrypt_rsa, get_dekey_response
 
 
 class AuthService:
@@ -35,7 +35,7 @@ class AuthService:
         return self._issue_token(user.id, user.oid or 0, user.password)
 
     async def get_dekey(self) -> str:
-        return get_public_key_pem()
+        return get_dekey_response()
 
     def _issue_token(self, user_id: int, oid: int, password_hash: str) -> TokenResponse:
         now_seconds = int(datetime.now(UTC).timestamp())

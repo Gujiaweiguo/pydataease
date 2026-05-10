@@ -16,6 +16,7 @@ from app.routers.login import router as login_router
 from app.routers.share import router as share_router
 from app.routers.system import router as system_router
 from app.routers.task import router as task_router
+from app.routers.bootstrap import router as bootstrap_router
 from app.routers.websocket import router as websocket_router
 from app.schemas.response import ResultMessage
 from app.settings.config import get_settings
@@ -50,6 +51,7 @@ api_router.include_router(export_router)
 api_router.include_router(task_router)
 api_router.include_router(share_router)
 api_router.include_router(system_router)
+api_router.include_router(bootstrap_router)
 
 
 @app.exception_handler(HTTPException)

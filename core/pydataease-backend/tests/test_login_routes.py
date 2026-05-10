@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import base64
 from datetime import UTC, datetime
 
 import pytest
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.primitives import padding as sym_padding
 from fastapi import APIRouter, Depends, Request
 from httpx import AsyncClient
 from jose import jwt
@@ -31,13 +34,33 @@ def _ensure_test_routes() -> None:
     app.include_router(router)
 
 
-def _encrypt(value: str, public_key_pem: str) -> str:
+def _extract_public_key_pem(dekey: str) -> str:
+    """Parse Java-compatible dekey format back to PEM public key."""
+    separator = base64.urlsafe_b64encode(b"-pk_separator-").decode("utf-8")
+    k1, k2 = dekey.split(separator)
+    ct = base64.b64decode(k1)
+    cipher = Cipher(algorithms.AES(k2.encode("utf-8")), modes.CBC(b"0000000000000000"))
+    decryptor = cipher.decryptor()
+    padded = decryptor.update(ct) + decryptor.finalize()
+    unpadder = sym_padding.PKCS7(128).unpadder()
+    pub_key_b64 = (unpadder.update(padded) + unpadder.finalize()).decode("utf-8")
+    der_bytes = base64.b64decode(pub_key_b64)
+    pub = serialization.load_der_public_key(der_bytes)
+    pem_bytes = pub.public_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PublicFormat.SubjectPublicKeyInfo,
+    )
+    return pem_bytes.decode("utf-8")
+
+
+def _encrypt(value: str, dekey: str) -> str:
+    public_key_pem = _extract_public_key_pem(dekey)
     public_key = serialization.load_pem_public_key(public_key_pem.encode("utf-8"))
     ciphertext = public_key.encrypt(
         value.encode("utf-8"),
-        padding.OAEP(mgf=padding.MGF1(algorithm=hashes.SHA256()), algorithm=hashes.SHA256(), label=None),
+        padding.PKCS1v15(),
     )
-    return __import__("base64").b64encode(ciphertext).decode("utf-8")
+    return base64.b64encode(ciphertext).decode("utf-8")
 
 
 _ensure_test_routes()
@@ -48,7 +71,12 @@ async def test_dekey_returns_public_key(client: AsyncClient) -> None:
     response = await client.get("/de2api/dekey")
 
     assert response.status_code == 200
-    assert "BEGIN PUBLIC KEY" in response.json()["data"]
+    dekey = response.json()["data"]
+    separator = base64.urlsafe_b64encode(b"-pk_separator-").decode("utf-8")
+    assert separator in dekey
+    parts = dekey.split(separator)
+    assert len(parts) == 2
+    assert len(parts[1]) == 16  # AES key is 16 chars
 
 
 @pytest.mark.asyncio

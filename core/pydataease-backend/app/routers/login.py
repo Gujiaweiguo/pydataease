@@ -1,8 +1,11 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.dependencies.auth import get_current_user
+from app.dependencies.database import get_db
+from app.repositories.user_repo import UserRepository
 from app.schemas.auth import TokenUser
 from app.schemas.login import LoginRequest
 from app.services.auth_service import AuthService, get_auth_service
@@ -34,3 +37,22 @@ async def logout(_: TokenUser = Depends(get_current_user)) -> None:
 @router.get("/dekey")
 async def get_dekey(service: AuthService = Depends(get_auth_service)) -> object:
     return await service.get_dekey()
+
+
+@router.get("/user/info")
+async def get_user_info(
+    user: TokenUser = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db),
+) -> dict:
+    repo = UserRepository(session)
+    db_user = await repo.get_by_id(user.user_id)
+    if db_user is None:
+        raise HTTPException(status_code=401, detail="User not found")
+    return {
+        "id": db_user.id,
+        "name": db_user.name,
+        "account": db_user.account,
+        "oid": db_user.oid or 0,
+        "language": db_user.language or "zh-CN",
+        "enable": db_user.enable,
+    }
