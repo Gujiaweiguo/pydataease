@@ -66,7 +66,7 @@ async def get_interactive_tree():
     }
 
 
-@router.get("/license/validate")
+@router.post("/license/validate")
 async def validate_license():
     return {"status": "valid", "license": "community", "edition": "Community Edition", "serialNo": "", "remark": "", "expired": False}
 
@@ -86,14 +86,14 @@ async def get_sqlbot_settings():
     return {"enable": False, "url": ""}
 
 
-@router.get("/msg-center/count")
+@router.post("/msg-center/count")
 async def get_msg_count():
     return 0
 
 
 @router.post("/store/query")
 async def query_store():
-    return []
+    return {"totalCount": 0, "list": []}
 
 
 @router.get("/dekey")
