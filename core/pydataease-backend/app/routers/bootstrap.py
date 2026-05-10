@@ -1,5 +1,7 @@
 from fastapi import APIRouter
 
+from app.utils.rsa_utils import get_dekey_response
+
 router = APIRouter()
 
 
@@ -56,3 +58,8 @@ async def get_template_market_search_recommend():
 @router.post("/dataVisualization/interactiveTree")
 async def get_interactive_tree():
     return {"dashboard": [], "dataV": [], "dataset": [], "datasource": []}
+
+
+@router.get("/dekey")
+async def get_dekey():
+    return get_dekey_response()
