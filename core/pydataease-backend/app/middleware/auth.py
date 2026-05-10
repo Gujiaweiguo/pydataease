@@ -5,13 +5,17 @@ from typing import cast
 
 from fastapi import Request, status
 from jose import ExpiredSignatureError, JWTError, jwt
+from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.responses import JSONResponse, Response
 from starlette.types import ASGIApp, Receive, Scope, Send
 
+from app.dependencies.database import async_session
 from app.middleware.whitelist import is_invalid_path, is_whitelisted_path
+from app.repositories.user_repo import UserRepository
 from app.schemas.auth import TokenUser
 from app.schemas.response import ResultMessage
 from app.settings.config import BaseConfig, get_settings
+from app.utils.password_utils import derive_jwt_secret
 
 TOKEN_HEADER = "X-DE-TOKEN"
 LINK_TOKEN_HEADER = "X-DE-LINK-TOKEN"
@@ -44,7 +48,7 @@ class AuthMiddleware:
             return
 
         try:
-            user = self._resolve_user(request)
+            user = await self._resolve_user(request)
             scope.setdefault("state", {})
             scope["state"]["user"] = user
             await self.app(scope, receive, send)
@@ -52,7 +56,7 @@ class AuthMiddleware:
             response = self._error_response(exc.status_code, exc.message)
             await response(scope, receive, send)
 
-    def _resolve_user(self, request: Request) -> TokenUser:
+    async def _resolve_user(self, request: Request) -> TokenUser:
         headers = request.headers
         link_token = headers.get(LINK_TOKEN_HEADER)
         if link_token:
@@ -66,11 +70,46 @@ class AuthMiddleware:
         token = headers.get(TOKEN_HEADER) or headers.get(EMBEDDED_TOKEN_HEADER)
         if not token:
             raise AuthError(status.HTTP_401_UNAUTHORIZED, f"token is empty for uri {{{request.url.path}}}")
-        claims = self._decode_token(token, self.settings.secret_key, token_kind="token")
+        claims = await self._decode_user_token(token)
         return self._claims_to_user(claims)
 
+    async def _decode_user_token(self, token: str) -> Mapping[str, object]:
+        unverified_claims = self._get_unverified_claims(token)
+        user_id = unverified_claims.get("uid")
+        if user_id is None:
+            raise AuthError(status.HTTP_401_UNAUTHORIZED, "token格式错误！")
+
+        user = await self._load_user(_to_int(user_id))
+        if user is None or not user.enable:
+            raise AuthError(status.HTTP_401_UNAUTHORIZED, "用户不存在或已禁用")
+
+        try:
+            return self._decode_token(token, derive_jwt_secret(user.password), token_kind="token")
+        except AuthError as exc:
+            if exc.message != "token is invalid":
+                raise
+            return self._decode_token(token, self.settings.secret_key, token_kind="token")
+
+    async def _load_user(self, user_id: int) -> object | None:
+        async with async_session() as session:
+            return await self._get_user(session, user_id)
+
+    @staticmethod
+    async def _get_user(session: AsyncSession, user_id: int) -> object | None:
+        repo = UserRepository(session)
+        return await repo.get_by_id(user_id)
+
+    def _get_unverified_claims(self, token: str) -> Mapping[str, object]:
+        if len(token) < 20:
+            raise AuthError(status.HTTP_401_UNAUTHORIZED, "token is invalid")
+        try:
+            claims = jwt.get_unverified_claims(token)
+            return cast(Mapping[str, object], claims)
+        except JWTError as exc:
+            raise AuthError(status.HTTP_401_UNAUTHORIZED, "token is invalid") from exc
+
     def _decode_token(self, token: str, secret: str, *, token_kind: str) -> Mapping[str, object]:
-        if len(token) < 100:
+        if len(token) < 20:
             raise AuthError(status.HTTP_401_UNAUTHORIZED, "token is invalid")
         try:
             claims = jwt.decode(token, secret, algorithms=[self.settings.jwt_algorithm])

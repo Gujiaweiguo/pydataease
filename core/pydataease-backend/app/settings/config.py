@@ -14,6 +14,7 @@ class BaseConfig(BaseSettings):
     secret_key: str = "change-me-in-production"
     share_secret_key: str = "change-me-in-production"
     jwt_algorithm: str = "HS256"
+    jwt_exp_seconds: int = 1800
     api_prefix: str = "/de2api"
 
     model_config: ClassVar[SettingsConfigDict] = SettingsConfigDict(env_file=".env", env_prefix="DE_")

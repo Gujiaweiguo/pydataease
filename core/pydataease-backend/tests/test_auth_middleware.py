@@ -3,11 +3,13 @@ from __future__ import annotations
 from datetime import UTC, datetime, timedelta
 
 import pytest
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Depends, Request
 from httpx import AsyncClient
 from jose import jwt
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.dependencies.auth import get_current_user
+from app.dependencies.database import get_db
 from app.main import app
 from app.settings.config import get_settings
 
@@ -16,19 +18,19 @@ async def _local_login() -> dict[str, str]:
     return {"token": "ok"}
 
 
-async def _protected_me(request: Request) -> dict[str, int]:
-    user = await get_current_user(request)
+async def _protected_me(request: Request, session: AsyncSession = Depends(get_db)) -> dict[str, int]:
+    user = await get_current_user(request, session)
     return {"user_id": user.user_id, "oid": user.oid}
 
 
-async def _share_view(request: Request) -> dict[str, int]:
-    user = await get_current_user(request)
+async def _share_view(request: Request, session: AsyncSession = Depends(get_db)) -> dict[str, int]:
+    user = await get_current_user(request, session)
     return {"user_id": user.user_id, "oid": user.oid}
 
 
 def _ensure_test_routes() -> None:
     existing_paths = {path for route in app.routes if (path := getattr(route, "path", None)) is not None}
-    if "/de2api/login/localLogin" in existing_paths:
+    if "/de2api/share/view" in existing_paths:
         return
 
     router = APIRouter(prefix=get_settings().api_prefix)
@@ -52,10 +54,10 @@ _ensure_test_routes()
 
 @pytest.mark.asyncio
 async def test_whitelist_path_accessible_without_token(client: AsyncClient) -> None:
-    response = await client.post("/de2api/login/localLogin")
+    response = await client.get("/de2api/dekey")
 
     assert response.status_code == 200
-    assert response.json() == {"code": 0, "data": {"token": "ok"}, "msg": "success"}
+    assert response.json()["code"] == 0
 
 
 @pytest.mark.asyncio

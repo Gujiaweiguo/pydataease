@@ -1,7 +1,77 @@
 import pytest
 from httpx import ASGITransport, AsyncClient
+from types import SimpleNamespace
 
 from app.main import app
+from app.dependencies.database import get_db
+from app.utils.password_utils import hash_password
+
+
+def _build_user(*, user_id: int, account: str, password: str, oid: int, enable: bool = True, language: str = "zh-CN"):
+    return SimpleNamespace(
+        id=user_id,
+        account=account,
+        name=account,
+        password=hash_password(password),
+        enable=enable,
+        oid=oid,
+        origin=0,
+        language=language,
+    )
+
+
+@pytest.fixture
+def fake_auth_users():
+    return {
+        1: _build_user(user_id=1, account="admin", password="DataEase@123456", oid=1),
+        2: _build_user(user_id=2, account="embedded", password="Embedded@123456", oid=3),
+        7: _build_user(user_id=7, account="route7", password="Route@123456", oid=9),
+        11: _build_user(user_id=11, account="share11", password="Share@123456", oid=13),
+    }
+
+
+@pytest.fixture(autouse=True)
+def install_fake_auth_backend(monkeypatch, fake_auth_users):
+    import app.dependencies.auth as auth_dependencies
+    import app.middleware.auth as auth_middleware
+    import app.services.auth_service as auth_service
+
+    class FakeUserRepository:
+        def __init__(self, session) -> None:
+            self._users = session.users
+
+        async def get_by_id(self, user_id: int):
+            return self._users.get(user_id)
+
+        async def get_by_account(self, account: str):
+            return next((user for user in self._users.values() if user.account == account), None)
+
+    class FakeSession(SimpleNamespace):
+        async def rollback(self) -> None:
+            return None
+
+    class FakeSessionContext:
+        def __init__(self, session) -> None:
+            self._session = session
+
+        async def __aenter__(self):
+            return self._session
+
+        async def __aexit__(self, exc_type, exc, tb) -> bool:
+            return False
+
+    session = FakeSession(users=fake_auth_users)
+
+    async def override_get_db():
+        yield session
+
+    monkeypatch.setattr(auth_middleware, "UserRepository", FakeUserRepository)
+    monkeypatch.setattr(auth_dependencies, "UserRepository", FakeUserRepository)
+    monkeypatch.setattr(auth_service, "UserRepository", FakeUserRepository)
+    monkeypatch.setattr(auth_middleware, "async_session", lambda: FakeSessionContext(session))
+    app.dependency_overrides[get_db] = override_get_db
+    yield
+    _ = app.dependency_overrides.pop(get_db, None)
 
 
 @pytest.fixture

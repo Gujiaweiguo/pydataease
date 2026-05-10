@@ -12,6 +12,7 @@ from app.routers.dataset import router as dataset_router
 from app.routers.engine import router as engine_router
 from app.routers.visualization import router as visualization_router
 from app.routers.export import router as export_router
+from app.routers.login import router as login_router
 from app.routers.share import router as share_router
 from app.routers.system import router as system_router
 from app.routers.task import router as task_router
@@ -42,6 +43,7 @@ api_router = APIRouter(prefix=settings.api_prefix)
 api_router.include_router(datasource_router)
 api_router.include_router(dataset_router)
 api_router.include_router(engine_router)
+api_router.include_router(login_router)
 api_router.include_router(chart_router)
 api_router.include_router(visualization_router)
 api_router.include_router(export_router)

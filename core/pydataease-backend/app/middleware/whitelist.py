@@ -4,6 +4,7 @@ from __future__ import annotations
 # These are public (no-auth) URL patterns the frontend expects to access.
 # They are NOT implementations — they preserve frontend routing compatibility.
 # xpack/APISIX paths are whitelist entries only, not xpack business logic.
+# Login bootstrap endpoints remain public even when mounted under /de2api.
 WHITE_PATHS = {
     "/",
     "/health",

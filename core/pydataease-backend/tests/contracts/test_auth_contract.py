@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import pytest
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Depends, Request
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.dependencies.auth import get_current_user
+from app.dependencies.database import get_db
 from app.main import app
 from app.settings.config import get_settings
 
@@ -13,12 +15,12 @@ def _ensure_test_routes() -> None:
     if "/de2api/protected/me" in existing_paths:
         return
 
-    async def _protected_me(request: Request) -> dict[str, int]:
-        user = await get_current_user(request)
+    async def _protected_me(request: Request, session: AsyncSession = Depends(get_db)) -> dict[str, int]:
+        user = await get_current_user(request, session)
         return {"user_id": user.user_id, "oid": user.oid}
 
-    async def _share_view(request: Request) -> dict[str, int]:
-        user = await get_current_user(request)
+    async def _share_view(request: Request, session: AsyncSession = Depends(get_db)) -> dict[str, int]:
+        user = await get_current_user(request, session)
         return {"user_id": user.user_id, "oid": user.oid}
 
     router = APIRouter(prefix=get_settings().api_prefix)

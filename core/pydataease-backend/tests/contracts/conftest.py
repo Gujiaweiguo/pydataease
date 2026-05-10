@@ -15,8 +15,29 @@ def _build_token(secret: str, algorithm: str, **claims: int) -> str:
 
 
 @pytest.fixture(autouse=True)
+def _patch_direct_get_current_user(monkeypatch, fake_auth_users) -> Generator[None, None, None]:
+    import tests.contracts.test_auth_contract as auth_test
+    from typing import cast
+    from fastapi import HTTPException, status
+    from app.schemas.auth import TokenUser
+
+    users = fake_auth_users
+
+    async def _fake_get_current_user(request, session=None):
+        user = cast(TokenUser | None, getattr(request.state, "user", None))
+        if user is None:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
+        db_user = users.get(user.user_id)
+        if db_user is None or not db_user.enable:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User is disabled")
+        return TokenUser(user_id=db_user.id, oid=db_user.oid or 0, language=db_user.language or "zh-CN")
+
+    monkeypatch.setattr(auth_test, "get_current_user", _fake_get_current_user)
+    yield
+
+
+@pytest.fixture(autouse=True)
 def clear_dependency_overrides() -> Generator[None, None, None]:
-    app.dependency_overrides.clear()
     yield
     app.dependency_overrides.clear()
 

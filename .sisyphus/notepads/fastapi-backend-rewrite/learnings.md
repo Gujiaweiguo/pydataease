@@ -84,3 +84,9 @@
 - `core/pydataease-backend/app` and `tests` no longer contain literal `'h2'`; remaining `migrate_data.py` mention is only the docs runbook reference in `docs/cutover-runbook.md`, which fits the allowed migration/reference-doc exception.
 - `app/middleware/whitelist.py` now carries an explicit compatibility-baseline comment stating xpack/APISIX routes are frontend whitelist compatibility entries rather than business-logic implementation.
 - `uv run pytest tests/ -q` currently reports `84 passed, 59 failed`; failures are the pre-existing `tests/contracts/*` `NotImplementedError` characterization stubs, so the requested `84 passed` expectation is not met in this workspace state.
+
+## T14: login-auth-flow OpenSpec artifacts (2026-05-10)
+
+- The `spec-driven` OpenSpec schema in this repo gates `tasks` on both `design` and `specs`, while `design`/`specs` both unlock from `proposal`; `openspec status --change <name>` is enough to confirm the dependency chain after each write.
+- For auth-slice changes, proposal capability names should map directly to one new spec folder per capability plus one delta spec for `auth-runtime-compatibility` when JWT validation behavior changes.
+- The existing frontend contract requires `/dekey`, RSA-encrypted `localLogin`, `refresh?time=...`, and wrapped logout semantics, so artifact docs should treat those as compatibility requirements rather than optional implementation details.

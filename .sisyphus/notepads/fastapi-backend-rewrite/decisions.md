@@ -6,3 +6,7 @@
 
 ## 2026-05-10 F4
 - Scope fidelity verdict is blocked until compatibility leftovers are removed from Python backend: APISIX whitelist entry, xpack whitelist endpoints beyond `xpack_share`, and H2-labeled datasource test expectations.
+
+## 2026-05-10 T14
+- The `login-auth-flow` change should be modeled as two new capabilities (`user-management`, `login-auth-endpoints`) plus a delta on `auth-runtime-compatibility`, keeping login contracts separate from lower-level JWT runtime behavior.
+- The design baseline for this change assumes bcrypt for stored password verification and deterministic MD5-derived per-user JWT secrets for community compatibility, with RSA key delivery preserved as a first-class API contract.
