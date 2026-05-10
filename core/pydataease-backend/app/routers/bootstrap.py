@@ -1,4 +1,7 @@
+from typing import Optional
+
 from fastapi import APIRouter
+from pydantic import BaseModel
 
 from app.utils.rsa_utils import get_dekey_response
 
@@ -91,8 +94,14 @@ async def get_msg_count():
     return 0
 
 
+class StoreQueryRequest(BaseModel):
+    keyword: Optional[str] = None
+    type: Optional[str] = None
+    asc: Optional[bool] = None
+
+
 @router.post("/store/query")
-async def query_store():
+async def query_store(request: Optional[StoreQueryRequest] = None):
     return {"totalCount": 0, "list": []}
 
 

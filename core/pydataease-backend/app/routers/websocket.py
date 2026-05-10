@@ -23,6 +23,12 @@ async def websocket_info():
     }
 
 
+@router.get("/websocket/{path:path}")
+async def websocket_transport_catchall(path: str):
+    """SockJS transport fallback stub (xhr_streaming, eventsource, etc.)"""
+    return {"body": ""}
+
+
 @router.websocket("/websocket")
 async def websocket_endpoint(websocket: WebSocket) -> None:
     await websocket.accept()
