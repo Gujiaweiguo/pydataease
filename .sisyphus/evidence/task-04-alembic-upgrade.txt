@@ -1,0 +1,37 @@
+Task: T04 PostgreSQL schema 建模与 Alembic 基线迁移
+
+Models created: 11
+Tables covered: 15
+Indexes covered: 2
+
+Covered tables:
+- core_datasource
+- core_datasource_task
+- core_datasource_task_log
+- core_dataset_group
+- core_dataset_table
+- core_dataset_table_field
+- data_visualization_info
+- core_chart_view
+- core_menu
+- xpack_share
+- core_share_ticket
+- core_store
+- core_export_task
+- core_de_engine
+
+PostgreSQL conversion decisions:
+- SnowFlake-style IDs use BigInteger primary keys with autoincrement disabled on ORM models.
+- Java/MySQL longtext-like payloads that carry structured data were promoted to JSONB.
+- Epoch-millis timestamps remain BigInteger rather than DateTime.
+- Boolean flags stay Boolean, including soft-delete and feature toggles.
+- Alembic env reads database_url from app.settings.config.get_settings() and supports async/offline migrations.
+- Baseline migration is usable without a running PostgreSQL instance via offline SQL generation.
+
+Commands run:
+- uv run alembic upgrade head --sql > /tmp/opencode/task-04-alembic-upgrade.sql
+
+Useful follow-up commands:
+- uv run alembic upgrade head
+- uv run alembic downgrade base
+- uv run pytest

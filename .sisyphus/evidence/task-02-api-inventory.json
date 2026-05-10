@@ -1,0 +1,2008 @@
+{
+  "generated_at": "2026-05-10T01:44:59.050281+00:00",
+  "api_prefix": "/de2api",
+  "response_wrapper": "ResultMessage { code, data, msg }",
+  "auth_headers": {
+    "primary": "X-DE-TOKEN",
+    "share": "X-DE-LINK-TOKEN",
+    "embedded": "X-EMBEDDED-TOKEN"
+  },
+  "domains": {
+    "login": {
+      "backend_api_files": [
+        "sdk/api/api-permissions/src/main/java/io/dataease/api/permissions/login/api/LoginApi.java",
+        "sdk/common/src/main/java/io/dataease/auth/filter/TokenFilter.java"
+      ],
+      "frontend_files": [
+        "core/core-frontend/src/api/login.ts",
+        "core/core-frontend/src/config/axios/service.ts"
+      ],
+      "endpoints": [
+        {
+          "method": "POST",
+          "path": "/login/localLogin",
+          "description": "Local username/password login returning token payload",
+          "auth": "none"
+        },
+        {
+          "method": "GET",
+          "path": "/login/refresh",
+          "description": "Refresh/extend token lifetime",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/login/platformLogin/{origin}",
+          "description": "Third-party platform login by origin",
+          "auth": "none"
+        },
+        {
+          "method": "GET",
+          "path": "/logout",
+          "description": "Logout current session",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/mfa/qr/{id}",
+          "description": "Fetch MFA QR enrollment payload",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/mfa/login",
+          "description": "Complete MFA login flow and return token",
+          "auth": "none"
+        },
+        {
+          "method": "POST",
+          "path": "/login/modifyInvalidPwd",
+          "description": "Change invalid/expired password during login recovery",
+          "auth": "token"
+        }
+      ]
+    },
+    "datasource": {
+      "backend_api_files": [
+        "sdk/api/api-base/src/main/java/io/dataease/api/ds/DatasourceApi.java"
+      ],
+      "frontend_files": [
+        "core/core-frontend/src/api/datasource.ts"
+      ],
+      "endpoints": [
+        {
+          "method": "GET",
+          "path": "/datasource/query/{keyWord}",
+          "description": "Query datasource tree by keyword",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/datasource/save",
+          "description": "Create datasource",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/datasource/update",
+          "description": "Update datasource",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/datasource/move",
+          "description": "Move datasource/folder",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/datasource/reName",
+          "description": "Rename datasource/folder",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/datasource/createFolder",
+          "description": "Create datasource folder",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/datasource/checkRepeat",
+          "description": "Validate duplicate datasource naming",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/datasource/types",
+          "description": "List datasource types/configurations",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/datasource/validate",
+          "description": "Validate datasource connection from request body",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/datasource/getSchema",
+          "description": "Fetch datasource schemas",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/datasource/validate/{datasourceId}",
+          "description": "Validate datasource by id",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/datasource/perDelete/{datasourceId}",
+          "description": "Check whether datasource can be deleted safely",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/datasource/delete/{datasourceId}",
+          "description": "Delete datasource",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/datasource/get/{datasourceId}",
+          "description": "Fetch datasource detail",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/datasource/hidePw/{datasourceId}",
+          "description": "Fetch datasource detail with hidden password",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/datasource/getSimpleDs/{datasourceId}",
+          "description": "Fetch simplified datasource detail",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/datasource/getTableField",
+          "description": "Fetch source table fields",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/datasource/syncApiTable",
+          "description": "Synchronize API datasource table",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/datasource/syncApiDs",
+          "description": "Synchronize API datasource definition",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/datasource/tree",
+          "description": "List datasource tree nodes",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/datasource/getTables",
+          "description": "List datasource tables",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/datasource/getTableStatus",
+          "description": "Fetch datasource table sync status",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/datasource/checkApiDatasource",
+          "description": "Validate API datasource definition",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/datasource/uploadFile",
+          "description": "Upload local datasource file (multipart)",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/datasource/previewData",
+          "description": "Preview datasource rows",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/datasource/latestUse",
+          "description": "List recently used datasource types",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/datasource/showFinishPage",
+          "description": "Read onboarding finish-page flag",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/datasource/setShowFinishPage",
+          "description": "Persist onboarding finish-page flag",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/datasource/listSyncRecord/{dsId}/{goPage}/{pageSize}",
+          "description": "List datasource sync records",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/datasource/simple/{id}",
+          "description": "Fetch minimal datasource snapshot",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/datasource/multidimensionalTables",
+          "description": "List multidimensional tables",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/datasource/loadRemoteFile",
+          "description": "Load remote excel/file datasource",
+          "auth": "token"
+        }
+      ]
+    },
+    "dataset": {
+      "backend_api_files": [
+        "sdk/api/api-base/src/main/java/io/dataease/api/dataset/DatasetTreeApi.java"
+      ],
+      "frontend_files": [
+        "core/core-frontend/src/api/dataset.ts",
+        "core/core-frontend/src/api/datasource.ts"
+      ],
+      "endpoints": [
+        {
+          "method": "POST",
+          "path": "/datasetTree/save",
+          "description": "Save existing dataset definition",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/datasetTree/rename",
+          "description": "Rename dataset",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/datasetTree/create",
+          "description": "Create dataset",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/datasetTree/move",
+          "description": "Move dataset",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/datasetTree/perDelete/{id}",
+          "description": "Check dataset delete safety",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/datasetTree/delete/{id}",
+          "description": "Delete dataset",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/datasetTree/tree",
+          "description": "List dataset tree",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/datasetTree/barInfo/{id}",
+          "description": "Fetch dataset owner/user summary bar info",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/datasetTree/get/{id}",
+          "description": "Fetch dataset preview/detail payload",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/datasetTree/details/{id}",
+          "description": "Fetch dataset details",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/datasetTree/dsDetails",
+          "description": "Fetch dataset details for multiple ids",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/datasetTree/getSqlParams",
+          "description": "Fetch SQL variable metadata",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/datasetTree/detailWithPerm",
+          "description": "Fetch dataset details with permission shaping",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/datasetTree/exportDataset",
+          "description": "Export dataset as file/blob",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/datasetData/tableField",
+          "description": "List dataset table fields",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/datasetData/previewData",
+          "description": "Preview dataset data",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/datasetData/getDatasetTotal",
+          "description": "Fetch dataset total row count",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/datasetData/previewSql",
+          "description": "Preview generated dataset SQL",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/datasetData/enumValueObj",
+          "description": "Fetch enum values from object request",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/datasetData/enumValueDs",
+          "description": "Fetch enum values from datasource request",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/dataset/rowPermissions/pager/{datasetId}/{page}/{limit}",
+          "description": "List row permissions",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/dataset/columnPermissions/pager/{datasetId}/{page}/{limit}",
+          "description": "List column permissions",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/dataset/rowPermissions/authObjs/{datasetId}/{type}",
+          "description": "List row-permission target objects",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/dataset/rowPermissions/save",
+          "description": "Save row permissions",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/dataset/columnPermissions/save",
+          "description": "Save column permissions",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/dataset/rowPermissions/delete",
+          "description": "Delete row permissions",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/dataset/columnPermissions/delete",
+          "description": "Delete column permissions",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/dataset/rowPermissions/whiteListUsers",
+          "description": "List whitelist users for row permissions",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/datasetField/listByDatasetGroup/{datasetId}",
+          "description": "List dataset fields by dataset group",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/datasetField/multFieldValuesForPermissions",
+          "description": "List field values for permission editor",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/datasetField/listWithPermissions/{datasetId}",
+          "description": "List fields with permission metadata",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/datasetField/copilotFields/{datasetId}",
+          "description": "List copilot field metadata",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/datasetField/save",
+          "description": "Save calculated/custom dataset field",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/datasetField/delete/{id}",
+          "description": "Delete dataset field",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/datasetField/deleteByChartId/{id}",
+          "description": "Delete dataset fields derived from chart",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/datasetData/enumValue",
+          "description": "Fetch dataset enum values",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/datasetField/getFunction",
+          "description": "List dataset field functions",
+          "auth": "token"
+        }
+      ]
+    },
+    "chart": {
+      "backend_api_files": [
+        "sdk/api/api-base/src/main/java/io/dataease/api/chart/ChartViewApi.java",
+        "sdk/api/api-base/src/main/java/io/dataease/api/chart/ChartDataApi.java"
+      ],
+      "frontend_files": [
+        "core/core-frontend/src/api/chart.ts"
+      ],
+      "endpoints": [
+        {
+          "method": "POST",
+          "path": "/chart/getChart/{id}",
+          "description": "Load chart definition and computed data",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/chart/listByDQ/{id}/{chartId}",
+          "description": "List chart fields by dataset/chart pair",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/chart/save",
+          "description": "Save chart definition",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/chart/checkSameDataSet/{viewIdSource}/{viewIdTarget}",
+          "description": "Check whether two charts share same dataset",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/chart/getDetail/{id}/{resourceTable}",
+          "description": "Fetch chart detail by resource table",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/chart/viewOption/{resourceId}",
+          "description": "List dashboard chart/view options",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/chart/copyField/{id}/{chartId}",
+          "description": "Copy chart field",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/chart/deleteField/{id}",
+          "description": "Delete chart field",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/chart/deleteFieldByChart/{chartId}",
+          "description": "Clear computed fields for chart",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/chart/chartBaseInfo/{id}/{resourceTable}",
+          "description": "Fetch chart header/base info",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/chartData/getData",
+          "description": "Execute chart query and return visualization data",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/chartData/innerExportDetails",
+          "description": "Export chart detail rows as blob",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/chartData/innerExportDataSetDetails",
+          "description": "Export dataset detail rows as blob",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/chartData/getFieldData/{fieldId}/{fieldType}",
+          "description": "Fetch field enum values for chart filter",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/chartData/getDrillFieldData/{fieldId}",
+          "description": "Fetch drill-down field values",
+          "auth": "token"
+        }
+      ]
+    },
+    "visualization": {
+      "backend_api_files": [
+        "sdk/api/api-base/src/main/java/io/dataease/api/visualization/DataVisualizationApi.java",
+        "sdk/api/api-base/src/main/java/io/dataease/api/visualization/VisualizationSubjectApi.java",
+        "sdk/api/api-base/src/main/java/io/dataease/api/visualization/VisualizationStoreApi.java",
+        "sdk/api/api-base/src/main/java/io/dataease/api/visualization/VisualizationLinkJumpApi.java",
+        "sdk/api/api-base/src/main/java/io/dataease/api/visualization/VisualizationLinkageApi.java",
+        "sdk/api/api-base/src/main/java/io/dataease/api/visualization/VisualizationOuterParamsApi.java",
+        "sdk/api/api-base/src/main/java/io/dataease/api/visualization/VisualizationWatermarkApi.java",
+        "sdk/api/api-base/src/main/java/io/dataease/api/visualization/StaticResourceApi.java"
+      ],
+      "frontend_files": [
+        "core/core-frontend/src/api/visualization/dataVisualization.ts",
+        "core/core-frontend/src/api/visualization/linkJump.ts",
+        "core/core-frontend/src/api/visualization/linkage.ts",
+        "core/core-frontend/src/api/visualization/outerParams.ts",
+        "core/core-frontend/src/api/watermark.ts",
+        "core/core-frontend/src/api/staticResource.ts"
+      ],
+      "endpoints": [
+        {
+          "method": "POST",
+          "path": "/dataVisualization/findById",
+          "description": "Fetch visualization resource by id and business flag",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/dataVisualization/findCopyResource/{dvId}/{busiFlag}",
+          "description": "Fetch temporary copied visualization",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/dataVisualization/saveCanvas",
+          "description": "Save new visualization canvas",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/dataVisualization/appCanvasNameCheck",
+          "description": "Validate app canvas name",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/dataVisualization/checkCanvasChange",
+          "description": "Check whether draft differs from persisted canvas",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/dataVisualization/updateCanvas",
+          "description": "Update visualization canvas",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/dataVisualization/updatePublishStatus",
+          "description": "Change visualization publish status",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/dataVisualization/recoverToPublished",
+          "description": "Restore last published visualization",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/dataVisualization/updateBase",
+          "description": "Update visualization base metadata",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/dataVisualization/deleteLogic/{dvId}/{busiFlag}",
+          "description": "Soft delete visualization resource",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/dataVisualization/tree",
+          "description": "List visualization tree",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/dataVisualization/interactiveTree",
+          "description": "List business resource trees for linking/interactions",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/dataVisualization/move",
+          "description": "Move visualization resource",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/dataVisualization/nameCheck",
+          "description": "Validate visualization name",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/dataVisualization/findRecent",
+          "description": "List recently operated visualizations",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/dataVisualization/copy",
+          "description": "Copy visualization",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/dataVisualization/findDvType/{dvId}",
+          "description": "Resolve visualization business type",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/dataVisualization/updateCheckVersion/{dvId}",
+          "description": "Fetch optimistic-lock/check version",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/dataVisualization/decompression",
+          "description": "Parse uploaded/imported visualization template payload",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/dataVisualization/decompressionLocalFile",
+          "description": "Parse local uploaded visualization template file",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/dataVisualization/viewDetailList/{dvId}",
+          "description": "List visualization view detail metadata",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/dataVisualization/export2AppCheck",
+          "description": "Validate visualization export-to-app request",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/dataVisualization/exportLogApp",
+          "description": "Record app export operation",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/dataVisualization/exportLogTemplate",
+          "description": "Record template export operation",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/dataVisualization/exportLogPDF",
+          "description": "Record PDF export operation",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/dataVisualization/exportLogImg",
+          "description": "Record image export operation",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/visualizationSubject/querySubjectWithGroup",
+          "description": "Query visualization subject groups",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/visualizationSubject/update",
+          "description": "Save or update visualization subject",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/visualizationSubject/delete/{id}",
+          "description": "Delete visualization subject",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/store/execute",
+          "description": "Toggle/store favorite visualization state",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/store/query",
+          "description": "Query favorited visualization resources",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/store/favorited/{id}",
+          "description": "Check favorite state for visualization",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/linkJump/getTableFieldWithViewId/{viewId}",
+          "description": "List jumpable fields for a chart view",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/linkJump/queryWithViewId/{dvId}/{viewId}",
+          "description": "Fetch jump settings for view",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/linkJump/queryVisualizationJumpInfo/{dvId}/{resourceTable}",
+          "description": "Fetch jump settings for visualization",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/linkJump/updateJumpSet",
+          "description": "Persist jump settings",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/linkJump/queryTargetVisualizationJumpInfo",
+          "description": "Resolve jump target metadata",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/linkJump/viewTableDetailList/{dvId}",
+          "description": "Fetch jump detail list",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/linkJump/updateJumpSetActive",
+          "description": "Enable/disable jump rule",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/linkJump/removeJumpSet",
+          "description": "Delete jump rule",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/linkage/getViewLinkageGather",
+          "description": "Fetch linkage graph for view",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/linkage/getViewLinkageGatherArray",
+          "description": "Fetch linkage graph array form",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/linkage/saveLinkage",
+          "description": "Save linkage rules",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/linkage/getVisualizationAllLinkageInfo/{dvId}/{resourceTable}",
+          "description": "Fetch all linkage metadata for visualization",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/linkage/updateLinkageActive",
+          "description": "Enable/disable linkage rule",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/linkage/removeLinkage",
+          "description": "Delete linkage rule",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/outerParams/queryWithVisualizationId/{dvId}",
+          "description": "Fetch visualization outer-parameter configuration",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/outerParams/updateOuterParamsSet",
+          "description": "Save visualization outer-parameter configuration",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/outerParams/getOuterParamsInfo/{dvId}",
+          "description": "Fetch outer-parameter base info",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/outerParams/queryDsWithVisualizationId/{dvId}",
+          "description": "List datasets referenced by visualization outer params",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/watermark/find",
+          "description": "Fetch visualization watermark settings",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/watermark/save",
+          "description": "Save visualization watermark settings",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/staticResource/upload/{fileId}",
+          "description": "Upload visualization static resource (multipart)",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/staticResource/findResourceAsBase64",
+          "description": "Fetch static resource as base64 payload",
+          "auth": "token"
+        }
+      ]
+    },
+    "share": {
+      "backend_api_files": [
+        "sdk/api/api-base/src/main/java/io/dataease/api/xpack/share/XpackShareApi.java",
+        "sdk/api/api-base/src/main/java/io/dataease/api/xpack/share/ShareTicketApi.java",
+        "sdk/common/src/main/java/io/dataease/auth/filter/TokenFilter.java"
+      ],
+      "frontend_files": [
+        "core/core-frontend/src/config/axios/service.ts",
+        "core/core-frontend/src/api/visualization/dataVisualization.ts"
+      ],
+      "endpoints": [
+        {
+          "method": "GET",
+          "path": "/share/status/{resourceId}",
+          "description": "Fetch share status for resource",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/share/switcher/{resourceId}",
+          "description": "Enable/disable resource sharing",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/share/editExp",
+          "description": "Update share expiration policy",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/share/editPwd",
+          "description": "Update share password",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/share/detail/{resourceId}",
+          "description": "Fetch share configuration details",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/share/query",
+          "description": "List shares for visualization resources",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/share/proxyInfo",
+          "description": "Resolve share proxy/open URL metadata",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/share/validate",
+          "description": "Validate share password and emit share token",
+          "auth": "none_or_link_token"
+        },
+        {
+          "method": "GET",
+          "path": "/share/queryRelationByUserId/{uid}",
+          "description": "Fetch share relation metadata for user",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/share/editUuid",
+          "description": "Rotate/edit share uuid",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/shareTicket/saveTicket",
+          "description": "Create share access ticket",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/shareTicket/delTicket",
+          "description": "Delete share access ticket",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/shareTicket/enableTicket",
+          "description": "Toggle required-ticket enforcement",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/shareTicket/pager/{resourceId}/{goPage}/{pageSize}",
+          "description": "List tickets for shared resource",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/shareTicket/tempTicket",
+          "description": "Generate temporary share ticket",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/shareTicket/limit",
+          "description": "Read server-side share ticket limit",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "<protected shared resource>",
+          "description": "Any protected share view may also accept X-DE-LINK-TOKEN header instead of X-DE-TOKEN",
+          "auth": "link_token"
+        }
+      ]
+    },
+    "export": {
+      "backend_api_files": [
+        "sdk/api/api-base/src/main/java/io/dataease/api/exportCenter/ExportCenterApi.java",
+        "sdk/api/api-base/src/main/java/io/dataease/api/chart/ChartDataApi.java",
+        "sdk/api/api-base/src/main/java/io/dataease/api/dataset/DatasetTreeApi.java",
+        "sdk/api/api-base/src/main/java/io/dataease/api/visualization/DataVisualizationApi.java"
+      ],
+      "frontend_files": [
+        "core/core-frontend/src/api/dataset.ts",
+        "core/core-frontend/src/api/chart.ts",
+        "core/core-frontend/src/api/visualization/dataVisualization.ts"
+      ],
+      "endpoints": [
+        {
+          "method": "POST",
+          "path": "/exportCenter/exportTasks/records",
+          "description": "Fetch export task counters by status",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/exportCenter/exportTasks/{status}/{goPage}/{pageSize}",
+          "description": "Page export tasks by status",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/exportCenter/delete/{id}",
+          "description": "Delete one export task record",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/exportCenter/delete",
+          "description": "Delete multiple export task records",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/exportCenter/deleteAll/{type}",
+          "description": "Delete all export task records by type",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/exportCenter/download/{id}",
+          "description": "Download exported artifact",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/exportCenter/generateDownloadUri/{id}",
+          "description": "Generate signed/derived download URL",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/exportCenter/retry/{id}",
+          "description": "Retry failed export task",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/exportCenter/exportLimit",
+          "description": "Fetch export-limit policy",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/datasetTree/exportDataset",
+          "description": "Export dataset blob",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/chartData/innerExportDetails",
+          "description": "Export chart detail blob",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/chartData/innerExportDataSetDetails",
+          "description": "Export dataset detail blob from chart context",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/dataVisualization/export2AppCheck",
+          "description": "Check app export preconditions",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/dataVisualization/exportLogApp",
+          "description": "Record app export event",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/dataVisualization/exportLogTemplate",
+          "description": "Record template export event",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/dataVisualization/exportLogPDF",
+          "description": "Record PDF export event",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/dataVisualization/exportLogImg",
+          "description": "Record image export event",
+          "auth": "token"
+        }
+      ]
+    },
+    "system": {
+      "backend_api_files": [
+        "sdk/api/api-base/src/main/java/io/dataease/api/system/SysParameterApi.java"
+      ],
+      "frontend_files": [
+        "core/core-frontend/src/api/login.ts",
+        "core/core-frontend/src/api/setting/sysParameter.ts",
+        "core/core-frontend/src/api/common.ts",
+        "core/core-frontend/src/config/axios/service.ts",
+        "core/core-frontend/src/api/visualization/dataVisualization.ts"
+      ],
+      "endpoints": [
+        {
+          "method": "GET",
+          "path": "/sysParameter/singleVal/{key}",
+          "description": "Fetch one system parameter value",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/sysParameter/saveOnlineMap",
+          "description": "Save online map provider settings",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/sysParameter/queryOnlineMap",
+          "description": "Fetch online map provider settings",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/sysParameter/queryOnlineMap/{type}",
+          "description": "Fetch online map settings by map type",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/sysParameter/basic/query",
+          "description": "Fetch basic system settings",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/sysParameter/basic/save",
+          "description": "Save basic system settings",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/sysParameter/requestTimeOut",
+          "description": "Fetch request timeout used by frontend bootstrap",
+          "auth": "none"
+        },
+        {
+          "method": "GET",
+          "path": "/sysParameter/defaultSettings",
+          "description": "Fetch UI default settings",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/sysParameter/ui",
+          "description": "Fetch login/UI bootstrap configuration",
+          "auth": "none"
+        },
+        {
+          "method": "GET",
+          "path": "/sysParameter/defaultLogin",
+          "description": "Fetch default login mode/category",
+          "auth": "none"
+        },
+        {
+          "method": "GET",
+          "path": "/sysParameter/shareBase",
+          "description": "Fetch share base settings",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/sysParameter/i18nOptions",
+          "description": "Fetch custom i18n options",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/sysParameter/sqlbot",
+          "description": "Fetch SQLBot embed configuration",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/sysParameter/sqlbot",
+          "description": "Save SQLBot embed configuration",
+          "auth": "token"
+        }
+      ]
+    },
+    "template": {
+      "backend_api_files": [
+        "sdk/api/api-base/src/main/java/io/dataease/api/template/TemplateManageApi.java",
+        "sdk/api/api-base/src/main/java/io/dataease/api/template/TemplateMarketApi.java"
+      ],
+      "frontend_files": [
+        "core/core-frontend/src/api/template.ts",
+        "core/core-frontend/src/api/templateMarket.ts"
+      ],
+      "endpoints": [
+        {
+          "method": "POST",
+          "path": "/templateManage/templateList",
+          "description": "List managed templates",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/templateManage/save",
+          "description": "Save managed template",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/templateManage/delete/{id}/{categoryId}",
+          "description": "Delete template by id and category",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/templateManage/deleteCategory/{id}",
+          "description": "Delete template category",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/templateManage/findOne/{templateId}",
+          "description": "Fetch one template detail",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/templateManage/findCategoriesByTemplateIds",
+          "description": "Resolve categories for template ids",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/templateManage/find",
+          "description": "Search template records",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/templateManage/findCategories",
+          "description": "Search template categories",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/templateManage/nameCheck",
+          "description": "Validate template name",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/templateManage/categoryTemplateNameCheck",
+          "description": "Validate category template name",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/templateManage/checkCategoryTemplateBatchNames",
+          "description": "Batch validate category template names",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/templateManage/batchUpdate",
+          "description": "Batch update templates",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/templateManage/batchDelete",
+          "description": "Batch delete templates",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/templateMarket/search",
+          "description": "Search template market",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/templateMarket/searchRecommend",
+          "description": "Fetch recommended market templates",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/templateMarket/searchPreview",
+          "description": "Fetch market preview payload",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/templateMarket/categories",
+          "description": "List market categories",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/templateMarket/categoriesObject",
+          "description": "List market category metadata objects",
+          "auth": "token"
+        }
+      ]
+    },
+    "map": {
+      "backend_api_files": [
+        "sdk/api/api-base/src/main/java/io/dataease/api/map/MapApi.java",
+        "sdk/api/api-base/src/main/java/io/dataease/api/map/GeoApi.java",
+        "sdk/api/api-base/src/main/java/io/dataease/api/map/CustomGeoApi.java"
+      ],
+      "frontend_files": [
+        "core/core-frontend/src/api/map.ts",
+        "core/core-frontend/src/api/setting/sysParameter.ts"
+      ],
+      "endpoints": [
+        {
+          "method": "GET",
+          "path": "/map/worldTree",
+          "description": "Fetch world area tree",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/map/{countryCode}/{areaCode}.json",
+          "description": "Fetch built-in map geojson for China/built-in regions",
+          "auth": "token_or_public_static"
+        },
+        {
+          "method": "GET",
+          "path": "/geo/{countryCode}/{areaCode}.json",
+          "description": "Fetch built-in map geojson for non-China regions",
+          "auth": "token_or_public_static"
+        },
+        {
+          "method": "POST",
+          "path": "/geo/save",
+          "description": "Upload custom geo definition and file (multipart)",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/geo/delete/{id}",
+          "description": "Delete geo definition",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/geo/{id}/mapping",
+          "description": "Persist place-name mapping for geo",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/customGeo/geoArea/list",
+          "description": "List custom geo areas",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/customGeo/geoArea/{id}",
+          "description": "Fetch custom geo area detail",
+          "auth": "token"
+        },
+        {
+          "method": "DELETE",
+          "path": "/customGeo/geoArea/{id}",
+          "description": "Delete custom geo area",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/customGeo/geoArea/save",
+          "description": "Save custom geo area",
+          "auth": "token"
+        },
+        {
+          "method": "DELETE",
+          "path": "/customGeo/geoSubArea/{id}",
+          "description": "Delete custom geo sub-area",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/customGeo/geoSubArea/save",
+          "description": "Save custom geo sub-area",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/customGeo/geoSubArea/options",
+          "description": "List selectable sub-area options",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/sysParameter/queryOnlineMap",
+          "description": "Fetch online map key/configuration",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/sysParameter/queryOnlineMap/{type}",
+          "description": "Fetch online map key/configuration by type",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/sysParameter/saveOnlineMap",
+          "description": "Persist online map key/configuration",
+          "auth": "token"
+        }
+      ]
+    },
+    "sync": {
+      "backend_api_files": [
+        "sdk/api/api-sync/src/main/java/io/dataease/api/sync/datasource/api/SyncDatasourceApi.java",
+        "sdk/api/api-sync/src/main/java/io/dataease/api/sync/task/api/TaskApi.java",
+        "sdk/api/api-sync/src/main/java/io/dataease/api/sync/task/api/TaskLogApi.java",
+        "sdk/api/api-sync/src/main/java/io/dataease/api/sync/summary/api/SummaryApi.java"
+      ],
+      "frontend_files": [
+        "core/core-frontend/src/api/sync/syncDatasource.ts",
+        "core/core-frontend/src/api/sync/syncTask.ts",
+        "core/core-frontend/src/api/sync/syncTaskLog.ts",
+        "core/core-frontend/src/api/sync/syncSummary.ts"
+      ],
+      "endpoints": [
+        {
+          "method": "POST",
+          "path": "/sync/datasource/source/pager/{goPage}/{pageSize}",
+          "description": "Page source sync datasources",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/sync/datasource/target/pager/{goPage}/{pageSize}",
+          "description": "Page target sync datasources",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/sync/datasource/save",
+          "description": "Create sync datasource",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/sync/datasource/update",
+          "description": "Update sync datasource",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/sync/datasource/delete/{datasourceId}",
+          "description": "Delete sync datasource",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/sync/datasource/types",
+          "description": "List sync datasource types",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/sync/datasource/validate",
+          "description": "Validate sync datasource",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/sync/datasource/getSchema",
+          "description": "Fetch sync datasource schema list",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/sync/datasource/validate/{datasourceId}",
+          "description": "Validate sync datasource by id",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/sync/datasource/latestUse/{sourceType}",
+          "description": "List recently used sync source types",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/sync/datasource/get/{datasourceId}",
+          "description": "Fetch sync datasource detail",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/sync/datasource/batchDel",
+          "description": "Batch delete sync datasources",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/sync/datasource/fields",
+          "description": "Fetch source fields and target type metadata",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/sync/datasource/list/{type}",
+          "description": "List sync datasources by type",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/sync/datasource/table/list/{dsId}",
+          "description": "List source tables for sync datasource",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/sync/datasource/query2Root/{id}",
+          "description": "Resolve datasource path to root",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/sync/datasource/getLogResourceId/{id}",
+          "description": "Resolve log resource id for datasource",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/sync/task/pager/{current}/{size}",
+          "description": "Page sync tasks",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/sync/task/execute/{id}",
+          "description": "Execute sync task once immediately",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/sync/task/start/{id}",
+          "description": "Start sync task schedule",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/sync/task/stop/{id}",
+          "description": "Stop sync task schedule",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/sync/task/add",
+          "description": "Create sync task",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/sync/task/remove/{taskId}",
+          "description": "Delete sync task",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/sync/task/batch/del",
+          "description": "Batch delete sync tasks",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/sync/task/update",
+          "description": "Update sync task",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/sync/task/get/{taskId}",
+          "description": "Fetch sync task detail",
+          "auth": "token"
+        }
+      ]
+    },
+    "permissions": {
+      "backend_api_files": [
+        "sdk/api/api-permissions/src/main/java/io/dataease/api/permissions/auth/api/AuthApi.java",
+        "sdk/api/api-permissions/src/main/java/io/dataease/api/permissions/user/api/UserApi.java",
+        "sdk/api/api-permissions/src/main/java/io/dataease/api/permissions/role/api/RoleApi.java",
+        "sdk/api/api-permissions/src/main/java/io/dataease/api/permissions/org/api/OrgApi.java",
+        "sdk/common/src/main/java/io/dataease/auth/filter/TokenFilter.java"
+      ],
+      "frontend_files": [
+        "core/core-frontend/src/api/auth.ts",
+        "core/core-frontend/src/api/user.ts",
+        "core/core-frontend/src/api/org.ts",
+        "core/core-frontend/src/config/axios/service.ts"
+      ],
+      "endpoints": [
+        {
+          "method": "GET",
+          "path": "/auth/busiResource/{flag}",
+          "description": "Fetch business resource tree",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/auth/busiPermission",
+          "description": "Fetch permissions granted to object for business resources",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/auth/busiTargetPermission",
+          "description": "Fetch objects granted on a business resource",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/auth/menuResource",
+          "description": "Fetch menu resource tree",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/auth/menuPermission",
+          "description": "Fetch permissions granted to object for menus",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/auth/menuTargetPermission",
+          "description": "Fetch objects granted on a menu resource",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/auth/saveBusiPer",
+          "description": "Save business-resource permissions",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/auth/saveBusiTargetPer",
+          "description": "Save business-resource target permissions",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/auth/saveMenuPer",
+          "description": "Save menu permissions",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/auth/saveMenuTargetPer",
+          "description": "Save menu target permissions",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/user/pager/{goPage}/{pageSize}",
+          "description": "Page users",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/user/queryById/{id}",
+          "description": "Fetch user form detail",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/user/personInfo",
+          "description": "Fetch current user's editable profile",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/user/personSysVariableInfo/{id}",
+          "description": "Fetch system variable info for user",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/user/ipInfo",
+          "description": "Fetch client IP metadata",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/user/create",
+          "description": "Create user",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/user/edit",
+          "description": "Edit user",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/user/personEdit",
+          "description": "Edit current user profile",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/user/delete/{id}",
+          "description": "Delete user",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/user/batchDel",
+          "description": "Batch delete users",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/user/role/option",
+          "description": "List users selectable for role binding",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/user/org/option",
+          "description": "List users in current org",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/user/role/selected/{goPage}/{pageSize}",
+          "description": "Page users already selected for role",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/user/switch/{oId}",
+          "description": "Switch current organization and return token",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/user/info",
+          "description": "Fetch current auth/user info",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/user/byCurOrg",
+          "description": "List users in current org by keyword",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/user/switchLanguage",
+          "description": "Change current user language",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/user/excelTemplate",
+          "description": "Download user import template",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/user/batchImport",
+          "description": "Batch import users (multipart)",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/user/errorRecord/{key}",
+          "description": "Download failed import records",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/user/clearErrorRecord/{key}",
+          "description": "Clear failed import records",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/user/defaultPwd",
+          "description": "Fetch default password policy/value",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/user/resetPwd/{id}",
+          "description": "Reset user password",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/user/enable",
+          "description": "Enable/disable user",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/role/query",
+          "description": "Search roles",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/role/create",
+          "description": "Create role",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/role/edit",
+          "description": "Edit role",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/role/mountUser",
+          "description": "Bind users to role",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/role/mountExternalUser",
+          "description": "Bind external user to role",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/role/searchExternalUser/{keyword}",
+          "description": "Search external users for role binding",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/role/unMountUser",
+          "description": "Unbind users from role",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/role/user/option",
+          "description": "List roles selectable for user",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/role/detail/{rid}",
+          "description": "Fetch role detail",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/role/delete/{rid}",
+          "description": "Delete role",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/role/beforeUnmountInfo",
+          "description": "Preflight role unmount impact",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/role/byCurOrg",
+          "description": "List roles in current org",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/org/page/tree",
+          "description": "List org tree",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/org/page/create",
+          "description": "Create org",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/org/page/edit",
+          "description": "Edit org",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/org/page/delete/{id}",
+          "description": "Delete org",
+          "auth": "token"
+        },
+        {
+          "method": "POST",
+          "path": "/org/mounted",
+          "description": "List org tree constrained by current permissions",
+          "auth": "token"
+        },
+        {
+          "method": "GET",
+          "path": "/org/resourceExist/{oid}",
+          "description": "Check whether org still owns resources",
+          "auth": "token"
+        }
+      ]
+    }
+  }
+}

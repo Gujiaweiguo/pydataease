@@ -1,0 +1,28 @@
+T01 Scope Audit — PASSED
+========================
+Date: 2026-05-10
+Auditor: Atlas automated verification
+
+Checking for unapproved scope items...
+
+Desktop/H2 implementation tasks: NOT FOUND — PASS
+Distributed/Nacos implementation tasks: NOT FOUND — PASS
+Unapproved xpack full parity: NOT FOUND — PASS
+
+Evidence references:
+- 71 backend Api files catalogued (sdk/api/**/*Api.java)
+- 32 frontend API files catalogued (core/core-frontend/src/api/*.ts)
+- Auth pipeline fully documented (TokenFilter, AuthConstant, WhitelistUtils)
+- Runtime topology documented (APISIX → dataease → MySQL)
+- xpack scope: 60 Java files in sdk/api identified as deferred; no implementation tasks created
+- WebSocket: 2 frontend files using STOMP/SockJS identified; flagged as "Verify First"
+
+Scope boundaries confirmed:
+  [IN SCOPE] Permissions, Sync, Chart, Dataset, Datasource, Visualization, Template, System, Map, Export, Font, Log, Email, Webhook, Report, Menu, MsgCenter, Threshold, AI, Communicate, IM integrations
+  [DEFERRED] xpack/* (share, dataFilling, appearance, plugin, component, authentication settings)
+  [DEFERRED] WebSocket STOMP/SockJS (pending usage verification)
+  [EXCLUDED] desktop/H2 profile
+  [EXCLUDED] distributed/Nacos profile
+  [EXCLUDED] APISIX gateway (replaced by direct FastAPI)
+
+Conclusion: No unapproved scope drift detected.

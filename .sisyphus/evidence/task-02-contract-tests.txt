@@ -1,0 +1,35 @@
+Task 02 contract baseline generated.
+
+Inventory file: .sisyphus/evidence/task-02-api-inventory.json
+Contract stub directory: core/pydataease-backend/tests/contracts/
+
+Domains and endpoint counts:
+- login: 7 endpoints, 2 backend source file(s), 2 frontend file(s)
+- datasource: 32 endpoints, 1 backend source file(s), 1 frontend file(s)
+- dataset: 37 endpoints, 1 backend source file(s), 2 frontend file(s)
+- chart: 15 endpoints, 2 backend source file(s), 1 frontend file(s)
+- visualization: 54 endpoints, 8 backend source file(s), 6 frontend file(s)
+- share: 17 endpoints, 3 backend source file(s), 2 frontend file(s)
+- export: 17 endpoints, 4 backend source file(s), 3 frontend file(s)
+- system: 14 endpoints, 1 backend source file(s), 5 frontend file(s)
+- template: 18 endpoints, 2 backend source file(s), 2 frontend file(s)
+- map: 16 endpoints, 3 backend source file(s), 2 frontend file(s)
+- sync: 26 endpoints, 4 backend source file(s), 4 frontend file(s)
+- permissions: 52 endpoints, 5 backend source file(s), 4 frontend file(s)
+
+Stub files created:
+- core/pydataease-backend/tests/contracts/conftest.py
+- core/pydataease-backend/tests/contracts/test_auth_contract.py
+- core/pydataease-backend/tests/contracts/test_datasource_contract.py
+- core/pydataease-backend/tests/contracts/test_dataset_contract.py
+- core/pydataease-backend/tests/contracts/test_chart_contract.py
+- core/pydataease-backend/tests/contracts/test_visualization_contract.py
+- core/pydataease-backend/tests/contracts/test_share_contract.py
+- core/pydataease-backend/tests/contracts/test_export_contract.py
+- core/pydataease-backend/tests/contracts/test_system_contract.py
+
+Contract assumptions captured:
+- API base prefix is /de2api and frontend request base path prepends it via VITE_API_BASEPATH.
+- Standard envelope is ResultMessage { code, data, msg }.
+- Main auth header is X-DE-TOKEN; alternate share header is X-DE-LINK-TOKEN; embedded mode uses X-EMBEDDED-TOKEN.
+- TokenFilter allows whitelisted bootstrap routes and enforces token/link-token semantics elsewhere.
