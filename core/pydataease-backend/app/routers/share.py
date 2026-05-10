@@ -1,0 +1,108 @@
+from __future__ import annotations
+
+from fastapi import APIRouter, Depends
+
+from app.dependencies.auth import get_current_user
+from app.schemas.auth import TokenUser
+from app.schemas.share import (
+    ShareCreateRequest,
+    ShareDeleteRequest,
+    ShareDetailRequest,
+    ShareProxyInfoRequest,
+    ShareTicketDeleteRequest,
+    ShareTicketDetailRequest,
+    ShareTicketSaveRequest,
+    ShareViewDetailRequest,
+)
+from app.services.share_service import ShareService, get_share_service
+
+router = APIRouter(prefix="/share", tags=["share"])
+
+
+@router.post("/proxyInfo")
+async def proxy_info(
+    payload: ShareProxyInfoRequest,
+    service: ShareService = Depends(get_share_service),
+) -> object:
+    return await service.proxy_info(payload)
+
+
+@router.post("/save")
+async def save_share(
+    payload: ShareCreateRequest,
+    user: TokenUser = Depends(get_current_user),
+    service: ShareService = Depends(get_share_service),
+) -> object:
+    return await service.save(payload, user)
+
+
+@router.post("/detail")
+async def detail_share(
+    payload: ShareDetailRequest,
+    user: TokenUser = Depends(get_current_user),
+    service: ShareService = Depends(get_share_service),
+) -> object:
+    return await service.detail(payload)
+
+
+@router.post("/delete")
+async def delete_share(
+    payload: ShareDeleteRequest,
+    user: TokenUser = Depends(get_current_user),
+    service: ShareService = Depends(get_share_service),
+) -> None:
+    await service.delete(payload)
+
+
+@router.post("/viewDetail")
+async def view_detail(
+    payload: ShareViewDetailRequest,
+    user: TokenUser = Depends(get_current_user),
+    service: ShareService = Depends(get_share_service),
+) -> object:
+    return await service.view_detail(payload)
+
+
+@router.get("/detail/{resource_id}")
+async def get_share_detail(
+    resource_id: int,
+    user: TokenUser = Depends(get_current_user),
+    service: ShareService = Depends(get_share_service),
+) -> object:
+    return await service.get_by_id(resource_id)
+
+
+@router.post("/saveTicket")
+async def save_ticket(
+    payload: ShareTicketSaveRequest,
+    user: TokenUser = Depends(get_current_user),
+    service: ShareService = Depends(get_share_service),
+) -> object:
+    return await service.save_ticket(payload)
+
+
+@router.post("/deleteTicket")
+async def delete_ticket(
+    payload: ShareTicketDeleteRequest,
+    user: TokenUser = Depends(get_current_user),
+    service: ShareService = Depends(get_share_service),
+) -> None:
+    await service.delete_ticket(payload)
+
+
+@router.post("/detailTicket")
+async def detail_tickets(
+    payload: ShareTicketDetailRequest,
+    user: TokenUser = Depends(get_current_user),
+    service: ShareService = Depends(get_share_service),
+) -> object:
+    return await service.detail_tickets(payload)
+
+
+@router.get("/proxy/{uuid}")
+async def proxy_share(
+    uuid: str,
+    user: TokenUser = Depends(get_current_user),
+    service: ShareService = Depends(get_share_service),
+) -> object:
+    return await service.proxy(uuid)
