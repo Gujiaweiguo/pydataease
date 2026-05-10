@@ -52,3 +52,17 @@ core/core-frontend/src/assets/fsSvg.html
 .vite/
 /core/backend/
 /classpath:substitule.json
+
+# Python / FastAPI backend
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+.venv/
+.pytest_cache/
+.mypy_cache/
+.pyright/
+*.egg
+.python-version
