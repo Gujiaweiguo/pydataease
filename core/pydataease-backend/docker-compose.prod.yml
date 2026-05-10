@@ -1,0 +1,48 @@
+services:
+  pydataease-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pydataease-app
+    ports:
+      - "8100:8000"
+    env_file:
+      - .env
+    environment:
+      DE_ENV: ${DE_ENV:-prod}
+      DE_DATABASE_URL: ${DE_DATABASE_URL:-postgresql+asyncpg://dataease:${DE_PG_PASSWORD:-dataease}@pydataease-pg:5432/dataease}
+      DE_SECRET_KEY: ${DE_SECRET_KEY:?DE_SECRET_KEY is required}
+      DE_SHARE_SECRET_KEY: ${DE_SHARE_SECRET_KEY:?DE_SHARE_SECRET_KEY is required}
+      DE_PORT: ${DE_PORT:-8000}
+    depends_on:
+      pydataease-pg:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    volumes:
+      - app_logs:/app/logs
+      - static_resources:/app/static
+
+  pydataease-pg:
+    image: postgres:16
+    container_name: pydataease-pg
+    environment:
+      POSTGRES_DB: dataease
+      POSTGRES_USER: dataease
+      POSTGRES_PASSWORD: ${DE_PG_PASSWORD:-dataease}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dataease"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:
+  app_logs:
+  static_resources:
