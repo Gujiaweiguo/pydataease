@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import random
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
@@ -10,6 +11,16 @@ from app.services.stomp_handler import StompSession, parse_frame
 
 router = APIRouter(tags=["websocket"])
 logger = logging.getLogger(__name__)
+
+
+@router.get("/websocket/info")
+async def websocket_info():
+    return {
+        "entropy": random.randint(0, 2**32 - 1),
+        "origins": ["*:*"],
+        "cookie_needed": False,
+        "websocket": True,
+    }
 
 
 @router.websocket("/websocket")

@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import APIRouter, FastAPI, Request
 from fastapi.exceptions import HTTPException
 from fastapi.responses import JSONResponse
+from starlette.middleware.cors import CORSMiddleware
 
 from app.middleware.auth import AuthMiddleware
 from app.middleware.response_wrapper import ResultMessageMiddleware
@@ -64,6 +65,13 @@ async def http_exception_handler(_: Request, exc: HTTPException) -> JSONResponse
 
 app.add_middleware(AuthMiddleware)
 app.add_middleware(ResultMessageMiddleware)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 app.include_router(api_router)
 app.include_router(websocket_router)
 

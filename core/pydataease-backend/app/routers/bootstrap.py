@@ -57,7 +57,13 @@ async def get_template_market_search_recommend():
 
 @router.post("/dataVisualization/interactiveTree")
 async def get_interactive_tree():
-    return {"dashboard": [], "dataV": [], "dataset": [], "datasource": []}
+    root = {"id": 0, "name": "root", "leaf": False, "weight": 9, "extraFlag": 0, "extraFlag1": 0, "children": []}
+    return {
+        "dashboard": [{**root}],
+        "dataV": [{**root}],
+        "dataset": [{**root}],
+        "datasource": [{**root}],
+    }
 
 
 @router.get("/dekey")
