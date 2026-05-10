@@ -13,22 +13,37 @@ def fake_service(install_override) -> FakeShareService:
     return service
 
 
+@pytest.mark.usefixtures("fake_service")
 class TestShareContract:
-    @pytest.mark.skip(reason="Endpoint not yet implemented")
-    async def test_share_status_success_contract(self) -> None:
+    async def test_share_status_success_contract(self, async_client, auth_headers) -> None:
         """GET /de2api/share/status/{resourceId} should require X-DE-TOKEN and return boolean share status in ResultMessage.data."""
+        response = await async_client.get("/de2api/share/status/100", headers=auth_headers)
+        assert response.status_code == 200
+        body = response.json()
+        assert body["code"] == 0
+        assert body["data"] is True
 
-    @pytest.mark.skip(reason="Endpoint not yet implemented")
-    async def test_share_status_auth_failure_contract(self) -> None:
+    async def test_share_status_auth_failure_contract(self, async_client) -> None:
         """GET /de2api/share/status/{resourceId} should fail when auth token is missing, invalid, or expired."""
+        response = await async_client.get("/de2api/share/status/100")
+        assert response.status_code == 401
 
-    @pytest.mark.skip(reason="Endpoint not yet implemented")
-    async def test_validate_share_password_success_contract(self) -> None:
+    async def test_validate_share_password_success_contract(self, async_client) -> None:
         """POST /de2api/share/validate should accept XpackSharePwdValidator and return validation result, potentially establishing X-DE-LINK-TOKEN flow."""
+        response = await async_client.post(
+            "/de2api/share/validate",
+            json={"resourceId": 1, "password": "test"},
+        )
+        assert response.status_code == 200
+        body = response.json()
+        assert body["code"] == 0
 
-    @pytest.mark.skip(reason="Endpoint not yet implemented")
-    async def test_validate_share_password_failure_contract(self) -> None:
+    async def test_validate_share_password_failure_contract(self, async_client) -> None:
         """POST /de2api/share/validate should reject bad share password or malformed share input with non-zero ResultMessage.code."""
+        response = await async_client.post("/de2api/share/validate", json={})
+        assert response.status_code == 200
+        body = response.json()
+        assert body["code"] != 0
 
 
 @pytest.mark.usefixtures("fake_service")

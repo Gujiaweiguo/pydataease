@@ -138,6 +138,9 @@ class FakeDatasetService:
     async def preview_sql_stub(self, sql: str) -> dict[str, object]:
         return await self.preview_sql(sql)
 
+    async def export_dataset(self, payload: object) -> dict:
+        return {"file": "dataset.xlsx", "status": "SUCCESS"}
+
 
 @pytest.fixture
 def auth_headers() -> dict[str, str]:

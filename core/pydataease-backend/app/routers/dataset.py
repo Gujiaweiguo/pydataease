@@ -105,6 +105,15 @@ async def dataset_details(
     return await service.get_details(group_id)
 
 
+@router.post("/datasetTree/exportDataset")
+async def export_dataset(
+    payload: dict,
+    user: TokenUser = Depends(get_current_user),
+    service: DatasetService = Depends(get_dataset_service),
+) -> object:
+    return await service.export_dataset(payload)
+
+
 @router.post("/datasetData/tableField")
 async def table_field(
     payload: DatasetTableFieldRequest,

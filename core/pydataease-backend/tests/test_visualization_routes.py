@@ -149,6 +149,9 @@ class FakeVisualizationService:
     async def query_ds_with_visualization_id(self, dv_id: int) -> list[dict[str, object]]:
         return [{"datasetId": dv_id}]
 
+    async def save_watermark(self, payload: object) -> dict:
+        return {"saved": True}
+
 
 @pytest.fixture
 def auth_headers() -> dict[str, str]:

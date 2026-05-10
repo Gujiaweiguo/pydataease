@@ -19,6 +19,23 @@ from app.services.share_service import ShareService, get_share_service
 router = APIRouter(prefix="/share", tags=["share"])
 
 
+@router.get("/status/{resource_id}")
+async def share_status(
+    resource_id: int,
+    user: TokenUser = Depends(get_current_user),
+    service: ShareService = Depends(get_share_service),
+) -> object:
+    return await service.get_status(resource_id)
+
+
+@router.post("/validate")
+async def validate_share_password(
+    payload: dict,
+    service: ShareService = Depends(get_share_service),
+) -> object:
+    return await service.validate_password(payload)
+
+
 @router.post("/proxyInfo")
 async def proxy_info(
     payload: ShareProxyInfoRequest,

@@ -79,6 +79,9 @@ class FakeExportService:
             "msg": "Download stub - not implemented",
         }
 
+    async def retry_task(self, task_id: str) -> dict:
+        return {"id": task_id, "status": "RETRYING"}
+
 
 @pytest.fixture
 def auth_headers() -> dict[str, str]:

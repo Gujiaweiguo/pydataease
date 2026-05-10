@@ -137,6 +137,15 @@ class TestDatasourceValidationContract:
             "msg": "success",
         }
 
-    @pytest.mark.skip(reason="Endpoint not yet implemented")
-    async def test_upload_file_success_contract(self) -> None:
+    async def test_upload_file_success_contract(self, async_client, auth_headers) -> None:
         """POST /de2api/datasource/uploadFile should accept multipart file,id,editType and return parsed ExcelFileData in ResultMessage.data."""
+        response = await async_client.post(
+            "/de2api/datasource/uploadFile",
+            headers=auth_headers,
+            files={"file": ("test.xlsx", b"fake-excel-content", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")},
+            data={"id": "1", "editType": "0"},
+        )
+
+        assert response.status_code == 200
+        body = response.json()
+        assert body["code"] == 0

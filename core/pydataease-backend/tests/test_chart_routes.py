@@ -52,6 +52,9 @@ class FakeChartService:
     async def view_detail_list(self, scene_id: int) -> list[ChartResponse]:
         return [ChartResponse(id=scene_id + 1, title="child", scene_id=scene_id, table_id=202, type="bar", render="antv")]
 
+    async def export_details(self, payload: object) -> dict:
+        return {"file": "export.xlsx", "status": "SUCCESS"}
+
 
 @pytest.fixture
 def auth_headers() -> dict[str, str]:

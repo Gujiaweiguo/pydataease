@@ -43,6 +43,7 @@ WHITE_PREFIXES = (
     "/static-resource/",
     "/appearance/image/",
     "/share/proxyInfo",
+    "/share/validate",
     "/xpackComponent/content",
     "/xpackComponent/pluginStaticInfo",
     "/geo/",

@@ -99,6 +99,10 @@ class TestDatasetDataContract:
 
         assert response.status_code == 401
 
-    @pytest.mark.skip(reason="Endpoint not yet implemented")
-    async def test_export_dataset_success_contract(self) -> None:
+    async def test_export_dataset_success_contract(self, async_client, auth_headers) -> None:
         """POST /de2api/datasetTree/exportDataset should return blob/file response for DataSetExportRequest when authorized."""
+        response = await async_client.post("/de2api/datasetTree/exportDataset", headers=auth_headers, json={"id": 100, "name": "dataset1"})
+
+        assert response.status_code == 200
+        body = response.json()
+        assert body["code"] == 0

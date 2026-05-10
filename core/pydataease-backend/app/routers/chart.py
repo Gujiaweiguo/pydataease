@@ -75,6 +75,15 @@ async def get_chart_detail(
     return await service.get_detail(chart_id)
 
 
+@router.post("/chartData/innerExportDetails")
+async def export_chart_details(
+    payload: dict,
+    user: TokenUser = Depends(get_current_user),
+    service: ChartService = Depends(get_chart_service),
+) -> object:
+    return await service.export_details(payload)
+
+
 @router.post("/chart/viewDetailList")
 async def chart_view_detail_list(
     payload: ChartViewListRequest,

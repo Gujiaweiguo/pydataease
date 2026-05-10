@@ -307,6 +307,15 @@ async def get_outer_params_info(
     return await service.get_outer_params_info(dv_id)
 
 
+@router.post("/watermark/save")
+async def save_watermark(
+    payload: dict,
+    user: TokenUser = Depends(get_current_user),
+    service: VisualizationService = Depends(get_visualization_service),
+) -> object:
+    return await service.save_watermark(payload)
+
+
 @router.get("/outerParams/queryDsWithVisualizationId/{dv_id}")
 async def query_ds_with_visualization_id(
     dv_id: int,

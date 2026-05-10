@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, File, Form, UploadFile
 
 from app.dependencies.auth import get_current_user
 from app.schemas.auth import TokenUser
@@ -63,6 +63,17 @@ async def get_table_field(
     service: DatasourceService = Depends(get_datasource_service),
 ) -> object:
     return await service.get_fields(datasource_id, table_name)
+
+
+@router.post("/uploadFile")
+async def upload_datasource_file(
+    file: UploadFile = File(...),
+    id: str = Form(None),
+    editType: str = Form(None),
+    user: TokenUser = Depends(get_current_user),
+    service: DatasourceService = Depends(get_datasource_service),
+) -> object:
+    return await service.upload_file(file, id, editType)
 
 
 @router.post("/delete/{datasource_id}")

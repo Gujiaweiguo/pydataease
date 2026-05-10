@@ -1,6 +1,12 @@
 from __future__ import annotations
 
+import base64
+
 import pytest
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import padding as asym_padding
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.primitives import padding as sym_padding
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -8,6 +14,35 @@ from app.dependencies.auth import get_current_user
 from app.dependencies.database import get_db
 from app.main import app
 from app.settings.config import get_settings
+
+
+def _extract_public_key_pem(dekey: str) -> str:
+    """Parse Java-compatible dekey format back to PEM public key."""
+    separator = base64.urlsafe_b64encode(b"-pk_separator-").decode("utf-8")
+    k1, k2 = dekey.split(separator)
+    ct = base64.b64decode(k1)
+    cipher = Cipher(algorithms.AES(k2.encode("utf-8")), modes.CBC(b"0000000000000000"))
+    decryptor = cipher.decryptor()
+    padded = decryptor.update(ct) + decryptor.finalize()
+    unpadder = sym_padding.PKCS7(128).unpadder()
+    pub_key_b64 = (unpadder.update(padded) + unpadder.finalize()).decode("utf-8")
+    der_bytes = base64.b64decode(pub_key_b64)
+    pub = serialization.load_der_public_key(der_bytes)
+    pem_bytes = pub.public_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PublicFormat.SubjectPublicKeyInfo,
+    )
+    return pem_bytes.decode("utf-8")
+
+
+def _encrypt(value: str, dekey: str) -> str:
+    public_key_pem = _extract_public_key_pem(dekey)
+    public_key = serialization.load_pem_public_key(public_key_pem.encode("utf-8"))
+    ciphertext = public_key.encrypt(
+        value.encode("utf-8"),
+        asym_padding.PKCS1v15(),
+    )
+    return base64.b64encode(ciphertext).decode("utf-8")
 
 
 def _ensure_test_routes() -> None:
@@ -33,29 +68,64 @@ _ensure_test_routes()
 
 
 class TestLoginContract:
-    @pytest.mark.skip(reason="Endpoint not yet implemented")
-    async def test_local_login_success_contract(self) -> None:
+    async def test_local_login_success_contract(self, async_client, settings) -> None:
         """POST /de2api/login/localLogin should accept credential body and return ResultMessage with TokenVO data on success; no auth header required."""
+        dekey_resp = await async_client.get("/de2api/dekey")
+        assert dekey_resp.status_code == 200
+        dekey = dekey_resp.json()["data"]
 
-    @pytest.mark.skip(reason="Endpoint not yet implemented")
-    async def test_local_login_auth_failure_contract(self) -> None:
+        encrypted_name = _encrypt("admin", dekey)
+        encrypted_pwd = _encrypt("DataEase@123456", dekey)
+
+        response = await async_client.post(
+            "/de2api/login/localLogin",
+            json={"name": encrypted_name, "pwd": encrypted_pwd, "origin": 0},
+        )
+        body = response.json()
+        assert response.status_code == 200
+        assert body["code"] == 0
+        assert isinstance(body["data"]["token"], str) and len(body["data"]["token"]) > 0
+
+    async def test_local_login_auth_failure_contract(self, async_client, settings) -> None:
         """POST /de2api/login/localLogin should reject invalid credentials with non-zero ResultMessage.code and error msg."""
+        dekey_resp = await async_client.get("/de2api/dekey")
+        assert dekey_resp.status_code == 200
+        dekey = dekey_resp.json()["data"]
 
-    @pytest.mark.skip(reason="Endpoint not yet implemented")
-    async def test_refresh_success_contract(self) -> None:
+        encrypted_name = _encrypt("admin", dekey)
+        encrypted_pwd = _encrypt("wrong_password", dekey)
+
+        response = await async_client.post(
+            "/de2api/login/localLogin",
+            json={"name": encrypted_name, "pwd": encrypted_pwd, "origin": 0},
+        )
+        body = response.json()
+        assert body["code"] == 401
+
+    async def test_refresh_success_contract(self, async_client, auth_headers) -> None:
         """GET /de2api/login/refresh should require X-DE-TOKEN and return refreshed TokenVO in ResultMessage.data."""
+        response = await async_client.get("/de2api/login/refresh", headers=auth_headers)
+        body = response.json()
+        assert response.status_code == 200
+        assert body["code"] == 0
+        assert isinstance(body["data"]["token"], str) and len(body["data"]["token"]) > 0
 
-    @pytest.mark.skip(reason="Endpoint not yet implemented")
-    async def test_refresh_missing_token_contract(self) -> None:
+    async def test_refresh_missing_token_contract(self, async_client, invalid_auth_headers) -> None:
         """GET /de2api/login/refresh should fail when X-DE-TOKEN is missing, invalid, or expired."""
+        response = await async_client.get("/de2api/login/refresh", headers=invalid_auth_headers)
+        assert response.status_code == 401
 
-    @pytest.mark.skip(reason="Endpoint not yet implemented")
-    async def test_logout_success_contract(self) -> None:
+    async def test_logout_success_contract(self, async_client, auth_headers) -> None:
         """GET /de2api/logout should require X-DE-TOKEN and return success ResultMessage with empty data on logout."""
+        response = await async_client.get("/de2api/logout", headers=auth_headers)
+        body = response.json()
+        assert response.status_code == 200
+        assert body["code"] == 0
 
-    @pytest.mark.skip(reason="Endpoint not yet implemented")
-    async def test_logout_missing_token_contract(self) -> None:
+    async def test_logout_missing_token_contract(self, async_client, invalid_auth_headers) -> None:
         """GET /de2api/logout should fail when X-DE-TOKEN is missing, invalid, or expired."""
+        response = await async_client.get("/de2api/logout", headers=invalid_auth_headers)
+        assert response.status_code == 401
 
 
 class TestTokenSemanticsContract:

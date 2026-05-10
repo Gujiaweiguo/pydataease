@@ -107,6 +107,11 @@ class TestVisualizationAuxiliaryContract:
         assert response.status_code == 200
         assert response.json() == {"code": 0, "data": {"saved": True}, "msg": "success"}
 
-    @pytest.mark.skip(reason="Endpoint not yet implemented")
-    async def test_watermark_success_contract(self) -> None:
+    async def test_watermark_success_contract(self, async_client, auth_headers) -> None:
         """POST /de2api/watermark/save should persist visualization watermark configuration."""
+        response = await async_client.post("/de2api/watermark/save", headers=auth_headers, json={"dvId": 10, "settingContent": "watermark-config"})
+
+        assert response.status_code == 200
+        body = response.json()
+        assert body["code"] == 0
+        assert body["data"]["saved"] is True

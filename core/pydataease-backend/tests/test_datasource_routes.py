@@ -111,6 +111,9 @@ class FakeDatasourceService:
     async def get_engine_info(self) -> EngineInfoResponse:
         return EngineInfoResponse(configured=True, type="postgresql", status="Success", name="postgresql-engine")
 
+    async def upload_file(self, file, id=None, edit_type=None) -> dict:
+        return {"sheets": ["Sheet1"], "fileName": "test.xlsx"}
+
 
 @pytest.fixture
 def auth_headers() -> dict[str, str]:

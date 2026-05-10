@@ -40,6 +40,10 @@ class TestExportCenterContract:
             "msg": "success",
         }
 
-    @pytest.mark.skip(reason="Endpoint not yet implemented")
-    async def test_retry_success_contract(self) -> None:
+    async def test_retry_success_contract(self, async_client, auth_headers) -> None:
         """POST /de2api/exportCenter/retry/{id} should resubmit a failed export task and return success ResultMessage."""
+        response = await async_client.post("/de2api/exportCenter/retry/task-1", headers=auth_headers)
+
+        assert response.status_code == 200
+        body = response.json()
+        assert body["code"] == 0

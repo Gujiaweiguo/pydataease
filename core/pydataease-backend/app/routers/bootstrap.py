@@ -33,6 +33,11 @@ async def get_sys_parameter_ui():
     return {}
 
 
+@router.get("/sysParameter/defaultLogin")
+async def get_default_login():
+    return 0
+
+
 @router.get("/setting/authentication/status")
 async def get_authentication_status():
     return False

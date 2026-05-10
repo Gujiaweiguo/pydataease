@@ -50,6 +50,15 @@ async def delete_all_export_tasks(
     await service.delete_all(export_from, user)
 
 
+@router.post("/retry/{task_id}")
+async def retry_export(
+    task_id: str,
+    user: TokenUser = Depends(get_current_user),
+    service: ExportService = Depends(get_export_service),
+) -> object:
+    return await service.retry_task(task_id)
+
+
 @router.get("/download/{task_id}")
 async def download_export(
     task_id: str,

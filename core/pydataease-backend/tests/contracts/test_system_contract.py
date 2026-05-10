@@ -25,13 +25,21 @@ class TestSysParameterContract:
         assert response.status_code == 200
         assert response.json() == {"code": 0, "data": 120, "msg": "success"}
 
-    @pytest.mark.skip(reason="Endpoint not yet implemented")
-    async def test_ui_success_contract(self) -> None:
+    async def test_ui_success_contract(self, async_client) -> None:
         """GET /de2api/sysParameter/ui should be callable without auth and return login/UI bootstrap configuration list."""
+        response = await async_client.get("/de2api/sysParameter/ui")
+        assert response.status_code == 200
+        body = response.json()
+        assert body["code"] == 0
+        assert isinstance(body["data"], dict)
 
-    @pytest.mark.skip(reason="Endpoint not yet implemented")
-    async def test_default_login_success_contract(self) -> None:
+    async def test_default_login_success_contract(self, async_client) -> None:
         """GET /de2api/sysParameter/defaultLogin should be callable without auth and return login category integer."""
+        response = await async_client.get("/de2api/sysParameter/defaultLogin")
+        assert response.status_code == 200
+        body = response.json()
+        assert body["code"] == 0
+        assert isinstance(body["data"], int)
 
     async def test_basic_query_success_contract(self, async_client, auth_headers) -> None:
         """GET /de2api/sysParameter/basic/query should require X-DE-TOKEN and return basic SettingItemVO list in ResultMessage.data."""

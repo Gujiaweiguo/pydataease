@@ -26,6 +26,14 @@ class FakeShareService:
         self.saved_tickets: list[object] = []
         self.deleted_tickets: list[str] = []
 
+    async def get_status(self, resource_id: int) -> bool:
+        return True
+
+    async def validate_password(self, payload: object) -> dict:
+        if isinstance(payload, dict) and not payload.get("resourceId"):
+            return {"code": 1, "data": None, "msg": "Missing resourceId"}
+        return {"status": "valid", "data": True}
+
     async def proxy_info(self, payload: object) -> ShareResponse | None:
         return ShareResponse(
             id=1,
