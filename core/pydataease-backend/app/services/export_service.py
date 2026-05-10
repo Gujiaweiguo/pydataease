@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+from pathlib import Path
 import time
 import uuid
 from typing import final
@@ -59,10 +61,37 @@ class ExportService:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Export task not found"
             )
+        if task.export_status != "SUCCESS":
+            return {
+                "id": task_id,
+                "status": task.export_status,
+                "msg": task.msg or "Export file is not ready",
+            }
+
+        file_name = task.file_name
+        if not file_name:
+            return {
+                "id": task_id,
+                "status": task.export_status,
+                "msg": "Export file metadata is missing",
+            }
+
+        export_dir = Path(os.getenv("DE_EXPORT_DIR", "/tmp/de-exports"))
+        file_path = export_dir / Path(file_name).name
+        if not file_path.exists() or not file_path.is_file():
+            return {
+                "id": task_id,
+                "status": task.export_status,
+                "msg": "Export file not found",
+            }
+
         return {
             "id": task_id,
             "status": task.export_status,
-            "msg": "Download stub - not implemented",
+            "path": str(file_path),
+            "file_name": Path(file_name).name,
+            "file_size": task.file_size,
+            "msg": task.msg or "Export task completed",
         }
 
 

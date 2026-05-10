@@ -132,8 +132,11 @@ class FakeDatasetService:
             )
         ]
 
-    async def preview_sql_stub(self, sql: str) -> dict[str, object]:
+    async def preview_sql(self, sql: str) -> dict[str, object]:
         return {"sql": sql, "data": [], "fields": [], "total": 0}
+
+    async def preview_sql_stub(self, sql: str) -> dict[str, object]:
+        return await self.preview_sql(sql)
 
 
 @pytest.fixture

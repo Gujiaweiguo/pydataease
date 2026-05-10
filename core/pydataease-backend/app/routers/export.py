@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends
+from fastapi.responses import FileResponse
 
 from app.dependencies.auth import get_current_user
 from app.schemas.auth import TokenUser
@@ -32,9 +33,10 @@ async def list_export_tasks(
 async def delete_export_task(
     export_from: int,
     payload: dict[str, object],
-    user: TokenUser = Depends(get_current_user),
+    _user: TokenUser = Depends(get_current_user),
     service: ExportService = Depends(get_export_service),
 ) -> None:
+    _ = export_from, _user
     task_id = str(payload.get("id", ""))
     await service.delete_task(task_id)
 
@@ -53,4 +55,11 @@ async def download_export(
     task_id: str,
     service: ExportService = Depends(get_export_service),
 ) -> object:
-    return await service.download(task_id)
+    result = await service.download(task_id)
+    if "path" not in result:
+        return result
+    return FileResponse(
+        path=str(result["path"]),
+        filename=str(result.get("file_name") or task_id),
+        media_type="application/octet-stream",
+    )

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import final
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.share import CoreShareTicket, XpackShare
@@ -36,6 +36,15 @@ class ShareRepository:
 
     async def delete(self, entity: XpackShare) -> None:
         await self._base.delete(entity)
+
+    async def delete_expired(self, exp_before: int) -> int:
+        stmt = delete(XpackShare).where(
+            XpackShare.exp.isnot(None),
+            XpackShare.exp < exp_before,
+        )
+        result = await self.session.execute(stmt)
+        await self.session.commit()
+        return result.rowcount
 
 
 @final

@@ -49,3 +49,15 @@ class ExportTaskRepository:
         )
         await self.session.execute(stmt)
         await self.session.commit()
+
+    async def delete_old_completed(self, before_ms: int) -> int:
+        stmt = (
+            delete(CoreExportTask)
+            .where(
+                CoreExportTask.export_status.in_(["SUCCESS", "FAILED"]),
+                CoreExportTask.export_time < before_ms,
+            )
+        )
+        result = await self.session.execute(stmt)
+        await self.session.commit()
+        return result.rowcount

@@ -3,7 +3,8 @@ from __future__ import annotations
 import json
 import time
 from collections.abc import Sequence
-from typing import final
+from importlib import import_module
+from typing import Any, final
 
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -26,6 +27,8 @@ from app.schemas.dataset import (
     DatasetTableFieldRequest,
     DatasetTreeNodeResponse,
 )
+
+SQLExecutor = import_module("app.services.sql_executor").SQLExecutor
 
 
 def _timestamp_ms() -> int:
@@ -67,6 +70,7 @@ class DatasetService:
     group_repo: DatasetGroupRepository
     table_repo: DatasetTableRepository
     field_repo: DatasetFieldRepository
+    sql_executor: Any
 
     def __init__(
         self,
@@ -79,6 +83,7 @@ class DatasetService:
         self.group_repo = group_repo
         self.table_repo = table_repo
         self.field_repo = field_repo
+        self.sql_executor = SQLExecutor()
 
     async def tree(self) -> list[DatasetTreeNodeResponse]:
         groups = await self.group_repo.list_all_ordered()
@@ -195,8 +200,11 @@ class DatasetService:
             fields = []
         return [DatasetFieldResponse.model_validate(f) for f in fields]
 
+    async def preview_sql(self, sql: str) -> dict[str, object]:
+        return await self.sql_executor.execute_select(sql)
+
     async def preview_sql_stub(self, sql: str) -> dict[str, object]:
-        return {"sql": sql, "data": [], "fields": [], "total": 0}
+        return await self.preview_sql(sql)
 
     async def per_delete(self, group_id: int) -> bool:
         group = await self.group_repo.get_by_id(group_id)

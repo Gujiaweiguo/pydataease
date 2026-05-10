@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 import time
 from collections.abc import Callable
 from typing import final
@@ -12,6 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from app.models.export import CoreExportTask
 from app.repositories.export_repo import ExportTaskRepository
 from app.tasks.base import idempotent_task_check, with_retry
+from app.tasks.file_generator import generate_export_file
 
 logger = logging.getLogger(__name__)
 
@@ -70,6 +72,22 @@ class ExportTaskWorker:
     async def _execute_with_retry(self, task_id: str) -> None:
         await self._mark_running(task_id)
         await asyncio.sleep(self._sleep_seconds)
+        async with self._session_factory() as session:
+            repo = ExportTaskRepository(session)
+            task = await repo.get_by_id(task_id)
+            if task is None:
+                raise ValueError("Export task not found")
+            export_dir = os.getenv("DE_EXPORT_DIR", "/tmp/de-exports")
+            file_path, file_size = generate_export_file(
+                task_id=task.id,
+                file_name=task.file_name,
+                params=task.params if isinstance(task.params, dict) else {},
+                export_dir=export_dir,
+            )
+            task.file_name = os.path.basename(file_path)
+            task.file_size = float(file_size)
+            task.file_size_unit = "B"
+            await session.commit()
         await self._mark_success(task_id)
 
     async def _mark_running(self, task_id: str) -> None:

@@ -11,6 +11,7 @@ dependencies = [
     "apscheduler",
     "asyncpg",
     "alembic",
+    "openpyxl",
     "pydantic-settings",
     "python-jose[cryptography]",
     "passlib[bcrypt]",

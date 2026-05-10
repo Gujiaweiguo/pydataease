@@ -6,3 +6,9 @@ from pydantic import BaseModel
 class WSMessage(BaseModel):
     type: str
     content: object = None
+
+
+class StompFrameSchema(BaseModel):
+    command: str
+    headers: dict[str, str] = {}
+    body: str = ""
