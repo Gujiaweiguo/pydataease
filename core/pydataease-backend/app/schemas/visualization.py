@@ -70,8 +70,11 @@ class VisualizationDeleteRequest(BaseModel):
 class VisualizationRecentRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
-    size: int = 10
+    size: int = 50
     busi_flag: str | None = Field(default=None, validation_alias=AliasChoices("busiFlag", "busi_flag"), serialization_alias="busiFlag")
+    keyword: str | None = None
+    type: str | None = None
+    asc: bool | None = None
 
 
 class VisualizationResponse(BaseModel):

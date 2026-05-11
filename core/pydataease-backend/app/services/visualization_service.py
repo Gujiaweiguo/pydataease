@@ -139,7 +139,12 @@ class VisualizationService:
         return VisualizationResponse.model_validate(updated)
 
     async def find_recent(self, payload: VisualizationRecentRequest) -> list[VisualizationResponse]:
-        items = await self.visualization_repo.list_recent(payload.size)
+        items = await self.visualization_repo.list_recent(
+            size=payload.size,
+            type_filter=payload.type,
+            keyword=payload.keyword,
+            asc=payload.asc,
+        )
         return [VisualizationResponse.model_validate(item) for item in items]
 
     async def per_resource(self, visualization_id: int) -> VisualizationResponse:

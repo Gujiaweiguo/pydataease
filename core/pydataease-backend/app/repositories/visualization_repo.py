@@ -24,11 +24,20 @@ class VisualizationRepository(AsyncBaseRepository[DataVisualizationInfo]):
         )
         return await self.get(statement)
 
-    async def list_recent(self, size: int) -> Sequence[DataVisualizationInfo]:
+    async def list_recent(self, size: int, type_filter: str | None = None, keyword: str | None = None, asc: bool | None = None) -> Sequence[DataVisualizationInfo]:
         statement: Select[tuple[DataVisualizationInfo]] = (
             select(DataVisualizationInfo)
-            .where((DataVisualizationInfo.delete_flag.is_(False)) | (DataVisualizationInfo.delete_flag.is_(None)))
-            .order_by(DataVisualizationInfo.update_time.desc(), DataVisualizationInfo.create_time.desc())
-            .limit(size)
+            .where(
+                (DataVisualizationInfo.delete_flag.is_(False)) | (DataVisualizationInfo.delete_flag.is_(None)),
+            )
         )
+        if type_filter and type_filter != "all_types":
+            statement = statement.where(DataVisualizationInfo.type == type_filter)
+        if keyword:
+            statement = statement.where(DataVisualizationInfo.name.ilike(f"%{keyword}%"))
+        if asc:
+            statement = statement.order_by(DataVisualizationInfo.update_time.asc(), DataVisualizationInfo.create_time.asc())
+        else:
+            statement = statement.order_by(DataVisualizationInfo.update_time.desc(), DataVisualizationInfo.create_time.desc())
+        statement = statement.limit(size)
         return await self.get(statement)
