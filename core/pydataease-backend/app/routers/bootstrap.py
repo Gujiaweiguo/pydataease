@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends
 
 from app.services.interactive_tree_service import get_interactive_tree_service
+from app.services.sys_setting_service import get_sys_setting_service
 from app.utils.rsa_utils import get_dekey_response
 
 router = APIRouter()
@@ -17,23 +18,23 @@ async def get_model():
 
 
 @router.get("/sysParameter/i18nOptions")
-async def get_i18n_options():
-    return {}
+async def get_i18n_options(service=Depends(get_sys_setting_service)):
+    return await service.get_i18n_options()
 
 
 @router.get("/sysParameter/defaultSettings")
-async def get_default_settings():
-    return {}
+async def get_default_settings(service=Depends(get_sys_setting_service)):
+    return await service.get_default_settings()
 
 
 @router.get("/sysParameter/ui")
-async def get_sys_parameter_ui():
-    return {}
+async def get_sys_parameter_ui(service=Depends(get_sys_setting_service)):
+    return await service.get_ui_settings()
 
 
 @router.get("/sysParameter/defaultLogin")
-async def get_default_login():
-    return 0
+async def get_default_login(service=Depends(get_sys_setting_service)):
+    return await service.get_default_login()
 
 
 @router.get("/setting/authentication/status")
@@ -42,8 +43,8 @@ async def get_authentication_status():
 
 
 @router.get("/sysParameter/shareBase")
-async def get_share_base():
-    return {"disable": True, "peRequire": False}
+async def get_share_base(service=Depends(get_sys_setting_service)):
+    return await service.get_share_base()
 
 
 @router.get("/typeface/defaultFont")

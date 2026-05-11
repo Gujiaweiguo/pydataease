@@ -34,6 +34,7 @@ WHITE_PATHS = {
     "/sysParameter/defaultLogin",
     "/embedded/initIframe",
     "/sysParameter/i18nOptions",
+    "/sysParameter/shareBase",
     "/login/modifyInvalidPwd",
     "/perSetting/hmac/info",
 }

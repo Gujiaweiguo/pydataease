@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import Generic, TypeVar, final
+from typing import Generic, TypeVar
 
 from sqlalchemy import Select, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -11,7 +11,6 @@ from app.models.base import Base
 ModelT = TypeVar("ModelT", bound=Base)
 
 
-@final
 class AsyncBaseRepository(Generic[ModelT]):
     session: AsyncSession
     model: type[ModelT]
