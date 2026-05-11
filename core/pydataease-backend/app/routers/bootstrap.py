@@ -1,8 +1,9 @@
 from typing import Optional
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
+from app.services.interactive_tree_service import get_interactive_tree_service
 from app.utils.rsa_utils import get_dekey_response
 
 router = APIRouter()
@@ -64,14 +65,10 @@ async def get_template_market_search_recommend():
 
 
 @router.post("/dataVisualization/interactiveTree")
-async def get_interactive_tree():
-    root = {"id": 0, "name": "root", "leaf": False, "weight": 9, "extraFlag": 0, "extraFlag1": 0, "children": []}
-    return {
-        "dashboard": [{**root}],
-        "dataV": [{**root}],
-        "dataset": [{**root}],
-        "datasource": [{**root}],
-    }
+async def get_interactive_tree(
+    service=Depends(get_interactive_tree_service),
+):
+    return await service.get_tree()
 
 
 @router.post("/license/validate")
@@ -106,7 +103,7 @@ class StoreQueryRequest(BaseModel):
 
 
 @router.post("/store/query")
-async def query_store(request: Optional[StoreQueryRequest] = None):
+async def query_store(_request: Optional[StoreQueryRequest] = None):
     return {"totalCount": 0, "list": []}
 
 
