@@ -1,7 +1,4 @@
-from typing import Optional
-
 from fastapi import APIRouter, Depends
-from pydantic import BaseModel
 
 from app.services.interactive_tree_service import get_interactive_tree_service
 from app.utils.rsa_utils import get_dekey_response
@@ -94,17 +91,6 @@ async def get_sqlbot_settings():
 @router.post("/msg-center/count")
 async def get_msg_count():
     return 0
-
-
-class StoreQueryRequest(BaseModel):
-    keyword: Optional[str] = None
-    type: Optional[str] = None
-    asc: Optional[bool] = None
-
-
-@router.post("/store/query")
-async def query_store(_request: Optional[StoreQueryRequest] = None):
-    return {"totalCount": 0, "list": []}
 
 
 @router.get("/dekey")

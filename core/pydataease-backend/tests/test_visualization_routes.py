@@ -88,6 +88,10 @@ class FakeVisualizationService:
         _ = resource_type, user
         return StoreResponse(resource_id=resource_id, favorited=False)
 
+    async def query_stores(self, user, keyword=None, type_filter=None, asc=None) -> dict:
+        _ = user, keyword, type_filter, asc
+        return {"totalCount": 0, "list": []}
+
     async def get_view_linkage_gather(self, payload: object) -> dict[str, object]:
         _ = payload
         return {"dvId": 10, "viewId": 101, "config": [{"id": 1}]}

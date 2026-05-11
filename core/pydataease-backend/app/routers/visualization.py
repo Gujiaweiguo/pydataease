@@ -151,6 +151,20 @@ async def remove_store(
     return await service.remove_store(resource_id, payload.resource_type, user)
 
 
+@router.post("/store/query")
+async def query_stores(
+    payload: dict,
+    user: TokenUser = Depends(get_current_user),
+    service: VisualizationService = Depends(get_visualization_service),
+) -> object:
+    return await service.query_stores(
+        user,
+        keyword=payload.get("keyword"),
+        type_filter=payload.get("type"),
+        asc=payload.get("asc"),
+    )
+
+
 @router.post("/linkage/getViewLinkageGather")
 async def get_view_linkage_gather(
     payload: LinkageRequest,

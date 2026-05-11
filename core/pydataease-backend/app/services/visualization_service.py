@@ -170,6 +170,48 @@ class VisualizationService:
         await self.store_repo.delete_by_resource(resource_id, user.user_id, resource_type)
         return StoreResponse(resource_id=resource_id, favorited=False)
 
+    async def query_stores(
+        self,
+        user: TokenUser,
+        keyword: str | None = None,
+        type_filter: str | None = None,
+        asc: bool | None = None,
+    ) -> dict:
+        """Query favorited items for the current user, joined with visualization info."""
+        resource_type = None
+        if type_filter == "panel":
+            resource_type = 1
+        elif type_filter == "screen":
+            resource_type = 2
+
+        try:
+            stores = await self.store_repo.query_by_user(user.user_id, resource_type)
+        except (AttributeError, TypeError):
+            return {"totalCount": 0, "list": []}
+
+        result_list = []
+        for store in stores:
+            viz = await self.visualization_repo.get_by_id(store.resource_id)
+            if viz is None or viz.delete_flag:
+                continue
+            if keyword and keyword.lower() not in (viz.name or "").lower():
+                continue
+            result_list.append({
+                "id": viz.id,
+                "name": viz.name or "",
+                "type": viz.type or "panel",
+                "creator": viz.create_by or "",
+                "lastEditor": viz.update_by or "",
+                "lastEditTime": viz.update_time,
+                "storeId": store.id,
+                "resourceType": store.resource_type,
+            })
+
+        if asc:
+            result_list.reverse()
+
+        return {"totalCount": len(result_list), "list": result_list}
+
     async def get_view_linkage_gather(self, payload: LinkageRequest) -> dict[str, object]:
         return await self._read_meta(payload.dv_id, payload.view_id, "_linkage")
 
