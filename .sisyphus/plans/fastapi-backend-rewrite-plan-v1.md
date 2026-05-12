@@ -164,7 +164,7 @@ Wave 4 — 运行时与交付（中并行）
 
 > Implementation + Test = ONE task. Never separate.
 
-- [ ] **T01. 范围定格与兼容矩阵冻结**
+- [x] **T01. 范围定格与兼容矩阵冻结**
 
   **Risk**: High  
   **Inputs**:
@@ -224,7 +224,7 @@ Wave 4 — 运行时与交付（中并行）
 
   **Commit**: YES | Message: `docs(plan): freeze migration scope and compatibility matrix` | Files: `.sisyphus/evidence/*`
 
-- [ ] **T02. 契约清点与刻画测试基线生成**
+- [x] **T02. 契约清点与刻画测试基线生成**
 
   **Risk**: High  
   **Inputs**:
@@ -284,7 +284,7 @@ Wave 4 — 运行时与交付（中并行）
 
   **Commit**: YES | Message: `test(contract): add backend compatibility characterization suite` | Files: `tests/contracts/**`, `.sisyphus/evidence/*`
 
-- [ ] **T03. FastAPI + uv 工程骨架初始化**
+- [x] **T03. FastAPI + uv 工程骨架初始化**
 
   **Risk**: Medium  
   **Inputs**:
@@ -342,7 +342,7 @@ Wave 4 — 运行时与交付（中并行）
 
   **Commit**: YES | Message: `build(py): initialize fastapi backend with uv` | Files: `pyproject.toml`, `uv.lock`, `app/**`
 
-- [ ] **T04. PostgreSQL schema 建模与 Alembic 基线迁移**
+- [x] **T04. PostgreSQL schema 建模与 Alembic 基线迁移**
 
   **Risk**: Critical  
   **Inputs**:
@@ -402,7 +402,7 @@ Wave 4 — 运行时与交付（中并行）
 
   **Commit**: YES | Message: `feat(db): add postgresql models and alembic baseline` | Files: `app/models/**`, `alembic/**`
 
-- [ ] **T05. 配置体系、环境分层与本地/生产运行编排**
+- [x] **T05. 配置体系、环境分层与本地/生产运行编排**
 
   **Risk**: High  
   **Inputs**:
@@ -463,7 +463,7 @@ Wave 4 — 运行时与交付（中并行）
 
   **Commit**: YES | Message: `build(env): add dev and prod runtime configuration for fastapi` | Files: `app/settings/**`, `docker/**`, `compose/**`
 
-- [ ] **T06. 认证、响应包装与请求中间件兼容层**
+- [x] **T06. 认证、响应包装与请求中间件兼容层**
 
   **Risk**: Critical  
   **Inputs**:
@@ -524,7 +524,7 @@ Wave 4 — 运行时与交付（中并行）
 
   **Commit**: YES | Message: `feat(auth): add fastapi compatibility auth middleware` | Files: `app/middleware/**`, `app/dependencies/**`
 
-- [ ] **T07. 数据源、SQL 执行引擎与仓储抽象替代**
+- [x] **T07. 数据源、SQL 执行引擎与仓储抽象替代**
 
   **Risk**: Critical  
   **Inputs**:
@@ -583,7 +583,7 @@ Wave 4 — 运行时与交付（中并行）
 
   **Commit**: YES | Message: `feat(engine): migrate datasource and query execution foundation` | Files: `app/repositories/**`, `app/services/datasource/**`
 
-- [ ] **T08. 数据集、字段与权限相关接口替代**
+- [x] **T08. 数据集、字段与权限相关接口替代**
 
   **Risk**: High  
   **Inputs**:

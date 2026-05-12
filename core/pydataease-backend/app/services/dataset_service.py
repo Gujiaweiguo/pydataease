@@ -100,7 +100,7 @@ class DatasetService:
 
         children = [_node_to_dict(n) for n in built_tree]
         root = {
-            "id": 0,
+            "id": "0",
             "name": "root",
             "pid": -1,
             "leaf": False,

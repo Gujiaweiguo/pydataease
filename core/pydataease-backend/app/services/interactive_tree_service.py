@@ -34,7 +34,7 @@ class InteractiveTreeService:
             dataset_nodes = await self._get_dataset_tree()
             datasource_nodes = await self._get_datasource_tree()
         except (AttributeError, TypeError):
-            root = {"id": 0, "name": "root", "pid": -1, "leaf": False, "weight": 7, "extraFlag": 0, "extraFlag1": 0, "children": []}
+            root = {"id": "0", "name": "root", "pid": -1, "leaf": False, "weight": 7, "extraFlag": 0, "extraFlag1": 0, "children": []}
             dashboard_nodes = [{**root, "extraFlag1": 1}]
             datav_nodes = [{**root, "extraFlag1": 1}]
             dataset_nodes = [{**root}]
@@ -64,7 +64,7 @@ class InteractiveTreeService:
             for row in rows
         ]
         children = _build_tree(flat, pid=0)
-        root = {"id": 0, "name": "root", "pid": -1, "leaf": False,
+        root = {"id": "0", "name": "root", "pid": -1, "leaf": False,
                 "weight": 7, "extraFlag": 0, "extraFlag1": 1, "children": children}
         return [root]
 
@@ -79,7 +79,7 @@ class InteractiveTreeService:
             for row in rows
         ]
         children = _build_tree(flat, pid=0)
-        root = {"id": 0, "name": "root", "pid": -1, "leaf": False,
+        root = {"id": "0", "name": "root", "pid": -1, "leaf": False,
                 "weight": 7, "extraFlag": 0, "extraFlag1": 0, "children": children}
         return [root]
 
@@ -93,7 +93,7 @@ class InteractiveTreeService:
             for row in rows
         ]
         children = _build_tree(flat, pid=0)
-        root = {"id": 0, "name": "root", "pid": -1, "leaf": False,
+        root = {"id": "0", "name": "root", "pid": -1, "leaf": False,
                 "weight": 7, "extraFlag": 0, "extraFlag1": 0, "children": children}
         return [root]
 

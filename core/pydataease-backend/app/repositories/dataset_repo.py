@@ -15,7 +15,7 @@ class DatasetGroupRepository(AsyncBaseRepository[CoreDatasetGroup]):
         super().__init__(session, CoreDatasetGroup)
 
     async def list_all_ordered(self) -> Sequence[CoreDatasetGroup]:
-        stmt = select(CoreDatasetGroup).order_by(
+        stmt = select(CoreDatasetGroup).where(CoreDatasetGroup.id != 0).order_by(
             CoreDatasetGroup.name.asc(),
             CoreDatasetGroup.create_time.desc(),
         )

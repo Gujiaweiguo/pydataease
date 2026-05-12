@@ -53,7 +53,7 @@ class DatasourceService:
 
     async def tree(self) -> list[dict]:
         try:
-            stmt = select(CoreDatasource).order_by(CoreDatasource.name.asc(), CoreDatasource.update_time.desc())
+            stmt = select(CoreDatasource).where(CoreDatasource.id != 0).order_by(CoreDatasource.name.asc(), CoreDatasource.update_time.desc())
             result = await self.session.execute(stmt)
             rows = result.scalars().all()
             flat = [
@@ -64,7 +64,7 @@ class DatasourceService:
             children = _build_tree(flat, pid=0)
         except (AttributeError, TypeError):
             children = []
-        root = {"id": 0, "name": "root", "pid": -1, "leaf": False,
+        root = {"id": "0", "name": "root", "pid": -1, "leaf": False,
                 "weight": 7, "extraFlag": 0, "extraFlag1": 0, "children": children}
         return [root]
 
