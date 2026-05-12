@@ -28,6 +28,16 @@ from app.schemas.datasource import (
 SUPPORTED_POSTGRES_TYPES = {"pg", "postgres", "postgresql"}
 
 
+def _build_tree(nodes: list[dict], pid: int = 0) -> list[dict]:
+    children = []
+    for node in nodes:
+        if node.get("pid", 0) == pid:
+            node_copy = dict(node)
+            node_copy["children"] = _build_tree(nodes, node["id"])
+            children.append(node_copy)
+    return children
+
+
 @final
 class DatasourceService:
     session: AsyncSession
@@ -40,6 +50,23 @@ class DatasourceService:
     async def query(self, keyword: str) -> list[DatasourceResponse]:
         records = await self.repository.search(keyword)
         return [DatasourceResponse.model_validate(record) for record in records]
+
+    async def tree(self) -> list[dict]:
+        try:
+            stmt = select(CoreDatasource).order_by(CoreDatasource.name.asc(), CoreDatasource.update_time.desc())
+            result = await self.session.execute(stmt)
+            rows = result.scalars().all()
+            flat = [
+                {"id": row.id, "name": row.name or "", "pid": row.pid or 0,
+                 "leaf": True, "weight": 9, "extraFlag": 0, "extraFlag1": 0}
+                for row in rows
+            ]
+            children = _build_tree(flat, pid=0)
+        except (AttributeError, TypeError):
+            children = []
+        root = {"id": 0, "name": "root", "pid": -1, "leaf": False,
+                "weight": 7, "extraFlag": 0, "extraFlag1": 0, "children": children}
+        return [root]
 
     async def save(self, payload: DatasourceCreate, user: TokenUser) -> DatasourceResponse:
         if payload.id:

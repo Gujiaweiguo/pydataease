@@ -10,6 +10,15 @@ from app.services.datasource_service import DatasourceService, get_datasource_se
 router = APIRouter(prefix="/datasource", tags=["datasource"])
 
 
+@router.post("/tree")
+async def datasource_tree(
+    payload: dict | None = None,
+    _: TokenUser = Depends(get_current_user),
+    service: DatasourceService = Depends(get_datasource_service),
+) -> object:
+    return await service.tree()
+
+
 @router.get("/query/{keyWord}")
 async def query_datasources(
     keyWord: str,
