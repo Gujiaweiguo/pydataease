@@ -189,6 +189,20 @@ class DatasourceService:
             name=engine.name,
         )
 
+    async def latest_use(self) -> list[str]:
+        try:
+            stmt = (
+                select(CoreDatasource.type)
+                .where(CoreDatasource.type != "folder")
+                .order_by(CoreDatasource.create_time.desc())
+                .limit(5)
+            )
+            result = await self.session.execute(stmt)
+            types = list(set(row[0] for row in result.all() if row[0]))
+            return types[:5]
+        except (AttributeError, TypeError):
+            return []
+
     async def _get_entity(self, datasource_id: int) -> CoreDatasource:
         entity = await self.repository.get_by_id(datasource_id)
         if entity is None:

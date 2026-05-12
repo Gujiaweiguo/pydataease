@@ -1,5 +1,10 @@
+import base64
+import os
+
 from fastapi import APIRouter, Depends, UploadFile
 
+from app.dependencies.auth import get_current_user
+from app.schemas.auth import TokenUser
 from app.services.font_service import FontPayload, get_font_service
 from app.services.interactive_tree_service import get_interactive_tree_service
 from app.services.sys_setting_service import get_sys_setting_service
@@ -142,3 +147,25 @@ async def get_msg_count():
 @router.get("/dekey")
 async def get_dekey():
     return get_dekey_response()
+
+
+@router.post("/exportCenter/exportLimit")
+async def export_limit(_: TokenUser = Depends(get_current_user)) -> str:
+    return "100000"
+
+
+@router.get("/symmetricKey")
+async def symmetric_key() -> str:
+    """Generate and return a Base64-encoded 128-bit AES key for symmetric encryption.
+
+    The frontend uses this key with AES-128-CBC (IV='0000000000000000') to decrypt
+    sensitive configuration fields in datasource responses.
+    """
+    key = base64.b64encode(os.urandom(16)).decode("ascii")
+    return key
+
+
+@router.get("/engine/supportSetKey")
+async def support_set_key(_: TokenUser = Depends(get_current_user)) -> bool:
+    """Whether the engine supports the 'set key' feature for API datasources."""
+    return False

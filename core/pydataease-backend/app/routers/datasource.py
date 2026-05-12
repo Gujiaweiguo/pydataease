@@ -92,3 +92,11 @@ async def delete_datasource(
     service: DatasourceService = Depends(get_datasource_service),
 ) -> None:
     await service.delete(datasource_id)
+
+
+@router.post("/latestUse")
+async def latest_use(
+    _: TokenUser = Depends(get_current_user),
+    service: DatasourceService = Depends(get_datasource_service),
+) -> list[str]:
+    return await service.latest_use()
