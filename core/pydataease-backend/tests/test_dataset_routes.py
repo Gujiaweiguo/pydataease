@@ -133,7 +133,7 @@ class FakeDatasetService:
         ]
 
     async def preview_sql(self, payload: dict[str, object]) -> dict[str, object]:
-        return {"data": [], "fields": []}
+        return {"sql": str(payload.get("sql", "")), "data": [], "fields": [], "total": 0}
 
     async def export_dataset(self, payload: object) -> dict:
         return {"file": "dataset.xlsx", "status": "SUCCESS"}

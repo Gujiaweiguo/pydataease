@@ -19,7 +19,10 @@ export function formatterUrl(url: string) {
 }
 export function imgUrlTrans(url) {
   if (url) {
-    if (typeof url === 'string' && url.indexOf('static-resource') > -1) {
+    if (typeof url !== 'string') {
+      return url
+    }
+    if (url.indexOf('static-resource') > -1) {
       const rawUrl = url
         ? (basePath.endsWith('/') ? basePath.substring(0, basePath.length - 1) : basePath) + url
         : null

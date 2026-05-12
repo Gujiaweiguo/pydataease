@@ -332,10 +332,10 @@ class DatasetService:
                 await connection.close()
             rows = [list(record) for record in records]
             fields = self._build_external_fields(records, rows)
-            return {"data": rows, "fields": fields}
+            return {"sql": sql, "data": rows, "fields": fields, "total": len(rows)}
 
         result = await self.sql_executor.execute_select(sql)
-        return {"data": result["data"], "fields": result["fields"]}
+        return {"sql": sql, "data": result["data"], "fields": result["fields"], "total": len(result["data"])}
 
     def _build_external_fields(self, records: Sequence[Any], rows: Sequence[list[Any]]) -> list[dict[str, str]]:
         if not records:
