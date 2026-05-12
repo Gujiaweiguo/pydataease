@@ -39,6 +39,11 @@ async def get_dekey(service: AuthService = Depends(get_auth_service)) -> object:
     return await service.get_dekey()
 
 
+@router.get("/user/ipInfo")
+async def get_user_ip_info() -> dict:
+    return {"data": {"ip": "127.0.0.1", "location": "local"}}
+
+
 @router.get("/user/info")
 async def get_user_info(
     user: TokenUser = Depends(get_current_user),

@@ -64,6 +64,14 @@ async def get_list_font(service=Depends(get_font_service)):
     return await service.list_fonts()
 
 
+@router.get("/typeface/download/{font_id}")
+async def download_font(font_id):
+    # Return empty response for null font IDs or non-existent fonts
+    if font_id is None or font_id == "null" or font_id == "None":
+        return {"data": None, "msg": "no font"}
+    return {"data": None, "msg": "font not found"}
+
+
 @router.post("/typeface/create")
 async def create_font(data: FontPayload, service=Depends(get_font_service)):
     await service.create_font(data)
