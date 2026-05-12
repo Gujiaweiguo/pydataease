@@ -85,10 +85,31 @@ class DatasetService:
         self.field_repo = field_repo
         self.sql_executor = SQLExecutor()
 
-    async def tree(self) -> list[DatasetTreeNodeResponse]:
+    async def tree(self) -> list[dict]:
         groups = await self.group_repo.list_all_ordered()
         groups = await self._filter_by_permission(groups)
-        return _build_tree(list(groups))
+        built_tree = _build_tree(list(groups))
+
+        def _node_to_dict(node: DatasetTreeNodeResponse) -> dict:
+            d = node.model_dump()
+            d["weight"] = 9
+            d["extraFlag"] = 0
+            d["extraFlag1"] = 0
+            d["children"] = [_node_to_dict(c) for c in (node.children or [])]
+            return d
+
+        children = [_node_to_dict(n) for n in built_tree]
+        root = {
+            "id": 0,
+            "name": "root",
+            "pid": -1,
+            "leaf": False,
+            "weight": 7,
+            "extraFlag": 0,
+            "extraFlag1": 0,
+            "children": children,
+        }
+        return [root]
 
     async def create(self, payload: DatasetGroupCreate, user: TokenUser) -> DatasetNodeResponse:
         all_groups = list(await self.group_repo.list_all_ordered())
