@@ -16,10 +16,7 @@ FROM python:3.12-slim AS runtime
 
 WORKDIR /app
 
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends curl \
-    && rm -rf /var/lib/apt/lists/* \
-    && mkdir -p /app/logs /app/static
+RUN mkdir -p /app/logs /app/static
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONFAULTHANDLER=1 \

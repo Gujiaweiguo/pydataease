@@ -11,8 +11,8 @@ term_handler() {
 trap term_handler TERM INT
 
 echo "Running Alembic migrations..."
-uv run alembic upgrade head
+alembic upgrade head
 echo "Starting FastAPI application..."
-uv run uvicorn app.main:app --host 0.0.0.0 --port "${DE_PORT:-8000}" &
+uvicorn app.main:app --host 0.0.0.0 --port "${DE_PORT:-8000}" &
 child_pid=$!
 wait "$child_pid"
