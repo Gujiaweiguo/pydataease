@@ -1,7 +1,9 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, UploadFile
 
+from app.services.font_service import FontPayload, get_font_service
 from app.services.interactive_tree_service import get_interactive_tree_service
 from app.services.sys_setting_service import get_sys_setting_service
+from app.services.template_market_service import get_template_market_service
 from app.utils.rsa_utils import get_dekey_response
 
 router = APIRouter()
@@ -48,18 +50,61 @@ async def get_share_base(service=Depends(get_sys_setting_service)):
 
 
 @router.get("/typeface/defaultFont")
-async def get_default_font():
-    return []
+async def get_default_font(service=Depends(get_font_service)):
+    return await service.default_fonts()
 
 
 @router.get("/typeface/listFont")
-async def get_list_font():
-    return []
+async def get_list_font(service=Depends(get_font_service)):
+    return await service.list_fonts()
+
+
+@router.post("/typeface/create")
+async def create_font(data: FontPayload, service=Depends(get_font_service)):
+    await service.create_font(data)
+    return None
+
+
+@router.post("/typeface/edit")
+async def edit_font(data: FontPayload, service=Depends(get_font_service)):
+    await service.edit_font(data)
+    return None
+
+
+@router.post("/typeface/delete/{font_id}")
+async def delete_font(font_id: int, service=Depends(get_font_service)):
+    await service.delete_font(font_id)
+    return None
+
+
+@router.post("/typeface/uploadFile")
+async def upload_font_file(file: UploadFile, service=Depends(get_font_service)):
+    return await service.upload_file(file)
+
+
+@router.get("/templateMarket/search")
+async def get_template_market_search(service=Depends(get_template_market_service)):
+    return await service.search()
+
+
+@router.get("/templateMarket/searchPreview")
+async def get_template_market_search_preview(service=Depends(get_template_market_service)):
+    return await service.search_preview()
+
+
+@router.get("/templateMarket/categories")
+async def get_template_market_categories(service=Depends(get_template_market_service)):
+    return await service.get_categories()
+
+
+@router.get("/templateMarket/categoriesObject")
+async def get_template_market_categories_object(service=Depends(get_template_market_service)):
+    return await service.get_categories_object()
 
 
 @router.get("/templateMarket/searchRecommend")
-async def get_template_market_search_recommend():
-    return {"baseUrl": "", "contents": []}
+async def get_template_market_search_recommend(service=Depends(get_template_market_service)):
+    return await service.search_recommend()
 
 
 @router.post("/dataVisualization/interactiveTree")
