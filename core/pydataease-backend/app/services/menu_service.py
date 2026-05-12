@@ -33,10 +33,17 @@ class MenuService:
             by_pid[row.pid].append(row)
         return self._build_children(0, by_pid)
 
+    def _normalize_path(self, path: str, pid: int) -> str:
+        """Strip leading '/' from non-root menu paths, matching Java MenuManage behavior."""
+        if pid != 0 and path.startswith("/"):
+            return path[1:]
+        return path
+
     def _build_children(self, pid: int, by_pid: dict[int, list[CoreMenu]]) -> list[MenuVO]:
         result: list[MenuVO] = []
         for row in by_pid.get(pid, []):
             title = TITLE_MAP.get(row.name or "", "")
+            path = self._normalize_path(row.path or "", row.pid)
             children = self._build_children(row.id, by_pid)
             if row.type == 1 and not row.component:
                 # Directory node with no direct component — only include if has children
@@ -44,7 +51,7 @@ class MenuService:
                     continue
                 result.append(
                     MenuVO(
-                        path=row.path or "",
+                        path=path,
                         component=None,
                         hidden=row.hidden,
                         name=row.name or "",
@@ -56,7 +63,7 @@ class MenuService:
             else:
                 result.append(
                     MenuVO(
-                        path=row.path or "",
+                        path=path,
                         component=row.component,
                         hidden=row.hidden,
                         name=row.name or "",
