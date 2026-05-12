@@ -212,13 +212,31 @@ class DatasetService:
         group = await self._get_group(group_id)
         return DatasetNodeResponse.model_validate(group)
 
-    async def get_details(self, group_id: int) -> DatasetNodeResponse:
+    async def get_details(self, group_id: int) -> dict[str, object]:
         group = await self._get_group(group_id)
-        return DatasetNodeResponse.model_validate(group)
+        fields = await self.field_repo.list_by_group(group_id)
+        payload = DatasetNodeResponse.model_validate(group).model_dump(by_alias=True)
+        payload["allFields"] = [self._field_to_dict(field) for field in fields]
+        return payload
 
-    async def ds_details(self, payload: dict[str, object]) -> list[dict[str, object]]:
+    async def get_dataset_preview(self, group_id: int) -> dict[str, object]:
+        group = await self._get_group(group_id)
+        fields = await self.field_repo.list_by_group(group_id)
+        preview_fields = [self._field_to_preview_field(field) for field in fields]
+        return {
+            "id": group.id,
+            "name": group.name,
+            "allFields": [self._field_to_dict(field) for field in fields],
+            "data": {
+                "fields": preview_fields,
+                "data": [],
+            },
+            "total": 0,
+        }
+
+    async def ds_details(self, payload: object) -> list[dict[str, object]]:
         """Return dataset details for a list of table IDs."""
-        raw_ids = payload if isinstance(payload, list) else payload.get("ids", [])
+        raw_ids = payload if isinstance(payload, list) else payload.get("ids", []) if isinstance(payload, dict) else []
         ids: list[object] = raw_ids if isinstance(raw_ids, list) else []
         if not ids:
             return []
@@ -226,7 +244,7 @@ class DatasetService:
         results: list[dict[str, object]] = []
         for table_id in ids:
             try:
-                table_id_int = int(table_id)
+                table_id_int = int(str(table_id))
                 table = await self.table_repo.get_by_id(table_id_int)
                 if table is None:
                     continue
@@ -313,6 +331,13 @@ class DatasetService:
             fields.append({"name": key, "type": field_type})
         return fields
 
+    async def export_dataset(self, payload: dict[str, object]) -> dict[str, object]:
+        rows = payload.get("data") if isinstance(payload, dict) else None
+        return {
+            "rows": rows if isinstance(rows, list) else [],
+            "msg": "Dataset export payload accepted",
+        }
+
     async def per_delete(self, group_id: int) -> bool:
         group = await self.group_repo.get_by_id(group_id)
         return group is not None
@@ -348,6 +373,40 @@ class DatasetService:
                 "datasource_id": field_input.get("datasourceId", field_input.get("datasource_id")),
                 "dataset_table_id": field_input.get("datasetTableId", field_input.get("dataset_table_id")),
             })
+
+    @staticmethod
+    def _field_to_dict(field: object) -> dict[str, object]:
+        return {
+            "id": getattr(field, "id", None),
+            "originName": getattr(field, "origin_name", None),
+            "name": getattr(field, "name", None),
+            "dataeaseName": getattr(field, "dataease_name", None),
+            "fieldShortName": getattr(field, "field_short_name", None),
+            "groupType": getattr(field, "group_type", None),
+            "type": getattr(field, "type", None),
+            "size": getattr(field, "size", None),
+            "deType": getattr(field, "de_type", None),
+            "deExtractType": getattr(field, "de_extract_type", None),
+            "extField": getattr(field, "ext_field", None),
+            "checked": getattr(field, "checked", None),
+            "columnIndex": getattr(field, "column_index", None),
+            "accuracy": getattr(field, "accuracy", None),
+            "dateFormat": getattr(field, "date_format", None),
+            "dateFormatType": getattr(field, "date_format_type", None),
+            "datasourceId": getattr(field, "datasource_id", None),
+            "datasetTableId": getattr(field, "dataset_table_id", None),
+        }
+
+    @staticmethod
+    def _field_to_preview_field(field: object) -> dict[str, object]:
+        return {
+            "name": getattr(field, "name", None) or getattr(field, "origin_name", None),
+            "dataeaseName": getattr(field, "dataease_name", None),
+            "originName": getattr(field, "origin_name", None),
+            "type": getattr(field, "type", None),
+            "deType": getattr(field, "de_type", None),
+            "groupType": getattr(field, "group_type", None),
+        }
 
     async def _filter_by_permission(
         self, groups: Sequence[CoreDatasetGroup]

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Body, Depends
 from fastapi.responses import FileResponse
 
 from app.dependencies.auth import get_current_user
@@ -20,6 +20,25 @@ async def create_export_task(
     return await service.create_task(payload, user)
 
 
+@router.post("/exportTasks/records")
+async def export_task_records(
+    user: TokenUser = Depends(get_current_user),
+    service: ExportService = Depends(get_export_service),
+) -> object:
+    return await service.list_task_records(user)
+
+
+@router.post("/exportTasks/{status}/{page}/{limit}")
+async def list_export_tasks_paginated(
+    status: str,
+    page: int,
+    limit: int,
+    user: TokenUser = Depends(get_current_user),
+    service: ExportService = Depends(get_export_service),
+) -> object:
+    return await service.list_tasks_paginated(status, page, limit, user)
+
+
 @router.post("/exportTasks/{export_from}")
 async def list_export_tasks(
     export_from: int,
@@ -27,6 +46,58 @@ async def list_export_tasks(
     service: ExportService = Depends(get_export_service),
 ) -> object:
     return await service.list_tasks(export_from, user)
+
+
+@router.get("/delete/{task_id}")
+async def delete_export_task_get(
+    task_id: str,
+    _user: TokenUser = Depends(get_current_user),
+    service: ExportService = Depends(get_export_service),
+) -> None:
+    _ = _user
+    await service.delete_task(task_id)
+
+
+@router.post("/delete")
+async def delete_export_tasks_post(
+    payload: object = Body(...),
+    user: TokenUser = Depends(get_current_user),
+    service: ExportService = Depends(get_export_service),
+) -> None:
+    ids = payload if isinstance(payload, list) else [str(payload.get("id", ""))] if isinstance(payload, dict) else []
+    ids = [str(task_id) for task_id in ids if str(task_id)]
+    await service.delete_tasks(ids, user)
+
+
+@router.post("/deleteAll/{status}")
+async def delete_all_export_tasks_by_status(
+    status: str,
+    payload: object = Body(...),
+    user: TokenUser = Depends(get_current_user),
+    service: ExportService = Depends(get_export_service),
+) -> None:
+    ids = payload if isinstance(payload, list) else []
+    ids = [str(task_id) for task_id in ids if str(task_id)]
+    await service.delete_all_by_status(status, ids, user)
+
+
+@router.get("/generateDownloadUri/{task_id}")
+async def generate_download_uri(
+    task_id: str,
+    _user: TokenUser = Depends(get_current_user),
+    service: ExportService = Depends(get_export_service),
+) -> object:
+    _ = _user
+    return await service.generate_download_uri(task_id)
+
+
+@router.post("/exportLimit")
+async def export_limit(
+    _user: TokenUser = Depends(get_current_user),
+    service: ExportService = Depends(get_export_service),
+) -> bool:
+    _ = _user
+    return await service.export_limit()
 
 
 @router.post("/exportTasks/{export_from}/delete")

@@ -93,7 +93,7 @@ async def get_dataset(
     _: TokenUser = Depends(get_current_user),
     service: DatasetService = Depends(get_dataset_service),
 ) -> object:
-    return await service.get_details(group_id)
+    return await service.get_dataset_preview(group_id)
 
 
 @router.post("/datasetTree/details/{group_id}")
