@@ -101,24 +101,24 @@ class FakeDatasetService:
     async def per_delete(self, group_id: int) -> bool:
         return True
 
-    async def get_bar_info(self, group_id: int) -> DatasetNodeResponse:
-        return DatasetNodeResponse(
-            id=group_id,
-            name="bar-info-ds",
-            pid=0,
-            level=0,
-            node_type="dataset",
-            create_by="7",
-        )
+    async def get_bar_info(self, group_id: int) -> dict[str, object]:
+        return {
+            "id": str(group_id),
+            "name": "bar-info-ds",
+            "pid": "0",
+            "level": 0,
+            "nodeType": "dataset",
+            "createBy": "7",
+        }
 
-    async def get_details(self, group_id: int) -> DatasetNodeResponse:
-        return DatasetNodeResponse(
-            id=group_id,
-            name="detail-ds",
-            pid=0,
-            level=0,
-            node_type="dataset",
-        )
+    async def get_details(self, group_id: int) -> dict[str, object]:
+        return {
+            "id": str(group_id),
+            "name": "detail-ds",
+            "pid": "0",
+            "level": 0,
+            "nodeType": "dataset",
+        }
 
     async def get_fields(self, request: object) -> list[DatasetFieldResponse]:
         return [
@@ -274,7 +274,7 @@ async def test_dataset_details_route(
     )
     assert response.status_code == 200
     data = response.json()["data"]
-    assert data["id"] == 500
+    assert data["id"] == "500"
     assert data["name"] == "detail-ds"
 
 
@@ -290,7 +290,7 @@ async def test_dataset_bar_info_route(
     )
     assert response.status_code == 200
     data = response.json()["data"]
-    assert data["id"] == 600
+    assert data["id"] == "600"
     assert data["createBy"] == "7"
 
 

@@ -33,6 +33,11 @@ from app.schemas.dataset import (
 SQLExecutor = import_module("app.services.sql_executor").SQLExecutor
 
 
+def _sid(value: int | None) -> str | None:
+    """Stringify a nullable bigint ID to avoid JS precision loss."""
+    return str(value) if value is not None else None
+
+
 def _timestamp_ms() -> int:
     return int(time.time() * 1000)
 
@@ -94,6 +99,8 @@ class DatasetService:
 
         def _node_to_dict(node: DatasetTreeNodeResponse) -> dict:
             d = node.model_dump()
+            d["id"] = str(d["id"])
+            d["pid"] = str(d["pid"]) if d["pid"] is not None else "0"
             d["weight"] = 9
             d["extraFlag"] = 0
             d["extraFlag1"] = 0
@@ -208,14 +215,19 @@ class DatasetService:
         await self._get_group(group_id)
         await self.group_repo.delete_cascade(group_id)
 
-    async def get_bar_info(self, group_id: int) -> DatasetNodeResponse:
+    async def get_bar_info(self, group_id: int) -> dict[str, object]:
         group = await self._get_group(group_id)
-        return DatasetNodeResponse.model_validate(group)
+        payload = DatasetNodeResponse.model_validate(group).model_dump(by_alias=True)
+        payload["id"] = _sid(payload["id"])
+        payload["pid"] = _sid(payload["pid"])
+        return payload
 
     async def get_details(self, group_id: int) -> dict[str, object]:
         group = await self._get_group(group_id)
         fields = await self.field_repo.list_by_group(group_id)
         payload = DatasetNodeResponse.model_validate(group).model_dump(by_alias=True)
+        payload["id"] = _sid(payload["id"])
+        payload["pid"] = _sid(payload["pid"])
         payload["allFields"] = [self._field_to_dict(field) for field in fields]
         return payload
 
@@ -224,7 +236,7 @@ class DatasetService:
         fields = await self.field_repo.list_by_group(group_id)
         preview_fields = [self._field_to_preview_field(field) for field in fields]
         return {
-            "id": group.id,
+            "id": _sid(group.id),
             "name": group.name,
             "allFields": [self._field_to_dict(field) for field in fields],
             "data": {
@@ -233,6 +245,10 @@ class DatasetService:
             },
             "total": 0,
         }
+
+    async def get_dataset_total(self, group_id: int) -> int:
+        await self._get_group(group_id)
+        return 0
 
     async def ds_details(self, payload: object) -> list[dict[str, object]]:
         """Return dataset details for a list of table IDs."""
@@ -250,14 +266,14 @@ class DatasetService:
                     continue
                 fields = await self.field_repo.list_by_table(table_id_int)
                 results.append({
-                    "id": table.id,
+                    "id": _sid(table.id),
                     "name": table.name or "",
-                    "dataSourceId": table.datasource_id,
-                    "datasetGroupId": table.dataset_group_id,
+                    "dataSourceId": _sid(table.datasource_id),
+                    "datasetGroupId": _sid(table.dataset_group_id),
                     "type": table.type,
                     "fields": [
                         {
-                            "id": f.id,
+                            "id": _sid(f.id),
                             "originName": f.origin_name,
                             "name": f.name,
                             "dataeaseName": f.dataease_name,
@@ -377,7 +393,7 @@ class DatasetService:
     @staticmethod
     def _field_to_dict(field: object) -> dict[str, object]:
         return {
-            "id": getattr(field, "id", None),
+            "id": _sid(getattr(field, "id", None)),
             "originName": getattr(field, "origin_name", None),
             "name": getattr(field, "name", None),
             "dataeaseName": getattr(field, "dataease_name", None),
@@ -393,8 +409,8 @@ class DatasetService:
             "accuracy": getattr(field, "accuracy", None),
             "dateFormat": getattr(field, "date_format", None),
             "dateFormatType": getattr(field, "date_format_type", None),
-            "datasourceId": getattr(field, "datasource_id", None),
-            "datasetTableId": getattr(field, "dataset_table_id", None),
+            "datasourceId": _sid(getattr(field, "datasource_id", None)),
+            "datasetTableId": _sid(getattr(field, "dataset_table_id", None)),
         }
 
     @staticmethod

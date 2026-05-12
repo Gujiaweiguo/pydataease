@@ -28,10 +28,10 @@ from app.schemas.datasource import (
 SUPPORTED_POSTGRES_TYPES = {"pg", "postgres", "postgresql"}
 
 
-def _build_tree(nodes: list[dict], pid: int = 0) -> list[dict]:
+def _build_tree(nodes: list[dict], pid: str = "0") -> list[dict]:
     children = []
     for node in nodes:
-        if node.get("pid", 0) == pid:
+        if node.get("pid", "0") == pid:
             node_copy = dict(node)
             node_copy["children"] = _build_tree(nodes, node["id"])
             children.append(node_copy)
@@ -57,11 +57,11 @@ class DatasourceService:
             result = await self.session.execute(stmt)
             rows = result.scalars().all()
             flat = [
-                {"id": row.id, "name": row.name or "", "pid": row.pid or 0,
+                {"id": str(row.id), "name": row.name or "", "pid": str(row.pid) if row.pid else "0",
                  "leaf": True, "weight": 9, "extraFlag": 0, "extraFlag1": 0}
                 for row in rows
             ]
-            children = _build_tree(flat, pid=0)
+            children = _build_tree(flat, pid="0")
         except (AttributeError, TypeError):
             children = []
         root = {"id": "0", "name": "root", "pid": -1, "leaf": False,

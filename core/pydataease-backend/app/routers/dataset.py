@@ -141,6 +141,16 @@ async def table_field(
     return await service.get_fields(payload)
 
 
+@router.post("/datasetData/getDatasetTotal")
+async def get_dataset_total(
+    payload: dict[str, object],
+    _: TokenUser = Depends(get_current_user),
+    service: DatasetService = Depends(get_dataset_service),
+) -> object:
+    group_id = int(str(payload.get("id", "0")))
+    return await service.get_dataset_total(group_id)
+
+
 @router.post("/datasetData/previewSql")
 async def preview_sql(
     payload: dict[str, object],

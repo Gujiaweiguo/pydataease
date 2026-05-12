@@ -95,6 +95,24 @@ async def find_recent_visualizations(
     return await service.find_recent(payload)
 
 
+@router.get("/dataVisualization/findDvType/{dv_id}")
+async def find_dv_type(
+    dv_id: int,
+    _: TokenUser = Depends(get_current_user),
+    service: VisualizationService = Depends(get_visualization_service),
+) -> object:
+    return await service.find_dv_type(dv_id)
+
+
+@router.get("/dataVisualization/updateCheckVersion/{dv_id}")
+async def update_check_version(
+    dv_id: int,
+    _: TokenUser = Depends(get_current_user),
+    service: VisualizationService = Depends(get_visualization_service),
+) -> object:
+    return await service.update_check_version(dv_id)
+
+
 @router.get("/dataVisualization/perResource/{visualization_id}")
 async def get_visualization_per_resource(
     visualization_id: int,

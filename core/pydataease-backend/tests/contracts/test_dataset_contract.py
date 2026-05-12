@@ -61,9 +61,9 @@ class TestDatasetTreeContract:
         body = response.json()
         assert body["code"] == 0
         assert body["msg"] == "success"
-        assert body["data"]["id"] == 500
+        assert body["data"]["id"] == "500"
         assert body["data"]["name"] == "detail-ds"
-        assert body["data"]["pid"] == 0
+        assert body["data"]["pid"] == "0"
         assert body["data"]["level"] == 0
         assert body["data"]["nodeType"] == "dataset"
 
