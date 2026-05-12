@@ -67,13 +67,25 @@ class ShortcutOption {
         return res(result)
       })
     }
-    return request.post({ url, data: param }).then(res => {
-      const data = res.data
-      if (this.emptyParam(param)) {
-        this.busiRecordMap[this.busiFlag].dataCache = data
-      }
-      return res
-    })
+    return request
+      .post({ url, data: param })
+      .then(res => {
+        const responseData = res?.data ?? []
+        const data = Array.isArray(responseData) ? responseData : responseData?.list ?? []
+        if (this.emptyParam(param)) {
+          this.busiRecordMap[this.busiFlag].dataCache = data
+        }
+        return {
+          code: res?.code ?? 200,
+          data,
+          msg: res?.msg ?? null
+        }
+      })
+      .catch(() => ({
+        code: 200,
+        data: [],
+        msg: null
+      }))
   }
   getCacheData() {
     return this.busiRecordMap[this.busiFlag].dataCache
