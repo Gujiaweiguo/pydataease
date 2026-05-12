@@ -114,6 +114,24 @@ async def export_dataset(
     return await service.export_dataset(payload)
 
 
+@router.post("/datasetTree/dsDetails")
+async def ds_details(
+    payload: dict[str, object],
+    _: TokenUser = Depends(get_current_user),
+    service: DatasetService = Depends(get_dataset_service),
+) -> object:
+    return await service.ds_details(payload)
+
+
+@router.post("/datasetTree/detailWithPerm")
+async def detail_with_perm(
+    payload: dict[str, object],
+    _: TokenUser = Depends(get_current_user),
+    service: DatasetService = Depends(get_dataset_service),
+) -> object:
+    return await service.ds_details(payload)
+
+
 @router.post("/datasetData/tableField")
 async def table_field(
     payload: DatasetTableFieldRequest,

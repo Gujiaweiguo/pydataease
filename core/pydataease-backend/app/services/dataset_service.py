@@ -216,6 +216,45 @@ class DatasetService:
         group = await self._get_group(group_id)
         return DatasetNodeResponse.model_validate(group)
 
+    async def ds_details(self, payload: dict[str, object]) -> list[dict[str, object]]:
+        """Return dataset details for a list of table IDs."""
+        raw_ids = payload if isinstance(payload, list) else payload.get("ids", [])
+        ids: list[object] = raw_ids if isinstance(raw_ids, list) else []
+        if not ids:
+            return []
+
+        results: list[dict[str, object]] = []
+        for table_id in ids:
+            try:
+                table_id_int = int(table_id)
+                table = await self.table_repo.get_by_id(table_id_int)
+                if table is None:
+                    continue
+                fields = await self.field_repo.list_by_table(table_id_int)
+                results.append({
+                    "id": table.id,
+                    "name": table.name or "",
+                    "dataSourceId": table.datasource_id,
+                    "datasetGroupId": table.dataset_group_id,
+                    "type": table.type,
+                    "fields": [
+                        {
+                            "id": f.id,
+                            "originName": f.origin_name,
+                            "name": f.name,
+                            "dataeaseName": f.dataease_name,
+                            "type": f.type,
+                            "deType": f.de_type,
+                            "groupType": f.group_type,
+                            "checked": f.checked,
+                        }
+                        for f in fields
+                    ],
+                })
+            except (ValueError, TypeError, AttributeError):
+                continue
+        return results
+
     async def get_fields(self, request: DatasetTableFieldRequest) -> list[DatasetFieldResponse]:
         if request.dataset_group_id:
             fields = await self.field_repo.list_by_group(request.dataset_group_id)

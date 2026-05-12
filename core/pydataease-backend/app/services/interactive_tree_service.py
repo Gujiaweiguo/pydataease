@@ -69,7 +69,7 @@ class InteractiveTreeService:
         return [root]
 
     async def _get_dataset_tree(self) -> list[dict]:
-        stmt = select(CoreDatasetGroup).order_by(CoreDatasetGroup.name.asc(), CoreDatasetGroup.create_time.desc())
+        stmt = select(CoreDatasetGroup).where(CoreDatasetGroup.id != 0).order_by(CoreDatasetGroup.name.asc(), CoreDatasetGroup.create_time.desc())
         result = await self.session.execute(stmt)
         rows = result.scalars().all()
         flat = [
@@ -84,7 +84,7 @@ class InteractiveTreeService:
         return [root]
 
     async def _get_datasource_tree(self) -> list[dict]:
-        stmt = select(CoreDatasource).order_by(CoreDatasource.name.asc(), CoreDatasource.update_time.desc())
+        stmt = select(CoreDatasource).where(CoreDatasource.id != 0).order_by(CoreDatasource.name.asc(), CoreDatasource.update_time.desc())
         result = await self.session.execute(stmt)
         rows = result.scalars().all()
         flat = [
