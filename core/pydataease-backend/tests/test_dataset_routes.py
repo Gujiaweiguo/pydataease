@@ -132,11 +132,8 @@ class FakeDatasetService:
             )
         ]
 
-    async def preview_sql(self, sql: str) -> dict[str, object]:
-        return {"sql": sql, "data": [], "fields": [], "total": 0}
-
-    async def preview_sql_stub(self, sql: str) -> dict[str, object]:
-        return await self.preview_sql(sql)
+    async def preview_sql(self, payload: dict[str, object]) -> dict[str, object]:
+        return {"data": [], "fields": []}
 
     async def export_dataset(self, payload: object) -> dict:
         return {"file": "dataset.xlsx", "status": "SUCCESS"}
@@ -328,8 +325,8 @@ async def test_dataset_preview_sql_route(
     )
     assert response.status_code == 200
     data = response.json()["data"]
-    assert data["sql"] == "SELECT 1"
-    assert data["total"] == 0
+    assert data["data"] == []
+    assert data["fields"] == []
 
 
 @pytest.mark.asyncio

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 import json
 import time
 from collections.abc import Sequence
@@ -16,6 +17,7 @@ from app.repositories.dataset_repo import (
     DatasetGroupRepository,
     DatasetTableRepository,
 )
+from app.repositories.datasource_repo import DatasourceRepository
 from app.schemas.auth import TokenUser
 from app.schemas.dataset import (
     DatasetFieldResponse,
@@ -224,11 +226,53 @@ class DatasetService:
             fields = []
         return [DatasetFieldResponse.model_validate(f) for f in fields]
 
-    async def preview_sql(self, sql: str) -> dict[str, object]:
-        return await self.sql_executor.execute_select(sql)
+    async def preview_sql(self, payload: dict[str, object]) -> dict[str, object]:
+        raw_sql = str(payload.get("sql", ""))
+        try:
+            sql = base64.b64decode(raw_sql).decode("utf-8") if raw_sql else ""
+        except Exception:
+            sql = raw_sql
 
-    async def preview_sql_stub(self, sql: str) -> dict[str, object]:
-        return await self.preview_sql(sql)
+        datasource_id = payload.get("datasourceId") or payload.get("datasource_id")
+
+        if datasource_id:
+            datasource_id_int = int(str(datasource_id))
+            from app.services.datasource_service import DatasourceService
+
+            ds_repo = DatasourceRepository(self.session)
+            datasource = await ds_repo.get_by_id(datasource_id_int)
+            if datasource is None:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Datasource not found")
+            config = datasource.configuration
+            if isinstance(config, str):
+                config = json.loads(config)
+            if not isinstance(config, dict):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Datasource configuration must be an object",
+                )
+            ds_service = DatasourceService(self.session, ds_repo)
+            connection = await ds_service._open_connection(config)
+            try:
+                records = await connection.fetch(sql)
+            finally:
+                await connection.close()
+            rows = [list(record) for record in records]
+            fields = self._build_external_fields(records, rows)
+            return {"data": rows, "fields": fields}
+
+        result = await self.sql_executor.execute_select(sql)
+        return {"data": result["data"], "fields": result["fields"]}
+
+    def _build_external_fields(self, records: Sequence[Any], rows: Sequence[list[Any]]) -> list[dict[str, str]]:
+        if not records:
+            return []
+        keys = [str(key) for key in records[0].keys()]
+        fields: list[dict[str, str]] = []
+        for index, key in enumerate(keys):
+            field_type = self.sql_executor._infer_type(rows, index) or "unknown"
+            fields.append({"name": key, "type": field_type})
+        return fields
 
     async def per_delete(self, group_id: int) -> bool:
         group = await self.group_repo.get_by_id(group_id)

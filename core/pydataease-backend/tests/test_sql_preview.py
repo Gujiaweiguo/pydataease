@@ -199,12 +199,10 @@ async def test_sql_executor_returns_400_for_invalid_sql() -> None:
 
 
 class _FakePreviewService:
-    async def preview_sql(self, sql: str) -> dict[str, object]:
+    async def preview_sql(self, payload: dict[str, object]) -> dict[str, object]:
         return {
-            "sql": sql,
             "data": [[1, "alpha"]],
             "fields": [{"name": "id", "type": "integer"}, {"name": "name", "type": "varchar"}],
-            "total": 1,
         }
 
 
@@ -229,8 +227,6 @@ async def test_preview_sql_route_uses_preview_sql_method(
 
     assert response.status_code == 200
     assert response.json()["data"] == {
-        "sql": "SELECT id, name FROM preview_items LIMIT 1",
         "data": [[1, "alpha"]],
         "fields": [{"name": "id", "type": "integer"}, {"name": "name", "type": "varchar"}],
-        "total": 1,
     }

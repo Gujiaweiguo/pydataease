@@ -129,5 +129,4 @@ async def preview_sql(
     _: TokenUser = Depends(get_current_user),
     service: DatasetService = Depends(get_dataset_service),
 ) -> object:
-    sql = str(payload.get("sql", ""))
-    return await service.preview_sql(sql)
+    return await service.preview_sql(payload)
