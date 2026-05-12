@@ -10,6 +10,7 @@ from app.dependencies.database import get_db
 from app.models.visualization import DataVisualizationInfo
 from app.models.dataset import CoreDatasetGroup
 from app.models.datasource import CoreDatasource
+from app.utils.id_utils import _sid
 
 
 def _build_tree(nodes: list[dict], pid: str = "0") -> list[dict]:
@@ -58,7 +59,7 @@ class InteractiveTreeService:
         result = await self.session.execute(stmt)
         rows = result.scalars().all()
         flat = [
-            {"id": str(row.id), "name": row.name or "", "pid": str(row.pid) if row.pid else "0",
+            {"id": _sid(row.id), "name": row.name or "", "pid": _sid(row.pid) if row.pid else "0",
              "leaf": row.node_type == "leaf" if row.node_type else True,
              "weight": 9, "extraFlag": 0, "extraFlag1": 0}
             for row in rows
@@ -73,7 +74,7 @@ class InteractiveTreeService:
         result = await self.session.execute(stmt)
         rows = result.scalars().all()
         flat = [
-            {"id": str(row.id), "name": row.name or "", "pid": str(row.pid) if row.pid else "0",
+            {"id": _sid(row.id), "name": row.name or "", "pid": _sid(row.pid) if row.pid else "0",
              "leaf": row.node_type == "dataset" if row.node_type else True,
              "weight": 9, "extraFlag": 0, "extraFlag1": 0}
             for row in rows
@@ -88,7 +89,7 @@ class InteractiveTreeService:
         result = await self.session.execute(stmt)
         rows = result.scalars().all()
         flat = [
-            {"id": str(row.id), "name": row.name or "", "pid": str(row.pid) if row.pid else "0",
+            {"id": _sid(row.id), "name": row.name or "", "pid": _sid(row.pid) if row.pid else "0",
              "leaf": True, "weight": 9, "extraFlag": 0, "extraFlag1": 0}
             for row in rows
         ]

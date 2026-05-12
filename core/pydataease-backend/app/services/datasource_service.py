@@ -12,6 +12,7 @@ from app.dependencies.database import get_db
 from app.models.datasource import CoreDatasource
 from app.models.engine import CoreDeEngine
 from app.repositories.datasource_repo import DatasourceRepository
+from app.utils.id_utils import _sid
 from app.schemas.auth import TokenUser
 from app.schemas.datasource import (
     JSONDict,
@@ -57,7 +58,7 @@ class DatasourceService:
             result = await self.session.execute(stmt)
             rows = result.scalars().all()
             flat = [
-                {"id": str(row.id), "name": row.name or "", "pid": str(row.pid) if row.pid else "0",
+                {"id": _sid(row.id), "name": row.name or "", "pid": _sid(row.pid) if row.pid else "0",
                  "leaf": True, "weight": 9, "extraFlag": 0, "extraFlag1": 0}
                 for row in rows
             ]

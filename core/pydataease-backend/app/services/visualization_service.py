@@ -13,6 +13,7 @@ from app.models.visualization import DataVisualizationInfo
 from app.repositories.chart_repo import ChartRepository
 from app.repositories.store_repo import StoreRepository
 from app.repositories.visualization_repo import VisualizationRepository
+from app.utils.id_utils import _sid
 from app.schemas.auth import TokenUser
 from app.schemas.chart import ChartResponse
 from app.schemas.visualization import (
@@ -38,10 +39,6 @@ def _timestamp_ms() -> int:
 
 def _new_identifier() -> int:
     return time.time_ns()
-
-
-def _sid(value: int | None) -> str | None:
-    return str(value) if value is not None else None
 
 
 def _compute_level(all_items: list[DataVisualizationInfo], pid: int | None) -> int:

@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.dependencies.database import get_db
 from app.models.font import CoreFont
+from app.utils.id_utils import _sid
 
 FontPayload = dict[str, str | bool | float | None]
 
@@ -167,7 +168,7 @@ class FontService:
     @staticmethod
     def _to_dict(row: CoreFont) -> FontPayload:
         return {
-            "id": str(row.id),
+            "id": _sid(row.id),
             "name": row.name,
             "fileName": row.file_name,
             "fileTransName": row.file_trans_name,

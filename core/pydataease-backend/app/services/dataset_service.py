@@ -18,6 +18,7 @@ from app.repositories.dataset_repo import (
     DatasetTableRepository,
 )
 from app.repositories.datasource_repo import DatasourceRepository
+from app.utils.id_utils import _sid
 from app.schemas.auth import TokenUser
 from app.schemas.dataset import (
     DatasetFieldResponse,
@@ -31,11 +32,6 @@ from app.schemas.dataset import (
 )
 
 SQLExecutor = import_module("app.services.sql_executor").SQLExecutor
-
-
-def _sid(value: int | None) -> str | None:
-    """Stringify a nullable bigint ID to avoid JS precision loss."""
-    return str(value) if value is not None else None
 
 
 def _timestamp_ms() -> int:
