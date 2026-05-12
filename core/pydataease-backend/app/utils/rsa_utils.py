@@ -114,15 +114,14 @@ def get_dekey_response() -> str:
             + aes_key
     """
     _, pub = get_or_create_key_pair()
-    # Get raw base64 of the public key (no PEM headers)
-    der_bytes = pub.public_bytes(
-        encoding=serialization.Encoding.DER,
+    # JSEncrypt (frontend) requires PEM-formatted public key
+    pem_str = pub.public_bytes(
+        encoding=serialization.Encoding.PEM,
         format=serialization.PublicFormat.SubjectPublicKeyInfo,
-    )
-    pub_key_b64 = base64.b64encode(der_bytes).decode("utf-8")
+    ).decode("utf-8")
 
     aes_key = _get_or_create_aes_key()
-    encrypted = _aes_cbc_encrypt(pub_key_b64, aes_key)
+    encrypted = _aes_cbc_encrypt(pem_str, aes_key)
     separator = base64.urlsafe_b64encode(_PK_SEPARATOR.encode("utf-8")).decode("utf-8")
     return encrypted + separator + aes_key
 
