@@ -76,13 +76,14 @@ class DatasourceService:
         self._ensure_supported_type(payload.type)
         now = _timestamp_ms()
         status_value = await self._probe_status(payload.type, payload.configuration)
+        pid_value = None if payload.pid == 0 else payload.pid
         created = await self.repository.create(
             {
                 "id": _new_identifier(),
                 "name": payload.name.strip(),
                 "description": payload.description,
                 "type": payload.type,
-                "pid": payload.pid,
+                "pid": pid_value,
                 "edit_type": payload.edit_type,
                 "configuration": payload.configuration,
                 "create_time": now,
@@ -103,13 +104,15 @@ class DatasourceService:
         merged_type = payload.type or existing.type
 
         self._ensure_supported_type(merged_type)
+        raw_pid = payload.pid if payload.pid is not None else existing.pid
+        pid_value = None if raw_pid == 0 else raw_pid
         updated = await self.repository.update(
             existing,
             {
                 "name": payload.name.strip() if payload.name is not None else existing.name,
                 "description": payload.description if payload.description is not None else existing.description,
                 "type": merged_type,
-                "pid": payload.pid if payload.pid is not None else existing.pid,
+                "pid": pid_value,
                 "edit_type": payload.edit_type if payload.edit_type is not None else existing.edit_type,
                 "configuration": merged_configuration,
                 "update_time": _timestamp_ms(),

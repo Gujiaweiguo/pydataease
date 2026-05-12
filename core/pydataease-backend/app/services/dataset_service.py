@@ -113,7 +113,8 @@ class DatasetService:
 
     async def create(self, payload: DatasetGroupCreate, user: TokenUser) -> DatasetNodeResponse:
         all_groups = list(await self.group_repo.list_all_ordered())
-        level = _compute_level(all_groups, payload.pid)
+        pid_value = None if payload.pid == 0 else payload.pid
+        level = _compute_level(all_groups, pid_value)
 
         now = _timestamp_ms()
         info_str = json.dumps(payload.info) if payload.info is not None else None
@@ -121,7 +122,7 @@ class DatasetService:
         created = await self.group_repo.create({
             "id": _new_identifier(),
             "name": payload.name.strip(),
-            "pid": payload.pid,
+            "pid": pid_value,
             "level": level,
             "node_type": payload.node_type,
             "type": payload.type,
@@ -143,7 +144,8 @@ class DatasetService:
         existing = await self._get_group(payload.id)
 
         all_groups = list(await self.group_repo.list_all_ordered())
-        new_pid = payload.pid if payload.pid is not None else existing.pid
+        raw_pid = payload.pid if payload.pid is not None else existing.pid
+        new_pid = None if raw_pid == 0 else raw_pid
         level = _compute_level(all_groups, new_pid)
 
         now = _timestamp_ms()
@@ -158,7 +160,7 @@ class DatasetService:
         if payload.name is not None:
             update_data["name"] = payload.name.strip()
         if payload.pid is not None:
-            update_data["pid"] = payload.pid
+            update_data["pid"] = new_pid
         if payload.node_type is not None:
             update_data["node_type"] = payload.node_type
         if payload.type is not None:
@@ -190,9 +192,10 @@ class DatasetService:
     async def move(self, payload: DatasetGroupMove, user: TokenUser) -> DatasetNodeResponse:
         existing = await self._get_group(payload.id)
         all_groups = list(await self.group_repo.list_all_ordered())
-        level = _compute_level(all_groups, payload.pid)
+        pid_value = None if payload.pid == 0 else payload.pid
+        level = _compute_level(all_groups, pid_value)
         updated = await self.group_repo.update(existing, {
-            "pid": payload.pid,
+            "pid": pid_value,
             "level": level,
             "update_by": str(user.user_id),
             "last_update_time": _timestamp_ms(),
