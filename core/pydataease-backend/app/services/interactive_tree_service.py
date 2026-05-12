@@ -34,9 +34,9 @@ class InteractiveTreeService:
             dataset_nodes = await self._get_dataset_tree()
             datasource_nodes = await self._get_datasource_tree()
         except (AttributeError, TypeError):
-            root = {"id": 0, "name": "root", "leaf": False, "weight": 9, "extraFlag": 0, "extraFlag1": 0, "children": []}
-            dashboard_nodes = [{**root}]
-            datav_nodes = [{**root}]
+            root = {"id": 0, "name": "root", "pid": -1, "leaf": False, "weight": 7, "extraFlag": 0, "extraFlag1": 0, "children": []}
+            dashboard_nodes = [{**root, "extraFlag1": 1}]
+            datav_nodes = [{**root, "extraFlag1": 1}]
             dataset_nodes = [{**root}]
             datasource_nodes = [{**root}]
         return {
@@ -60,10 +60,13 @@ class InteractiveTreeService:
         flat = [
             {"id": row.id, "name": row.name or "", "pid": row.pid or 0,
              "leaf": row.node_type == "leaf" if row.node_type else True,
-             "weight": 0, "extraFlag": 0, "extraFlag1": 0}
+             "weight": 9, "extraFlag": 0, "extraFlag1": 0}
             for row in rows
         ]
-        return _build_tree(flat, pid=0)
+        children = _build_tree(flat, pid=0)
+        root = {"id": 0, "name": "root", "pid": -1, "leaf": False,
+                "weight": 7, "extraFlag": 0, "extraFlag1": 1, "children": children}
+        return [root]
 
     async def _get_dataset_tree(self) -> list[dict]:
         stmt = select(CoreDatasetGroup).order_by(CoreDatasetGroup.name.asc(), CoreDatasetGroup.create_time.desc())
@@ -72,10 +75,13 @@ class InteractiveTreeService:
         flat = [
             {"id": row.id, "name": row.name or "", "pid": row.pid or 0,
              "leaf": row.node_type == "dataset" if row.node_type else True,
-             "weight": 0, "extraFlag": 0, "extraFlag1": 0}
+             "weight": 9, "extraFlag": 0, "extraFlag1": 0}
             for row in rows
         ]
-        return _build_tree(flat, pid=0)
+        children = _build_tree(flat, pid=0)
+        root = {"id": 0, "name": "root", "pid": -1, "leaf": False,
+                "weight": 7, "extraFlag": 0, "extraFlag1": 0, "children": children}
+        return [root]
 
     async def _get_datasource_tree(self) -> list[dict]:
         stmt = select(CoreDatasource).order_by(CoreDatasource.name.asc(), CoreDatasource.update_time.desc())
@@ -83,10 +89,13 @@ class InteractiveTreeService:
         rows = result.scalars().all()
         flat = [
             {"id": row.id, "name": row.name or "", "pid": row.pid or 0,
-             "leaf": True, "weight": 0, "extraFlag": 0, "extraFlag1": 0}
+             "leaf": True, "weight": 9, "extraFlag": 0, "extraFlag1": 0}
             for row in rows
         ]
-        return _build_tree(flat, pid=0)
+        children = _build_tree(flat, pid=0)
+        root = {"id": 0, "name": "root", "pid": -1, "leaf": False,
+                "weight": 7, "extraFlag": 0, "extraFlag1": 0, "children": children}
+        return [root]
 
 
 async def get_interactive_tree_service(session: AsyncSession = Depends(get_db)) -> InteractiveTreeService:
