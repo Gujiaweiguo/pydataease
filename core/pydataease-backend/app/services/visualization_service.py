@@ -630,11 +630,23 @@ class VisualizationService:
         payload = VisualizationResponse.model_validate(item).model_dump(by_alias=True)
         payload["id"] = _sid(payload.get("id"))
         payload["pid"] = _sid(payload.get("pid"))
+        component_data = payload.get("componentData")
+        if isinstance(component_data, dict):
+            payload["componentData"] = []
         # Frontend expects JSON strings for these JSONB fields (Java backend stored as strings)
         for key in ("canvasStyleData", "componentData"):
             val = payload.get(key)
             if val is not None and not isinstance(val, str):
                 payload[key] = _json.dumps(val, ensure_ascii=False)
+        # Ensure componentData is always a JSON array (frontend calls .forEach on parsed result)
+        cd_str = payload.get("componentData")
+        if isinstance(cd_str, str):
+            try:
+                parsed = _json.loads(cd_str)
+                if not isinstance(parsed, list):
+                    payload["componentData"] = "[]"
+            except (ValueError, TypeError):
+                payload["componentData"] = "[]"
         return payload
 
 
