@@ -43,8 +43,12 @@ def _extract_public_key_pem(dekey: str) -> str:
     decryptor = cipher.decryptor()
     padded = decryptor.update(ct) + decryptor.finalize()
     unpadder = sym_padding.PKCS7(128).unpadder()
-    pub_key_b64 = (unpadder.update(padded) + unpadder.finalize()).decode("utf-8")
-    der_bytes = base64.b64decode(pub_key_b64)
+    plaintext = (unpadder.update(padded) + unpadder.finalize()).decode("utf-8")
+    # The dekey response now contains a PEM-formatted public key (for JSEncrypt compat).
+    # If it's already PEM, return directly; otherwise fall back to DER→PEM conversion.
+    if plaintext.startswith("-----BEGIN PUBLIC KEY-----"):
+        return plaintext
+    der_bytes = base64.b64decode(plaintext)
     pub = serialization.load_der_public_key(der_bytes)
     pem_bytes = pub.public_bytes(
         encoding=serialization.Encoding.PEM,

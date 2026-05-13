@@ -66,7 +66,8 @@ def _parse_json_value(value: str | None) -> object | None:
 
 
 def _normalize_int(value: int | str | None) -> int | None:
-    if value in (None, "", "null"):
+    """Normalize an int/str/None value. Returns None for 0, empty, or null (root-level pid)."""
+    if value in (None, "", "null", 0, "0"):
         return None
     return int(value)
 
@@ -171,8 +172,8 @@ class VisualizationService:
         created = await self.visualization_repo.create({
             "id": visualization_id,
             "name": payload.name,
-            "pid": _normalize_int(payload.pid) or 0,
-            "level": _compute_level(items, _normalize_int(payload.pid) or 0),
+            "pid": _normalize_int(payload.pid),
+            "level": _compute_level(items, _normalize_int(payload.pid)),
             "node_type": "leaf",
             "type": payload.type,
             "canvas_style_data": _parse_json_value(payload.canvas_style_data),
@@ -244,13 +245,13 @@ class VisualizationService:
         return {"id": _sid(updated.id), "status": updated.status}
 
     async def name_check(self, payload: VisualizationNameCheckRequest) -> bool:
-        pid = _normalize_int(payload.pid) or 0
+        pid = _normalize_int(payload.pid)
         normalized_name = payload.name.strip()
         items = await self.visualization_repo.list_all_ordered()
         for item in items:
             if item.delete_flag:
                 continue
-            if (item.pid or 0) != pid:
+            if (item.pid) != pid:
                 continue
             if (item.name or "").strip() != normalized_name:
                 continue
