@@ -133,6 +133,16 @@ class DatasourceService:
         await self._validate_postgres_connection(payload.configuration)
         return DatasourceValidateResponse(success=True, message="Connection successful", datasource_type=payload.type)
 
+    async def get_schemas_from_config(self, configuration: JSONDict) -> list[str]:
+        connection = await self._open_connection(configuration)
+        try:
+            rows = await connection.fetch(
+                "SELECT schema_name FROM information_schema.schemata ORDER BY schema_name"
+            )
+        finally:
+            await connection.close()
+        return [row["schema_name"] for row in rows]
+
     async def get_tables(self, datasource_id: int) -> list[DatasourceTableResponse]:
         datasource = await self._get_entity(datasource_id)
         self._ensure_supported_type(datasource.type)

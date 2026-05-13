@@ -1,11 +1,27 @@
 from __future__ import annotations
 
+import base64
+import json
+
 from fastapi import APIRouter, Depends, File, Form, UploadFile
 
 from app.dependencies.auth import get_current_user
 from app.schemas.auth import TokenUser
-from app.schemas.datasource import DatasourceCreate, DatasourceUpdate, DatasourceValidateRequest
+from app.schemas.datasource import (
+    DatasourceCreate,
+    DatasourceUpdate,
+    DatasourceValidateRequest,
+    DatasourceValidateResponse,
+)
 from app.services.datasource_service import DatasourceService, get_datasource_service
+
+
+def _decode_configuration(payload: dict) -> dict:
+    """Decode Base64-encoded configuration string to a dict, if needed."""
+    config_raw = payload.get("configuration")
+    if isinstance(config_raw, str):
+        payload["configuration"] = json.loads(base64.b64decode(config_raw).decode())
+    return payload
 
 router = APIRouter(prefix="/datasource", tags=["datasource"])
 
@@ -48,11 +64,26 @@ async def update_datasource(
 
 @router.post("/validate")
 async def validate_datasource(
-    payload: DatasourceValidateRequest,
+    payload: dict,
     _: TokenUser = Depends(get_current_user),
     service: DatasourceService = Depends(get_datasource_service),
-) -> object:
-    return await service.validate(payload)
+) -> DatasourceValidateResponse:
+    decoded = _decode_configuration(payload)
+    typed = DatasourceValidateRequest(**decoded)
+    return await service.validate(typed)
+
+
+@router.post("/getSchema")
+async def get_schema_from_config(
+    payload: dict,
+    _: TokenUser = Depends(get_current_user),
+    service: DatasourceService = Depends(get_datasource_service),
+) -> list[str]:
+    decoded = _decode_configuration(payload)
+    configuration = decoded.get("configuration", {})
+    if not isinstance(configuration, dict):
+        configuration = {}
+    return await service.get_schemas_from_config(configuration)
 
 
 @router.get("/getSchema/{datasource_id}")
