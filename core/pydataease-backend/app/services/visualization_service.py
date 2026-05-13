@@ -77,7 +77,12 @@ def _build_tree(items: list[DataVisualizationInfo]) -> list[VisualizationTreeNod
     for item in items:
         node = VisualizationTreeNodeResponse.model_validate(item)
         node.leaf = item.node_type == "leaf"
-        node.children = []
+        # Frontend uses !children?.length to detect leaf nodes,
+        # so only initialise children list for non-leaf (folder) nodes.
+        if node.leaf:
+            node.children = None
+        else:
+            node.children = []
         nodes[item.id] = node
     roots: list[VisualizationTreeNodeResponse] = []
     for item in items:
@@ -85,7 +90,10 @@ def _build_tree(items: list[DataVisualizationInfo]) -> list[VisualizationTreeNod
         if item.pid in (None, 0) or item.pid not in nodes:
             roots.append(node)
         else:
-            nodes[item.pid].children.append(node)
+            parent = nodes[item.pid]
+            if parent.children is None:
+                parent.children = []
+            parent.children.append(node)
     return roots
 
 
@@ -106,7 +114,7 @@ class VisualizationService:
             data = node.model_dump(by_alias=True)
             data["id"] = _sid(data.get("id"))
             data["pid"] = _sid(data.get("pid"))
-            data["children"] = [_node_to_dict(child) for child in node.children]
+            data["children"] = [_node_to_dict(child) for child in (node.children or [])] if node.children is not None else None
             return data
 
         return [_node_to_dict(node) for node in nodes]  # type: ignore[return-value]

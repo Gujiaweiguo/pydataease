@@ -205,8 +205,11 @@ class VisualizationResponse(BaseModel):
 
 
 class VisualizationTreeNodeResponse(VisualizationResponse):
-    children: list[VisualizationTreeNodeResponse] = Field(default_factory=list)
+    children: list[VisualizationTreeNodeResponse] | None = Field(default=None)
     leaf: bool | None = None
+    extra_flag: int | None = Field(default=None, serialization_alias="extraFlag")
+    extra_flag1: int | None = Field(default=1, serialization_alias="extraFlag1")
+    weight: int | None = Field(default=9, serialization_alias="weight")
 
 
 class StoreFavoritedRequest(BaseModel):
