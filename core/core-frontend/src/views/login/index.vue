@@ -15,6 +15,7 @@ import router from '@/router'
 import { ElMessage } from 'element-plus-secondary'
 import { XpackComponent } from '@/components/plugin'
 import { logoutHandler } from '@/utils/logout'
+import { usePermissionStoreWithOut } from '@/store/modules/permission'
 import DeImage from '@/assets/login-desc-de.png'
 import elementResizeDetectorMaker from 'element-resize-detector'
 import { cleanPlatformFlag } from '@/utils/utils'
@@ -109,6 +110,8 @@ const handleLogin = () => {
           userStore.setToken(token)
           userStore.setExp(exp)
           userStore.setTime(Date.now())
+          const permissionStore = usePermissionStoreWithOut()
+          permissionStore.clear()
           const queryRedirectPath = getCurLocation()
           router.push({ path: queryRedirectPath })
         })
@@ -128,6 +131,8 @@ const invalidPwdCb = cbParam => {
       duringLogin.value = false
       return
     }
+    const permissionStore = usePermissionStoreWithOut()
+    permissionStore.clear()
     const queryRedirectPath = getCurLocation()
     router.push({ path: queryRedirectPath })
   }
