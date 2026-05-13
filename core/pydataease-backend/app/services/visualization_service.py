@@ -193,6 +193,268 @@ _DEFAULT_USER_VIEW: dict[str, object] = {
     "state": "prepare",
 }
 
+_DEFAULT_CANVAS_STYLE_DATA: dict[str, object] = {
+    "width": 1920,
+    "height": 1080,
+    "scale": 60,
+    "scaleWidth": 60,
+    "scaleHeight": 60,
+    "backgroundColorSelect": True,
+    "backgroundImageEnable": False,
+    "backgroundType": "backgroundColor",
+    "background": "",
+    "openCommonStyle": True,
+    "opacity": 1,
+    "fontSize": 14,
+    "fontFamily": "PingFang",
+    "refreshViewEnable": False,
+    "refreshViewLoading": True,
+    "refreshUnit": "minute",
+    "refreshTime": 5,
+    "refreshBrowserEnable": False,
+    "refreshBrowserUnit": "minute",
+    "refreshBrowserTime": 5,
+    "popupAvailable": True,
+    "popupButtonAvailable": True,
+    "suspensionButtonAvailable": False,
+    "screenAdaptor": "widthFirst",
+    "dashboardAdaptor": "keepHeightAndWidth",
+    "themeId": "10001",
+    "color": "#000000",
+    "backgroundColor": "#f5f6f7",
+    "dashboard": {
+        "gap": "yes",
+        "gapSize": 5,
+        "gapMode": "middle",
+        "showGrid": False,
+        "matrixBase": 4,
+        "resultMode": "all",
+        "resultCount": 1000,
+        "themeColor": "light",
+        "mobileSetting": {
+            "customSetting": False,
+            "imageUrl": None,
+            "backgroundType": "image",
+            "color": "#000",
+        },
+    },
+    "component": {
+        "seniorStyleSetting": {
+            "linkageIconColor": "#a6a6a6",
+            "drillLayerColor": "#a6a6a6",
+            "pagerColor": "#a6a6a6",
+            "pagerSize": 14,
+        },
+        "formatterItem": {
+            "type": "auto",
+            "unitLanguage": "en",
+            "unit": 1,
+            "suffix": "",
+            "decimalCount": 2,
+            "thousandSeparator": True,
+        },
+        "chartTitle": {
+            "show": True,
+            "fontSize": 16,
+            "hPosition": "left",
+            "vPosition": "top",
+            "isItalic": False,
+            "isBolder": True,
+            "remarkShow": False,
+            "remark": "",
+            "fontFamily": "",
+            "letterSpace": "0",
+            "fontShadow": False,
+            "color": "#000000",
+            "remarkBackgroundColor": "#ffffff",
+        },
+        "chartColor": {
+            "basicStyle": {
+                "colorScheme": "default",
+                "colors": ["#1E90FF", "#90EE90", "#00CED1", "#E2BD84", "#7A90E0", "#3BA272", "#2BE7FF", "#0A8ADA", "#FFD700"],
+                "alpha": 100,
+                "gradient": False,
+                "mapStyle": "normal",
+                "areaBaseColor": "#FFFFFF",
+                "areaBorderColor": "#303133",
+                "gaugeStyle": "default",
+                "tableBorderColor": "#E6E7E4",
+                "tableScrollBarColor": "rgba(0, 0, 0, 0.15)",
+                "zoomButtonColor": "#aaa",
+                "zoomBackground": "#fff",
+            },
+            "misc": {
+                "flowMapConfig": {
+                    "lineConfig": {
+                        "mapLineAnimate": True,
+                        "mapLineGradient": False,
+                        "mapLineSourceColor": "#146C94",
+                        "mapLineTargetColor": "#576CBC",
+                    }
+                },
+                "nameFontColor": "#000000",
+                "valueFontColor": "#5470c6",
+            },
+            "tableHeader": {
+                "tableHeaderBgColor": "#1E90FF",
+                "tableHeaderCornerBgColor": "#1E90FF",
+                "tableHeaderColBgColor": "#1E90FF",
+                "tableHeaderFontColor": "#000000",
+                "tableHeaderCornerFontColor": "#000000",
+                "tableHeaderColFontColor": "#000000",
+            },
+            "tableCell": {
+                "tableItemBgColor": "#FFFFFF",
+                "tableFontColor": "#000000",
+                "tableItemSubBgColor": "#1E90FF",
+            },
+            "label": {"color": "#000000", "fontSize": 12},
+            "tooltip": {"color": "#000000", "fontSize": 12, "backgroundColor": "#FFFFFF"},
+        },
+        "chartCommonStyle": {
+            "backgroundColorSelect": True,
+            "backdropFilterEnable": False,
+            "backgroundImageEnable": False,
+            "backgroundType": "innerImage",
+            "innerImage": "board/board_1.svg",
+            "outerImage": None,
+            "innerPadding": {"mode": "Uniform", "top": 12},
+            "borderRadius": {"mode": "Uniform", "topLeft": 0},
+            "backdropFilter": 4,
+            "backgroundColor": "rgba(255,255,255,1)",
+            "innerImageColor": "rgba(16, 148, 229,1)",
+        },
+        "filterStyle": {
+            "layout": "horizontal",
+            "titleLayout": "left",
+            "labelColor": "#1f2329",
+            "titleColor": "#1f2329",
+            "color": "#1f2329",
+            "borderColor": "#bbbfc4",
+            "text": "#1f2329",
+            "bgColor": "#FFFFFF",
+        },
+        "tabStyle": {
+            "headPosition": "left",
+            "headFontColor": "#000000",
+            "headFontActiveColor": "#000000",
+            "headBorderColor": "#ffffff",
+            "headBorderActiveColor": "#ffffff",
+        },
+    },
+}
+
+_DEFAULT_CHART_CUSTOM_ATTR: dict[str, object] = {
+    "basicStyle": {
+        "alpha": 100,
+        "colorScheme": "default",
+        "colors": ["#5470c6", "#91cc75", "#fac858", "#ee6666", "#73c0de", "#3ba272", "#fc8452", "#9a60b4", "#ea7ccc"],
+        "gradient": False,
+        "lineWidth": 2,
+        "lineSymbol": "circle",
+        "lineSymbolSize": 4,
+        "lineSmooth": True,
+        "barDefault": True,
+        "radiusColumnBar": "rightAngle",
+        "columnBarRightAngleRadius": 20,
+        "columnWidthRatio": 60,
+        "barWidth": 40,
+        "barGap": 0.4,
+        "lineType": "solid",
+    },
+    "misc": {
+        "pieInnerRadius": 0,
+        "pieOuterRadius": 80,
+        "radarShape": "polygon",
+        "radarSize": 80,
+    },
+    "label": {
+        "show": False,
+        "position": "top",
+        "color": "#909399",
+        "fontSize": 12,
+        "formatter": "",
+        "labelLine": {"show": True},
+        "reserveDecimalCount": 2,
+        "showDimension": True,
+        "showQuota": False,
+        "showProportion": True,
+    },
+    "tooltip": {
+        "show": True,
+        "trigger": "item",
+        "confine": True,
+        "fontSize": 12,
+        "color": "#909399",
+        "backgroundColor": "#ffffff",
+        "seriesTooltipFormatter": [],
+    },
+    "map": {"id": "", "level": "world"},
+}
+
+_DEFAULT_CHART_CUSTOM_STYLE: dict[str, object] = {
+    "text": {
+        "show": True,
+        "fontSize": 16,
+        "color": "#ffffff",
+        "hPosition": "left",
+        "vPosition": "top",
+        "isItalic": False,
+        "isBolder": True,
+        "remarkShow": False,
+        "remark": "",
+        "remarkBackgroundColor": "#ffffff",
+        "fontFamily": "",
+        "letterSpace": "0",
+        "fontShadow": False,
+    },
+    "legend": {
+        "show": True,
+        "hPosition": "center",
+        "vPosition": "bottom",
+        "orient": "horizontal",
+        "icon": "circle",
+        "color": "#333333",
+        "fontSize": 12,
+    },
+    "xAxis": {
+        "show": True,
+        "position": "bottom",
+        "nameShow": False,
+        "color": "#333333",
+        "fontSize": 12,
+        "axisLabel": {"show": True, "color": "#333333", "fontSize": 12, "rotate": 0, "formatter": "{value}", "lengthLimit": 10},
+        "axisLine": {"show": True, "lineStyle": {"color": "#cccccc", "width": 1, "style": "solid"}},
+        "splitLine": {"show": False, "lineStyle": {"color": "#cccccc", "width": 1, "style": "solid"}},
+    },
+    "yAxis": {
+        "show": True,
+        "position": "left",
+        "nameShow": False,
+        "color": "#333333",
+        "fontSize": 12,
+        "axisLabel": {"show": True, "color": "#333333", "fontSize": 12, "rotate": 0, "formatter": "{value}", "lengthLimit": 10},
+        "axisLine": {"show": False, "lineStyle": {"color": "#cccccc", "width": 1, "style": "solid"}},
+        "splitLine": {"show": True, "lineStyle": {"color": "#cccccc", "width": 1, "style": "solid"}},
+    },
+    "misc": {
+        "showName": False,
+        "color": "#999",
+        "fontSize": 12,
+        "axisColor": "#999",
+        "splitNumber": 5,
+    },
+}
+
+_DEFAULT_CHART_SENIOR: dict[str, object] = {
+    "functionCfg": {},
+    "assistLineCfg": {"enable": False, "assistLine": []},
+    "threshold": {"enable": False},
+    "scrollCfg": {"open": False, "row": 1, "interval": 2000, "step": 50},
+    "areaMapping": {},
+    "bubbleCfg": {"enable": False},
+}
+
 
 def _deep_merge_defaults(defaults: object, value: object) -> object:
     if isinstance(defaults, dict):
@@ -212,6 +474,64 @@ def _deep_merge_defaults(defaults: object, value: object) -> object:
             return deepcopy(value)
         return deepcopy(defaults)
     return deepcopy(value if value is not None else defaults)
+
+
+def _enrich_canvas_style_data(canvas_style_data: object) -> object:
+    """Enrich canvasStyleData with dashboard defaults for frontend compatibility."""
+    if not isinstance(canvas_style_data, dict):
+        return canvas_style_data
+    return _deep_merge_defaults(_DEFAULT_CANVAS_STYLE_DATA, canvas_style_data)
+
+
+def _enrich_chart_view(chart_dict: dict[str, object]) -> dict[str, object]:
+    """Enrich a single canvasViewInfo entry with frontend-required defaults."""
+    enriched = dict(chart_dict)
+
+    for field in ("customAttr", "customStyle", "senior"):
+        raw = enriched.get(field)
+        if isinstance(raw, str):
+            try:
+                enriched[field] = _json.loads(raw)
+            except (ValueError, TypeError):
+                pass
+
+    custom_attr = enriched.get("customAttr")
+    if isinstance(custom_attr, dict):
+        enriched["customAttr"] = _deep_merge_defaults(_DEFAULT_CHART_CUSTOM_ATTR, custom_attr)
+    elif custom_attr is None:
+        enriched["customAttr"] = deepcopy(_DEFAULT_CHART_CUSTOM_ATTR)
+
+    custom_style = enriched.get("customStyle")
+    if isinstance(custom_style, dict):
+        enriched["customStyle"] = _deep_merge_defaults(_DEFAULT_CHART_CUSTOM_STYLE, custom_style)
+    elif custom_style is None:
+        enriched["customStyle"] = deepcopy(_DEFAULT_CHART_CUSTOM_STYLE)
+
+    senior = enriched.get("senior")
+    if isinstance(senior, dict):
+        enriched["senior"] = _deep_merge_defaults(_DEFAULT_CHART_SENIOR, senior)
+    elif senior is None:
+        enriched["senior"] = deepcopy(_DEFAULT_CHART_SENIOR)
+
+    for field in ("xAxis", "yAxis", "xAxisExt", "yAxisExt", "extStack", "drillFields", "viewFields", "extBubble", "extLabel", "extTooltip", "sortPriority"):
+        if not isinstance(enriched.get(field), list):
+            enriched[field] = []
+
+    enriched.setdefault("type", "bar")
+    enriched.setdefault("render", "antv")
+    enriched.setdefault("title", "")
+    enriched.setdefault("resultMode", "custom")
+    enriched.setdefault("resultCount", 1000)
+    enriched.setdefault("refreshViewEnable", False)
+    enriched.setdefault("refreshTime", 5)
+    enriched.setdefault("refreshUnit", "minute")
+    enriched.setdefault("isPlugin", False)
+    enriched.setdefault("plugin", {"isPlugin": False, "staticMap": None})
+    enriched.setdefault("customFilter", {})
+    enriched.setdefault("flowMapStartName", [])
+    enriched.setdefault("flowMapEndName", [])
+
+    return enriched
 
 
 def _enrich_component_item(component: object, visualization_type: str | None, canvas_id: str = "canvas-main") -> object:
@@ -327,17 +647,28 @@ class VisualizationService:
                 if col.name == "id":
                     chart_dict["id"] = _sid(val)
                 else:
-                    chart_dict[col.name] = val
+                    chart_dict[self._snake_to_camel(col.name)] = val
             # Parse JSON string fields that frontend expects as objects
-            for json_field in ("custom_attr", "custom_style", "custom_filter", "senior", "x_axis", "y_axis", "x_axis_ext", "y_axis_ext", "ext_stack", "ext_bubble", "ext_label", "ext_tooltip", "drill_fields", "view_fields", "ext_color"):
+            for json_field in ("customAttr", "customStyle", "customFilter", "senior", "xAxis", "yAxis", "xAxisExt", "yAxisExt", "extStack", "extBubble", "extLabel", "extTooltip", "drillFields", "viewFields", "extColor"):
                 raw = chart_dict.get(json_field)
                 if isinstance(raw, str):
                     try:
                         chart_dict[json_field] = _json.loads(raw)
                     except (ValueError, TypeError):
                         pass
-            view_info[str(chart.id)] = chart_dict
+            view_info[str(chart.id)] = _enrich_chart_view(chart_dict)
         result["canvasViewInfo"] = view_info
+        canvas_style = result.get("canvasStyleData")
+        if isinstance(canvas_style, str):
+            try:
+                canvas_style = _json.loads(canvas_style)
+            except (ValueError, TypeError):
+                canvas_style = {}
+        if canvas_style is None:
+            canvas_style = deepcopy(_DEFAULT_CANVAS_STYLE_DATA)
+        if isinstance(canvas_style, dict):
+            canvas_style = _enrich_canvas_style_data(canvas_style)
+            result["canvasStyleData"] = _json.dumps(canvas_style, ensure_ascii=False)
         return result  # type: ignore[return-value]
 
     async def save(self, payload: VisualizationSaveRequest, user: TokenUser) -> VisualizationResponse:
@@ -379,6 +710,11 @@ class VisualizationService:
         existing = await self.visualization_repo.get_by_id(visualization_id)
         if existing is None:
             component_data = _enrich_component_data(_parse_json_value(payload.component_data), payload.type)
+            canvas_style = _parse_json_value(payload.canvas_style_data)
+            if canvas_style is None:
+                canvas_style = deepcopy(_DEFAULT_CANVAS_STYLE_DATA)
+            if isinstance(canvas_style, dict):
+                canvas_style = _enrich_canvas_style_data(canvas_style)
             created = await self.visualization_repo.create({
                 "id": visualization_id,
                 "name": payload.name,
@@ -386,7 +722,7 @@ class VisualizationService:
                 "level": _compute_level(items, pid),
                 "node_type": "leaf",
                 "type": payload.type,
-                "canvas_style_data": _parse_json_value(payload.canvas_style_data),
+                "canvas_style_data": canvas_style,
                 "component_data": self._merge_component_state(component_data, None),
                 "mobile_layout": payload.mobile_layout,
                 "status": payload.status if payload.status is not None else 0,
@@ -400,13 +736,18 @@ class VisualizationService:
             })
         else:
             component_data = _enrich_component_data(_parse_json_value(payload.component_data), payload.type or existing.type)
+            canvas_style = _parse_json_value(payload.canvas_style_data)
+            if canvas_style is None:
+                canvas_style = deepcopy(_DEFAULT_CANVAS_STYLE_DATA)
+            if isinstance(canvas_style, dict):
+                canvas_style = _enrich_canvas_style_data(canvas_style)
             created = await self.visualization_repo.update(existing, {
                 "name": payload.name,
                 "pid": pid if pid is not None else existing.pid,
                 "level": _compute_level(items, pid if pid is not None else existing.pid),
                 "node_type": existing.node_type or "leaf",
                 "type": payload.type or existing.type,
-                "canvas_style_data": _parse_json_value(payload.canvas_style_data),
+                "canvas_style_data": canvas_style,
                 "component_data": self._merge_component_state(component_data, existing.component_data),
                 "mobile_layout": payload.mobile_layout if payload.mobile_layout is not None else existing.mobile_layout,
                 "status": payload.status if payload.status is not None else existing.status,
@@ -424,6 +765,11 @@ class VisualizationService:
         existing = await self._get_visualization(payload.id)
         items = list(await self.visualization_repo.list_all_ordered())
         pid = _normalize_int(payload.pid)
+        canvas_style = _parse_json_value(payload.canvas_style_data)
+        if canvas_style is None:
+            canvas_style = deepcopy(_DEFAULT_CANVAS_STYLE_DATA)
+        if isinstance(canvas_style, dict):
+            canvas_style = _enrich_canvas_style_data(canvas_style)
         component_data = self._merge_component_state(
             _enrich_component_data(_parse_json_value(payload.component_data), payload.type or existing.type),
             existing.component_data,
@@ -434,7 +780,7 @@ class VisualizationService:
             "level": _compute_level(items, pid if pid is not None else existing.pid),
             "node_type": existing.node_type or "leaf",
             "type": payload.type or existing.type,
-            "canvas_style_data": _parse_json_value(payload.canvas_style_data),
+            "canvas_style_data": canvas_style,
             "component_data": component_data,
             "mobile_layout": payload.mobile_layout,
             "status": 2,
@@ -781,6 +1127,11 @@ class VisualizationService:
             else:
                 chars.append(char)
         return "".join(chars).lstrip("_")
+
+    @staticmethod
+    def _snake_to_camel(value: str) -> str:
+        parts = value.split("_")
+        return parts[0] + "".join(part[:1].upper() + part[1:] for part in parts[1:])
 
     @staticmethod
     def _merge_component_state(
