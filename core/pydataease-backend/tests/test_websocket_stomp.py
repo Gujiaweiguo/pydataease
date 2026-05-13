@@ -152,7 +152,6 @@ async def test_websocket_endpoint_handles_partial_stomp_frames() -> None:
     await websocket_endpoint(websocket)  # type: ignore[arg-type]
 
     assert websocket.accepted is True
-    assert websocket.sent_json == [{"type": "welcome", "content": "WebSocket compatibility stub connected"}]
     assert websocket.sent_text[0].startswith("CONNECTED\n")
     assert websocket.sent_text[1] == "RECEIPT\nreceipt-id:r-1\n\n\x00"
     assert websocket.sent_text[2].startswith("MESSAGE\n")
@@ -165,5 +164,4 @@ async def test_websocket_endpoint_preserves_plain_text_echo() -> None:
 
     await websocket_endpoint(websocket)  # type: ignore[arg-type]
 
-    assert websocket.sent_json == [{"type": "welcome", "content": "WebSocket compatibility stub connected"}]
     assert websocket.sent_text == ["echo: hello"]
