@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from copy import deepcopy
 import json as _json
 import time
 from typing import Any, cast, final
@@ -70,6 +71,200 @@ def _normalize_int(value: int | str | None) -> int | None:
     if value in (None, "", "null", 0, "0"):
         return None
     return int(value)
+
+
+_COMMON_STYLE_DEFAULTS: dict[str, object] = {
+    "rotate": 0,
+    "opacity": 1,
+    "borderActive": False,
+    "borderWidth": 1,
+    "borderRadius": 5,
+    "borderStyle": "solid",
+    "borderColor": "#cccccc",
+}
+
+_BASE_EVENTS: dict[str, object] = {
+    "checked": False,
+    "showTips": False,
+    "type": "jump",
+    "typeList": [
+        {"key": "jump", "label": "jump"},
+        {"key": "download", "label": "download"},
+        {"key": "share", "label": "share"},
+        {"key": "fullScreen", "label": "fullScreen"},
+        {"key": "showHidden", "label": "showHidden"},
+        {"key": "refreshDataV", "label": "refreshDataV"},
+        {"key": "refreshView", "label": "refreshView"},
+    ],
+    "jump": {"value": "https://", "type": "_blank"},
+    "download": {"value": True},
+    "share": {"value": True},
+    "showHidden": {"value": True},
+    "refreshDataV": {"value": True},
+    "refreshView": {"value": True, "target": "all"},
+}
+
+_BASE_CAROUSEL: dict[str, object] = {"enable": False, "time": 10}
+
+_MULTI_DIMENSIONAL: dict[str, object] = {"enable": False, "x": 0, "y": 0, "z": 0}
+
+_COMMON_COMPONENT_BACKGROUND_BASE: dict[str, object] = {
+    "backgroundColorSelect": True,
+    "backdropFilterEnable": False,
+    "backgroundImageEnable": False,
+    "backgroundType": "innerImage",
+    "innerImage": "board/board_1.svg",
+    "outerImage": None,
+    "innerPadding": {"mode": "uniform", "top": 12},
+    "borderRadius": {"mode": "uniform", "topLeft": 0},
+    "backdropFilter": 4,
+}
+
+_COMMON_COMPONENT_BACKGROUND_LIGHT: dict[str, object] = {
+    **_COMMON_COMPONENT_BACKGROUND_BASE,
+    "backgroundColor": "rgba(255,255,255,1)",
+    "innerImageColor": "rgba(16, 148, 229,1)",
+}
+
+_COMMON_COMPONENT_BACKGROUND_DARK: dict[str, object] = {
+    **_COMMON_COMPONENT_BACKGROUND_BASE,
+    "backgroundColor": "rgba(19,28,66,1)",
+    "innerImageColor": "#1094E5",
+}
+
+_ACTION_SELECTION: dict[str, object] = {"linkageActive": "custom"}
+
+_COMMON_ATTR: dict[str, object] = {
+    "animations": [],
+    "canvasId": "canvas-main",
+    "events": _BASE_EVENTS,
+    "carousel": _BASE_CAROUSEL,
+    "multiDimensional": _MULTI_DIMENSIONAL,
+    "groupStyle": {},
+    "isLock": False,
+    "maintainRadio": False,
+    "aspectRatio": 1,
+    "isShow": True,
+    "dashboardHidden": False,
+    "category": "base",
+    "dragging": False,
+    "resizing": False,
+    "collapseName": [
+        "position",
+        "background",
+        "style",
+        "picture",
+        "frameLinks",
+        "videoLinks",
+        "streamLinks",
+        "carouselInfo",
+        "events",
+        "decoration_style",
+    ],
+    "linkage": {
+        "duration": 0,
+        "data": [{"id": "", "label": "", "event": "", "style": [{"key": "", "value": ""}]}],
+    },
+}
+
+_DEFAULT_USER_VIEW: dict[str, object] = {
+    **_COMMON_ATTR,
+    "component": "UserView",
+    "name": "view",
+    "label": "view",
+    "propValue": {"textValue": "", "urlList": []},
+    "icon": "bar",
+    "innerType": "bar",
+    "editing": False,
+    "canvasActive": False,
+    "actionSelection": _ACTION_SELECTION,
+    "x": 1,
+    "y": 1,
+    "sizeX": 36,
+    "sizeY": 14,
+    "style": {
+        **_COMMON_STYLE_DEFAULTS,
+        "adaptation": "adaptation",
+        "width": 600,
+        "height": 300,
+    },
+    "matrixStyle": {},
+    "commonBackground": _COMMON_COMPONENT_BACKGROUND_LIGHT,
+    "state": "prepare",
+}
+
+
+def _deep_merge_defaults(defaults: object, value: object) -> object:
+    if isinstance(defaults, dict):
+        merged: dict[str, object] = {}
+        value_dict = value if isinstance(value, dict) else {}
+        for key, default_value in defaults.items():
+            if key in value_dict:
+                merged[key] = _deep_merge_defaults(default_value, value_dict[key])
+            else:
+                merged[key] = deepcopy(default_value)
+        for key, current_value in value_dict.items():
+            if key not in merged:
+                merged[key] = deepcopy(current_value)
+        return merged
+    if isinstance(defaults, list):
+        if isinstance(value, list):
+            return deepcopy(value)
+        return deepcopy(defaults)
+    return deepcopy(value if value is not None else defaults)
+
+
+def _enrich_component_item(component: object, visualization_type: str | None, canvas_id: str = "canvas-main") -> object:
+    if not isinstance(component, dict):
+        return component
+
+    enriched = deepcopy(component)
+    component_type = enriched.get("component")
+
+    if component_type == "UserView":
+        defaults = deepcopy(_DEFAULT_USER_VIEW)
+        defaults["commonBackground"] = deepcopy(
+            _COMMON_COMPONENT_BACKGROUND_LIGHT if visualization_type == "dashboard" else _COMMON_COMPONENT_BACKGROUND_DARK
+        )
+        defaults["canvasId"] = canvas_id
+        return _deep_merge_defaults(defaults, enriched)
+
+    if component_type == "Group":
+        prop_value = enriched.get("propValue")
+        if isinstance(prop_value, list):
+            enriched["propValue"] = [
+                _enrich_component_item(item, visualization_type, str(enriched.get("id") or canvas_id)) for item in prop_value
+            ]
+        return enriched
+
+    if component_type == "DeTabs":
+        prop_value = enriched.get("propValue")
+        tab_owner = str(enriched.get("id") or canvas_id)
+        if isinstance(prop_value, list):
+            new_tabs: list[object] = []
+            for tab in prop_value:
+                if not isinstance(tab, dict):
+                    new_tabs.append(tab)
+                    continue
+                tab_copy = deepcopy(tab)
+                tab_name = str(tab_copy.get("name") or "")
+                tab_canvas_id = f"{tab_owner}--{tab_name}" if tab_name else tab_owner
+                tab_components = tab_copy.get("componentData")
+                if isinstance(tab_components, list):
+                    tab_copy["componentData"] = [
+                        _enrich_component_item(item, visualization_type, tab_canvas_id) for item in tab_components
+                    ]
+                new_tabs.append(tab_copy)
+            enriched["propValue"] = new_tabs
+        return enriched
+
+    return enriched
+
+
+def _enrich_component_data(component_data: object | None, visualization_type: str | None) -> object | None:
+    if not isinstance(component_data, list):
+        return component_data
+    return [_enrich_component_item(component, visualization_type) for component in component_data]
 
 
 def _build_tree(items: list[DataVisualizationInfo]) -> list[VisualizationTreeNodeResponse]:
@@ -183,6 +378,7 @@ class VisualizationService:
         pid = _normalize_int(payload.pid)
         existing = await self.visualization_repo.get_by_id(visualization_id)
         if existing is None:
+            component_data = _enrich_component_data(_parse_json_value(payload.component_data), payload.type)
             created = await self.visualization_repo.create({
                 "id": visualization_id,
                 "name": payload.name,
@@ -191,7 +387,7 @@ class VisualizationService:
                 "node_type": "leaf",
                 "type": payload.type,
                 "canvas_style_data": _parse_json_value(payload.canvas_style_data),
-                "component_data": self._merge_component_state(_parse_json_value(payload.component_data), None),
+                "component_data": self._merge_component_state(component_data, None),
                 "mobile_layout": payload.mobile_layout,
                 "status": payload.status if payload.status is not None else 0,
                 "content_id": payload.content_id,
@@ -203,6 +399,7 @@ class VisualizationService:
                 "delete_flag": False,
             })
         else:
+            component_data = _enrich_component_data(_parse_json_value(payload.component_data), payload.type or existing.type)
             created = await self.visualization_repo.update(existing, {
                 "name": payload.name,
                 "pid": pid if pid is not None else existing.pid,
@@ -210,7 +407,7 @@ class VisualizationService:
                 "node_type": existing.node_type or "leaf",
                 "type": payload.type or existing.type,
                 "canvas_style_data": _parse_json_value(payload.canvas_style_data),
-                "component_data": self._merge_component_state(_parse_json_value(payload.component_data), existing.component_data),
+                "component_data": self._merge_component_state(component_data, existing.component_data),
                 "mobile_layout": payload.mobile_layout if payload.mobile_layout is not None else existing.mobile_layout,
                 "status": payload.status if payload.status is not None else existing.status,
                 "content_id": payload.content_id if payload.content_id is not None else existing.content_id,
@@ -227,7 +424,10 @@ class VisualizationService:
         existing = await self._get_visualization(payload.id)
         items = list(await self.visualization_repo.list_all_ordered())
         pid = _normalize_int(payload.pid)
-        component_data = self._merge_component_state(_parse_json_value(payload.component_data), existing.component_data)
+        component_data = self._merge_component_state(
+            _enrich_component_data(_parse_json_value(payload.component_data), payload.type or existing.type),
+            existing.component_data,
+        )
         await self.visualization_repo.update(existing, {
             "name": payload.name,
             "pid": pid if pid is not None else existing.pid,
