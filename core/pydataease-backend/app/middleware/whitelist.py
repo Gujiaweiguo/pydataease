@@ -9,6 +9,7 @@ WHITE_PATHS = {
     "/",
     "/health",
     "/login/localLogin",
+    "/login/refresh",
     "/apisix/check",
     "/dekey",
     "/symmetricKey",

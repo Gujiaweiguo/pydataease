@@ -110,3 +110,7 @@
 - `ChartService.get_data()` can stay FakeSession-safe by returning the pre-existing empty payload whenever chart/dataset resolution or SQL execution fails, while only executing real SQL after `table_id -> dataset_group -> dataset_table -> datasource` resolution succeeds.
 - A small `ChartDataBuilder` layer is enough for first delivery: map grouped query rows into AntV-style `{field,name,value,category,quotaList,dimensionList}` items for bar/line/pie and return row dicts directly for table charts.
 - Reusing `SQLExecutor` for internal PostgreSQL plus `DatasourceService._open_connection()` for external PostgreSQL keeps SQL execution aligned with existing validation and datasource configuration patterns.
+
+## 2026-05-13 refresh + chart metadata fix
+- `/login/refresh` must bypass middleware whitelist checks and decode `X-DE-TOKEN`/`X-EMBEDDED-TOKEN` with `verify_exp=False` after loading the user-specific derived JWT secret, so expired-but-authentic tokens can refresh without changing global JWT behavior.
+- Visualization `find_by_id()` already serializes `x_axis`/`y_axis` to `xAxis`/`yAxis` and parses JSON-compatible values; missing bar-chart labels here were caused by empty DB axis arrays, not service serialization.
