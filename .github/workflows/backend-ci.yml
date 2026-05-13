@@ -1,0 +1,67 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [feat/fastapi-backend-rewrite]
+    paths: ['core/pydataease-backend/**']
+  pull_request:
+    branches: [feat/fastapi-backend-rewrite]
+    paths: ['core/pydataease-backend/**']
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+
+    env:
+      DE_ENV: dev
+      DE_DATABASE_URL: postgresql+asyncpg://dataease:dataease@localhost:5432/dataease
+      DE_SECRET_KEY: ci-test-secret-key
+      DE_SHARE_SECRET_KEY: ci-test-share-secret-key
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: dataease
+          POSTGRES_PASSWORD: dataease
+          POSTGRES_DB: dataease
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Install dependencies
+        working-directory: core/pydataease-backend
+        run: uv sync
+
+      - name: Run linter
+        working-directory: core/pydataease-backend
+        run: uv run ruff check .
+
+      - name: Run tests
+        working-directory: core/pydataease-backend
+        run: >-
+          uv run pytest tests/ -v --tb=short -x
+          --ignore=tests/test_e2e_creation_flow.py
+
+  docker-build:
+    needs: lint-and-test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        working-directory: core/pydataease-backend
+        run: docker build -t pydataease-backend:ci .
