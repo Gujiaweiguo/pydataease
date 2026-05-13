@@ -8,16 +8,18 @@ from importlib import import_module
 from typing import Any, final
 
 from fastapi import Depends, HTTPException, status
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.dependencies.database import get_db
-from app.models.dataset import CoreDatasetGroup
+from app.models.dataset import CoreDatasetGroup, CoreDatasetTable
 from app.repositories.dataset_repo import (
     DatasetFieldRepository,
     DatasetGroupRepository,
     DatasetTableRepository,
 )
 from app.repositories.datasource_repo import DatasourceRepository
+from app.services.datasource_service import DatasourceService, _as_config_dict
 from app.utils.id_utils import _sid
 from app.schemas.auth import TokenUser
 from app.schemas.dataset import (
@@ -30,6 +32,7 @@ from app.schemas.dataset import (
     DatasetTableFieldRequest,
     DatasetTreeNodeResponse,
 )
+from app.schemas.datasource import DatasourceFieldResponse
 
 SQLExecutor = import_module("app.services.sql_executor").SQLExecutor
 
@@ -88,12 +91,12 @@ class DatasetService:
         self.field_repo = field_repo
         self.sql_executor = SQLExecutor()
 
-    async def tree(self) -> list[dict]:
+    async def tree(self) -> list[dict[str, object]]:
         groups = await self.group_repo.list_all_ordered()
         groups = await self._filter_by_permission(groups)
         built_tree = _build_tree(list(groups))
 
-        def _node_to_dict(node: DatasetTreeNodeResponse) -> dict:
+        def _node_to_dict(node: DatasetTreeNodeResponse) -> dict[str, object]:
             d = node.model_dump()
             d["id"] = str(d["id"])
             d["pid"] = str(d["pid"]) if d["pid"] is not None else "0"
@@ -122,7 +125,7 @@ class DatasetService:
         level = _compute_level(all_groups, pid_value)
 
         now = _timestamp_ms()
-        info_str = json.dumps(payload.info) if payload.info is not None else None
+        info_value = self._normalize_info(payload.info)
 
         created = await self.group_repo.create({
             "id": _new_identifier(),
@@ -132,13 +135,15 @@ class DatasetService:
             "node_type": payload.node_type,
             "type": payload.type,
             "mode": payload.mode,
-            "info": info_str,
+            "info": info_value,
             "create_by": str(user.user_id),
             "create_time": now,
             "update_by": str(user.user_id),
             "last_update_time": now,
             "is_cross": payload.is_cross,
         })
+
+        await self._sync_dataset_source(created.id, payload.name.strip(), info_value)
 
         if payload.all_fields:
             await self._save_fields_for_group(created.id, payload.all_fields)
@@ -155,7 +160,7 @@ class DatasetService:
 
         now = _timestamp_ms()
         info_value = payload.info if payload.info is not None else existing.info
-        info_str = json.dumps(info_value) if isinstance(info_value, (dict, list)) else info_value
+        info_value = self._normalize_info(info_value)
 
         update_data: dict[str, object] = {
             "update_by": str(user.user_id),
@@ -172,12 +177,13 @@ class DatasetService:
             update_data["type"] = payload.type
         if payload.mode is not None:
             update_data["mode"] = payload.mode
-        if info_str is not None:
-            update_data["info"] = info_str
+        if info_value is not None:
+            update_data["info"] = info_value
         if payload.is_cross is not None:
             update_data["is_cross"] = payload.is_cross
 
         updated = await self.group_repo.update(existing, update_data)
+        await self._sync_dataset_source(updated.id, updated.name or "", info_value)
 
         if payload.all_fields is not None:
             await self.field_repo.delete_by_group(payload.id)
@@ -360,7 +366,7 @@ class DatasetService:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Dataset not found")
         return group
 
-    async def _save_fields_for_group(self, group_id: int, fields_data: list[object]) -> None:
+    async def _save_fields_for_group(self, group_id: int, fields_data: Sequence[object]) -> None:
         for idx, field_input in enumerate(fields_data):
             if not isinstance(field_input, dict):
                 continue
@@ -385,6 +391,87 @@ class DatasetService:
                 "datasource_id": field_input.get("datasourceId", field_input.get("datasource_id")),
                 "dataset_table_id": field_input.get("datasetTableId", field_input.get("dataset_table_id")),
             })
+
+    async def _sync_dataset_source(self, group_id: int, group_name: str, info: object) -> None:
+        if not isinstance(info, dict):
+            return
+        datasource_id = info.get("datasourceId") or info.get("datasource_id")
+        table_name = info.get("table") or info.get("tableName") or info.get("table_name")
+        if datasource_id is None or not isinstance(table_name, str) or not table_name.strip():
+            return
+
+        datasource_id_int = int(str(datasource_id))
+        table_name_str = table_name.strip()
+        dataset_table = await self._get_or_create_dataset_table(group_id, group_name, datasource_id_int, table_name_str)
+        await self.field_repo.delete_by_group(group_id)
+        fields = await self._load_datasource_fields(datasource_id_int, table_name_str)
+        normalized_fields = [self._field_to_storage_payload(field, datasource_id_int, dataset_table.id) for field in fields]
+        await self._save_fields_for_group(group_id, normalized_fields)
+
+    async def _get_or_create_dataset_table(
+        self,
+        group_id: int,
+        group_name: str,
+        datasource_id: int,
+        table_name: str,
+    ) -> CoreDatasetTable:
+        existing_tables = await self.table_repo.list_by_group(group_id)
+        existing = next((table for table in existing_tables if table.table_name == table_name), None)
+        if existing is not None:
+            return existing
+        return await self.table_repo.create({
+            "id": _new_identifier(),
+            "name": group_name,
+            "table_name": table_name,
+            "datasource_id": datasource_id,
+            "dataset_group_id": group_id,
+            "type": "db",
+            "info": None,
+        })
+
+    async def _load_datasource_fields(self, datasource_id: int, table_name: str) -> list[DatasourceFieldResponse]:
+        datasource = await DatasourceRepository(self.session).get_by_id(datasource_id)
+        if datasource is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Datasource not found")
+        service = DatasourceService(self.session, DatasourceRepository(self.session))
+        return await service.get_fields(datasource_id, table_name)
+
+    @staticmethod
+    def _field_to_storage_payload(field: DatasourceFieldResponse, datasource_id: int, dataset_table_id: int) -> dict[str, object]:
+        name = getattr(field, "name", "")
+        data_type = str(getattr(field, "data_type", "varchar") or "varchar")
+        return {
+            "originName": name,
+            "name": name,
+            "dataeaseName": name,
+            "fieldShortName": name,
+            "groupType": "d",
+            "type": data_type,
+            "deType": DatasetService._de_type_for_column(data_type),
+            "deExtractType": 0,
+            "extField": 0,
+            "checked": True,
+            "datasourceId": datasource_id,
+            "datasetTableId": dataset_table_id,
+        }
+
+    @staticmethod
+    def _normalize_info(info: object) -> object:
+        if isinstance(info, str):
+            try:
+                return json.loads(info)
+            except (TypeError, ValueError):
+                return info
+        return info
+
+    @staticmethod
+    def _de_type_for_column(data_type: str) -> int:
+        lower = data_type.lower()
+        if any(token in lower for token in ("int", "numeric", "decimal", "double", "real", "float")):
+            return 1
+        if any(token in lower for token in ("date", "time")):
+            return 2
+        return 0
 
     @staticmethod
     def _field_to_dict(field: object) -> dict[str, object]:

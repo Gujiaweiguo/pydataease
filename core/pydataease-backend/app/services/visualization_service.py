@@ -140,10 +140,12 @@ class VisualizationService:
     async def save(self, payload: VisualizationSaveRequest, user: TokenUser) -> VisualizationResponse:
         items = list(await self.visualization_repo.list_all_ordered())
         now = _timestamp_ms()
+        pid = _normalize_int(payload.pid)
         created = await self.visualization_repo.create({
             **payload.model_dump(by_alias=False, exclude_none=True),
             "id": payload.id or _new_identifier(),
-            "level": _compute_level(items, payload.pid),
+            "pid": pid,
+            "level": _compute_level(items, pid),
             "create_time": now,
             "create_by": str(user.user_id),
             "update_time": now,
@@ -155,9 +157,10 @@ class VisualizationService:
     async def update(self, payload: VisualizationUpdateRequest, user: TokenUser) -> VisualizationResponse:
         existing = await self._get_visualization(payload.id)
         items = list(await self.visualization_repo.list_all_ordered())
-        new_pid = payload.pid if payload.pid is not None else existing.pid
+        new_pid = _normalize_int(payload.pid) if payload.pid is not None else existing.pid
         update_data = payload.model_dump(by_alias=False, exclude_none=True)
         update_data.update({
+            "pid": new_pid,
             "level": _compute_level(items, new_pid),
             "update_time": _timestamp_ms(),
             "update_by": str(user.user_id),
@@ -169,25 +172,44 @@ class VisualizationService:
         items = list(await self.visualization_repo.list_all_ordered())
         now = _timestamp_ms()
         visualization_id = payload.id or _new_identifier()
-        created = await self.visualization_repo.create({
-            "id": visualization_id,
-            "name": payload.name,
-            "pid": _normalize_int(payload.pid),
-            "level": _compute_level(items, _normalize_int(payload.pid)),
-            "node_type": "leaf",
-            "type": payload.type,
-            "canvas_style_data": _parse_json_value(payload.canvas_style_data),
-            "component_data": self._merge_component_state(_parse_json_value(payload.component_data), None),
-            "mobile_layout": payload.mobile_layout,
-            "status": payload.status if payload.status is not None else 0,
-            "content_id": payload.content_id,
-            "check_version": payload.check_version,
-            "create_time": now,
-            "create_by": str(user.user_id),
-            "update_time": now,
-            "update_by": str(user.user_id),
-            "delete_flag": False,
-        })
+        pid = _normalize_int(payload.pid)
+        existing = await self.visualization_repo.get_by_id(visualization_id)
+        if existing is None:
+            created = await self.visualization_repo.create({
+                "id": visualization_id,
+                "name": payload.name,
+                "pid": pid,
+                "level": _compute_level(items, pid),
+                "node_type": "leaf",
+                "type": payload.type,
+                "canvas_style_data": _parse_json_value(payload.canvas_style_data),
+                "component_data": self._merge_component_state(_parse_json_value(payload.component_data), None),
+                "mobile_layout": payload.mobile_layout,
+                "status": payload.status if payload.status is not None else 0,
+                "content_id": payload.content_id,
+                "check_version": payload.check_version,
+                "create_time": now,
+                "create_by": str(user.user_id),
+                "update_time": now,
+                "update_by": str(user.user_id),
+                "delete_flag": False,
+            })
+        else:
+            created = await self.visualization_repo.update(existing, {
+                "name": payload.name,
+                "pid": pid if pid is not None else existing.pid,
+                "level": _compute_level(items, pid if pid is not None else existing.pid),
+                "node_type": existing.node_type or "leaf",
+                "type": payload.type or existing.type,
+                "canvas_style_data": _parse_json_value(payload.canvas_style_data),
+                "component_data": self._merge_component_state(_parse_json_value(payload.component_data), existing.component_data),
+                "mobile_layout": payload.mobile_layout if payload.mobile_layout is not None else existing.mobile_layout,
+                "status": payload.status if payload.status is not None else existing.status,
+                "content_id": payload.content_id if payload.content_id is not None else existing.content_id,
+                "check_version": payload.check_version if payload.check_version is not None else existing.check_version,
+                "update_time": now,
+                "update_by": str(user.user_id),
+            })
         await self._sync_canvas_views(created.id, payload.canvas_view_info, user, delete_missing=False)
         return {"id": _sid(created.id), "status": 0}
 
@@ -302,9 +324,10 @@ class VisualizationService:
     async def move(self, payload: VisualizationMoveRequest, user: TokenUser) -> VisualizationResponse:
         existing = await self._get_visualization(payload.id)
         items = list(await self.visualization_repo.list_all_ordered())
+        pid = _normalize_int(payload.pid)
         updated = await self.visualization_repo.update(existing, {
-            "pid": payload.pid,
-            "level": _compute_level(items, payload.pid),
+            "pid": pid,
+            "level": _compute_level(items, pid),
             "update_time": _timestamp_ms(),
             "update_by": str(user.user_id),
         })
