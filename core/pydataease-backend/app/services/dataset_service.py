@@ -126,6 +126,7 @@ class DatasetService:
 
         now = _timestamp_ms()
         info_value = self._normalize_info(payload.info)
+        info_value = self._merge_source_info(info_value, payload.datasource_id, payload.table_name)
 
         created = await self.group_repo.create({
             "id": _new_identifier(),
@@ -161,6 +162,7 @@ class DatasetService:
         now = _timestamp_ms()
         info_value = payload.info if payload.info is not None else existing.info
         info_value = self._normalize_info(info_value)
+        info_value = self._merge_source_info(info_value, payload.datasource_id, payload.table_name)
 
         update_data: dict[str, object] = {
             "update_by": str(user.user_id),
@@ -294,9 +296,8 @@ class DatasetService:
     async def get_fields(self, request: DatasetTableFieldRequest) -> list[DatasetFieldResponse]:
         if request.dataset_group_id:
             fields = await self.field_repo.list_by_group(request.dataset_group_id)
-        elif request.datasource_id:
-            stmt_fields = await self.field_repo.list_by_table(request.datasource_id)
-            fields = stmt_fields
+        elif request.datasource_id and request.table_name:
+            fields = await self._load_datasource_fields(request.datasource_id, request.table_name)
         else:
             fields = []
         return [DatasetFieldResponse.model_validate(f) for f in fields]
@@ -463,6 +464,25 @@ class DatasetService:
             except (TypeError, ValueError):
                 return info
         return info
+
+    @staticmethod
+    def _merge_source_info(info: object, datasource_id: int | None, table_name: str | None) -> object:
+        if datasource_id is None and table_name is None:
+            return info
+        payload: dict[str, object]
+        if isinstance(info, dict):
+            payload = dict(info)
+        else:
+            payload = {}
+        if datasource_id is not None:
+            payload["datasourceId"] = datasource_id
+            payload["datasource_id"] = datasource_id
+        if table_name is not None and table_name.strip():
+            table_name_value = table_name.strip()
+            payload["tableName"] = table_name_value
+            payload["table_name"] = table_name_value
+            payload["table"] = table_name_value
+        return payload
 
     @staticmethod
     def _de_type_for_column(data_type: str) -> int:

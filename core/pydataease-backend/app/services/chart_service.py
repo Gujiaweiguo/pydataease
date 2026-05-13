@@ -118,7 +118,7 @@ class ChartService:
 
             limit = self._result_limit(chart)
             chart_sql = self._build_chart_sql(base_sql, x_axis, y_axis, limit)
-            query_result = await self._execute_chart_sql(chart_sql, dataset_tables)
+            query_result = await self._execute_chart_sql(chart_sql, dataset_tables, dataset_group)
             result_fields = cast(list[dict[str, Any]], query_result.get("fields", []))
             rows = cast(list[list[Any]], query_result.get("data", []))
             chart_type = str(chart.chart_type or chart.type or "") if chart else ""
@@ -231,7 +231,7 @@ class ChartService:
             sql = info.get("sql")
             if isinstance(sql, str) and sql.strip():
                 return sql.strip()
-            table_name = info.get("table")
+            table_name = info.get("table") or info.get("tableName") or info.get("table_name")
             if isinstance(table_name, str) and table_name.strip():
                 return f'SELECT * FROM {self._quote_identifier(table_name.strip())}'
         first_table = dataset_tables[0] if dataset_tables else None
@@ -280,8 +280,8 @@ class ChartService:
             sql = f'{sql} GROUP BY {", ".join(group_by_parts)}'
         return f"{sql} LIMIT {limit}"
 
-    async def _execute_chart_sql(self, sql: str, dataset_tables: Sequence[object]) -> dict[str, object]:
-        datasource = await self._resolve_datasource(dataset_tables)
+    async def _execute_chart_sql(self, sql: str, dataset_tables: Sequence[object], dataset_group: object | None = None) -> dict[str, object]:
+        datasource = await self._resolve_datasource(dataset_tables, dataset_group)
         if datasource is None:
             return await self.sql_executor.execute_select(sql, limit=1000)
 
@@ -296,9 +296,15 @@ class ChartService:
         fields = self._build_external_fields(records, rows)
         return {"sql": sql, "data": rows, "fields": fields, "total": len(rows)}
 
-    async def _resolve_datasource(self, dataset_tables: Sequence[object]) -> CoreDatasource | None:
+    async def _resolve_datasource(self, dataset_tables: Sequence[object], dataset_group: object | None = None) -> CoreDatasource | None:
         first_table = dataset_tables[0] if dataset_tables else None
         datasource_id = getattr(first_table, "datasource_id", None)
+        if not isinstance(datasource_id, int) and dataset_group is not None:
+            info = getattr(dataset_group, "info", None)
+            if isinstance(info, dict):
+                raw_id = info.get("datasourceId") or info.get("datasource_id")
+                if raw_id is not None:
+                    datasource_id = int(str(raw_id))
         if not isinstance(datasource_id, int):
             return None
         return await self.datasource_repo.get_by_id(datasource_id)

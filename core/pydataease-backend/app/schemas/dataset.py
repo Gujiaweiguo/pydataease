@@ -22,6 +22,8 @@ class DatasetGroupCreate(BaseModel):
     type: str | None = None
     mode: int | None = None
     info: JSONDict | JSONList | None = None
+    datasource_id: int | None = Field(default=None, validation_alias=AliasChoices("datasourceId", "datasource_id"), serialization_alias="datasourceId")
+    table_name: str | None = Field(default=None, validation_alias=AliasChoices("tableName", "table_name"), serialization_alias="tableName")
     union: JSONList | None = None
     all_fields: JSONList | None = Field(default=None, validation_alias=AliasChoices("allFields", "all_fields"), serialization_alias="allFields")
     is_cross: bool | None = Field(default=None, validation_alias=AliasChoices("isCross", "is_cross"), serialization_alias="isCross")
@@ -38,6 +40,8 @@ class DatasetGroupUpdate(BaseModel):
     type: str | None = None
     mode: int | None = None
     info: JSONDict | JSONList | None = None
+    datasource_id: int | None = Field(default=None, validation_alias=AliasChoices("datasourceId", "datasource_id"), serialization_alias="datasourceId")
+    table_name: str | None = Field(default=None, validation_alias=AliasChoices("tableName", "table_name"), serialization_alias="tableName")
     union: JSONList | None = None
     all_fields: JSONList | None = Field(default=None, validation_alias=AliasChoices("allFields", "all_fields"), serialization_alias="allFields")
     is_cross: bool | None = Field(default=None, validation_alias=AliasChoices("isCross", "is_cross"), serialization_alias="isCross")

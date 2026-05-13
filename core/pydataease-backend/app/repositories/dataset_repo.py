@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import final
 
 from sqlalchemy import delete, select
@@ -64,6 +65,14 @@ class DatasetTableRepository(AsyncBaseRepository[CoreDatasetTable]):
             CoreDatasetTable.dataset_group_id == dataset_group_id
         )
         return await self.get(stmt)
+
+    async def get_by_datasource_and_table(self, datasource_id: int, table_name: str) -> CoreDatasetTable | None:
+        stmt = select(CoreDatasetTable).where(
+            CoreDatasetTable.datasource_id == datasource_id,
+            CoreDatasetTable.table_name == table_name,
+        )
+        rows = await self.get(stmt)
+        return rows[0] if rows else None
 
 
 @final
