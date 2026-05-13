@@ -10,12 +10,19 @@ from app.schemas.visualization import (
     OuterParamsRequest,
     StoreCreateRequest,
     StoreFavoritedRequest,
+    VisualizationAppCanvasNameCheckRequest,
+    VisualizationCanvasChangeRequest,
+    VisualizationCanvasRequest,
+    VisualizationDeleteLogicRequest,
     VisualizationFindByIdRequest,
     VisualizationMoveRequest,
+    VisualizationNameCheckRequest,
+    VisualizationPublishStatusRequest,
     VisualizationRecentRequest,
     VisualizationRenameRequest,
     VisualizationSaveRequest,
     VisualizationTreeRequest,
+    VisualizationUpdateBaseRequest,
     VisualizationUpdateRequest,
 )
 from app.services.visualization_service import VisualizationService, get_visualization_service
@@ -50,6 +57,15 @@ async def save_visualization(
     return await service.save(payload, user)
 
 
+@router.post("/dataVisualization/saveCanvas")
+async def save_canvas(
+    payload: VisualizationCanvasRequest,
+    user: TokenUser = Depends(get_current_user),
+    service: VisualizationService = Depends(get_visualization_service),
+) -> object:
+    return await service.save_canvas(payload, user)
+
+
 @router.post("/dataVisualization/update")
 async def update_visualization(
     payload: VisualizationUpdateRequest,
@@ -59,6 +75,60 @@ async def update_visualization(
     return await service.update(payload, user)
 
 
+@router.post("/dataVisualization/updateCanvas")
+async def update_canvas(
+    payload: VisualizationCanvasRequest,
+    user: TokenUser = Depends(get_current_user),
+    service: VisualizationService = Depends(get_visualization_service),
+) -> object:
+    return await service.update_canvas(payload, user)
+
+
+@router.post("/dataVisualization/updateBase")
+async def update_base(
+    payload: VisualizationUpdateBaseRequest,
+    user: TokenUser = Depends(get_current_user),
+    service: VisualizationService = Depends(get_visualization_service),
+) -> object:
+    return await service.update_base(payload, user)
+
+
+@router.post("/dataVisualization/updatePublishStatus")
+async def update_publish_status(
+    payload: VisualizationPublishStatusRequest,
+    user: TokenUser = Depends(get_current_user),
+    service: VisualizationService = Depends(get_visualization_service),
+) -> object:
+    return await service.update_publish_status(payload, user)
+
+
+@router.post("/dataVisualization/nameCheck")
+async def name_check(
+    payload: VisualizationNameCheckRequest,
+    _: TokenUser = Depends(get_current_user),
+    service: VisualizationService = Depends(get_visualization_service),
+) -> object:
+    return await service.name_check(payload)
+
+
+@router.post("/dataVisualization/checkCanvasChange")
+async def check_canvas_change(
+    payload: VisualizationCanvasChangeRequest,
+    _: TokenUser = Depends(get_current_user),
+    service: VisualizationService = Depends(get_visualization_service),
+) -> object:
+    return await service.check_canvas_change(payload)
+
+
+@router.post("/dataVisualization/recoverToPublished")
+async def recover_to_published(
+    payload: VisualizationFindByIdRequest,
+    _: TokenUser = Depends(get_current_user),
+    service: VisualizationService = Depends(get_visualization_service),
+) -> object:
+    return await service.recover_to_published(payload)
+
+
 @router.post("/dataVisualization/delete")
 async def delete_visualization(
     payload: dict[str, int],
@@ -66,6 +136,16 @@ async def delete_visualization(
     service: VisualizationService = Depends(get_visualization_service),
 ) -> object:
     return await service.delete(int(payload["id"]), user)
+
+
+@router.post("/dataVisualization/deleteLogic/{dv_id}/{busi_flag}")
+async def delete_logic(
+    dv_id: int,
+    busi_flag: str,
+    user: TokenUser = Depends(get_current_user),
+    service: VisualizationService = Depends(get_visualization_service),
+) -> object:
+    return await service.delete_logic(VisualizationDeleteLogicRequest(dv_id=dv_id, busi_flag=busi_flag), user)
 
 
 @router.post("/dataVisualization/move")
@@ -93,6 +173,34 @@ async def find_recent_visualizations(
     service: VisualizationService = Depends(get_visualization_service),
 ) -> object:
     return await service.find_recent(payload)
+
+
+@router.get("/dataVisualization/findCopyResource/{dv_id}/{busi_flag}")
+async def find_copy_resource(
+    dv_id: int,
+    busi_flag: str,
+    _: TokenUser = Depends(get_current_user),
+    service: VisualizationService = Depends(get_visualization_service),
+) -> object:
+    return await service.find_copy_resource(dv_id, busi_flag)
+
+
+@router.post("/dataVisualization/appCanvasNameCheck")
+async def app_canvas_name_check(
+    payload: VisualizationAppCanvasNameCheckRequest,
+    _: TokenUser = Depends(get_current_user),
+    service: VisualizationService = Depends(get_visualization_service),
+) -> object:
+    return await service.app_canvas_name_check(payload)
+
+
+@router.post("/dataVisualization/decompression")
+async def decompression(
+    payload: dict[str, object],
+    _: TokenUser = Depends(get_current_user),
+    service: VisualizationService = Depends(get_visualization_service),
+) -> object:
+    return await service.decompression(payload)
 
 
 @router.get("/dataVisualization/findDvType/{dv_id}")
@@ -151,15 +259,18 @@ async def store_favorited_legacy(
 
 @router.post("/store/query")
 async def query_stores(
-    payload: dict,
+    payload: dict[str, object],
     user: TokenUser = Depends(get_current_user),
     service: VisualizationService = Depends(get_visualization_service),
 ) -> object:
+    keyword = payload.get("keyword")
+    type_filter = payload.get("type")
+    asc = payload.get("asc")
     return await service.query_stores(
         user,
-        keyword=payload.get("keyword"),
-        type_filter=payload.get("type"),
-        asc=payload.get("asc"),
+        keyword=keyword if isinstance(keyword, str) else None,
+        type_filter=type_filter if isinstance(type_filter, str) else None,
+        asc=asc if isinstance(asc, bool) else None,
     )
 
 
@@ -341,7 +452,7 @@ async def get_outer_params_info(
 
 @router.post("/watermark/save")
 async def save_watermark(
-    payload: dict,
+    payload: dict[str, object],
     user: TokenUser = Depends(get_current_user),
     service: VisualizationService = Depends(get_visualization_service),
 ) -> object:

@@ -21,14 +21,22 @@ from app.schemas.visualization import (
     LinkageRequest,
     OuterParamsRequest,
     StoreResponse,
+    VisualizationAppCanvasNameCheckRequest,
+    VisualizationCanvasChangeRequest,
+    VisualizationCanvasRequest,
+    VisualizationDeleteLogicRequest,
+    VisualizationDecompressionRequest,
     VisualizationFindByIdRequest,
     VisualizationMoveRequest,
+    VisualizationNameCheckRequest,
+    VisualizationPublishStatusRequest,
     VisualizationRecentRequest,
     VisualizationRenameRequest,
     VisualizationResponse,
     VisualizationSaveRequest,
     VisualizationTreeNodeResponse,
     VisualizationTreeRequest,
+    VisualizationUpdateBaseRequest,
     VisualizationUpdateRequest,
 )
 
@@ -46,6 +54,21 @@ def _compute_level(all_items: list[DataVisualizationInfo], pid: int | None) -> i
         return 0
     id_to_level = {item.id: item.level or 0 for item in all_items}
     return (id_to_level.get(pid, 0) or 0) + 1
+
+
+def _parse_json_value(value: str | None) -> object | None:
+    if value is None:
+        return None
+    try:
+        return _json.loads(value)
+    except (TypeError, ValueError):
+        return value
+
+
+def _normalize_int(value: int | str | None) -> int | None:
+    if value in (None, "", "null"):
+        return None
+    return int(value)
 
 
 def _build_tree(items: list[DataVisualizationInfo]) -> list[VisualizationTreeNodeResponse]:
@@ -73,7 +96,7 @@ class VisualizationService:
         self.store_repo = StoreRepository(session)
         self.chart_repo = ChartRepository(session)
 
-    async def tree(self, _: VisualizationTreeRequest) -> list[VisualizationTreeNodeResponse]:
+    async def tree(self, _: VisualizationTreeRequest) -> object:
         items = await self.visualization_repo.list_all_ordered()
         visible = [item for item in items if not item.delete_flag]
         nodes = _build_tree(visible)
@@ -87,7 +110,7 @@ class VisualizationService:
 
         return [_node_to_dict(node) for node in nodes]  # type: ignore[return-value]
 
-    async def find_by_id(self, payload: VisualizationFindByIdRequest) -> VisualizationResponse:
+    async def find_by_id(self, payload: VisualizationFindByIdRequest) -> object:
         item = await self._get_visualization(payload.id)
         result = self._serialize_visualization(item)
         # Attach canvasViewInfo — map of chartId -> chart view details
@@ -141,6 +164,129 @@ class VisualizationService:
         updated = await self.visualization_repo.update(existing, update_data)
         return VisualizationResponse.model_validate(updated)
 
+    async def save_canvas(self, payload: VisualizationCanvasRequest, user: TokenUser) -> dict[str, object]:
+        items = list(await self.visualization_repo.list_all_ordered())
+        now = _timestamp_ms()
+        visualization_id = payload.id or _new_identifier()
+        created = await self.visualization_repo.create({
+            "id": visualization_id,
+            "name": payload.name,
+            "pid": _normalize_int(payload.pid) or 0,
+            "level": _compute_level(items, _normalize_int(payload.pid) or 0),
+            "node_type": "leaf",
+            "type": payload.type,
+            "canvas_style_data": _parse_json_value(payload.canvas_style_data),
+            "component_data": self._merge_component_state(_parse_json_value(payload.component_data), None),
+            "mobile_layout": payload.mobile_layout,
+            "status": payload.status if payload.status is not None else 0,
+            "content_id": payload.content_id,
+            "check_version": payload.check_version,
+            "create_time": now,
+            "create_by": str(user.user_id),
+            "update_time": now,
+            "update_by": str(user.user_id),
+            "delete_flag": False,
+        })
+        await self._sync_canvas_views(created.id, payload.canvas_view_info, user, delete_missing=False)
+        return {"id": _sid(created.id), "status": 0}
+
+    async def update_canvas(self, payload: VisualizationCanvasRequest, user: TokenUser) -> dict[str, object]:
+        if payload.id is None:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Visualization id is required")
+        existing = await self._get_visualization(payload.id)
+        items = list(await self.visualization_repo.list_all_ordered())
+        pid = _normalize_int(payload.pid)
+        component_data = self._merge_component_state(_parse_json_value(payload.component_data), existing.component_data)
+        await self.visualization_repo.update(existing, {
+            "name": payload.name,
+            "pid": pid if pid is not None else existing.pid,
+            "level": _compute_level(items, pid if pid is not None else existing.pid),
+            "node_type": existing.node_type or "leaf",
+            "type": payload.type or existing.type,
+            "canvas_style_data": _parse_json_value(payload.canvas_style_data),
+            "component_data": component_data,
+            "mobile_layout": payload.mobile_layout,
+            "status": 2,
+            "content_id": payload.content_id,
+            "check_version": payload.check_version,
+            "update_time": _timestamp_ms(),
+            "update_by": str(user.user_id),
+        })
+        await self._sync_canvas_views(existing.id, payload.canvas_view_info, user, delete_missing=True)
+        return {"status": 2}
+
+    async def update_base(self, payload: VisualizationUpdateBaseRequest, user: TokenUser) -> dict[str, object]:
+        existing = await self._get_visualization(payload.id)
+        items = list(await self.visualization_repo.list_all_ordered())
+        pid = _normalize_int(payload.pid)
+        updated = await self.visualization_repo.update(existing, {
+            "name": payload.name.strip() if payload.name else existing.name,
+            "pid": pid if pid is not None else existing.pid,
+            "level": _compute_level(items, pid if pid is not None else existing.pid),
+            "node_type": payload.node_type or existing.node_type,
+            "type": payload.type or existing.type,
+            "mobile_layout": payload.mobile_layout if payload.mobile_layout is not None else existing.mobile_layout,
+            "status": payload.status if payload.status is not None else existing.status,
+            "update_time": _timestamp_ms(),
+            "update_by": str(user.user_id),
+        })
+        return self._serialize_visualization(updated)
+
+    async def update_publish_status(self, payload: VisualizationPublishStatusRequest, user: TokenUser) -> dict[str, object]:
+        existing = await self._get_visualization(payload.id)
+        component_data = self._merge_component_state(existing.component_data, existing.component_data, payload.active_view_ids)
+        updated = await self.visualization_repo.update(existing, {
+            "status": payload.status,
+            "component_data": component_data,
+            "update_time": _timestamp_ms(),
+            "update_by": str(user.user_id),
+        })
+        return {"id": _sid(updated.id), "status": updated.status}
+
+    async def name_check(self, payload: VisualizationNameCheckRequest) -> bool:
+        pid = _normalize_int(payload.pid) or 0
+        normalized_name = payload.name.strip()
+        items = await self.visualization_repo.list_all_ordered()
+        for item in items:
+            if item.delete_flag:
+                continue
+            if (item.pid or 0) != pid:
+                continue
+            if (item.name or "").strip() != normalized_name:
+                continue
+            if payload.type and item.type != payload.type:
+                continue
+            if payload.opt == "edit" and payload.id is not None and item.id == payload.id:
+                continue
+            return False
+        return True
+
+    async def check_canvas_change(self, payload: VisualizationCanvasChangeRequest) -> str:
+        existing = await self._get_visualization(payload.id)
+        if payload.content_id and existing.content_id and payload.content_id != existing.content_id:
+            return "Repeat"
+        if payload.check_version and existing.check_version and payload.check_version != existing.check_version:
+            return "Repeat"
+        return "NoChange"
+
+    async def recover_to_published(self, payload: VisualizationFindByIdRequest) -> object:
+        return await self.find_by_id(payload)
+
+    async def delete_logic(self, payload: VisualizationDeleteLogicRequest, user: TokenUser) -> dict[str, object]:
+        deleted = await self.delete(payload.dv_id, user)
+        return self._serialize_visualization(await self._get_visualization(payload.dv_id))
+
+    async def find_copy_resource(self, dv_id: int, busi_flag: str) -> object:
+        return await self.find_by_id(VisualizationFindByIdRequest(id=dv_id, busi_flag=busi_flag))
+
+    async def app_canvas_name_check(self, _: VisualizationAppCanvasNameCheckRequest) -> str:
+        return "success"
+
+    async def decompression(self, payload: dict[str, object] | VisualizationDecompressionRequest) -> dict[str, object]:
+        if isinstance(payload, VisualizationDecompressionRequest):
+            return payload.data
+        return payload
+
     async def delete(self, visualization_id: int, user: TokenUser) -> VisualizationResponse:
         existing = await self._get_visualization(visualization_id)
         updated = await self.visualization_repo.update(existing, {
@@ -181,7 +327,7 @@ class VisualizationService:
         )
         return [VisualizationResponse.model_validate(item) for item in items]
 
-    async def per_resource(self, visualization_id: int) -> VisualizationResponse:
+    async def per_resource(self, visualization_id: int) -> object:
         item = await self._get_visualization(visualization_id)
         return self._serialize_visualization(item)  # type: ignore[return-value]
 
@@ -215,7 +361,7 @@ class VisualizationService:
         keyword: str | None = None,
         type_filter: str | None = None,
         asc: bool | None = None,
-    ) -> dict:
+    ) -> dict[str, object]:
         """Query favorited items for the current user, joined with visualization info."""
         resource_type = None
         if type_filter == "panel":
@@ -334,6 +480,100 @@ class VisualizationService:
 
     async def save_watermark(self, payload: dict[str, Any]) -> dict[str, Any]:
         return {"success": True}
+
+    async def _sync_canvas_views(
+        self,
+        visualization_id: int,
+        canvas_view_info: dict[str, dict[str, object]],
+        user: TokenUser,
+        *,
+        delete_missing: bool,
+    ) -> None:
+        now = _timestamp_ms()
+        keep_ids: set[int] = set()
+        for raw_view_id, chart_info in canvas_view_info.items():
+            view_id = self._resolve_chart_id(raw_view_id, chart_info)
+            keep_ids.add(view_id)
+            existing = await self.chart_repo.get_by_id(view_id)
+            chart_payload = self._build_chart_payload(chart_info, view_id, visualization_id, str(user.user_id), now, existing)
+            await self.chart_repo.upsert_by_id(chart_payload)
+        if delete_missing:
+            await self.chart_repo.delete_by_scene_excluding(visualization_id, keep_ids)
+
+    def _build_chart_payload(
+        self,
+        chart_info: dict[str, object],
+        view_id: int,
+        visualization_id: int,
+        user_id: str,
+        now: int,
+        existing: CoreChartView | None,
+    ) -> dict[str, object]:
+        field_names = {column.name for column in CoreChartView.__table__.columns}
+        payload: dict[str, object] = {
+            "id": view_id,
+            "scene_id": visualization_id,
+            "update_time": now,
+        }
+        if existing is None:
+            payload["create_time"] = now
+            payload["create_by"] = user_id
+        else:
+            payload["create_time"] = existing.create_time
+            payload["create_by"] = existing.create_by
+        for key, value in chart_info.items():
+            snake_key = self._camel_to_snake(key)
+            if snake_key in {"id", "scene_id", "update_by"}:
+                continue
+            if snake_key in field_names:
+                payload[snake_key] = value
+        if "title" not in payload:
+            payload["title"] = chart_info.get("title") or chart_info.get("name") or ""
+        if "type" not in payload:
+            payload["type"] = chart_info.get("type") or chart_info.get("chartType") or "bar"
+        return payload
+
+    @staticmethod
+    def _resolve_chart_id(raw_view_id: str, chart_info: dict[str, object]) -> int:
+        chart_id = chart_info.get("id", raw_view_id)
+        if not isinstance(chart_id, (int, str)):
+            raise TypeError("chart id must be int or str")
+        return int(chart_id)
+
+    @staticmethod
+    def _camel_to_snake(value: str) -> str:
+        chars: list[str] = []
+        for char in value:
+            if char.isupper():
+                chars.extend(("_", char.lower()))
+            else:
+                chars.append(char)
+        return "".join(chars).lstrip("_")
+
+    @staticmethod
+    def _merge_component_state(
+        component_data: object | None,
+        existing_component_data: object | None,
+        active_view_ids: list[int] | None = None,
+    ) -> object | None:
+        if active_view_ids is None:
+            if isinstance(component_data, list):
+                return component_data
+            if isinstance(component_data, dict):
+                merged = dict(component_data)
+                if isinstance(existing_component_data, dict) and "_activeViewIds" in existing_component_data and "_activeViewIds" not in merged:
+                    merged["_activeViewIds"] = existing_component_data["_activeViewIds"]
+                return merged
+            return component_data
+
+        if isinstance(component_data, dict):
+            merged = dict(component_data)
+        elif isinstance(existing_component_data, dict):
+            merged = dict(existing_component_data)
+        else:
+            merged = {}
+        merged["_activeViewIds"] = active_view_ids
+        return merged
 
     async def _get_visualization(self, visualization_id: int) -> DataVisualizationInfo:
         item = await self.visualization_repo.get_by_id(visualization_id)

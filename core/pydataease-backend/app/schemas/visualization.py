@@ -49,8 +49,105 @@ class VisualizationSaveRequest(BaseModel):
     check_version: str | None = Field(default=None, validation_alias=AliasChoices("checkVersion", "check_version"), serialization_alias="checkVersion")
 
 
-class VisualizationUpdateRequest(VisualizationSaveRequest):
-    id: int  # pyright: ignore[reportGeneralTypeIssues]
+class VisualizationUpdateRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: int
+    name: str
+    pid: int | None = 0
+    org_id: int | None = Field(default=None, validation_alias=AliasChoices("orgId", "org_id"), serialization_alias="orgId")
+    level: int | None = None
+    node_type: str = Field(validation_alias=AliasChoices("nodeType", "node_type"), serialization_alias="nodeType")
+    type: str | None = None
+    canvas_style_data: JSONValue | None = Field(default=None, validation_alias=AliasChoices("canvasStyleData", "canvas_style_data"), serialization_alias="canvasStyleData")
+    component_data: JSONValue | None = Field(default=None, validation_alias=AliasChoices("componentData", "component_data"), serialization_alias="componentData")
+    mobile_layout: bool | None = Field(default=None, validation_alias=AliasChoices("mobileLayout", "mobile_layout"), serialization_alias="mobileLayout")
+    status: int | None = None
+    self_watermark_status: int | None = Field(default=None, validation_alias=AliasChoices("selfWatermarkStatus", "self_watermark_status"), serialization_alias="selfWatermarkStatus")
+    sort: int | None = None
+    remark: str | None = None
+    source: str | None = None
+    delete_flag: bool | None = Field(default=None, validation_alias=AliasChoices("deleteFlag", "delete_flag"), serialization_alias="deleteFlag")
+    version: int | None = None
+    content_id: str | None = Field(default=None, validation_alias=AliasChoices("contentId", "content_id"), serialization_alias="contentId")
+    check_version: str | None = Field(default=None, validation_alias=AliasChoices("checkVersion", "check_version"), serialization_alias="checkVersion")
+
+
+class VisualizationCanvasRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    canvas_style_data: str | None = Field(default=None, validation_alias=AliasChoices("canvasStyleData", "canvas_style_data"), serialization_alias="canvasStyleData")
+    component_data: str | None = Field(default=None, validation_alias=AliasChoices("componentData", "component_data"), serialization_alias="componentData")
+    canvas_view_info: dict[str, dict[str, object]] = Field(default_factory=dict, validation_alias=AliasChoices("canvasViewInfo", "canvas_view_info"), serialization_alias="canvasViewInfo")
+    name: str
+    pid: int | str | None = 0
+    type: str | None = None
+    id: int | None = None
+    opt_type: str | None = Field(default=None, validation_alias=AliasChoices("optType", "opt_type"), serialization_alias="optType")
+    content_id: str | None = Field(default=None, validation_alias=AliasChoices("contentId", "content_id"), serialization_alias="contentId")
+    status: int | None = None
+    mobile_layout: bool | None = Field(default=None, validation_alias=AliasChoices("mobileLayout", "mobile_layout"), serialization_alias="mobileLayout")
+    watermark_info: JSONValue | None = Field(default=None, validation_alias=AliasChoices("watermarkInfo", "watermark_info"), serialization_alias="watermarkInfo")
+    check_version: str | None = Field(default=None, validation_alias=AliasChoices("checkVersion", "check_version"), serialization_alias="checkVersion")
+
+
+class VisualizationUpdateBaseRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: int
+    name: str | None = None
+    pid: int | str | None = 0
+    node_type: str | None = Field(default=None, validation_alias=AliasChoices("nodeType", "node_type"), serialization_alias="nodeType")
+    type: str | None = None
+    mobile_layout: bool | None = Field(default=None, validation_alias=AliasChoices("mobileLayout", "mobile_layout"), serialization_alias="mobileLayout")
+    status: int | None = None
+
+
+class VisualizationPublishStatusRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: int
+    status: int
+    active_view_ids: list[int] | None = Field(default=None, validation_alias=AliasChoices("activeViewIds", "active_view_ids"), serialization_alias="activeViewIds")
+
+
+class VisualizationNameCheckRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: int | None = None
+    pid: int | str | None = 0
+    name: str
+    type: str | None = None
+    node_type: str | None = Field(default=None, validation_alias=AliasChoices("nodeType", "node_type"), serialization_alias="nodeType")
+    opt: str | None = None
+
+
+class VisualizationCanvasChangeRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: int
+    content_id: str | None = Field(default=None, validation_alias=AliasChoices("contentId", "content_id"), serialization_alias="contentId")
+    check_version: str | None = Field(default=None, validation_alias=AliasChoices("checkVersion", "check_version"), serialization_alias="checkVersion")
+
+
+class VisualizationDeleteLogicRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    dv_id: int = Field(validation_alias=AliasChoices("dvId", "dv_id"), serialization_alias="dvId")
+    busi_flag: str = Field(validation_alias=AliasChoices("busiFlag", "busi_flag"), serialization_alias="busiFlag")
+
+
+class VisualizationAppCanvasNameCheckRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    dataset_folder_pid: int | str | None = Field(default=None, validation_alias=AliasChoices("datasetFolderPid", "dataset_folder_pid"), serialization_alias="datasetFolderPid")
+    dataset_folder_name: str | None = Field(default=None, validation_alias=AliasChoices("datasetFolderName", "dataset_folder_name"), serialization_alias="datasetFolderName")
+
+
+class VisualizationDecompressionRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    data: dict[str, object] = Field(default_factory=dict)
 
 
 class VisualizationMoveRequest(BaseModel):
