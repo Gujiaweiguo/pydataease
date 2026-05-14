@@ -1,12 +1,6 @@
 name: Python Backend CI
 
 on:
-  push:
-    paths:
-      - 'core/pydataease-backend/**'
-      - '.github/workflows/test.yml'
-    branches:
-      - '**'
   pull_request:
     paths:
       - 'core/pydataease-backend/**'
