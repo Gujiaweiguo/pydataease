@@ -190,7 +190,7 @@ _DEFAULT_USER_VIEW: dict[str, object] = {
     },
     "matrixStyle": {},
     "commonBackground": _COMMON_COMPONENT_BACKGROUND_LIGHT,
-    "state": "prepare",
+    "state": "ready",
 }
 
 _DEFAULT_CANVAS_STYLE_DATA: dict[str, object] = {

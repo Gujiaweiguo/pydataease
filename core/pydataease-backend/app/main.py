@@ -2,10 +2,10 @@ from contextlib import asynccontextmanager
 
 from fastapi import APIRouter, FastAPI, Request
 from fastapi.exceptions import HTTPException
-from fastapi.responses import JSONResponse
 from starlette.middleware.cors import CORSMiddleware
 
 from app.middleware.auth import AuthMiddleware
+from app.middleware.bigint_json import BigIntJSONResponse
 from app.middleware.response_wrapper import ResultMessageMiddleware
 from app.routers.chart import router as chart_router
 from app.routers.datasource import router as datasource_router
@@ -56,8 +56,8 @@ api_router.include_router(bootstrap_router)
 
 
 @app.exception_handler(HTTPException)
-async def http_exception_handler(_: Request, exc: HTTPException) -> JSONResponse:
-    return JSONResponse(
+async def http_exception_handler(_: Request, exc: HTTPException) -> BigIntJSONResponse:
+    return BigIntJSONResponse(
         status_code=exc.status_code,
         content=ResultMessage(code=exc.status_code, data=None, msg=str(exc.detail)).model_dump(),
     )

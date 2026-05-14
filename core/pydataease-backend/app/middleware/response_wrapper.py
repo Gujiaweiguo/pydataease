@@ -3,7 +3,9 @@ from __future__ import annotations
 import json
 from typing import Any, cast
 
-from starlette.responses import JSONResponse, Response
+from starlette.responses import Response
+
+from app.middleware.bigint_json import BigIntJSONResponse
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from app.middleware.whitelist import API_PREFIXES
@@ -76,7 +78,7 @@ class ResultMessageMiddleware:
 
         payload = self._decode_body(body)
         if isinstance(payload, dict) and {"code", "data", "msg"}.issubset(payload):
-            return JSONResponse(status_code=status_code, content=payload, headers=header_map)
+            return BigIntJSONResponse(status_code=status_code, content=payload, headers=header_map)
 
         if status_code >= 400:
             detail = payload.get("detail") if isinstance(payload, dict) else payload
@@ -86,7 +88,7 @@ class ResultMessageMiddleware:
         else:
             result = ResultMessage(code=0, data=payload, msg="success")
 
-        return JSONResponse(status_code=status_code, content=result.model_dump(), headers=header_map)
+        return BigIntJSONResponse(status_code=status_code, content=result.model_dump(), headers=header_map)
 
     @staticmethod
     def _decode_body(body: bytes) -> Any:

@@ -6,7 +6,9 @@ from typing import cast
 from fastapi import Request, status
 from jose import ExpiredSignatureError, JWTError, jwt
 from sqlalchemy.ext.asyncio import AsyncSession
-from starlette.responses import JSONResponse, Response
+from starlette.responses import Response
+
+from app.middleware.bigint_json import BigIntJSONResponse
 from starlette.types import ASGIApp, Receive, Scope, Send
 
 from app.dependencies.database import async_session
@@ -131,7 +133,7 @@ class AuthMiddleware:
     @staticmethod
     def _error_response(status_code: int, message: str) -> Response:
         payload = ResultMessage(code=status_code, data=None, msg=message).model_dump()
-        return JSONResponse(status_code=status_code, content=payload)
+        return BigIntJSONResponse(status_code=status_code, content=payload)
 
 
 class AuthError(Exception):
