@@ -10,8 +10,8 @@ from jose import jwt
 from app.main import app
 from app.schemas.menu import MenuMeta, MenuVO
 from app.schemas.system import MenuTreeNodeResponse
-from app.services.menu_service import MenuService, get_menu_service
-from app.services.system_service import SystemService, get_system_service
+from app.services.menu_service import get_menu_service
+from app.services.system_service import get_system_service
 from app.settings.config import get_settings
 
 

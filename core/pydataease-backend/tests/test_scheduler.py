@@ -5,7 +5,6 @@ from collections.abc import AsyncGenerator
 import pytest
 
 from app.tasks.base import generate_task_id, with_retry
-from typing import Any
 
 from app.tasks.export_worker import ExportTaskWorker
 from app.tasks.scheduler import configure_scheduler, register_jobs, shutdown_scheduler

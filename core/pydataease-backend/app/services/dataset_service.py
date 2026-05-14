@@ -8,7 +8,6 @@ from importlib import import_module
 from typing import Any, final
 
 from fastapi import Depends, HTTPException, status
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.dependencies.database import get_db
@@ -19,7 +18,7 @@ from app.repositories.dataset_repo import (
     DatasetTableRepository,
 )
 from app.repositories.datasource_repo import DatasourceRepository
-from app.services.datasource_service import DatasourceService, _as_config_dict
+from app.services.datasource_service import DatasourceService
 from app.utils.id_utils import _sid
 from app.schemas.auth import TokenUser
 from app.schemas.dataset import (

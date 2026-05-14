@@ -9,7 +9,7 @@ from jose import jwt
 
 from app.main import app
 from app.schemas.export import ExportTaskResponse
-from app.services.export_service import ExportService, get_export_service
+from app.services.export_service import get_export_service
 from app.settings.config import get_settings
 
 

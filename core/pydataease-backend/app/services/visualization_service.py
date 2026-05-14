@@ -850,7 +850,7 @@ class VisualizationService:
         return await self.find_by_id(payload)
 
     async def delete_logic(self, payload: VisualizationDeleteLogicRequest, user: TokenUser) -> dict[str, object]:
-        deleted = await self.delete(payload.dv_id, user)
+        await self.delete(payload.dv_id, user)
         return self._serialize_visualization(await self._get_visualization(payload.dv_id))
 
     async def find_copy_resource(self, dv_id: int, busi_flag: str) -> object:

@@ -8,6 +8,7 @@ from jose import jwt
 
 from app.main import app
 from app.settings.config import BaseConfig, get_settings
+from app.utils.password_utils import derive_jwt_secret
 
 
 def _build_token(secret: str, algorithm: str, **claims: int) -> str:
@@ -61,8 +62,9 @@ def api_prefix() -> str:
 
 
 @pytest.fixture
-def auth_headers(settings: BaseConfig) -> dict[str, str]:
-    token = _build_token(settings.secret_key, settings.jwt_algorithm, uid=1, oid=1)
+def auth_headers(settings: BaseConfig, fake_auth_users) -> dict[str, str]:
+    user = fake_auth_users[1]
+    token = _build_token(derive_jwt_secret(user.password), settings.jwt_algorithm, uid=1, oid=1)
     return {"X-DE-TOKEN": token}
 
 
@@ -78,8 +80,9 @@ def share_headers(settings: BaseConfig) -> dict[str, str]:
 
 
 @pytest.fixture
-def embedded_auth_headers(settings: BaseConfig) -> dict[str, str]:
-    token = _build_token(settings.secret_key, settings.jwt_algorithm, uid=2, oid=3)
+def embedded_auth_headers(settings: BaseConfig, fake_auth_users) -> dict[str, str]:
+    user = fake_auth_users[2]
+    token = _build_token(derive_jwt_secret(user.password), settings.jwt_algorithm, uid=2, oid=3)
     return {"X-EMBEDDED-TOKEN": token}
 
 

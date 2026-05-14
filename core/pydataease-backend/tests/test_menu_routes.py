@@ -8,7 +8,7 @@ from httpx import AsyncClient
 
 from app.main import app
 from app.schemas.menu import MenuMeta, MenuVO
-from app.services.menu_service import MenuService, get_menu_service
+from app.services.menu_service import get_menu_service
 from app.settings.config import get_settings
 
 

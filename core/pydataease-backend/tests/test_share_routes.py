@@ -9,7 +9,7 @@ from jose import jwt
 
 from app.main import app
 from app.schemas.share import ShareResponse, ShareTicketResponse
-from app.services.share_service import ShareService, get_share_service
+from app.services.share_service import get_share_service
 from app.settings.config import get_settings
 
 
