@@ -16,6 +16,7 @@ class BaseConfig(BaseSettings):
     jwt_algorithm: str = "HS256"
     jwt_exp_seconds: int = 1800
     api_prefix: str = "/de2api"
+    rsa_private_key_path: str = ""
 
     model_config: ClassVar[SettingsConfigDict] = SettingsConfigDict(env_file=".env", env_prefix="DE_")
 

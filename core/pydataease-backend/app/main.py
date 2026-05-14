@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+import os
 
 from fastapi import APIRouter, FastAPI, Request
 from fastapi.exceptions import HTTPException
@@ -24,6 +25,11 @@ from app.settings.config import get_settings
 from app.tasks import configure_scheduler, shutdown_scheduler
 
 settings = get_settings()
+
+# Sync RSA key path to os.environ so rsa_utils can read it via os.environ.get().
+# Pydantic Settings loads .env values into model fields but not into os.environ.
+if settings.rsa_private_key_path and not os.environ.get("DE_RSA_PRIVATE_KEY_PATH"):
+    os.environ["DE_RSA_PRIVATE_KEY_PATH"] = settings.rsa_private_key_path
 
 
 
