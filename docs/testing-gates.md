@@ -35,13 +35,11 @@ Run from `core/pydataease-backend/`:
 - `uv run ruff check .`
 - `uv run pytest tests/ -v --ignore=tests/test_e2e_creation_flow.py`
 - `uv run alembic upgrade head`
-- `docker build -t pydataease-backend:ci .`
 
 Hard gate:
 - backend lint passes
 - non-e2e backend tests pass
 - migrations apply cleanly
-- backend Docker build succeeds
 
 Soft gate:
 - real e2e is recommended when runnable infrastructure is available

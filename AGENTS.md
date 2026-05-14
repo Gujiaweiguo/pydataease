@@ -86,7 +86,7 @@
 - **Docs / comments only**: typo/spell checks only; do not force full builds or backend suites.
 - **Backend internal logic**: `uv run ruff check .` + `uv run pytest tests/ -v --ignore=tests/test_e2e_creation_flow.py`
 - **API / auth / repository changes**: same backend gate, with extra attention to contract/auth/route coverage.
-- **Database / integration / external service changes**: backend gate plus `uv run alembic upgrade head` and backend Docker build.
+- **Database / integration / external service changes**: backend gate plus `uv run alembic upgrade head`. Defer backend Docker build to release-sensitive verification.
 - **Frontend / UI changes**: `npm run ts:check` + `npm run lint` + `npm run lint:stylelint`; add `npm run build:distributed` when routing/assets/packaging outputs are affected.
 - **Release / packaging changes**: inherit affected subsystem gates, then require final build/package validation.
 - **OpenSpec responsibility split**:
