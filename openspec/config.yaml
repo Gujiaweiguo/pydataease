@@ -1,5 +1,44 @@
 schema: spec-driven
 
+context: |
+  This repository uses layered testing gates that follow the current codebase reality instead of a one-size-fits-all policy.
+
+  Active runtime surfaces:
+  - Python/FastAPI backend in core/pydataease-backend/
+  - Shared Vue frontend in core/core-frontend/
+  - Legacy Java desktop/backend packaging in core/core-backend/ and core/pom.xml
+
+  Gate layers:
+  - L0: static checks and fast feedback
+    - Backend: `uv run ruff check .`
+    - Frontend: `npm run ts:check`, `npm run lint`, `npm run lint:stylelint`
+    - Docs/spec-only: typo/spell checks only
+  - L1: default backend verification
+    - `uv run pytest tests/ -v --ignore=tests/test_e2e_creation_flow.py`
+  - L2: integration/release-sensitive backend checks
+    - `uv run alembic upgrade head`
+    - `docker build -t pydataease-backend:ci .`
+  - L3: final release/user-journey verification
+    - `uv run pytest tests/test_e2e_creation_flow.py -v` when a runnable environment exists
+
+  Classification rules:
+  - Docs/comments/OpenSpec only -> L0 docs gate only
+  - Internal backend logic -> L0 backend + L1 backend
+  - API/auth/repository changes -> L0 backend + L1 backend, with extra attention to contract/auth tests
+  - Database/integration/external-service changes -> L0 backend + L1 backend + L2 backend
+  - Frontend/UI changes -> L0 frontend, plus frontend build when routing/assets/packaging are affected
+  - Release/packaging changes -> inherit relevant lower layers and add final build/package checks
+
+  Workflow responsibilities:
+  - verify selects the minimum required gate set based on changed files and reports hard failures vs soft warnings.
+  - archive inherits verify's hard-gate result and must not archive when required gates are failing or missing.
+  - release is the final hard gate for build/package/user-journey checks.
+
+  Guardrails:
+  - Keep real e2e out of default PR blocking.
+  - Do not require nonexistent frontend or Java automated tests.
+  - Prefer path-scoped, fast feedback over full-suite checks on every change.
+
 # Project context (optional)
 # This is shown to AI when creating artifacts.
 # Add your tech stack, conventions, style guides, domain knowledge, etc.
@@ -18,3 +57,13 @@ schema: spec-driven
 #       - Always include a "Non-goals" section
 #     tasks:
 #       - Break tasks into chunks of max 2 hours
+
+rules:
+  proposal:
+    - State which gate layer(s) the change requires and why.
+    - Call out if release-sensitive work needs Docker, packaging, or runnable-environment validation.
+  design:
+    - Describe any new test or verification expectations only if the repository already supports them.
+  tasks:
+    - Include explicit verification tasks with the exact commands needed for the classified change type.
+    - Separate fast local checks from slower release-only checks.
