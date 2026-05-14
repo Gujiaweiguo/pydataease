@@ -12,7 +12,9 @@
 
 ### Commands (run from `core/pydataease-backend/`)
 - `uv sync` — install dependencies
-- `uv run pytest tests/ -v` — run tests (84 implementation tests)
+- `uv run ruff check .` — fast backend lint gate
+- `uv run pytest tests/ -v --ignore=tests/test_e2e_creation_flow.py` — default backend gate for CI and verify
+- `uv run pytest tests/test_e2e_creation_flow.py -v` — real user-journey e2e when a runnable environment exists
 - `uv run python -c "from app.main import app; print(app.title)"` — verify import
 - `uv run uvicorn app.main:app --host 0.0.0.0 --port 8000` — run dev server
 - `uv run alembic upgrade head` — run database migrations
@@ -78,6 +80,20 @@
   - `npm run dev` / `npm run ts:check` / `npm run lint` / `npm run lint:stylelint`
   - `npm run build:base` / `npm run build:distributed`
 - Formatting: `core/core-frontend/.editorconfig` (2 spaces, LF, UTF-8)
+
+## Layered testing gates
+
+- **Docs / comments only**: typo/spell checks only; do not force full builds or backend suites.
+- **Backend internal logic**: `uv run ruff check .` + `uv run pytest tests/ -v --ignore=tests/test_e2e_creation_flow.py`
+- **API / auth / repository changes**: same backend gate, with extra attention to contract/auth/route coverage.
+- **Database / integration / external service changes**: backend gate plus `uv run alembic upgrade head` and backend Docker build.
+- **Frontend / UI changes**: `npm run ts:check` + `npm run lint` + `npm run lint:stylelint`; add `npm run build:distributed` when routing/assets/packaging outputs are affected.
+- **Release / packaging changes**: inherit affected subsystem gates, then require final build/package validation.
+- **OpenSpec responsibility split**:
+  - `verify` selects required gates by change type and records hard failures vs soft warnings.
+  - `archive` inherits verify hard-gate results and must block on failed required gates.
+  - `release` is the final hard gate for build/package/user-journey validation.
+- Keep real e2e out of default PR blocking unless the user explicitly asks for release-grade verification.
 
 ## CI and contribution signals
 - PRs satisfy `.github/PULL_REQUEST_TEMPLATE.md`: passing tests, coverage, Conventional Commit messages, docs impact review.
