@@ -22,7 +22,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: core/core-frontend
-        run: npm ci --no-audit
+        run: npm install --no-audit
 
       - name: Run TypeScript checks
         working-directory: core/core-frontend
