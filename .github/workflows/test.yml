@@ -1,16 +1,24 @@
-name: Python Backend Tests
+name: Python Backend CI
 
 on:
   push:
     paths:
       - 'core/pydataease-backend/**'
+      - 'core/pydataease-backend/Dockerfile'
+      - '.github/workflows/test.yml'
     branches:
       - '**'
   pull_request:
     paths:
       - 'core/pydataease-backend/**'
+      - 'core/pydataease-backend/Dockerfile'
+      - '.github/workflows/test.yml'
     branches:
       - '**'
+
+concurrency:
+  group: backend-ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test:
@@ -62,3 +70,15 @@ jobs:
         run: >-
           uv run pytest tests/ -v --tb=short -x
           --ignore=tests/test_e2e_creation_flow.py
+
+  docker-build:
+    needs: test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        working-directory: core/pydataease-backend
+        run: docker build -t pydataease-backend:ci .
