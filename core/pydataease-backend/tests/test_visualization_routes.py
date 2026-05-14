@@ -261,3 +261,41 @@ async def test_visualization_view_detail_and_auth_route(client, auth_headers: di
 
     unauthorized = await client.post("/de2api/dataVisualization/tree", json={"busiFlag": "dashboard"})
     assert unauthorized.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_watermark_find_with_auth_returns_default(client, auth_headers: dict[str, str], fake_service: FakeVisualizationService) -> None:
+    from unittest.mock import AsyncMock, patch
+
+    fake_svc = AsyncMock()
+    fake_svc.get_setting.return_value = None
+
+    with patch("app.services.sys_setting_service.SysSettingService", return_value=fake_svc):
+        response = await client.get("/de2api/watermark/find", headers=auth_headers)
+
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert "settingContent" in data
+    assert "enable" in data["settingContent"]
+
+
+@pytest.mark.asyncio
+async def test_watermark_find_with_auth_returns_stored(client, auth_headers: dict[str, str], fake_service: FakeVisualizationService) -> None:
+    from unittest.mock import AsyncMock, patch
+
+    stored_value = '{"type":"custom","content":"logo","enable":true}'
+    fake_svc = AsyncMock()
+    fake_svc.get_setting.return_value = stored_value
+
+    with patch("app.services.sys_setting_service.SysSettingService", return_value=fake_svc):
+        response = await client.get("/de2api/watermark/find", headers=auth_headers)
+
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert data["settingContent"] == stored_value
+
+
+@pytest.mark.asyncio
+async def test_watermark_find_without_auth_returns_401(client) -> None:
+    response = await client.get("/de2api/watermark/find")
+    assert response.status_code == 401
