@@ -23,18 +23,15 @@ def test_websocket_route_exists() -> None:
 def test_websocket_accepts_connection() -> None:
     with TestClient(app) as client:
         with client.websocket_connect("/websocket") as websocket:
-            payload = websocket.receive_json()
+            websocket.send_text("ping")
+            response = websocket.receive_text()
 
-    assert payload == {
-        "type": "welcome",
-        "content": "WebSocket compatibility stub connected",
-    }
+    assert response == "echo: ping"
 
 
 def test_websocket_echo() -> None:
     with TestClient(app) as client:
         with client.websocket_connect("/websocket") as websocket:
-            _ = websocket.receive_json()
             websocket.send_text("hello")
             response = websocket.receive_text()
 
