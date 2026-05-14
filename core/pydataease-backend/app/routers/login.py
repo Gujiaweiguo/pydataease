@@ -4,6 +4,8 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from jose import JWTError, jwt
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.limiter import limiter
+
 from app.dependencies.auth import get_current_user
 from app.dependencies.database import get_db
 from app.repositories.user_repo import UserRepository
@@ -17,7 +19,9 @@ router = APIRouter(tags=["login"])
 
 
 @router.post("/login/localLogin")
+@limiter.limit("5/minute")
 async def local_login(
+    request: Request,
     payload: LoginRequest,
     service: AuthService = Depends(get_auth_service),
 ) -> object:

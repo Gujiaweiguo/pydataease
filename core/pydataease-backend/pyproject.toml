@@ -18,6 +18,8 @@ dependencies = [
     "httpx",
     "bcrypt>=4.0",
     "cryptography>=42.0",
+    "slowapi",
+    "python-json-logger",
 ]
 
 [dependency-groups]

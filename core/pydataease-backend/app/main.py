@@ -3,9 +3,15 @@ import os
 
 from fastapi import APIRouter, FastAPI, Request
 from fastapi.exceptions import HTTPException
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 from starlette.middleware.cors import CORSMiddleware
 
+from app.core.limiter import limiter
+from app.core.logging import setup_logging
 from app.middleware.auth import AuthMiddleware
+from app.middleware.request_id import RequestIDMiddleware
 from app.middleware.bigint_json import BigIntJSONResponse
 from app.middleware.response_wrapper import ResultMessageMiddleware
 from app.routers.chart import router as chart_router
@@ -26,6 +32,10 @@ from app.tasks import configure_scheduler, shutdown_scheduler
 
 settings = get_settings()
 
+# Parse CORS origins from comma-separated string
+_cors_origins_str = settings.cors_origins.strip()
+cors_origins: list[str] = ["*"] if _cors_origins_str == "*" else [o.strip() for o in _cors_origins_str.split(",") if o.strip()]
+
 # Sync RSA key path to os.environ so rsa_utils can read it via os.environ.get().
 # Pydantic Settings loads .env values into model fields but not into os.environ.
 if settings.rsa_private_key_path and not os.environ.get("DE_RSA_PRIVATE_KEY_PATH"):
@@ -35,6 +45,7 @@ if settings.rsa_private_key_path and not os.environ.get("DE_RSA_PRIVATE_KEY_PATH
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    setup_logging()
     scheduler, worker = configure_scheduler()
     app.state.task_scheduler = scheduler
     app.state.task_worker = worker
@@ -73,11 +84,15 @@ app.add_middleware(AuthMiddleware)
 app.add_middleware(ResultMessageMiddleware)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_middleware(SlowAPIMiddleware)
+app.add_middleware(RequestIDMiddleware)
 app.include_router(api_router)
 app.include_router(websocket_router)
 
