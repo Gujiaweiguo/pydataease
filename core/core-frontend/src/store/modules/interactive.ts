@@ -120,6 +120,15 @@ export const interactiveStore = defineStore('interactive', {
 export const interactiveStoreWithOut = () => interactiveStore(store)
 
 const convertInteractive = (list): InnerInteractive => {
+  if (!list || !list.length) {
+    return {
+      rootManage: false,
+      anyManage: false,
+      treeNodes: [],
+      leafNodeCount: 0,
+      menuAuth: true
+    }
+  }
   const result: InnerInteractive = {
     rootManage: list[0]['weight'] >= 7,
     anyManage: false,
