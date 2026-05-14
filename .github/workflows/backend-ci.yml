@@ -3,10 +3,20 @@ name: Backend CI
 on:
   push:
     branches: [feat/fastapi-backend-rewrite]
-    paths: ['core/pydataease-backend/**']
+    paths:
+      - 'core/pydataease-backend/**'
+      - 'core/pydataease-backend/Dockerfile'
+      - '.github/workflows/backend-ci.yml'
   pull_request:
     branches: [feat/fastapi-backend-rewrite]
-    paths: ['core/pydataease-backend/**']
+    paths:
+      - 'core/pydataease-backend/**'
+      - 'core/pydataease-backend/Dockerfile'
+      - '.github/workflows/backend-ci.yml'
+
+concurrency:
+  group: backend-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   lint-and-test:

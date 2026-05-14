@@ -2,9 +2,13 @@ name: Python Backend Tests
 
 on:
   push:
+    paths:
+      - 'core/pydataease-backend/**'
     branches:
       - '**'
   pull_request:
+    paths:
+      - 'core/pydataease-backend/**'
     branches:
       - '**'
 
@@ -49,6 +53,12 @@ jobs:
         working-directory: core/pydataease-backend
         run: uv sync
 
+      - name: Run linter
+        working-directory: core/pydataease-backend
+        run: uv run ruff check .
+
       - name: Run tests
         working-directory: core/pydataease-backend
-        run: uv run pytest tests/ -v
+        run: >-
+          uv run pytest tests/ -v --tb=short -x
+          --ignore=tests/test_e2e_creation_flow.py

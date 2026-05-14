@@ -15,11 +15,44 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      DE_ENV: test
+      DE_DATABASE_URL: postgresql+asyncpg://dataease:dataease@localhost:5432/dataease
+      DE_SECRET_KEY: test-secret-key-for-ci
+      DE_SHARE_SECRET_KEY: test-share-secret-key-for-ci
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: dataease
+          POSTGRES_PASSWORD: dataease
+          POSTGRES_DB: dataease
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
     - name: checkout dataease repo
       uses: actions/checkout@v4
       with:
         ref: ${{ github.event.inputs.branch }}
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+    - name: Set up uv
+      uses: astral-sh/setup-uv@v4
+    - name: Verify active backend gates
+      working-directory: core/pydataease-backend
+      run: |
+        uv sync
+        uv run ruff check .
+        uv run pytest tests/ -v --tb=short -x --ignore=tests/test_e2e_creation_flow.py
     - name: Cache local Maven repository
       uses: actions/cache@v4
       with:
