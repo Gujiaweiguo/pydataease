@@ -14,6 +14,7 @@ from app.schemas.datasource import (
     DatasourceValidateResponse,
 )
 from app.services.datasource_service import DatasourceService, get_datasource_service
+from app.services.permission_service import PermissionService, get_permission_service
 
 
 def _decode_configuration(payload: dict) -> dict:
@@ -29,9 +30,11 @@ router = APIRouter(prefix="/datasource", tags=["datasource"])
 @router.post("/tree")
 async def datasource_tree(
     payload: dict | None = None,
-    _: TokenUser = Depends(get_current_user),
+    user: TokenUser = Depends(get_current_user),
     service: DatasourceService = Depends(get_datasource_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> object:
+    await perm.require_resource_access(user, "datasource", "use")
     return await service.tree()
 
 
@@ -49,7 +52,9 @@ async def save_datasource(
     payload: DatasourceCreate,
     user: TokenUser = Depends(get_current_user),
     service: DatasourceService = Depends(get_datasource_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> object:
+    await perm.require_resource_access(user, "datasource", "manage")
     return await service.save(payload, user)
 
 
@@ -58,7 +63,9 @@ async def update_datasource(
     payload: DatasourceUpdate,
     user: TokenUser = Depends(get_current_user),
     service: DatasourceService = Depends(get_datasource_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> object:
+    await perm.require_resource_access(user, "datasource", "manage")
     return await service.update(payload, user)
 
 
@@ -119,9 +126,11 @@ async def upload_datasource_file(
 @router.post("/delete/{datasource_id}")
 async def delete_datasource(
     datasource_id: int,
-    _: TokenUser = Depends(get_current_user),
+    user: TokenUser = Depends(get_current_user),
     service: DatasourceService = Depends(get_datasource_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> None:
+    await perm.require_resource_access(user, "datasource", "manage")
     await service.delete(datasource_id)
 
 

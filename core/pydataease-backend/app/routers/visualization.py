@@ -28,6 +28,7 @@ from app.schemas.visualization import (
     VisualizationUpdateRequest,
 )
 from app.services.visualization_service import VisualizationService, get_visualization_service
+from app.services.permission_service import PermissionService, get_permission_service
 
 router = APIRouter(tags=["visualization"])
 
@@ -35,9 +36,11 @@ router = APIRouter(tags=["visualization"])
 @router.post("/dataVisualization/tree")
 async def visualization_tree(
     payload: VisualizationTreeRequest,
-    _: TokenUser = Depends(get_current_user),
+    user: TokenUser = Depends(get_current_user),
     service: VisualizationService = Depends(get_visualization_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> object:
+    await perm.require_resource_access(user, "dashboard", "use")
     return await service.tree(payload)
 
 
@@ -55,7 +58,9 @@ async def save_visualization(
     payload: VisualizationSaveRequest,
     user: TokenUser = Depends(get_current_user),
     service: VisualizationService = Depends(get_visualization_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> object:
+    await perm.require_resource_access(user, "dashboard", "manage")
     return await service.save(payload, user)
 
 
@@ -73,7 +78,9 @@ async def update_visualization(
     payload: VisualizationUpdateRequest,
     user: TokenUser = Depends(get_current_user),
     service: VisualizationService = Depends(get_visualization_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> object:
+    await perm.require_resource_access(user, "dashboard", "manage")
     return await service.update(payload, user)
 
 
@@ -136,7 +143,9 @@ async def delete_visualization(
     payload: dict[str, int],
     user: TokenUser = Depends(get_current_user),
     service: VisualizationService = Depends(get_visualization_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> object:
+    await perm.require_resource_access(user, "dashboard", "manage")
     return await service.delete(int(payload["id"]), user)
 
 

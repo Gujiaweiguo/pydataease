@@ -12,15 +12,18 @@ from app.schemas.dataset import (
     DatasetTableFieldRequest,
 )
 from app.services.dataset_service import DatasetService, get_dataset_service
+from app.services.permission_service import PermissionService, get_permission_service
 
 router = APIRouter(tags=["dataset"])
 
 
 @router.post("/datasetTree/tree")
 async def dataset_tree(
-    _: TokenUser = Depends(get_current_user),
+    user: TokenUser = Depends(get_current_user),
     service: DatasetService = Depends(get_dataset_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> object:
+    await perm.require_resource_access(user, "dataset", "use")
     return await service.tree()
 
 
@@ -29,7 +32,9 @@ async def create_dataset(
     payload: DatasetGroupCreate,
     user: TokenUser = Depends(get_current_user),
     service: DatasetService = Depends(get_dataset_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> object:
+    await perm.require_resource_access(user, "dataset", "manage")
     return await service.create(payload, user)
 
 
@@ -38,7 +43,9 @@ async def save_dataset(
     payload: DatasetGroupUpdate,
     user: TokenUser = Depends(get_current_user),
     service: DatasetService = Depends(get_dataset_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> object:
+    await perm.require_resource_access(user, "dataset", "manage")
     return await service.save(payload, user)
 
 

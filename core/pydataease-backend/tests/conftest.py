@@ -4,6 +4,7 @@ from types import SimpleNamespace
 
 from app.main import app
 from app.dependencies.database import get_db
+from app.services.permission_service import get_permission_service
 from app.utils.password_utils import hash_password
 
 
@@ -28,6 +29,17 @@ def fake_auth_users():
         7: _build_user(user_id=7, account="route7", password="Route@123456", oid=9),
         11: _build_user(user_id=11, account="share11", password="Share@123456", oid=13),
     }
+
+
+class FakePermissionService:
+    async def require_resource_access(self, user, resource_type: str, permission_type: str = "use") -> None:
+        return None
+
+    async def has_resource_permission(self, user, resource_type: str, permission_type: str = "use") -> bool:
+        return True
+
+    async def get_effective_menu_ids(self, user_id: int, oid: int) -> set[int]:
+        return set()
 
 
 @pytest.fixture(autouse=True)
@@ -96,8 +108,10 @@ def install_fake_auth_backend(monkeypatch, fake_auth_users):
     monkeypatch.setattr(auth_service, "OrgRepository", FakeOrgRepository)
     monkeypatch.setattr(auth_middleware, "async_session", lambda: FakeSessionContext(session))
     app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[get_permission_service] = lambda: FakePermissionService()
     yield
     _ = app.dependency_overrides.pop(get_db, None)
+    _ = app.dependency_overrides.pop(get_permission_service, None)
 
 
 @pytest.fixture

@@ -37,10 +37,10 @@ async def request_timeout(
 
 @router.get("/menu/query")
 async def query_menus(
-    _: TokenUser = Depends(get_current_user),
+    user: TokenUser = Depends(get_current_user),
     service: MenuService = Depends(get_menu_service),
 ) -> list[dict]:
-    tree = await service.get_menu_tree()
+    tree = await service.get_menu_tree(user)
     return [vo.model_dump() for vo in tree]
 
 

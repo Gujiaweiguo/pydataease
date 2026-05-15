@@ -45,7 +45,7 @@ _FAKE_TREE: list[MenuVO] = [
 
 
 class FakeMenuService:
-    async def get_menu_tree(self) -> list[MenuVO]:
+    async def get_menu_tree(self, user=None) -> list[MenuVO]:
         return _FAKE_TREE
 
 

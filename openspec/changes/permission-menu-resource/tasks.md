@@ -9,27 +9,27 @@
 
 ## 2. Menu Authorization
 
-- [ ] 2.1 Modify `MenuService.get_menu_tree()` to accept user context and filter menus by effective permissions.
-- [ ] 2.2 Implement effective-permission computation: union of org grants + role grants + user direct grants.
-- [ ] 2.3 Ensure system-admin sees all menus regardless of explicit grants.
-- [ ] 2.4 Verify `/menu/query` returns different menus for admin vs non-admin users.
+- [x] 2.1 Modify `MenuService.get_menu_tree()` to accept user context and filter menus by effective permissions.
+- [x] 2.2 Implement effective-permission computation: union of org grants + role grants + user direct grants.
+- [x] 2.3 Ensure system-admin sees all menus regardless of explicit grants.
+- [x] 2.4 Verify `/menu/query` returns different menus for admin vs non-admin users.
 
 ## 3. Resource Authorization
 
-- [ ] 3.1 Implement permission check decorator/dependency for resource routers (dashboard, screen, dataset, datasource).
-- [ ] 3.2 Add permission enforcement to `GET /visualization/tree`, `GET /dataset/tree`, `GET /datasource/list` endpoints.
-- [ ] 3.3 Add permission enforcement to write operations (create/edit/delete resource).
-- [ ] 3.4 Return 403 for unauthorized access (not 404 or 500).
+- [x] 3.1 Implement permission check decorator/dependency for resource routers (dashboard, screen, dataset, datasource).
+- [x] 3.2 Add permission enforcement to `GET /visualization/tree`, `GET /dataset/tree`, `GET /datasource/list` endpoints.
+- [x] 3.3 Add permission enforcement to write operations (create/edit/delete resource).
+- [x] 3.4 Return 403 for unauthorized access (not 404 or 500).
 
 ## 4. Guardrails and Compatibility
 
-- [ ] 4.1 Add feature flag to disable permission enforcement (fall back to auth-only mode).
-- [ ] 4.2 Preserve existing `/menu/query` contract shape (same response structure, just filtered content).
-- [ ] 4.3 Verify login, token refresh, and embedded/share flows still work with permission layer active.
+- [x] 4.1 Add feature flag to disable permission enforcement (fall back to auth-only mode).
+- [x] 4.2 Preserve existing `/menu/query` contract shape (same response structure, just filtered content).
+- [x] 4.3 Verify login, token refresh, and embedded/share flows still work with permission layer active.
 
 ## 5. Verification
 
-- [ ] 5.1 `cd core/pydataease-backend && uv run ruff check .` — zero errors.
-- [ ] 5.2 `cd core/pydataease-backend && uv run pytest tests/ -v --ignore=tests/test_e2e_creation_flow.py` — all pass.
-- [ ] 5.3 Browser test: non-admin user sees filtered menu; admin sees all menus.
-- [ ] 5.4 API test: non-admin access to restricted resource returns 403.
+- [x] 5.1 `cd core/pydataease-backend && uv run ruff check .` — zero errors.
+- [x] 5.2 `cd core/pydataease-backend && uv run pytest tests/ -v --ignore=tests/test_e2e_creation_flow.py` — all pass.
+- [x] 5.3 Browser test: non-admin user sees filtered menu; admin sees all menus.
+- [x] 5.4 API test: non-admin access to restricted resource returns 403.
