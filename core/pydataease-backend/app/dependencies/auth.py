@@ -22,7 +22,7 @@ async def get_current_user(
     if db_user is None or not db_user.enable:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User is disabled")
 
-    return TokenUser(user_id=db_user.id, oid=db_user.oid or 0, language=db_user.language or "zh-CN")
+    return TokenUser(user_id=db_user.id, oid=user.oid, language=db_user.language or "zh-CN")
 
 
 async def get_optional_user(
@@ -37,4 +37,4 @@ async def get_optional_user(
     if db_user is None or not db_user.enable:
         return None
 
-    return TokenUser(user_id=db_user.id, oid=db_user.oid or 0, language=db_user.language or "zh-CN")
+    return TokenUser(user_id=db_user.id, oid=user.oid, language=db_user.language or "zh-CN")

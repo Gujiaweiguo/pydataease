@@ -17,6 +17,7 @@ class BaseConfig(BaseSettings):
     jwt_exp_seconds: int = 1800
     api_prefix: str = "/de2api"
     cors_origins: str = "*"
+    org_management_enabled: bool = True
     rsa_private_key_path: str = ""
     log_level: str = "INFO"
 

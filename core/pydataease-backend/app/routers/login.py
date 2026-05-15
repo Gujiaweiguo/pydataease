@@ -8,6 +8,7 @@ from app.core.limiter import limiter
 
 from app.dependencies.auth import get_current_user
 from app.dependencies.database import get_db
+from app.repositories.org_repo import OrgRepository
 from app.repositories.user_repo import UserRepository
 from app.schemas.auth import TokenUser
 from app.schemas.login import LoginRequest
@@ -43,6 +44,7 @@ async def refresh_token(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="token is invalid") from exc
 
     user_id = claims.get("uid")
+    oid = claims.get("oid")
     if user_id is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="token格式错误！")
 
@@ -60,7 +62,7 @@ async def refresh_token(
     except JWTError as exc:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="token is invalid") from exc
 
-    return await service.refresh(db_user.id)
+    return await service.refresh_with_org(db_user.id, int(oid) if oid is not None else None)
 
 
 @router.get("/logout")
@@ -84,14 +86,28 @@ async def get_user_info(
     session: AsyncSession = Depends(get_db),
 ) -> dict[str, object]:
     repo = UserRepository(session)
+    org_repo = OrgRepository(session)
     db_user = await repo.get_by_id(user.user_id)
     if db_user is None:
         raise HTTPException(status_code=401, detail="User not found")
+    current_org = await org_repo.get_by_id(user.oid) if user.oid > 0 else None
+    user_orgs = await org_repo.get_user_orgs(user.user_id)
     return {
         "id": db_user.id,
         "name": db_user.name,
         "account": db_user.account,
-        "oid": db_user.oid or 0,
+        "oid": user.oid,
         "language": db_user.language or "zh-CN",
         "enable": db_user.enable,
+        "currentOrg": None if current_org is None else {"id": current_org.id, "name": current_org.name},
+        "orgList": [{"id": org.id, "name": org.name, "pid": org.pid or 0} for org in user_orgs],
     }
+
+
+@router.post("/user/switch/{oid}")
+async def switch_user_org(
+    oid: int,
+    user: TokenUser = Depends(get_current_user),
+    service: AuthService = Depends(get_auth_service),
+) -> object:
+    return await service.switch_org(user, oid)

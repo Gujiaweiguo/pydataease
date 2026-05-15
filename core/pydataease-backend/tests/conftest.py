@@ -46,6 +46,30 @@ def install_fake_auth_backend(monkeypatch, fake_auth_users):
         async def get_by_account(self, account: str):
             return next((user for user in self._users.values() if user.account == account), None)
 
+    class FakeOrgRepository:
+        def __init__(self, session) -> None:
+            self._users = session.users
+
+        def _build_org(self, org_id: int):
+            if org_id <= 0:
+                return None
+            name = "默认组织" if org_id == 1 else f"org-{org_id}"
+            return SimpleNamespace(id=org_id, pid=0, name=name)
+
+        async def is_member(self, user_id: int, org_id: int):
+            user = self._users.get(user_id)
+            return user is not None and user.oid == org_id
+
+        async def get_user_orgs(self, user_id: int):
+            user = self._users.get(user_id)
+            if user is None or user.oid <= 0:
+                return []
+            org = self._build_org(user.oid)
+            return [] if org is None else [org]
+
+        async def get_by_id(self, org_id: int):
+            return self._build_org(org_id)
+
     class FakeSession(SimpleNamespace):
         async def rollback(self) -> None:
             return None
@@ -66,8 +90,10 @@ def install_fake_auth_backend(monkeypatch, fake_auth_users):
         yield session
 
     monkeypatch.setattr(auth_middleware, "UserRepository", FakeUserRepository)
+    monkeypatch.setattr(auth_middleware, "OrgRepository", FakeOrgRepository)
     monkeypatch.setattr(auth_dependencies, "UserRepository", FakeUserRepository)
     monkeypatch.setattr(auth_service, "UserRepository", FakeUserRepository)
+    monkeypatch.setattr(auth_service, "OrgRepository", FakeOrgRepository)
     monkeypatch.setattr(auth_middleware, "async_session", lambda: FakeSessionContext(session))
     app.dependency_overrides[get_db] = override_get_db
     yield

@@ -13,6 +13,8 @@ from starlette.types import ASGIApp, Receive, Scope, Send
 
 from app.dependencies.database import async_session
 from app.middleware.whitelist import is_invalid_path, is_whitelisted_path
+from app.models.user import CoreUser
+from app.repositories.org_repo import OrgRepository
 from app.repositories.user_repo import UserRepository
 from app.schemas.auth import TokenUser
 from app.schemas.response import ResultMessage
@@ -67,13 +69,13 @@ class AuthMiddleware:
             if resource_id is not None:
                 request.scope.setdefault("state", {})
                 request.scope["state"]["share_resource_id"] = resource_id
-            return self._claims_to_user(claims, link_token=True)
+            return await self._claims_to_user(claims, link_token=True)
 
         token = headers.get(TOKEN_HEADER) or headers.get(EMBEDDED_TOKEN_HEADER)
         if not token:
             raise AuthError(status.HTTP_401_UNAUTHORIZED, f"token is empty for uri {{{request.url.path}}}")
         claims = await self._decode_user_token(token)
-        return self._claims_to_user(claims)
+        return await self._claims_to_user(claims)
 
     async def _decode_user_token(self, token: str) -> Mapping[str, object]:
         unverified_claims = self._get_unverified_claims(token)
@@ -92,12 +94,12 @@ class AuthMiddleware:
                 raise
             return self._decode_token(token, self.settings.secret_key, token_kind="token")
 
-    async def _load_user(self, user_id: int) -> object | None:
+    async def _load_user(self, user_id: int) -> CoreUser | None:
         async with async_session() as session:
             return await self._get_user(session, user_id)
 
     @staticmethod
-    async def _get_user(session: AsyncSession, user_id: int) -> object | None:
+    async def _get_user(session: AsyncSession, user_id: int) -> CoreUser | None:
         repo = UserRepository(session)
         return await repo.get_by_id(user_id)
 
@@ -121,14 +123,30 @@ class AuthMiddleware:
         except JWTError as exc:
             raise AuthError(status.HTTP_401_UNAUTHORIZED, "token is invalid") from exc
 
-    @staticmethod
-    def _claims_to_user(claims: Mapping[str, object], *, link_token: bool = False) -> TokenUser:
+    async def _claims_to_user(self, claims: Mapping[str, object], *, link_token: bool = False) -> TokenUser:
         user_id = claims.get("uid")
         oid = claims.get("oid")
         if user_id is None:
             message = "link token格式错误！" if link_token else "token格式错误！"
             raise AuthError(status.HTTP_401_UNAUTHORIZED, message)
-        return TokenUser(user_id=_to_int(user_id), oid=_to_int(oid) if oid is not None else 0)
+        resolved_user_id = _to_int(user_id)
+        resolved_oid = _to_int(oid) if oid is not None else 0
+        if link_token:
+            return TokenUser(user_id=resolved_user_id, oid=resolved_oid)
+        validated_oid = await self._validate_org_membership(resolved_user_id, resolved_oid)
+        return TokenUser(user_id=resolved_user_id, oid=validated_oid)
+
+    async def _validate_org_membership(self, user_id: int, oid: int) -> int:
+        async with async_session() as session:
+            org_repo = OrgRepository(session)
+            if user_id == 1:
+                return oid
+            if oid > 0 and await org_repo.is_member(user_id, oid):
+                return oid
+            user_orgs = await org_repo.get_user_orgs(user_id)
+            if user_orgs:
+                return user_orgs[0].id
+            return 0
 
     @staticmethod
     def _error_response(status_code: int, message: str) -> Response:
