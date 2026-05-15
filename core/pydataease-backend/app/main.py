@@ -17,6 +17,7 @@ from app.middleware.request_id import RequestIDMiddleware
 from app.middleware.bigint_json import BigIntJSONResponse
 from app.middleware.response_wrapper import ResultMessageMiddleware
 from app.routers.chart import router as chart_router
+from app.routers.column_permission import router as column_permission_router
 from app.routers.datasource import router as datasource_router
 from app.routers.dataset import router as dataset_router
 from app.routers.engine import router as engine_router
@@ -25,6 +26,7 @@ from app.routers.export import router as export_router
 from app.routers.login import router as login_router
 from app.routers.org import router as org_router
 from app.routers.role import router as role_router
+from app.routers.row_permission import router as row_permission_router
 from app.routers.share import router as share_router
 from app.routers.system import router as system_router
 from app.routers.task import router as task_router
@@ -71,6 +73,8 @@ api_router.include_router(login_router)
 api_router.include_router(org_router)
 api_router.include_router(user_router)
 api_router.include_router(role_router)
+api_router.include_router(row_permission_router)
+api_router.include_router(column_permission_router)
 api_router.include_router(chart_router)
 api_router.include_router(visualization_router)
 api_router.include_router(export_router)

@@ -19,6 +19,7 @@ class BaseConfig(BaseSettings):
     cors_origins: str = "*"
     org_management_enabled: bool = True
     permission_enforcement_enabled: bool = True
+    row_column_permission_enabled: bool = True
     rsa_private_key_path: str = ""
     log_level: str = "INFO"
 

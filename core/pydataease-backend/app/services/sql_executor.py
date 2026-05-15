@@ -13,6 +13,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from app.dependencies.database import engine
+from app.schemas.auth import TokenUser
 
 _LEADING_QUERY_RE = re.compile(r"^\s*(select|with)\b", re.IGNORECASE | re.DOTALL)
 _LIMIT_RE = re.compile(r"\blimit\b", re.IGNORECASE)
@@ -73,13 +74,67 @@ class SQLExecutor:
     def __init__(self, db_engine: AsyncEngine | None = None) -> None:
         self._engine = db_engine or engine
 
-    async def execute_select(self, sql: str, limit: int = 1000) -> dict[str, object]:
+    async def execute_select(
+        self,
+        sql: str,
+        limit: int = 1000,
+        user: TokenUser | None = None,
+        dataset_id: int | None = None,
+    ) -> dict[str, object]:
         normalized_sql = self._normalize_sql(sql)
         executable_sql = self._apply_limit(normalized_sql, limit)
 
+        if user is not None and dataset_id is not None:
+            executable_sql, fields, rows = await self._execute_with_permissions(
+                executable_sql, user, dataset_id, limit
+            )
+        else:
+            try:
+                async with self._engine.connect() as conn:
+                    result = await conn.execute(text(executable_sql))
+                    rows = [list(row) for row in result.all()]
+                    fields = self._build_fields(result, rows)
+            except HTTPException:
+                raise
+            except SQLAlchemyError as exc:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"SQL preview failed: {exc}",
+                ) from exc
+            except Exception as exc:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"SQL preview failed: {exc}",
+                ) from exc
+
+        return {"sql": executable_sql, "data": rows, "fields": fields, "total": len(rows)}
+
+    async def _execute_with_permissions(
+        self, sql: str, user: TokenUser, dataset_id: int, limit: int
+    ) -> tuple[str, list[dict[str, str]], list[list[object]]]:
+        from app.services.data_permission_service import DataPermissionService
+        from app.settings.config import get_settings
+
+        settings = get_settings()
+        if not settings.row_column_permission_enabled:
+            async with self._engine.connect() as conn:
+                result = await conn.execute(text(sql))
+                rows = [list(row) for row in result.all()]
+                fields = self._build_fields(result, rows)
+            return sql, fields, rows
+
+        from app.dependencies.database import async_session
+
+        async with async_session() as session:
+            perm_svc = DataPermissionService(session)
+            row_filters = await perm_svc.collect_row_filters(user, dataset_id)
+            if row_filters:
+                from app.services.data_permission_service import apply_row_filters
+                sql = apply_row_filters(sql, row_filters)
+
         try:
             async with self._engine.connect() as conn:
-                result = await conn.execute(text(executable_sql))
+                result = await conn.execute(text(sql))
                 rows = [list(row) for row in result.all()]
                 fields = self._build_fields(result, rows)
         except HTTPException:
@@ -95,7 +150,11 @@ class SQLExecutor:
                 detail=f"SQL preview failed: {exc}",
             ) from exc
 
-        return {"sql": executable_sql, "data": rows, "fields": fields, "total": len(rows)}
+        async with async_session() as session:
+            perm_svc = DataPermissionService(session)
+            fields, rows = await perm_svc.apply_column_rules(user, dataset_id, fields, rows)
+
+        return sql, fields, rows
 
     def _normalize_sql(self, sql: str) -> str:
         return validate_readonly_sql(sql)
