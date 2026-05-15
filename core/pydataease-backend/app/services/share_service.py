@@ -233,14 +233,27 @@ class ShareService:
         return ShareResponse.model_validate(share)
 
     async def validate_password(self, payload: dict) -> dict:
-        uuid = payload.get("uuid", "")
+        # Decrypt RSA ciphertext → "uuid,password"
+        ciphertext = payload.get("ciphertext", "")
+        if not ciphertext:
+            return {"code": 1, "data": None, "msg": "Missing ciphertext"}
+        try:
+            from app.utils.rsa_utils import decrypt_rsa
+
+            decrypted = decrypt_rsa(ciphertext)
+            if "," not in decrypted:
+                return {"code": 1, "data": None, "msg": "Invalid ciphertext format"}
+            uuid, password = decrypted.split(",", 1)
+        except Exception:
+            logger.warning("Failed to decrypt share password ciphertext")
+            return {"code": 1, "data": None, "msg": "Decryption failed"}
+
         share = await self.share_repo.get_by_uuid(uuid)
         if share is None:
             return {"code": 1, "data": None, "msg": "Share not found"}
         current_ms = int(time.time() * 1000)
         if share.exp is not None and share.exp < current_ms:
             return {"code": 1, "data": None, "msg": "Share has expired"}
-        password = payload.get("password", "") or ""
         if not share.pwd:
             return {"code": 0, "data": True, "msg": ""}
         if hmac.compare_digest(share.pwd, password):
