@@ -112,7 +112,7 @@ class _AsyncmyConnectionWrapper:
             else:
                 await cursor.execute(sql)
             rows = await cursor.fetchall()
-            columns = [desc[0] for desc in cursor.description] if cursor.description else []
+            columns = [desc[0].lower() for desc in cursor.description] if cursor.description else []
             return [dict(zip(columns, row)) for row in rows]
 
     async def fetchval(self, query: str, *args: Any) -> Any:
