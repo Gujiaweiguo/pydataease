@@ -1,0 +1,44 @@
+TASK-08: Dataset, Field & Permission API Replacement
+=====================================================
+
+Files Created:
+  - core/pydataease-backend/app/schemas/dataset.py
+  - core/pydataease-backend/app/repositories/dataset_repo.py
+  - core/pydataease-backend/app/services/dataset_service.py
+  - core/pydataease-backend/app/routers/dataset.py
+  - core/pydataease-backend/tests/test_dataset_routes.py
+
+Files Modified:
+  - core/pydataease-backend/app/main.py (added dataset router)
+
+Endpoints Implemented (all under /de2api prefix):
+  POST /datasetTree/tree          — get dataset tree (pid-based hierarchy)
+  POST /datasetTree/create        — create dataset group/folder
+  POST /datasetTree/save          — update dataset group
+  POST /datasetTree/rename        — rename dataset group
+  POST /datasetTree/move          — move dataset group to new parent
+  POST /datasetTree/delete/{id}   — cascade delete dataset group
+  POST /datasetTree/perDelete/{id} — pre-delete check
+  GET  /datasetTree/barInfo/{id}  — bar info for dataset
+  POST /datasetTree/get/{id}      — get dataset details
+  POST /datasetTree/details/{id}  — get dataset details (alias)
+  POST /datasetData/tableField    — get fields for dataset group/table
+  POST /datasetData/previewSql    — SQL preview stub
+
+Architecture:
+  - Repository: DatasetGroupRepository, DatasetTableRepository, DatasetFieldRepository
+    extending AsyncBaseRepository with tree queries, cascade delete
+  - Service: DatasetService with tree building, CRUD, field management,
+    permission filtering stub (_filter_by_permission)
+  - Schemas: camelCase input/output via AliasChoices + serialization_alias
+  - Tests: 16 tests covering all routes + auth failure paths
+
+Test Results:
+  26 passed (16 new dataset + 10 existing), 0 failed
+
+Verified:
+  - All endpoints require X-DE-TOKEN auth
+  - Frontend camelCase (nodeType, allFields, etc.) accepted via AliasChoices
+  - Output serialized with camelCase aliases matching frontend contract
+  - Cascade delete handles dataset tables + fields
+  - Tree building uses pid-based hierarchy

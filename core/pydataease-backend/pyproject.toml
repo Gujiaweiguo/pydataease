@@ -1,0 +1,34 @@
+[project]
+name = "pydataease-backend"
+version = "0.1.0"
+description = "DataEase Python backend service"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi[standard]",
+    "uvicorn[standard]",
+    "sqlalchemy[asyncio]",
+    "apscheduler",
+    "asyncpg",
+    "asyncmy",
+    "alembic",
+    "openpyxl",
+    "pydantic-settings",
+    "python-jose[cryptography]",
+    "passlib[bcrypt]",
+    "httpx",
+    "bcrypt>=4.0",
+    "cryptography>=42.0",
+    "slowapi",
+    "python-json-logger",
+]
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "pytest-asyncio",
+    "ruff",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"

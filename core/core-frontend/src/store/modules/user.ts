@@ -55,7 +55,11 @@ export const userStore = defineStore('user', {
     async setUser() {
       const user = await import('@/api/user')
       const res = await user.userInfo()
-      const data = res.data
+      const data = res?.data
+      if (!data) {
+        this.clear()
+        return
+      }
       data.token = wsCache.get('user.token')
       data.exp = wsCache.get('user.exp')
       data.time = wsCache.get('user.time')

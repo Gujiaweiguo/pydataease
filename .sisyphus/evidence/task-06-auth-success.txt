@@ -1,0 +1,9 @@
+T06 auth/response compatibility verification
+Command: uv run pytest tests/test_auth_middleware.py tests/test_health.py -v
+Result: 7 passed in 0.09s
+Verified behaviors: whitelist bypass, X-DE-TOKEN auth, X-DE-LINK-TOKEN auth, wrapped 401/404 responses, raw /health endpoint.
+
+2026-05-10 final verification
+Command: uv run pytest tests/test_auth_middleware.py tests/test_health.py -v
+Result: 7 passed in 0.03s
+Diagnostics: lsp_diagnostics reported 0 errors on app/ Python files after auth/response middleware changes.

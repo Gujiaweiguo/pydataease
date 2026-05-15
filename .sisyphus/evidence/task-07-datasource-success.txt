@@ -1,0 +1,12 @@
+Task T07 completed.
+
+Implemented:
+- async database session dependency
+- async base repository and datasource repository
+- datasource service for CRUD, PostgreSQL validation, table listing, field listing
+- FastAPI datasource and engine routes wired into main app under /de2api
+- route-level tests for datasource CRUD flow, validation/table metadata flow, and auth failure
+
+Verification:
+- lsp diagnostics on changed Python files
+- uv run pytest tests/test_datasource_routes.py tests/test_auth_middleware.py -v

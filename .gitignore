@@ -52,3 +52,47 @@ core/core-frontend/src/assets/fsSvg.html
 .vite/
 /core/backend/
 /classpath:substitule.json
+
+# Python / FastAPI backend
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+.venv/
+.pytest_cache/
+.mypy_cache/
+.pyright/
+*.egg
+.python-version
+
+# Environment files with secrets
+.env
+!.env.example
+!.env.dev
+!.env.base
+!.env.distributed
+!.env.desktop
+
+# RSA keys
+*.pem
+
+# E2E / browser screenshots
+*.png
+
+# E2E artifacts
+findById-response.json
+e2e-browser-console*.log
+e2e-browser-network.txt
+
+# IDE metadata (Eclipse/IDEA)
+.project
+.settings/
+.classpath
+.factorypath
+
+# Tool artifacts
+.opencode/
+.playwright-mcp/
+.sisyphus/

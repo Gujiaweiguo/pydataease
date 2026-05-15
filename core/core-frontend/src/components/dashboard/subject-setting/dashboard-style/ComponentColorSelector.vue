@@ -345,7 +345,11 @@
 <script lang="ts" setup>
 import { computed, nextTick, onMounted, reactive, ref, toRefs, PropType } from 'vue'
 import { dvMainStoreWithOut } from '@/store/modules/data-visualization/dvMain'
-import { COLOR_PANEL, DEFAULT_BASIC_STYLE } from '@/views/chart/components/editor/util/chart'
+import {
+  COLOR_PANEL,
+  DEFAULT_BASIC_STYLE,
+  DEFAULT_COLOR_CASE
+} from '@/views/chart/components/editor/util/chart'
 import { useI18n } from '@/hooks/web/useI18n'
 import eventBus from '@/utils/eventBus'
 import { storeToRefs } from 'pinia'
@@ -381,10 +385,11 @@ const fontSizeList = computed(() => {
 })
 
 const colorForm = computed(
-  () => canvasStyleData.value.component.chartColor as DeepPartial<ChartAttr>
+  () =>
+    canvasStyleData.value.component?.chartColor ?? (DEFAULT_COLOR_CASE as DeepPartial<ChartAttr>)
 )
 
-const seniorForm = computed(() => canvasStyleData.value.component.seniorStyleSetting)
+const seniorForm = computed(() => canvasStyleData.value.component?.seniorStyleSetting ?? {})
 
 const predefineColors = COLOR_PANEL
 
@@ -398,7 +403,8 @@ const { canvasStyleData, canvasViewInfo } = storeToRefs(dvMainStore)
 const initForm = () => {
   state.customColor = colorForm.value.basicStyle.colors[0]
   setTimeout(() => {
-    state.basicStyleForm = canvasStyleData.value.component.chartColor.basicStyle
+    state.basicStyleForm =
+      canvasStyleData.value.component?.chartColor?.basicStyle ?? DEFAULT_BASIC_STYLE
     colorAreaInit.value = true
   }, 1000)
   const tableHeader = colorForm.value.tableHeader

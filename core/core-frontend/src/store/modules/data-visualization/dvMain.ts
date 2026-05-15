@@ -34,6 +34,27 @@ import { formatterItem } from '@/views/chart/components/js/formatter'
 import { checkFilterRemove } from '@/custom-component/v-query/QueryUtils'
 const { t } = useI18n()
 
+function filterEmptyComponentData(componentData = []) {
+  if (!Array.isArray(componentData)) {
+    return []
+  }
+  for (let index = componentData.length - 1; index >= 0; index--) {
+    const componentItem = componentData[index]
+    if (!componentItem) {
+      componentData.splice(index, 1)
+      continue
+    }
+    if (componentItem.component === 'Group') {
+      componentItem.propValue = filterEmptyComponentData(componentItem.propValue || [])
+    } else if (componentItem.component === 'DeTabs') {
+      componentItem.propValue?.forEach(tabItem => {
+        tabItem.componentData = filterEmptyComponentData(tabItem.componentData || [])
+      })
+    }
+  }
+  return componentData
+}
+
 export const dvMainStore = defineStore('dataVisualization', {
   state: () => {
     return {
@@ -274,6 +295,8 @@ export const dvMainStore = defineStore('dataVisualization', {
     },
 
     setCanvasStyle(style) {
+      style = style || {}
+      style.component = style.component || {}
       style.component['seniorStyleSetting'] =
         style.component['seniorStyleSetting'] || deepCopy(SENIOR_STYLE_SETTING_LIGHT)
       style['component']['formatterItem'] =
@@ -409,7 +432,7 @@ export const dvMainStore = defineStore('dataVisualization', {
     },
 
     setComponentData(componentData = []) {
-      this.componentData = componentData
+      this.componentData = filterEmptyComponentData(componentData)
     },
 
     addCopyComponent(component, idMap, canvasViewInfoPre = this.canvasViewInfo) {

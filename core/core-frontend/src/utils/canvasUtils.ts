@@ -462,11 +462,13 @@ export function initCanvasDataPrepare(dvId, params, callBack) {
       dvInfo.type === 'dashboard' && canvasStyleResult['dashboard'].gap === 'yes'
         ? canvasStyleResult['dashboard'].gapSize
         : 0
-    appearanceStore.setCurrentFont(canvasStyleResult.fontFamily)
-    document.documentElement.style.setProperty(
-      '--de-canvas_custom_font',
-      `${canvasStyleResult.fontFamily}`
-    )
+    const canvasFontFamily =
+      (canvasStyleResult as Record<string, any>)?.['fontFamily'] || 'PingFang'
+    if (canvasStyleResult) {
+      ;(canvasStyleResult as Record<string, any>)['fontFamily'] = canvasFontFamily
+    }
+    appearanceStore.setCurrentFont(canvasFontFamily)
+    document.documentElement.style.setProperty('--de-canvas_custom_font', `${canvasFontFamily}`)
     callBack({ canvasDataResult, canvasStyleResult, dvInfo, canvasViewInfoPreview, curPreviewGap })
   })
 }

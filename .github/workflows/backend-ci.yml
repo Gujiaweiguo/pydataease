@@ -1,0 +1,164 @@
+name: Backend CI
+
+on:
+  push:
+    branches:
+      - feat/fastapi-backend-rewrite
+      - main
+    paths:
+      - 'core/pydataease-backend/**'
+      - '.github/workflows/backend-ci.yml'
+  pull_request:
+    paths:
+      - 'core/pydataease-backend/**'
+      - '.github/workflows/backend-ci.yml'
+    branches:
+      - '**'
+
+concurrency:
+  group: backend-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ── Job 1: Lint + Migration + Tests ─────────────────────────
+  test:
+    runs-on: ubuntu-latest
+
+    env:
+      DE_ENV: test
+      DE_DATABASE_URL: postgresql+asyncpg://dataease:dataease@localhost:5432/dataease
+      DE_SECRET_KEY: ci-secret-key
+      DE_SHARE_SECRET_KEY: ci-share-secret-key
+
+    defaults:
+      run:
+        working-directory: core/pydataease-backend
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: dataease
+          POSTGRES_PASSWORD: dataease
+          POSTGRES_DB: dataease
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Run linter
+        run: uv run ruff check .
+
+      - name: Verify migrations
+        run: uv run alembic upgrade head
+
+      - name: Run tests
+        run: >-
+          uv run pytest tests/ -v --tb=short -x
+          --ignore=tests/test_e2e_creation_flow.py
+
+  # ── Job 2: E2E user-journey test ──────────────────────────────
+  e2e:
+    runs-on: ubuntu-latest
+    needs: test
+    timeout-minutes: 5
+
+    env:
+      DE_ENV: test
+      DE_DATABASE_URL: postgresql+asyncpg://dataease:dataease@localhost:5432/dataease
+      DE_SECRET_KEY: ci-secret-key
+      DE_SHARE_SECRET_KEY: ci-share-secret-key
+
+    defaults:
+      run:
+        working-directory: core/pydataease-backend
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: dataease
+          POSTGRES_PASSWORD: dataease
+          POSTGRES_DB: dataease
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Run migrations
+        run: uv run alembic upgrade head
+
+      - name: Start server
+        run: |
+          uv run uvicorn app.main:app --host 0.0.0.0 --port 8100 &
+          echo "Waiting for server to start..."
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:8100/health > /dev/null 2>&1; then
+              echo "Server is healthy"
+              break
+            fi
+            echo "  attempt $i/30..."
+            sleep 1
+          done
+          curl -sf http://localhost:8100/health || (echo "Server failed to start" && exit 1)
+
+      - name: Run E2E tests
+        run: uv run pytest tests/test_e2e_creation_flow.py -v --tb=short
+
+  # ── Job 3: Docker build verification ────────────────────────
+  docker-build:
+    runs-on: ubuntu-latest
+    needs: test
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: core/pydataease-backend
+          push: false
+          tags: pydataease-backend:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

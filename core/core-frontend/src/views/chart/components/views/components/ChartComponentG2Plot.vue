@@ -273,7 +273,7 @@ const calcData = async (view, callback) => {
           errMsg.value = res.msg
           callback?.()
         } else {
-          chartData.value = res?.data as Partial<Chart['data']>
+          chartData.value = res as Partial<Chart['data']>
           emit('onDrillFilters', res?.drillFilters)
           if (!res?.drillFilters?.length) {
             dynamicAreaId.value = ''
@@ -308,7 +308,7 @@ const calcData = async (view, callback) => {
             dvMainStore.setViewOriginData(view.id, chartData.value)
             emitter.emit('chart-data-change')
           }
-          await renderChart(res, callback)
+          await renderChart(view, callback)
         }
       })
       .catch(() => {
@@ -643,10 +643,10 @@ const trackMenu = computed(() => {
           ?.filter(item => !drillFields.includes(item.id))
           .forEach(item => {
             const sourceInfo = view.value.id + '#' + item.id
-            if (nowPanelTrackInfo.value[sourceInfo]) {
+            if (nowPanelTrackInfo.value?.[sourceInfo]) {
               linkageCount++
             }
-            if (nowPanelJumpInfo.value[sourceInfo]) {
+            if (nowPanelJumpInfo.value?.[sourceInfo]) {
               jumpCount++
             }
           })
@@ -656,10 +656,10 @@ const trackMenu = computed(() => {
         ?.filter(item => !drillFields.includes(item.id))
         .forEach(item => {
           const sourceInfo = view.value.id + '#' + item.id
-          if (nowPanelTrackInfo.value[sourceInfo]) {
+          if (nowPanelTrackInfo.value?.[sourceInfo]) {
             linkageCount++
           }
-          if (nowPanelJumpInfo.value[sourceInfo]) {
+          if (nowPanelJumpInfo.value?.[sourceInfo]) {
             jumpCount++
           }
         })

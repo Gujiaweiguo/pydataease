@@ -1,0 +1,55 @@
+T05: Configuration System, Environment Layers & Local/Production Run Orchestration
+===============================================================================
+
+Files Created
+-------------
+1. core/pydataease-backend/app/settings/config.py     — BaseConfig / DevConfig / ProdConfig with Pydantic Settings
+2. core/pydataease-backend/.env.example               — Template with all required environment variables
+3. core/pydataease-backend/docker-compose.dev.yml     — Dev: PostgreSQL 16 only
+4. core/pydataease-backend/docker-compose.prod.yml    — Prod: pydataease-app + pydataease-pg
+5. core/pydataease-backend/Dockerfile                 — Multi-stage Python build using uv
+
+Environment Variables (all prefixed with DE_)
+---------------------------------------------
+DE_ENV            — dev | prod (default: dev)
+DE_APP_NAME       — Application display name (default: "DataEase API")
+DE_VERSION        — Application version (default: "0.1.0")
+DE_DEBUG          — Enable debug mode (default: false in prod, true in dev)
+DE_DATABASE_URL   — AsyncPG connection string
+DE_DB_POOL_SIZE   — Connection pool size (default: 10)
+DE_DB_MAX_OVERFLOW — Pool overflow (default: 20)
+DE_DB_POOL_RECYCLE — Pool recycle seconds (default: 1800)
+DE_SECRET_KEY     — Signing/encryption key
+DE_API_PREFIX     — URL prefix (default: "/de2api")
+
+Dev Startup
+-----------
+1. Start PostgreSQL:
+   docker compose -f docker-compose.dev.yml up -d
+
+2. Run the FastAPI app locally with hot reload:
+   uv run uvicorn app.main:app --reload
+
+3. App available at http://localhost:8000
+
+Prod Startup
+-----------
+1. Set required secret:
+   export DE_SECRET_KEY=<your-secret-key>
+
+2. Start all services:
+   docker compose -f docker-compose.prod.yml up -d --build
+
+3. App available at http://localhost:8100 (mapped from internal 8000)
+
+Architecture Notes
+------------------
+- Dev environment: local FastAPI + Docker PostgreSQL only
+- Prod environment: Docker pydataease-app (Python) + Docker pydataease-pg (PostgreSQL 16)
+- Settings use pydantic-settings with DE_ prefix, loaded from .env and/or env vars
+- DevConfig defaults debug=True, ProdConfig defaults debug=False
+- get_settings() uses DE_ENV to select config class; caches singleton
+- Production healthcheck uses httpx to GET /health endpoint
+- PostgreSQL healthcheck uses pg_isready
+- Dockerfile uses multi-stage build: builder with uv for dependency install, slim runtime
+- External port 8100 preserves parity with existing Java backend (installer/deectl expects 8100)

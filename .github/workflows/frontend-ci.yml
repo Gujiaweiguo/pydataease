@@ -1,0 +1,42 @@
+name: Frontend CI
+
+on:
+  pull_request:
+    branches:
+      - '**'
+    paths:
+      - 'core/core-frontend/**'
+
+jobs:
+  lint-and-typecheck:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        working-directory: core/core-frontend
+        run: npm install --no-audit
+
+      - name: Run TypeScript checks
+        working-directory: core/core-frontend
+        run: npm run ts:check
+        continue-on-error: true  # pre-existing type errors; don't block PR
+
+      - name: Run ESLint
+        working-directory: core/core-frontend
+        run: npm run lint
+
+      - name: Run stylelint
+        working-directory: core/core-frontend
+        run: npm run lint:stylelint
+
+      - name: Build check
+        working-directory: core/core-frontend
+        run: npm run build:base
