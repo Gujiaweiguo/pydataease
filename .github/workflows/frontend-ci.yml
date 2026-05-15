@@ -36,3 +36,7 @@ jobs:
       - name: Run stylelint
         working-directory: core/core-frontend
         run: npm run lint:stylelint
+
+      - name: Build check
+        working-directory: core/core-frontend
+        run: npm run build:base
