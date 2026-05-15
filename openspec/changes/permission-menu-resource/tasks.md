@@ -1,11 +1,11 @@
 ## 1. Permission Catalog and Migration
 
-- [ ] 1.1 Create `CorePermissionPoint` model (`core_permission_point` table) mapping menu/resource to permission types (use/manage/authorize/view/export).
-- [ ] 1.2 Create `CoreRolePermission` model (`core_role_permission` table) binding role to permission point with grant/deny.
-- [ ] 1.3 Create `CoreUserPermission` model (`core_user_permission` table) for direct user-level permission overrides.
-- [ ] 1.4 Create `CoreOrgPermission` model (`core_org_permission` table) for org-level permission defaults.
-- [ ] 1.5 Write Alembic migration for all permission tables with expand-first approach.
-- [ ] 1.6 Seed default permission catalog matching existing menu items and resource types.
+- [x] 1.1 Create `CorePermissionPoint` model (`core_permission_point` table) mapping menu/resource to permission types (use/manage/authorize/view/export).
+- [x] 1.2 Create `CoreRolePermission` model (`core_role_permission` table) binding role to permission point with grant/deny.
+- [x] 1.3 Create `CoreUserPermission` model (`core_user_permission` table) for direct user-level permission overrides.
+- [x] 1.4 Create `CoreOrgPermission` model (`core_org_permission` table) for org-level permission defaults.
+- [x] 1.5 Write Alembic migration for all permission tables with expand-first approach.
+- [x] 1.6 Seed default permission catalog matching existing menu items and resource types.
 
 ## 2. Menu Authorization
 
