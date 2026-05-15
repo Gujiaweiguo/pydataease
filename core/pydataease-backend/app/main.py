@@ -20,6 +20,7 @@ from app.routers.chart import router as chart_router
 from app.routers.column_permission import router as column_permission_router
 from app.routers.datasource import router as datasource_router
 from app.routers.dataset import router as dataset_router
+from app.routers.dataset_field import router as dataset_field_router
 from app.routers.engine import router as engine_router
 from app.routers.visualization import router as visualization_router
 from app.routers.export import router as export_router
@@ -68,6 +69,7 @@ app = FastAPI(title=settings.app_name, version="0.1.0", lifespan=lifespan)
 api_router = APIRouter(prefix=settings.api_prefix)
 api_router.include_router(datasource_router)
 api_router.include_router(dataset_router)
+api_router.include_router(dataset_field_router)
 api_router.include_router(engine_router)
 api_router.include_router(login_router)
 api_router.include_router(org_router)

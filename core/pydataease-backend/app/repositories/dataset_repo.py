@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import final
+from typing import Any, final
 
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -102,3 +102,69 @@ class DatasetFieldRepository(AsyncBaseRepository[CoreDatasetTableField]):
         )
         await self.session.execute(stmt)
         await self.session.commit()
+
+    async def list_checked_by_group(self, dataset_group_id: int) -> Sequence[CoreDatasetTableField]:
+        stmt = (
+            select(CoreDatasetTableField)
+            .where(
+                CoreDatasetTableField.dataset_group_id == dataset_group_id,
+                CoreDatasetTableField.checked == True,  # noqa: E712
+                CoreDatasetTableField.chart_id.is_(None),
+            )
+            .order_by(CoreDatasetTableField.column_index.asc())
+        )
+        return await self.get(stmt)
+
+    async def list_checked_by_group_no_chart_filter(self, dataset_group_id: int) -> Sequence[CoreDatasetTableField]:
+        stmt = (
+            select(CoreDatasetTableField)
+            .where(
+                CoreDatasetTableField.dataset_group_id == dataset_group_id,
+                CoreDatasetTableField.checked == True,  # noqa: E712
+            )
+            .order_by(CoreDatasetTableField.column_index.asc())
+        )
+        return await self.get(stmt)
+
+    async def delete_by_id(self, field_id: int) -> None:
+        stmt = delete(CoreDatasetTableField).where(CoreDatasetTableField.id == field_id)
+        await self.session.execute(stmt)
+        await self.session.commit()
+
+    async def delete_by_chart_id(self, chart_id: int) -> None:
+        stmt = delete(CoreDatasetTableField).where(CoreDatasetTableField.chart_id == chart_id)
+        await self.session.execute(stmt)
+        await self.session.commit()
+
+    async def list_origin_fields_by_groups(self, group_ids: list[int]) -> dict[str, list[Any]]:
+        result: dict[str, list[Any]] = {}
+        for gid in group_ids:
+            stmt = (
+                select(CoreDatasetTableField)
+                .where(
+                    CoreDatasetTableField.dataset_group_id == gid,
+                    CoreDatasetTableField.checked == True,  # noqa: E712
+                    CoreDatasetTableField.chart_id.is_(None),
+                    CoreDatasetTableField.ext_field == 0,
+                )
+                .order_by(CoreDatasetTableField.column_index.asc())
+            )
+            rows = await self.get(stmt)
+            result[str(gid)] = list(rows)
+        return result
+
+    async def save_field(self, field_data: dict[str, object]) -> CoreDatasetTableField:
+        field_id = field_data.get("id")
+        if field_id:
+            existing = await self.session.get(CoreDatasetTableField, field_id)
+            if existing:
+                for key, value in field_data.items():
+                    setattr(existing, key, value)
+                await self.session.commit()
+                await self.session.refresh(existing)
+                return existing
+        entity = CoreDatasetTableField(**field_data)
+        self.session.add(entity)
+        await self.session.commit()
+        await self.session.refresh(entity)
+        return entity

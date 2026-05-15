@@ -140,3 +140,33 @@ class DatasetBarInfoResponse(BaseModel):
     create_time: int | None = Field(default=None, serialization_alias="createTime")
     update_by: str | None = Field(default=None, serialization_alias="updateBy")
     last_update_time: int | None = Field(default=None, serialization_alias="lastUpdateTime")
+
+
+class DatasetFieldSaveRequest(BaseModel):
+    """For save endpoint — matches Java DatasetTableFieldDTO."""
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: int | None = None
+    dataset_group_id: int | None = Field(default=None, validation_alias=AliasChoices("datasetGroupId", "dataset_group_id"), serialization_alias="datasetGroupId")
+    dataset_table_id: int | None = Field(default=None, validation_alias=AliasChoices("datasetTableId", "dataset_table_id"), serialization_alias="datasetTableId")
+    chart_id: int | None = Field(default=None, validation_alias=AliasChoices("chartId", "chart_id"), serialization_alias="chartId")
+    origin_name: str | None = Field(default=None, validation_alias=AliasChoices("originName", "origin_name"), serialization_alias="originName")
+    name: str | None = None
+    dataease_name: str | None = Field(default=None, validation_alias=AliasChoices("dataeaseName", "dataease_name"), serialization_alias="dataeaseName")
+    group_type: str | None = Field(default=None, validation_alias=AliasChoices("groupType", "group_type"), serialization_alias="groupType")
+    type: str | None = None
+    de_type: int | None = Field(default=None, validation_alias=AliasChoices("deType", "de_type"), serialization_alias="deType")
+    de_extract_type: int | None = Field(default=None, validation_alias=AliasChoices("deExtractType", "de_extract_type"), serialization_alias="deExtractType")
+    ext_field: int | None = Field(default=None, validation_alias=AliasChoices("extField", "ext_field"), serialization_alias="extField")
+    checked: bool | None = None
+    column_index: int | None = Field(default=None, validation_alias=AliasChoices("columnIndex", "column_index"), serialization_alias="columnIndex")
+    description: str | None = None
+    date_format: str | None = Field(default=None, validation_alias=AliasChoices("dateFormat", "date_format"), serialization_alias="dateFormat")
+    date_format_type: str | None = Field(default=None, validation_alias=AliasChoices("dateFormatType", "date_format_type"), serialization_alias="dateFormatType")
+    accuracy: int | None = None
+
+
+class DatasetFieldIdsRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    ids: list[int] = Field(default_factory=list)
