@@ -35,6 +35,13 @@ class ProdConfig(BaseConfig):
     debug: bool = False
 
 
+class TestConfig(BaseConfig):
+    debug: bool = True
+    database_url: str = "postgresql+asyncpg://dataease:dataease@localhost:5432/dataease"
+    secret_key: str = "test-secret-key"
+    share_secret_key: str = "test-share-secret-key"
+
+
 _settings: BaseConfig | None = None
 
 
@@ -46,6 +53,8 @@ def get_settings() -> BaseConfig:
         env = os.getenv("DE_ENV", "dev")
         if env == "prod":
             _settings = ProdConfig()
+        elif env == "test":
+            _settings = TestConfig()
         else:
             _settings = DevConfig()
     return _settings

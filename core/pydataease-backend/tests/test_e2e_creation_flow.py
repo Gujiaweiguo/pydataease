@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import base64
 import json
+import os
 from collections.abc import AsyncIterator
 
 import httpx
@@ -12,7 +13,7 @@ from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives import padding as sym_padding
 
 
-BASE_URL = "http://localhost:8100"
+BASE_URL = os.environ.get("E2E_BASE_URL", "http://localhost:8100")
 
 
 def _extract_public_key_pem(dekey: str) -> str:
@@ -70,8 +71,8 @@ async def test_e2e_creation_flow(api_client: httpx.AsyncClient) -> None:
                 "type": "postgresql",
                 "pid": 0,
                 "configuration": {
-                    "host": "172.17.0.1",
-                    "port": "5432",
+                                    "host": os.environ.get("E2E_PG_HOST", "172.17.0.1"),
+                    "port": os.environ.get("E2E_PG_PORT", "5432"),
                     "username": "dataease",
                     "password": "dataease",
                     "dataBase": "dataease",
