@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import time
 from typing import final
 
 from sqlalchemy import delete, select
@@ -74,3 +75,8 @@ class ShareTicketRepository:
 
     async def delete(self, entity: CoreShareTicket) -> None:
         await self._base.delete(entity)
+
+    async def update_access_time(self, ticket_id: int) -> None:
+        ticket = await self._base.get_by_id(ticket_id)
+        if ticket is not None:
+            await self._base.update(ticket, {"access_time": int(time.time() * 1000)})

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import hmac
+import logging
 import secrets
 import time
 from typing import final
@@ -22,6 +24,8 @@ from app.schemas.share import (
     ShareViewDetailRequest,
 )
 from app.schemas.auth import TokenUser
+
+logger = logging.getLogger(__name__)
 
 
 def _new_share_id() -> int:
@@ -115,6 +119,65 @@ class ShareService:
             return None
         return ShareResponse.model_validate(share)
 
+    async def resolve(
+        self, uuid: str, password: str | None = None
+    ) -> ShareResponse:
+        share = await self.share_repo.get_by_uuid(uuid)
+        if share is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Share not found"
+            )
+        current_ms = int(time.time() * 1000)
+        if share.exp is not None and share.exp < current_ms:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail="Share has expired"
+            )
+        if share.pwd:
+            if not password or not hmac.compare_digest(share.pwd, password):
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Password incorrect",
+                )
+        await self.record_access(uuid)
+        return ShareResponse.model_validate(share)
+
+    async def validate_password(self, payload: dict) -> dict:
+        uuid = payload.get("uuid", "")
+        share = await self.share_repo.get_by_uuid(uuid)
+        if share is None:
+            return {"code": 1, "data": None, "msg": "Share not found"}
+        current_ms = int(time.time() * 1000)
+        if share.exp is not None and share.exp < current_ms:
+            return {"code": 1, "data": None, "msg": "Share has expired"}
+        password = payload.get("password", "") or ""
+        if not share.pwd:
+            return {"code": 0, "data": True, "msg": ""}
+        if hmac.compare_digest(share.pwd, password):
+            return {"code": 0, "data": True, "msg": ""}
+        return {"code": 1, "data": False, "msg": "Password incorrect"}
+
+    async def get_status(self, resource_id: int) -> dict | None:
+        share = await self.share_repo.get_by_resource_id(resource_id)
+        if share is None:
+            return None
+        return {
+            "uuid": share.uuid,
+            "exp": share.exp,
+            "has_pwd": share.pwd is not None,
+            "auto_pwd": share.auto_pwd,
+        }
+
+    async def record_access(
+        self, uuid: str, client_ip: str | None = None
+    ) -> None:
+        try:
+            logger.info("Share access: uuid=%s ip=%s", uuid, client_ip)
+            tickets = await self.ticket_repo.list_by_uuid(uuid)
+            for ticket in tickets:
+                await self.ticket_repo.update_access_time(ticket.id)
+        except Exception:
+            logging.exception("Failed to record share access for uuid=%s", uuid)
+
     async def save_ticket(self, payload: ShareTicketSaveRequest) -> ShareTicketResponse:
         if payload.generate_new or payload.uuid is None:
             created = await self.ticket_repo.create({
@@ -154,6 +217,41 @@ class ShareService:
                 status_code=status.HTTP_404_NOT_FOUND, detail="Ticket not found"
             )
         await self.ticket_repo.delete(ticket)
+
+    async def get_resource_data(self, share: ShareResponse) -> dict:
+        resource_type = "dashboard" if share.type == 0 else "chart"
+        return {"resource_id": share.resource_id, "resource_type": resource_type}
+
+    async def generate_embed_token(self, uuid: str) -> str:
+        from jose import jwt as jose_jwt
+
+        share = await self.share_repo.get_by_uuid(uuid)
+        if share is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Share not found"
+            )
+        current_ms = int(time.time() * 1000)
+        if share.exp is not None and share.exp < current_ms:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail="Share has expired"
+            )
+
+        from app.settings.config import get_settings
+        settings = get_settings()
+
+        token_exp_s = int(time.time()) + 3600
+        if share.exp is not None:
+            share_exp_s = share.exp // 1000
+            token_exp_s = min(token_exp_s, share_exp_s)
+
+        claims = {
+            "resourceId": share.resource_id,
+            "uuid": share.uuid,
+            "uid": share.creator,
+            "oid": share.oid,
+            "exp": token_exp_s,
+        }
+        return jose_jwt.encode(claims, settings.share_secret_key, algorithm=settings.jwt_algorithm)
 
     async def detail_tickets(
         self, payload: ShareTicketDetailRequest
