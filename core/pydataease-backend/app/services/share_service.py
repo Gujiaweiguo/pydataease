@@ -63,9 +63,18 @@ class ShareService:
         if not share.pwd:
             pwd_valid = True
         elif payload.ciphertext:
-            # Direct comparison: ciphertext may be the password itself
-            # or RSA-encrypted "uuid,password" — compare directly for now
-            pwd_valid = hmac.compare_digest(payload.ciphertext, share.pwd)
+            try:
+                from app.utils.rsa_utils import decrypt_rsa
+                decrypted = decrypt_rsa(payload.ciphertext)
+                # Frontend encrypts "uuid,password" — extract password part
+                if "," in decrypted:
+                    _, password = decrypted.split(",", 1)
+                else:
+                    password = decrypted
+                pwd_valid = hmac.compare_digest(password, share.pwd)
+            except Exception:
+                logger.warning("Failed to decrypt share password ciphertext")
+                pwd_valid = False
 
         # Ticket validation
         ticket_vo = TicketValidVO()
@@ -118,7 +127,7 @@ class ShareService:
 
         settings = get_settings()
 
-        token_exp_s = int(time.time()) + 3600  # default 1 hour
+        token_exp_s = int(time.time()) + 86400  # 24 hours
         if share.exp is not None:
             share_exp_s = share.exp // 1000
             token_exp_s = min(token_exp_s, share_exp_s)
@@ -254,9 +263,12 @@ class ShareService:
     ) -> None:
         try:
             logger.info("Share access: uuid=%s ip=%s", uuid, client_ip)
+            # Update access time on all tickets for this share
             tickets = await self.ticket_repo.list_by_uuid(uuid)
             for ticket in tickets:
                 await self.ticket_repo.update_access_time(ticket.id)
+            # Increment access count on the share itself
+            await self.share_repo.increment_access_count(uuid)
         except Exception:
             logging.exception("Failed to record share access for uuid=%s", uuid)
 
@@ -321,7 +333,7 @@ class ShareService:
         from app.settings.config import get_settings
         settings = get_settings()
 
-        token_exp_s = int(time.time()) + 3600
+        token_exp_s = int(time.time()) + 86400  # 24 hours
         if share.exp is not None:
             share_exp_s = share.exp // 1000
             token_exp_s = min(token_exp_s, share_exp_s)

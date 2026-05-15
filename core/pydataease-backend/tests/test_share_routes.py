@@ -78,6 +78,7 @@ class FakeShareService:
             type=0,
             auto_pwd=True,
             ticket_require=False,
+            access_count=0,
         )
 
     async def detail(self, payload: object) -> ShareResponse | None:
@@ -93,6 +94,7 @@ class FakeShareService:
             type=0,
             auto_pwd=True,
             ticket_require=False,
+            access_count=0,
         )
 
     async def delete(self, payload: object) -> None:
@@ -111,6 +113,7 @@ class FakeShareService:
             type=0,
             auto_pwd=True,
             ticket_require=False,
+            access_count=0,
         )
 
     async def get_by_id(self, resource_id: int) -> ShareResponse | None:
@@ -126,6 +129,7 @@ class FakeShareService:
             type=0,
             auto_pwd=True,
             ticket_require=False,
+            access_count=0,
         )
 
     async def proxy(self, uuid: str) -> ShareResponse | None:
@@ -141,6 +145,7 @@ class FakeShareService:
             type=0,
             auto_pwd=True,
             ticket_require=False,
+            access_count=0,
         )
 
     async def save_ticket(self, payload: object) -> ShareTicketResponse:
@@ -191,6 +196,7 @@ class FakeShareService:
             type=0,
             auto_pwd=True,
             ticket_require=False,
+            access_count=0,
         )
 
     async def generate_embed_token(self, uuid: str) -> str:
@@ -585,3 +591,55 @@ async def test_public_view_expired_share(
     """Expired share should return 400 error."""
     response = await client.get("/de2api/share/view/expired-share")
     assert response.status_code == 400
+
+
+# ---------------------------------------------------------------------------
+# 5.4 — RSA password decryption unit test
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_proxy_info_rsa_password_decryption() -> None:
+    """Verify proxy_info decrypts RSA ciphertext containing 'uuid,password'."""
+    from unittest.mock import AsyncMock, MagicMock, patch
+
+    from app.models.share import XpackShare
+    from app.schemas.share import ShareProxyInfoRequest
+    from app.services.share_service import ShareService
+
+    # Create a mock share with a known password
+    mock_share = MagicMock(spec=XpackShare)
+    mock_share.pwd = "mysecretpwd"
+    mock_share.exp = None
+    mock_share.type = 0
+    mock_share.creator = 7
+    mock_share.oid = 1
+    mock_share.resource_id = 100
+    mock_share.uuid = "testuuid"
+
+    mock_session = AsyncMock()
+    svc = ShareService(mock_session)
+
+    with patch.object(svc.share_repo, "get_by_uuid", return_value=mock_share):
+        with patch("app.utils.rsa_utils.decrypt_rsa", return_value="testuuid,mysecretpwd"):
+            payload = ShareProxyInfoRequest(uuid="testuuid", ciphertext="fake_rsa_ciphertext")
+            result = await svc.proxy_info(payload)
+            assert result is not None
+            response, _link_token = result
+            assert response.pwd_valid is True
+
+        # Test wrong password via RSA decryption
+        with patch("app.utils.rsa_utils.decrypt_rsa", return_value="testuuid,wrongpwd"):
+            payload = ShareProxyInfoRequest(uuid="testuuid", ciphertext="fake_rsa_ciphertext")
+            result = await svc.proxy_info(payload)
+            assert result is not None
+            response, _link_token = result
+            assert response.pwd_valid is False
+
+        # Test decryption failure (exception) → pwd_valid = False
+        with patch("app.utils.rsa_utils.decrypt_rsa", side_effect=Exception("decryption error")):
+            payload = ShareProxyInfoRequest(uuid="testuuid", ciphertext="bad_ciphertext")
+            result = await svc.proxy_info(payload)
+            assert result is not None
+            response, _link_token = result
+            assert response.pwd_valid is False

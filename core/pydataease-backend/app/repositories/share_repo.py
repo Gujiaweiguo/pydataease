@@ -3,7 +3,7 @@ from __future__ import annotations
 import time
 from typing import final
 
-from sqlalchemy import delete, select
+from sqlalchemy import delete, select, update as sa_update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.share import CoreShareTicket, XpackShare
@@ -46,6 +46,15 @@ class ShareRepository:
         result = await self.session.execute(stmt)
         await self.session.commit()
         return result.rowcount
+
+    async def increment_access_count(self, uuid: str) -> None:
+        stmt = (
+            sa_update(XpackShare)
+            .where(XpackShare.uuid == uuid)
+            .values(access_count=XpackShare.access_count + 1)
+        )
+        await self.session.execute(stmt)
+        await self.session.commit()
 
 
 @final

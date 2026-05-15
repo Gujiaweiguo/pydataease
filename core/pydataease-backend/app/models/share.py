@@ -26,6 +26,7 @@ class XpackShare(Base):
     type: Mapped[int] = mapped_column(Integer, nullable=False)
     auto_pwd: Mapped[bool | None] = mapped_column(Boolean)
     ticket_require: Mapped[bool | None] = mapped_column(Boolean)
+    access_count: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
 
 
 @final

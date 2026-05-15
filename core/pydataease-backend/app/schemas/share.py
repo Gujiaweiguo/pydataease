@@ -67,6 +67,7 @@ class ShareResponse(BaseModel):
     type: int
     auto_pwd: bool | None = Field(default=None, serialization_alias="autoPwd")
     ticket_require: bool | None = Field(default=None, serialization_alias="ticketRequire")
+    access_count: int = 0
 
 
 class ShareTicketSaveRequest(BaseModel):
