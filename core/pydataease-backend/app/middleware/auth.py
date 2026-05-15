@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import time
 from collections.abc import Mapping
 from typing import cast
 
 from fastapi import Request, status
 from jose import ExpiredSignatureError, JWTError, jwt
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.responses import Response
 
@@ -13,6 +15,7 @@ from starlette.types import ASGIApp, Receive, Scope, Send
 
 from app.dependencies.database import async_session
 from app.middleware.whitelist import is_invalid_path, is_whitelisted_path
+from app.models.share import XpackShare
 from app.models.user import CoreUser
 from app.repositories.org_repo import OrgRepository
 from app.repositories.user_repo import UserRepository
@@ -71,11 +74,45 @@ class AuthMiddleware:
                 request.scope["state"]["share_resource_id"] = resource_id
             return await self._claims_to_user(claims, link_token=True)
 
-        token = headers.get(TOKEN_HEADER) or headers.get(EMBEDDED_TOKEN_HEADER)
+        embedded_token = headers.get(EMBEDDED_TOKEN_HEADER)
+        de_token = headers.get(TOKEN_HEADER)
+        if embedded_token and not de_token:
+            # Try share embed token first (signed with share_secret_key, has 'uuid' claim)
+            try:
+                claims = self._decode_token(embedded_token, self.settings.share_secret_key, token_kind="embedded token")
+                if "uuid" in claims:
+                    uuid = claims.get("uuid")
+                    resource_id = claims.get("resourceId")
+                    if uuid is not None:
+                        await self._verify_embed_share(str(uuid))
+                    if resource_id is not None:
+                        request.scope.setdefault("state", {})
+                        request.scope["state"]["share_resource_id"] = resource_id
+                    uid = claims.get("uid", 0)
+                    oid = claims.get("oid", 0)
+                    return TokenUser(
+                        user_id=_to_int(uid) if isinstance(uid, (int, float)) else 0,
+                        oid=_to_int(oid) if isinstance(oid, (int, float)) else 0,
+                    )
+            except AuthError:
+                pass  # Not a share embed token, fall through to regular user token handling
+
+        token = de_token or embedded_token
         if not token:
             raise AuthError(status.HTTP_401_UNAUTHORIZED, f"token is empty for uri {{{request.url.path}}}")
         claims = await self._decode_user_token(token)
         return await self._claims_to_user(claims)
+
+    async def _verify_embed_share(self, uuid: str) -> None:
+        async with async_session() as session:
+            stmt = select(XpackShare).where(XpackShare.uuid == uuid)
+            result = await session.execute(stmt)
+            share = result.scalar_one_or_none()
+        if share is None:
+            raise AuthError(status.HTTP_401_UNAUTHORIZED, "Share not found")
+        current_ms = int(time.time() * 1000)
+        if share.exp is not None and share.exp < current_ms:
+            raise AuthError(status.HTTP_401_UNAUTHORIZED, "Share has expired")
 
     async def _decode_user_token(self, token: str) -> Mapping[str, object]:
         unverified_claims = self._get_unverified_claims(token)

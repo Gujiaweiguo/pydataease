@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query, Request
+from pydantic import BaseModel
 
 from app.dependencies.auth import get_current_user
 from app.schemas.auth import TokenUser
@@ -17,6 +18,10 @@ from app.schemas.share import (
 from app.services.share_service import ShareService, get_share_service
 
 router = APIRouter(prefix="/share", tags=["share"])
+
+
+class EmbedTokenRequest(BaseModel):
+    uuid: str
 
 
 @router.get("/status/{resource_id}")
@@ -123,3 +128,26 @@ async def proxy_share(
     service: ShareService = Depends(get_share_service),
 ) -> object:
     return await service.proxy(uuid)
+
+
+@router.get("/view/{uuid}")
+async def view_share(
+    uuid: str,
+    request: Request,
+    password: str | None = Query(default=None),
+    ticket: str | None = Query(default=None),
+    service: ShareService = Depends(get_share_service),
+) -> object:
+    share = await service.resolve(uuid, password=password)
+    resource_info = await service.get_resource_data(share)
+    return {"share": share, "resource": resource_info}
+
+
+@router.post("/embedToken")
+async def generate_embed_token(
+    payload: EmbedTokenRequest,
+    user: TokenUser = Depends(get_current_user),
+    service: ShareService = Depends(get_share_service),
+) -> object:
+    token = await service.generate_embed_token(payload.uuid)
+    return {"token": token}
