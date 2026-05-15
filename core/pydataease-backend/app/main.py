@@ -1,8 +1,10 @@
 from contextlib import asynccontextmanager
 import os
+from typing import cast
 
 from fastapi import APIRouter, FastAPI, Request
 from fastapi.exceptions import HTTPException
+from starlette.types import ASGIApp
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
@@ -22,9 +24,11 @@ from app.routers.visualization import router as visualization_router
 from app.routers.export import router as export_router
 from app.routers.login import router as login_router
 from app.routers.org import router as org_router
+from app.routers.role import router as role_router
 from app.routers.share import router as share_router
 from app.routers.system import router as system_router
 from app.routers.task import router as task_router
+from app.routers.user import router as user_router
 from app.routers.bootstrap import router as bootstrap_router
 from app.routers.websocket import router as websocket_router
 from app.schemas.response import ResultMessage
@@ -65,6 +69,8 @@ api_router.include_router(dataset_router)
 api_router.include_router(engine_router)
 api_router.include_router(login_router)
 api_router.include_router(org_router)
+api_router.include_router(user_router)
+api_router.include_router(role_router)
 api_router.include_router(chart_router)
 api_router.include_router(visualization_router)
 api_router.include_router(export_router)
@@ -92,7 +98,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_exception_handler(RateLimitExceeded, cast(ASGIApp, _rate_limit_exceeded_handler))
 app.add_middleware(SlowAPIMiddleware)
 app.add_middleware(RequestIDMiddleware)
 app.include_router(api_router)
