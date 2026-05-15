@@ -154,6 +154,45 @@ class FakeShareService:
             )
         ]
 
+    async def resolve(self, uuid: str, password: str | None = None) -> ShareResponse:
+        from fastapi import HTTPException, status
+
+        if uuid == "expired-share":
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Share has expired")
+        if uuid == "nonexistent":
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Share not found")
+        if uuid == "pwd-protected":
+            if not password or password != "correctpwd":
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Password incorrect")
+        return ShareResponse(
+            id=100,
+            creator=7,
+            time=7000000,
+            exp=None,
+            uuid=uuid,
+            pwd="correctpwd" if uuid == "pwd-protected" else None,
+            resource_id=700,
+            oid=1,
+            type=0,
+            auto_pwd=True,
+            ticket_require=False,
+        )
+
+    async def generate_embed_token(self, uuid: str) -> str:
+        from fastapi import HTTPException, status
+
+        if uuid == "expired-share":
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Share has expired")
+        if uuid == "nonexistent":
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Share not found")
+        settings = get_settings()
+        claims = {"resourceId": 700, "uuid": uuid, "uid": 7, "oid": 1, "exp": 9999999999}
+        return jwt.encode(claims, settings.share_secret_key, algorithm=settings.jwt_algorithm)
+
+    async def get_resource_data(self, share: ShareResponse) -> dict:
+        resource_type = "dashboard" if share.type == 0 else "chart"
+        return {"resource_id": share.resource_id, "resource_type": resource_type}
+
 
 @pytest.fixture
 def auth_headers() -> dict[str, str]:
@@ -326,3 +365,154 @@ async def test_share_detail_requires_auth(client: AsyncClient) -> None:
         json={"resourceId": 1},
     )
     assert response.status_code == 401
+
+
+# ---------------------------------------------------------------------------
+# 5.1 — resolve() tests
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_resolve_share_not_found(
+    client: AsyncClient,
+    fake_service: FakeShareService,
+) -> None:
+    response = await client.get("/de2api/share/view/nonexistent")
+    assert response.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_resolve_expired_share_rejected(
+    client: AsyncClient,
+    fake_service: FakeShareService,
+) -> None:
+    response = await client.get("/de2api/share/view/expired-share")
+    assert response.status_code == 400
+
+
+@pytest.mark.asyncio
+async def test_resolve_password_protected_wrong_password(
+    client: AsyncClient,
+    fake_service: FakeShareService,
+) -> None:
+    response = await client.get("/de2api/share/view/pwd-protected?password=wrongpwd")
+    assert response.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_resolve_password_protected_correct_password(
+    client: AsyncClient,
+    fake_service: FakeShareService,
+) -> None:
+    response = await client.get("/de2api/share/view/pwd-protected?password=correctpwd")
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert data["share"]["uuid"] == "pwd-protected"
+    assert data["share"]["resourceId"] == 700
+
+
+@pytest.mark.asyncio
+async def test_resolve_no_password_share(
+    client: AsyncClient,
+    fake_service: FakeShareService,
+) -> None:
+    response = await client.get("/de2api/share/view/someshare")
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert data["share"]["uuid"] == "someshare"
+
+
+# ---------------------------------------------------------------------------
+# 5.2 — Embed token tests
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_embed_token_generation(
+    client: AsyncClient,
+    auth_headers: dict[str, str],
+    fake_service: FakeShareService,
+) -> None:
+    response = await client.post(
+        "/de2api/share/embedToken",
+        headers=auth_headers,
+        json={"uuid": "valid-share"},
+    )
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert "token" in data
+    assert isinstance(data["token"], str)
+    # Decode and verify claims
+    settings = get_settings()
+    claims = jwt.decode(data["token"], settings.share_secret_key, algorithms=[settings.jwt_algorithm])
+    assert claims["uuid"] == "valid-share"
+    assert claims["resourceId"] == 700
+
+
+@pytest.mark.asyncio
+async def test_embed_token_expired_share(
+    client: AsyncClient,
+    auth_headers: dict[str, str],
+    fake_service: FakeShareService,
+) -> None:
+    response = await client.post(
+        "/de2api/share/embedToken",
+        headers=auth_headers,
+        json={"uuid": "expired-share"},
+    )
+    assert response.status_code == 400
+
+
+@pytest.mark.asyncio
+async def test_embed_token_not_found_share(
+    client: AsyncClient,
+    auth_headers: dict[str, str],
+    fake_service: FakeShareService,
+) -> None:
+    response = await client.post(
+        "/de2api/share/embedToken",
+        headers=auth_headers,
+        json={"uuid": "nonexistent"},
+    )
+    assert response.status_code == 404
+
+
+# ---------------------------------------------------------------------------
+# 5.3 — Public /share/view/{uuid} endpoint tests
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_public_view_unauthenticated(
+    client: AsyncClient,
+    fake_service: FakeShareService,
+) -> None:
+    """Public /share/view/{uuid} should work without any auth token."""
+    response = await client.get("/de2api/share/view/someshare")
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert data["share"]["uuid"] == "someshare"
+    assert data["resource"]["resource_type"] == "dashboard"
+
+
+@pytest.mark.asyncio
+async def test_public_view_password_prompt(
+    client: AsyncClient,
+    fake_service: FakeShareService,
+) -> None:
+    """Password-protected share should reject without password, accept with correct password."""
+    response_no_pwd = await client.get("/de2api/share/view/pwd-protected")
+    assert response_no_pwd.status_code == 403
+
+    response_with_pwd = await client.get("/de2api/share/view/pwd-protected?password=correctpwd")
+    assert response_with_pwd.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_public_view_expired_share(
+    client: AsyncClient,
+    fake_service: FakeShareService,
+) -> None:
+    """Expired share should return 400 error."""
+    response = await client.get("/de2api/share/view/expired-share")
+    assert response.status_code == 400
