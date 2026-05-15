@@ -26,6 +26,49 @@ _SINGLE_QUOTED_RE = re.compile(r"'(?:''|[^'])*'")
 _DOUBLE_QUOTED_RE = re.compile(r'"(?:""|[^"])*"')
 
 
+def _sanitize_sql(sql: str) -> str:
+    sanitized = _LINE_COMMENT_RE.sub(" ", sql)
+    sanitized = _BLOCK_COMMENT_RE.sub(" ", sanitized)
+    sanitized = _SINGLE_QUOTED_RE.sub("''", sanitized)
+    sanitized = _DOUBLE_QUOTED_RE.sub('""', sanitized)
+    return sanitized
+
+
+def validate_readonly_sql(sql: str) -> str:
+    normalized = sql.strip().rstrip(";").strip()
+    if not normalized:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="SQL must not be empty")
+    if not _LEADING_QUERY_RE.match(normalized):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Only SELECT queries are allowed",
+        )
+
+    sanitized = _sanitize_sql(normalized)
+    if ";" in sanitized:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Only a single SELECT query is allowed",
+        )
+    if _FORBIDDEN_SQL_RE.search(sanitized):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Only SELECT queries are allowed",
+        )
+    return normalized
+
+
+def apply_limit(sql: str, limit: int = 1000) -> str:
+    if limit <= 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Limit must be greater than zero",
+        )
+    if _LIMIT_RE.search(_sanitize_sql(sql)):
+        return sql
+    return f"{sql} LIMIT {limit}"
+
+
 class SQLExecutor:
     def __init__(self, db_engine: AsyncEngine | None = None) -> None:
         self._engine = db_engine or engine
@@ -55,37 +98,10 @@ class SQLExecutor:
         return {"sql": executable_sql, "data": rows, "fields": fields, "total": len(rows)}
 
     def _normalize_sql(self, sql: str) -> str:
-        normalized = sql.strip().rstrip(";").strip()
-        if not normalized:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="SQL must not be empty")
-        if not _LEADING_QUERY_RE.match(normalized):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Only SELECT queries are allowed",
-            )
-
-        sanitized = self._sanitize_sql(normalized)
-        if ";" in sanitized:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Only a single SELECT query is allowed",
-            )
-        if _FORBIDDEN_SQL_RE.search(sanitized):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Only SELECT queries are allowed",
-            )
-        return normalized
+        return validate_readonly_sql(sql)
 
     def _apply_limit(self, sql: str, limit: int) -> str:
-        if limit <= 0:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Limit must be greater than zero",
-            )
-        if _LIMIT_RE.search(self._sanitize_sql(sql)):
-            return sql
-        return f"{sql} LIMIT {limit}"
+        return apply_limit(sql, limit)
 
     def _build_fields(self, result: Result[Any], rows: Sequence[list[object]]) -> list[dict[str, str]]:
         keys = list(result.keys())
@@ -100,11 +116,7 @@ class SQLExecutor:
 
     @staticmethod
     def _sanitize_sql(sql: str) -> str:
-        sanitized = _LINE_COMMENT_RE.sub(" ", sql)
-        sanitized = _BLOCK_COMMENT_RE.sub(" ", sanitized)
-        sanitized = _SINGLE_QUOTED_RE.sub("''", sanitized)
-        sanitized = _DOUBLE_QUOTED_RE.sub('""', sanitized)
-        return sanitized
+        return _sanitize_sql(sql)
 
     @staticmethod
     def _cursor_description(result: Result[Any]) -> Sequence[object] | None:

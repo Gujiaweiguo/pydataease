@@ -10,6 +10,7 @@ dependencies = [
     "sqlalchemy[asyncio]",
     "apscheduler",
     "asyncpg",
+    "asyncmy",
     "alembic",
     "openpyxl",
     "pydantic-settings",

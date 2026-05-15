@@ -18,7 +18,9 @@ from app.repositories.dataset_repo import (
     DatasetTableRepository,
 )
 from app.repositories.datasource_repo import DatasourceRepository
+from app.services.datasource_drivers import is_supported_type
 from app.services.datasource_service import DatasourceService
+from app.services.sql_executor import apply_limit, validate_readonly_sql
 from app.utils.id_utils import _sid
 from app.schemas.auth import TokenUser
 from app.schemas.dataset import (
@@ -105,8 +107,8 @@ class DatasetService:
             d["children"] = [_node_to_dict(c) for c in (node.children or [])]
             return d
 
-        children = [_node_to_dict(n) for n in built_tree]
-        root = {
+        children: list[dict[str, object]] = [_node_to_dict(n) for n in built_tree]
+        root: dict[str, object] = {
             "id": "0",
             "name": "root",
             "pid": -1,
@@ -312,12 +314,15 @@ class DatasetService:
 
         if datasource_id:
             datasource_id_int = int(str(datasource_id))
-            from app.services.datasource_service import DatasourceService
-
             ds_repo = DatasourceRepository(self.session)
             datasource = await ds_repo.get_by_id(datasource_id_int)
             if datasource is None:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Datasource not found")
+            if not is_supported_type(datasource.type):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Datasource type '{datasource.type}' does not support SQL preview",
+                )
             config = datasource.configuration
             if isinstance(config, str):
                 config = json.loads(config)
@@ -326,15 +331,17 @@ class DatasetService:
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="Datasource configuration must be an object",
                 )
+            sql = validate_readonly_sql(sql)
+            sql_with_limit = apply_limit(sql)
             ds_service = DatasourceService(self.session, ds_repo)
-            connection = await ds_service._open_connection(config)
+            connection = await ds_service._open_connection(config, ds_type=datasource.type)
             try:
-                records = await connection.fetch(sql)
+                records = await connection.fetch(sql_with_limit)
             finally:
                 await connection.close()
             rows = [list(record) for record in records]
             fields = self._build_external_fields(records, rows)
-            return {"sql": sql, "data": rows, "fields": fields, "total": len(rows)}
+            return {"sql": sql_with_limit, "data": rows, "fields": fields, "total": len(rows)}
 
         result = await self.sql_executor.execute_select(sql)
         return {"sql": sql, "data": result["data"], "fields": result["fields"], "total": len(result["data"])}

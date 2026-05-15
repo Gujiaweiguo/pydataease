@@ -1,9 +1,8 @@
 from __future__ import annotations
 
 import time
-from typing import cast, final
+from typing import Any, cast, final
 
-import asyncpg
 from fastapi import Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,6 +11,7 @@ from app.dependencies.database import get_db
 from app.models.datasource import CoreDatasource
 from app.models.engine import CoreDeEngine
 from app.repositories.datasource_repo import DatasourceRepository
+from app.services.datasource_drivers import canonical_type, is_supported_type, open_connection
 from app.utils.id_utils import _sid
 from app.schemas.auth import TokenUser
 from app.schemas.datasource import (
@@ -26,11 +26,8 @@ from app.schemas.datasource import (
     EngineInfoResponse,
 )
 
-SUPPORTED_POSTGRES_TYPES = {"pg", "postgres", "postgresql"}
-
-
-def _build_tree(nodes: list[dict], pid: str = "0") -> list[dict]:
-    children = []
+def _build_tree(nodes: list[dict[str, Any]], pid: str = "0") -> list[dict[str, Any]]:
+    children: list[dict[str, Any]] = []
     for node in nodes:
         if node.get("pid", "0") == pid:
             node_copy = dict(node)
@@ -52,7 +49,7 @@ class DatasourceService:
         records = await self.repository.search(keyword)
         return [DatasourceResponse.model_validate(record) for record in records]
 
-    async def tree(self) -> list[dict]:
+    async def tree(self) -> list[dict[str, Any]]:
         try:
             stmt = select(CoreDatasource).where(CoreDatasource.id != 0).order_by(CoreDatasource.name.asc(), CoreDatasource.update_time.desc())
             result = await self.session.execute(stmt)
@@ -101,7 +98,7 @@ class DatasourceService:
 
     async def update(self, payload: DatasourceUpdate, user: TokenUser) -> DatasourceResponse:
         existing = await self._get_entity(payload.id)
-        merged_configuration = payload.configuration if payload.configuration is not None else existing.configuration
+        merged_configuration = payload.configuration if payload.configuration is not None else _as_config_dict(existing.configuration)
         merged_type = payload.type or existing.type
 
         self._ensure_supported_type(merged_type)
@@ -130,11 +127,11 @@ class DatasourceService:
 
     async def validate(self, payload: DatasourceValidateRequest) -> DatasourceValidateResponse:
         self._ensure_supported_type(payload.type)
-        await self._validate_postgres_connection(payload.configuration)
+        await self._validate_connection(payload.type, payload.configuration)
         return DatasourceValidateResponse(success=True, message="Connection successful", datasource_type=payload.type)
 
-    async def get_schemas_from_config(self, configuration: JSONDict) -> list[str]:
-        connection = await self._open_connection(configuration)
+    async def get_schemas_from_config(self, configuration: JSONDict, ds_type: str = "postgresql") -> list[str]:
+        connection = await self._open_connection(configuration, ds_type)
         try:
             rows = await connection.fetch(
                 "SELECT schema_name FROM information_schema.schemata ORDER BY schema_name"
@@ -145,10 +142,10 @@ class DatasourceService:
 
     async def get_tables(self, datasource_id: int) -> list[DatasourceTableResponse]:
         datasource = await self._get_entity(datasource_id)
-        self._ensure_supported_type(datasource.type)
+        ds_type = canonical_type(datasource.type)
         configuration = _as_config_dict(datasource.configuration)
-        connection = await self._open_connection(configuration)
-        schema = self._schema_name(configuration)
+        connection = await self._open_connection(configuration, datasource.type)
+        schema = self._schema_name(configuration, ds_type)
         try:
             rows = await connection.fetch(
                 """
@@ -165,10 +162,10 @@ class DatasourceService:
 
     async def get_fields(self, datasource_id: int, table_name: str) -> list[DatasourceFieldResponse]:
         datasource = await self._get_entity(datasource_id)
-        self._ensure_supported_type(datasource.type)
+        ds_type = canonical_type(datasource.type)
         configuration = _as_config_dict(datasource.configuration)
-        connection = await self._open_connection(configuration)
-        schema = self._schema_name(configuration)
+        connection = await self._open_connection(configuration, datasource.type)
+        schema = self._schema_name(configuration, ds_type)
         try:
             rows = await connection.fetch(
                 """
@@ -224,22 +221,25 @@ class DatasourceService:
         return entity
 
     def _ensure_supported_type(self, datasource_type: str) -> None:
-        if datasource_type.lower() not in SUPPORTED_POSTGRES_TYPES:
+        if not is_supported_type(datasource_type):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Datasource type '{datasource_type}' is not supported yet. Only PostgreSQL is available.",
+                detail=(
+                    f"Datasource type '{datasource_type}' is not supported. "
+                    "Supported: PostgreSQL (pg/postgres/postgresql), MySQL (mysql/mariadb)."
+                ),
             )
 
     async def _probe_status(self, datasource_type: str, configuration: JSONDict) -> str:
         try:
             self._ensure_supported_type(datasource_type)
-            await self._validate_postgres_connection(configuration)
+            await self._validate_connection(datasource_type, configuration)
         except Exception:
             return "Error"
         return "Success"
 
-    async def _validate_postgres_connection(self, configuration: JSONDict) -> None:
-        connection = await self._open_connection(configuration)
+    async def _validate_connection(self, ds_type: str, configuration: JSONDict) -> None:
+        connection = await self._open_connection(configuration, ds_type)
         try:
             _ = await connection.fetchval("SELECT 1")
         except Exception as exc:
@@ -247,47 +247,34 @@ class DatasourceService:
         finally:
             await connection.close()
 
-    async def _open_connection(self, configuration: JSONDict) -> asyncpg.Connection:
+    async def _open_connection(self, configuration: JSONDict, ds_type: str | None = None) -> Any:
+        type_str = ds_type or "postgresql"
         try:
-            return cast(
-                asyncpg.Connection,
-                await asyncpg.connect(
-                    host=str(_config_value(configuration, "host")),
-                    port=_config_int(configuration, "port", 5432),
-                    user=str(_config_value(configuration, "username", _config_value(configuration, "user", "postgres"))),
-                    password=str(_config_value(configuration, "password", "")),
-                    database=str(_config_value(configuration, "database", _config_value(configuration, "dataBase", "postgres"))),
-                    server_settings={"search_path": self._schema_name(configuration)},
-                ),
-            )
+            return await open_connection(type_str, configuration)
+        except ValueError as exc:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
         except HTTPException:
             raise
         except Exception as exc:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Connection failed: {exc}") from exc
 
     @staticmethod
-    def _schema_name(configuration: JSONDict) -> str:
-        schema = configuration.get("schema") or configuration.get("currentSchema") or "public"
+    def _schema_name(configuration: JSONDict, ds_type: str = "postgresql") -> str:
+        schema = configuration.get("schema") or configuration.get("currentSchema")
+        if schema:
+            return str(schema)
+        if ds_type == "mysql":
+            database = configuration.get("database") or configuration.get("dataBase") or "mysql"
+            return str(database)
+        schema = "public"
         return str(schema)
+
+    async def upload_file(self, file: object, id: str | None = None, edit_type: str | None = None) -> dict[str, object]:
+        return {"sheets": [], "fileName": ""}
 
 
 async def get_datasource_service(session: AsyncSession = Depends(get_db)) -> DatasourceService:
     return DatasourceService(session=session, repository=DatasourceRepository(session))
-
-
-def _config_value(configuration: JSONDict, key: str, default: object | None = None) -> object:
-    value = configuration.get(key, default)
-    if value is None:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Missing datasource configuration field: {key}")
-    return value
-
-
-def _config_int(configuration: JSONDict, key: str, default: int) -> int:
-    value = _config_value(configuration, key, default)
-    if isinstance(value, bool) or not isinstance(value, int | float | str):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Datasource configuration field '{key}' must be numeric")
-    return int(value)
-
 
 def _as_config_dict(configuration: object) -> JSONDict:
     if not isinstance(configuration, dict):
