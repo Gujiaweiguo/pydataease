@@ -33,6 +33,6 @@
 - [x] 6.1 Run fast backend checks: `cd core/pydataease-backend && uv run ruff check .`
 - [x] 6.2 Run default backend tests: `cd core/pydataease-backend && uv run pytest tests/ -v --ignore=tests/test_e2e_creation_flow.py`
 - [x] 6.3 Run frontend checks if frontend datasource flows change: `cd core/core-frontend && npm run ts:check && npm run lint && npm run lint:stylelint`
-- [ ] 6.4 Run integration-sensitive backend checks for datasource/runtime changes: `cd core/pydataease-backend && uv run alembic upgrade head`
+- [x] 6.4 Run integration-sensitive backend checks for datasource/runtime changes: `cd core/pydataease-backend && uv run alembic upgrade head`
 - [ ] 6.5 Run release-only packaging validation if new drivers or container setup change: `cd core/pydataease-backend && docker build -t pydataease-backend:ci .`
 - [ ] 6.6 Run release-only user-journey validation in a runnable environment when preparing rollout: `cd core/pydataease-backend && uv run pytest tests/test_e2e_creation_flow.py -v`

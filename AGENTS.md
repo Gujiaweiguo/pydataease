@@ -95,6 +95,19 @@
   - `release` is the final hard gate for build/package/user-journey validation.
 - Keep real e2e out of default PR blocking unless the user explicitly asks for release-grade verification.
 
+## Local dev environment (Docker containers)
+
+Two shared containers are used for development. **Always use these, never create new ones.**
+
+| Container | Image | Port | Purpose | Credentials |
+|-----------|-------|------|---------|-------------|
+| `postgres16` | `pgvector/pgvector:pg16` | 5432 | **内部元数据库** — FastAPI 后端的系统库（用户、角色、仪表板、数据源配置等） | `dataease:dataease` / db: `dataease` |
+| `mysql8` | `mysql:8.0` | 3306 | **外部 MySQL 数据源** — 用于测试用户添加的 MySQL 类型数据源连接 | `root:` (空密码) / 或看容器 env |
+
+- `.env` 中 `DE_DATABASE_URL=postgresql+asyncpg://dataease:dataease@127.0.0.1:5432/dataease`
+- 如果容器没启动：`docker start postgres16 mysql8`
+- 原版 Java 后端用 MySQL 做元数据库；**新版 Python 后端元数据在 PostgreSQL**，两者独立
+
 ## CI and contribution signals
 - PRs satisfy `.github/PULL_REQUEST_TEMPLATE.md`: passing tests, coverage, Conventional Commit messages, docs impact review.
 - Typo checking via `.typos.toml`; `mapFiles/**` and `docs` are excluded.
