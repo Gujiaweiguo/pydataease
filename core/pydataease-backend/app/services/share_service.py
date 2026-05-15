@@ -10,8 +10,10 @@ from fastapi import Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.dependencies.database import get_db
+from app.models.share import XpackShare
 from app.repositories.share_repo import ShareRepository, ShareTicketRepository
 from app.schemas.share import (
+    ProxyInfoResponse,
     ShareCreateRequest,
     ShareDeleteRequest,
     ShareDetailRequest,
@@ -22,6 +24,7 @@ from app.schemas.share import (
     ShareTicketResponse,
     ShareTicketSaveRequest,
     ShareViewDetailRequest,
+    TicketValidVO,
 )
 from app.schemas.auth import TokenUser
 
@@ -43,11 +46,90 @@ class ShareService:
         self.share_repo = ShareRepository(session)
         self.ticket_repo = ShareTicketRepository(session)
 
-    async def proxy_info(self, payload: ShareProxyInfoRequest) -> ShareResponse | None:
+    async def proxy_info(
+        self, payload: ShareProxyInfoRequest
+    ) -> tuple[ProxyInfoResponse, str] | None:
         share = await self.share_repo.get_by_uuid(payload.uuid)
         if share is None:
             return None
-        return ShareResponse.model_validate(share)
+
+        current_ms = int(time.time() * 1000)
+
+        # Expiration check
+        is_expired = share.exp is not None and share.exp < current_ms
+
+        # Password validation
+        pwd_valid = False
+        if not share.pwd:
+            pwd_valid = True
+        elif payload.ciphertext:
+            # Direct comparison: ciphertext may be the password itself
+            # or RSA-encrypted "uuid,password" — compare directly for now
+            pwd_valid = hmac.compare_digest(payload.ciphertext, share.pwd)
+
+        # Ticket validation
+        ticket_vo = TicketValidVO()
+        if payload.ticket:
+            ticket_record = await self.ticket_repo.get_by_ticket(payload.ticket)
+            if ticket_record is None:
+                ticket_vo = TicketValidVO(ticket_valid=False, ticket_exp=False, args="")
+            else:
+                ticket_expired = (
+                    ticket_record.exp is not None and ticket_record.exp < current_ms
+                )
+                ticket_args = ""
+                if ticket_record.args is not None:
+                    import json
+
+                    ticket_args = json.dumps(ticket_record.args) if not isinstance(ticket_record.args, str) else ticket_record.args
+                ticket_vo = TicketValidVO(
+                    ticket_valid=not ticket_expired,
+                    ticket_exp=ticket_expired,
+                    args=ticket_args,
+                )
+
+        # Resource type
+        resource_type = "dashboard" if share.type == 0 else "dataV"
+
+        # Iframe error flag
+        in_iframe_error = bool(payload.in_iframe)
+
+        # Generate link token JWT
+        link_token = self._generate_link_token(share, current_ms)
+
+        response = ProxyInfoResponse(
+            resource_id=str(share.resource_id),
+            uid=str(share.creator),
+            exp=is_expired,
+            pwd_valid=pwd_valid,
+            type=resource_type,
+            in_iframe_error=in_iframe_error,
+            share_disable=False,
+            pe_require_valid=True,
+            ticket_valid_vo=ticket_vo,
+            uuid=share.uuid,
+        )
+        return response, link_token
+
+    def _generate_link_token(self, share: "XpackShare", _current_ms: int) -> str:
+        from jose import jwt as jose_jwt
+
+        from app.settings.config import get_settings
+
+        settings = get_settings()
+
+        token_exp_s = int(time.time()) + 3600  # default 1 hour
+        if share.exp is not None:
+            share_exp_s = share.exp // 1000
+            token_exp_s = min(token_exp_s, share_exp_s)
+
+        claims = {
+            "uid": share.creator,
+            "oid": share.oid,
+            "resourceId": share.resource_id,
+            "exp": token_exp_s,
+        }
+        return jose_jwt.encode(claims, settings.share_secret_key, algorithm=settings.jwt_algorithm)
 
     async def save(self, payload: ShareCreateRequest, user: TokenUser) -> ShareResponse:
         existing = await self.share_repo.get_by_resource_id(payload.resource_id)

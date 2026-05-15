@@ -8,7 +8,13 @@ from httpx import AsyncClient
 from jose import jwt
 
 from app.main import app
-from app.schemas.share import ShareResponse, ShareTicketResponse
+from app.schemas.share import (
+    ProxyInfoResponse,
+    ShareProxyInfoRequest,
+    ShareResponse,
+    ShareTicketResponse,
+    TicketValidVO,
+)
 from app.services.share_service import get_share_service
 from app.settings.config import get_settings
 
@@ -34,20 +40,29 @@ class FakeShareService:
             return {"code": 1, "data": None, "msg": "Missing resourceId"}
         return {"status": "valid", "data": True}
 
-    async def proxy_info(self, payload: object) -> ShareResponse | None:
-        return ShareResponse(
-            id=1,
-            creator=7,
-            time=1000000,
-            exp=None,
-            uuid="abc123xyz",
-            pwd=None,
-            resource_id=100,
-            oid=1,
-            type=0,
-            auto_pwd=True,
-            ticket_require=False,
+    async def proxy_info(self, payload: object) -> tuple[ProxyInfoResponse, str] | None:
+        settings = get_settings()
+        link_token = jwt.encode(
+            {"uid": 7, "oid": 1, "resourceId": 100, "exp": 9999999999},
+            settings.share_secret_key,
+            algorithm=settings.jwt_algorithm,
         )
+        in_iframe = False
+        if isinstance(payload, ShareProxyInfoRequest):
+            in_iframe = bool(payload.in_iframe)
+        proxy_resp = ProxyInfoResponse(
+            resource_id="100",
+            uid="7",
+            exp=False,
+            pwd_valid=True,
+            type="dashboard",
+            in_iframe_error=in_iframe,
+            share_disable=False,
+            pe_require_valid=True,
+            ticket_valid_vo=TicketValidVO(),
+            uuid="abc123xyz",
+        )
+        return proxy_resp, link_token
 
     async def save(self, payload: object, user: object) -> ShareResponse:
         self.saved_shares.append((payload, user))
@@ -218,9 +233,63 @@ async def test_share_proxy_info(
     )
     assert response.status_code == 200
     data = response.json()["data"]
-    assert data["id"] == 1
+    assert data["resourceId"] == "100"
+    assert data["uid"] == "7"
     assert data["uuid"] == "abc123xyz"
-    assert data["resourceId"] == 100
+    assert data["exp"] is False
+    assert data["pwdValid"] is True
+    assert data["type"] == "dashboard"
+    assert data["inIframeError"] is False
+    assert data["shareDisable"] is False
+    assert data["peRequireValid"] is True
+    assert data["ticketValidVO"]["ticketValid"] is True
+    assert data["ticketValidVO"]["ticketExp"] is False
+    assert data["ticketValidVO"]["args"] == ""
+    # Verify x-de-link-token header
+    assert "x-de-link-token" in response.headers
+    link_token = response.headers["x-de-link-token"]
+    settings = get_settings()
+    claims = jwt.decode(link_token, settings.share_secret_key, algorithms=[settings.jwt_algorithm])
+    assert claims["uid"] == 7
+    assert claims["oid"] == 1
+    assert claims["resourceId"] == 100
+
+
+@pytest.mark.asyncio
+async def test_share_proxy_info_in_iframe(
+    client: AsyncClient,
+    fake_service: FakeShareService,
+) -> None:
+    """Test proxyInfo with inIframe=true sets inIframeError."""
+    response = await client.post(
+        "/de2api/share/proxyInfo",
+        json={"uuid": "abc123xyz", "inIframe": True},
+    )
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert data["inIframeError"] is True
+
+
+@pytest.mark.asyncio
+async def test_share_proxy_info_link_token_is_valid_jwt(
+    client: AsyncClient,
+    fake_service: FakeShareService,
+) -> None:
+    """Verify the link token is a valid JWT with expected claims structure."""
+    response = await client.post(
+        "/de2api/share/proxyInfo",
+        json={"uuid": "abc123xyz"},
+    )
+    assert response.status_code == 200
+    link_token = response.headers["x-de-link-token"]
+    settings = get_settings()
+    claims = jwt.decode(link_token, settings.share_secret_key, algorithms=[settings.jwt_algorithm])
+    # Link token should NOT have 'uuid' claim (unlike embed token)
+    assert "uuid" not in claims
+    assert "uid" in claims
+    assert "oid" in claims
+    assert "resourceId" in claims
+    assert "exp" in claims
 
 
 @pytest.mark.asyncio

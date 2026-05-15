@@ -94,6 +94,29 @@ class ShareTicketDetailRequest(BaseModel):
     uuid: str
 
 
+class TicketValidVO(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    ticket_valid: bool = Field(default=True, serialization_alias="ticketValid")
+    ticket_exp: bool = Field(default=False, serialization_alias="ticketExp")
+    args: str = ""
+
+
+class ProxyInfoResponse(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    resource_id: str = Field(serialization_alias="resourceId")
+    uid: str
+    exp: bool
+    pwd_valid: bool = Field(serialization_alias="pwdValid")
+    type: str
+    in_iframe_error: bool = Field(default=False, serialization_alias="inIframeError")
+    share_disable: bool = Field(default=False, serialization_alias="shareDisable")
+    pe_require_valid: bool = Field(default=True, serialization_alias="peRequireValid")
+    ticket_valid_vo: TicketValidVO = Field(serialization_alias="ticketValidVO")
+    uuid: str
+
+
 class ShareTicketResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 

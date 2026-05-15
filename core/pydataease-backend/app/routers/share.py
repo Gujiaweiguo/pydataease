@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Query, Request
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from app.dependencies.auth import get_current_user
@@ -46,7 +47,15 @@ async def proxy_info(
     payload: ShareProxyInfoRequest,
     service: ShareService = Depends(get_share_service),
 ) -> object:
-    return await service.proxy_info(payload)
+    result = await service.proxy_info(payload)
+    if result is None:
+        return None
+    proxy_info_response, link_token = result
+    response = JSONResponse(
+        content=proxy_info_response.model_dump(by_alias=True)
+    )
+    response.headers["x-de-link-token"] = link_token
+    return response
 
 
 @router.post("/save")
