@@ -9,6 +9,10 @@ from app.dependencies.auth import get_current_user
 from app.schemas.auth import TokenUser
 from app.schemas.datasource import (
     DatasourceCreate,
+    DatasourceFolderRequest,
+    DatasourceMoveRequest,
+    DatasourceRenameRequest,
+    DatasourceTablesRequest,
     DatasourceUpdate,
     DatasourceValidateRequest,
     DatasourceValidateResponse,
@@ -25,6 +29,27 @@ def _decode_configuration(payload: dict) -> dict:
     return payload
 
 router = APIRouter(prefix="/datasource", tags=["datasource"])
+
+DATASOURCE_TYPES: list[dict[str, str]] = [
+    {"type": "folder", "name": "folder", "category": "folder"},
+    {"type": "API", "name": "API", "category": "api"},
+    {"type": "Excel", "name": "Excel", "category": "localfile"},
+    {"type": "mysql", "name": "MySQL", "category": "oltp"},
+    {"type": "mariadb", "name": "MariaDB", "category": "oltp"},
+    {"type": "pg", "name": "PostgreSQL", "category": "oltp"},
+    {"type": "oracle", "name": "Oracle", "category": "oltp"},
+    {"type": "sqlServer", "name": "SQL Server", "category": "oltp"},
+    {"type": "ck", "name": "ClickHouse", "category": "olap"},
+    {"type": "doris", "name": "Apache Doris", "category": "olap"},
+    {"type": "StarRocks", "name": "StarRocks", "category": "olap"},
+    {"type": "impala", "name": "Apache Impala", "category": "olap"},
+    {"type": "TiDB", "name": "TiDB", "category": "oltp"},
+    {"type": "db2", "name": "Db2", "category": "oltp"},
+    {"type": "redshift", "name": "AWS RedShift", "category": "oltp"},
+    {"type": "es", "name": "Elasticsearch", "category": "olap"},
+    {"type": "mongo", "name": "MongoDB BI", "category": "dl"},
+    {"type": "h2", "name": "H2", "category": "olap"},
+]
 
 
 @router.post("/tree")
@@ -140,3 +165,98 @@ async def latest_use(
     service: DatasourceService = Depends(get_datasource_service),
 ) -> list[str]:
     return await service.latest_use()
+
+
+@router.post("/move")
+async def move_datasource(
+    payload: DatasourceMoveRequest,
+    user: TokenUser = Depends(get_current_user),
+    service: DatasourceService = Depends(get_datasource_service),
+    perm: PermissionService = Depends(get_permission_service),
+) -> None:
+    await perm.require_resource_access(user, "datasource", "manage")
+    await service.move(payload.id, payload.pid)
+
+
+@router.post("/reName")
+async def rename_datasource(
+    payload: DatasourceRenameRequest,
+    user: TokenUser = Depends(get_current_user),
+    service: DatasourceService = Depends(get_datasource_service),
+    perm: PermissionService = Depends(get_permission_service),
+) -> None:
+    await perm.require_resource_access(user, "datasource", "manage")
+    await service.rename(payload.id, payload.name)
+
+
+@router.get("/types")
+async def list_datasource_types(
+    _: TokenUser = Depends(get_current_user),
+) -> list[dict[str, str]]:
+    return DATASOURCE_TYPES
+
+
+@router.post("/getTables")
+async def get_tables(
+    payload: DatasourceTablesRequest,
+    _: TokenUser = Depends(get_current_user),
+    service: DatasourceService = Depends(get_datasource_service),
+) -> object:
+    return await service.get_tables(payload.datasource_id)
+
+
+@router.get("/validate/{datasource_id}")
+async def validate_by_id(
+    datasource_id: int,
+    _: TokenUser = Depends(get_current_user),
+    service: DatasourceService = Depends(get_datasource_service),
+) -> dict[str, str]:
+    return await service.validate_by_id(datasource_id)
+
+
+@router.get("/get/{datasource_id}")
+async def get_datasource(
+    datasource_id: int,
+    _: TokenUser = Depends(get_current_user),
+    service: DatasourceService = Depends(get_datasource_service),
+) -> object:
+    return await service.get_full(datasource_id)
+
+
+@router.get("/hidePw/{datasource_id}")
+async def get_datasource_hide_pw(
+    datasource_id: int,
+    _: TokenUser = Depends(get_current_user),
+    service: DatasourceService = Depends(get_datasource_service),
+) -> object:
+    return await service.get_hide_pw(datasource_id)
+
+
+@router.post("/createFolder")
+async def create_folder(
+    payload: DatasourceFolderRequest,
+    user: TokenUser = Depends(get_current_user),
+    service: DatasourceService = Depends(get_datasource_service),
+    perm: PermissionService = Depends(get_permission_service),
+) -> object:
+    await perm.require_resource_access(user, "datasource", "manage")
+    return await service.create_folder(payload.name, payload.pid, user)
+
+
+@router.post("/perDelete/{datasource_id}")
+async def pre_delete_check(
+    datasource_id: int,
+    _: TokenUser = Depends(get_current_user),
+    service: DatasourceService = Depends(get_datasource_service),
+) -> dict[str, bool]:
+    in_use = await service.check_in_use(datasource_id)
+    return {"inUse": in_use}
+
+
+@router.get("/getSimpleDs/{datasource_id}")
+async def get_simple_datasource(
+    datasource_id: int,
+    _: TokenUser = Depends(get_current_user),
+    service: DatasourceService = Depends(get_datasource_service),
+) -> object:
+    return await service.get_simple(datasource_id)

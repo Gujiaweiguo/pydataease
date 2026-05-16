@@ -4,7 +4,7 @@ import time
 from typing import Any, cast, final
 
 from fastapi import Depends, HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.dependencies.database import get_db
@@ -19,6 +19,7 @@ from app.schemas.datasource import (
     DatasourceCreate,
     DatasourceFieldResponse,
     DatasourceResponse,
+    DatasourceSimpleResponse,
     DatasourceTableResponse,
     DatasourceUpdate,
     DatasourceValidateRequest,
@@ -214,6 +215,71 @@ class DatasourceService:
         except (AttributeError, TypeError):
             return []
 
+    async def move(self, datasource_id: int, pid: int) -> None:
+        entity = await self._get_entity(datasource_id)
+        pid_value = None if pid == 0 else pid
+        await self.repository.update(entity, {"pid": pid_value})
+
+    async def rename(self, datasource_id: int, name: str) -> None:
+        entity = await self._get_entity(datasource_id)
+        await self.repository.update(entity, {"name": name.strip(), "update_time": _timestamp_ms()})
+
+    async def create_folder(self, name: str, pid: int, user: TokenUser) -> DatasourceResponse:
+        now = _timestamp_ms()
+        pid_value = None if pid == 0 else pid
+        created = await self.repository.create(
+            {
+                "id": _new_identifier(),
+                "name": name.strip(),
+                "type": "folder",
+                "pid": pid_value,
+                "configuration": {},
+                "description": None,
+                "edit_type": None,
+                "create_time": now,
+                "update_time": now,
+                "update_by": user.user_id,
+                "create_by": str(user.user_id),
+                "status": "Success",
+                "qrtz_instance": None,
+                "task_status": "WaitingForExecution",
+                "enable_data_fill": None,
+            }
+        )
+        return DatasourceResponse.model_validate(created)
+
+    async def get_full(self, datasource_id: int) -> DatasourceResponse:
+        entity = await self._get_entity(datasource_id)
+        return DatasourceResponse.model_validate(entity)
+
+    async def get_hide_pw(self, datasource_id: int) -> DatasourceResponse:
+        entity = await self._get_entity(datasource_id)
+        resp = DatasourceResponse.model_validate(entity)
+        if resp.configuration and isinstance(resp.configuration, dict):
+            _mask_passwords(resp.configuration)
+        return resp
+
+    async def get_simple(self, datasource_id: int) -> DatasourceSimpleResponse:
+        entity = await self._get_entity(datasource_id)
+        return DatasourceSimpleResponse.model_validate(entity)
+
+    async def validate_by_id(self, datasource_id: int) -> dict[str, str]:
+        entity = await self._get_entity(datasource_id)
+        config = entity.configuration if isinstance(entity.configuration, dict) else {}
+        ds_type = entity.type
+        status_value = await self._probe_status(ds_type, config)
+        return {"status": status_value}
+
+    async def check_in_use(self, datasource_id: int) -> bool:
+        from app.models.dataset import CoreDatasetTable
+
+        stmt = select(func.count()).select_from(CoreDatasetTable).where(
+            CoreDatasetTable.datasource_id == datasource_id
+        )
+        result = await self.session.execute(stmt)
+        count = result.scalar() or 0
+        return count > 0
+
     async def _get_entity(self, datasource_id: int) -> CoreDatasource:
         entity = await self.repository.get_by_id(datasource_id)
         if entity is None:
@@ -288,3 +354,11 @@ def _timestamp_ms() -> int:
 
 def _new_identifier() -> int:
     return time.time_ns()
+
+
+def _mask_passwords(config: dict) -> None:
+    for key in list(config.keys()):
+        if key.lower() in ("password", "pwd", "pass", "accesskey", "secretkey"):
+            config[key] = "******"
+        elif isinstance(config[key], dict):
+            _mask_passwords(config[key])

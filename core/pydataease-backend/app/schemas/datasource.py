@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TypeAlias
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, AliasChoices
 
 
 JSONDict: TypeAlias = dict[str, object]
@@ -80,3 +80,35 @@ class EngineInfoResponse(BaseModel):
     type: str | None = None
     status: str | None = None
     name: str | None = None
+
+
+class DatasourceMoveRequest(BaseModel):
+    id: int
+    pid: int
+
+
+class DatasourceRenameRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: int
+    name: str = Field(min_length=1, max_length=128)
+
+
+class DatasourceFolderRequest(BaseModel):
+    name: str = Field(min_length=1, max_length=128)
+    pid: int = 0
+
+
+class DatasourceTablesRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    datasource_id: int = Field(validation_alias=AliasChoices("datasourceId", "datasource_id"))
+
+
+class DatasourceSimpleResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+    id: int
+    name: str | None = None
+    type: str | None = None
+    description: str | None = None
