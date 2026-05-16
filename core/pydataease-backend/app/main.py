@@ -25,6 +25,8 @@ from app.routers.engine import router as engine_router
 from app.routers.visualization import router as visualization_router
 from app.routers.export import router as export_router
 from app.routers.login import router as login_router
+from app.routers.log import router as log_router
+from app.routers.api_key import router as api_key_router
 from app.routers.org import router as org_router
 from app.routers.role import router as role_router
 from app.routers.row_permission import router as row_permission_router
@@ -87,6 +89,8 @@ api_router.include_router(export_router)
 api_router.include_router(task_router)
 api_router.include_router(share_router)
 api_router.include_router(system_router)
+api_router.include_router(log_router)
+api_router.include_router(api_key_router)
 api_router.include_router(bootstrap_router)
 api_router.include_router(visualization_bg_router)
 api_router.include_router(visualization_subject_router)
