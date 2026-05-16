@@ -10,11 +10,16 @@ from app.schemas.share import (
     ShareCreateRequest,
     ShareDeleteRequest,
     ShareDetailRequest,
+    ShareEditExpRequest,
+    ShareEditPwdRequest,
+    ShareEditUuidRequest,
     ShareProxyInfoRequest,
+    ShareQueryRequest,
     ShareTicketDeleteRequest,
     ShareTicketDetailRequest,
     ShareTicketSaveRequest,
     ShareViewDetailRequest,
+    TicketSwitchRequest,
 )
 from app.services.share_service import ShareService, get_share_service
 
@@ -160,3 +165,93 @@ async def generate_embed_token(
 ) -> object:
     token = await service.generate_embed_token(payload.uuid)
     return {"token": token}
+
+
+# ------------------------------------------------------------------
+# New share management endpoints
+# ------------------------------------------------------------------
+
+
+@router.post("/switcher/{resource_id}")
+async def switcher(
+    resource_id: int,
+    user: TokenUser = Depends(get_current_user),
+    service: ShareService = Depends(get_share_service),
+) -> object:
+    return await service.switcher(resource_id, user)
+
+
+@router.post("/editExp")
+async def edit_exp(
+    payload: ShareEditExpRequest,
+    user: TokenUser = Depends(get_current_user),
+    service: ShareService = Depends(get_share_service),
+) -> object:
+    result = await service.edit_exp(payload.resource_id, payload.exp)
+    if result is None:
+        return JSONResponse(status_code=404, content={"detail": "Share not found"})
+    return result
+
+
+@router.post("/editPwd")
+async def edit_pwd(
+    payload: ShareEditPwdRequest,
+    user: TokenUser = Depends(get_current_user),
+    service: ShareService = Depends(get_share_service),
+) -> object:
+    result = await service.edit_pwd(payload.resource_id, payload.pwd, payload.auto_pwd)
+    if result is None:
+        return JSONResponse(status_code=404, content={"detail": "Share not found"})
+    return result
+
+
+@router.post("/editUuid")
+async def edit_uuid(
+    payload: ShareEditUuidRequest,
+    user: TokenUser = Depends(get_current_user),
+    service: ShareService = Depends(get_share_service),
+) -> object:
+    msg = await service.edit_uuid(payload.resource_id, payload.uuid)
+    return msg
+
+
+@router.post("/query")
+async def query_shares(
+    payload: ShareQueryRequest,
+    user: TokenUser = Depends(get_current_user),
+    service: ShareService = Depends(get_share_service),
+) -> object:
+    return await service.query_shares()
+
+
+@router.get("/queryRelationByUserId/{uid}")
+async def query_relation_by_user_id(
+    uid: int,
+    user: TokenUser = Depends(get_current_user),
+    service: ShareService = Depends(get_share_service),
+) -> object:
+    return await service.query_relation_by_user(uid)
+
+
+@router.post("/enableTicket")
+async def enable_ticket(
+    payload: TicketSwitchRequest,
+    user: TokenUser = Depends(get_current_user),
+    service: ShareService = Depends(get_share_service),
+) -> None:
+    await service.enable_ticket(payload.resource_id, payload.require)
+
+
+@router.get("/tempTicket")
+async def temp_ticket(
+    user: TokenUser = Depends(get_current_user),
+    service: ShareService = Depends(get_share_service),
+) -> object:
+    return ShareService.generate_temp_ticket()
+
+
+@router.get("/ticketLimit")
+async def ticket_limit(
+    user: TokenUser = Depends(get_current_user),
+) -> object:
+    return 0

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import time
+from collections.abc import Sequence
 from typing import final
 
 from sqlalchemy import delete, select, update as sa_update
@@ -55,6 +56,17 @@ class ShareRepository:
         )
         await self.session.execute(stmt)
         await self.session.commit()
+
+    async def list_all_ordered(self, ascending: bool = False) -> Sequence[XpackShare]:
+        order_col = XpackShare.time.asc() if ascending else XpackShare.time.desc()
+        stmt = select(XpackShare).order_by(order_col)
+        result = await self.session.execute(stmt)
+        return result.scalars().all()
+
+    async def list_by_creator(self, creator: int) -> Sequence[XpackShare]:
+        stmt = select(XpackShare).where(XpackShare.creator == creator)
+        result = await self.session.execute(stmt)
+        return result.scalars().all()
 
 
 @final

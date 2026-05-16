@@ -366,6 +366,75 @@ class ShareService:
         tickets = await self.ticket_repo.list_by_uuid(payload.uuid)
         return [ShareTicketResponse.model_validate(t) for t in tickets]
 
+    # ------------------------------------------------------------------
+    # New share management methods
+    # ------------------------------------------------------------------
+
+    async def switcher(self, resource_id: int, user: TokenUser) -> dict:
+        """Toggle share on/off for a resource."""
+        share = await self.share_repo.get_by_resource_id(resource_id)
+        if share:
+            await self.delete(ShareDeleteRequest(resource_id=resource_id))
+            return {"status": "deleted"}
+        uuid = _new_share_uuid()
+        pwd = secrets.token_urlsafe(4)[:4]
+        payload = ShareCreateRequest(
+            resource_id=resource_id, uuid=uuid, auto_pwd=True, pwd=pwd
+        )
+        result = await self.save(payload, user)
+        return {"status": "created", "data": result}
+
+    async def edit_exp(self, resource_id: int, exp: int) -> ShareResponse | None:
+        share = await self.share_repo.get_by_resource_id(resource_id)
+        if share is None:
+            return None
+        updated = await self.share_repo.update(share, {"exp": exp if exp > 0 else None})
+        return ShareResponse.model_validate(updated)
+
+    async def edit_pwd(
+        self, resource_id: int, pwd: str, auto_pwd: bool
+    ) -> ShareResponse | None:
+        share = await self.share_repo.get_by_resource_id(resource_id)
+        if share is None:
+            return None
+        updated = await self.share_repo.update(
+            share, {"pwd": pwd if pwd else None, "auto_pwd": auto_pwd}
+        )
+        return ShareResponse.model_validate(updated)
+
+    async def edit_uuid(self, resource_id: int, uuid: str) -> str:
+        """Validate and update share UUID. Returns empty string on success, error message on failure."""
+        if not uuid.isalnum() or len(uuid) < 8 or len(uuid) > 16:
+            return "链接只能包含8-16位字母和数字"
+        existing = await self.share_repo.get_by_uuid(uuid)
+        if existing is not None and existing.resource_id != resource_id:
+            return "链接已存在"
+        share = await self.share_repo.get_by_resource_id(resource_id)
+        if share is None:
+            return "分享不存在"
+        await self.share_repo.update(share, {"uuid": uuid})
+        return ""
+
+    async def query_shares(self) -> list[ShareResponse]:
+        rows = await self.share_repo.list_all_ordered()
+        return [ShareResponse.model_validate(s) for s in rows]
+
+    async def query_relation_by_user(self, uid: int) -> dict[str, str]:
+        rows = await self.share_repo.list_by_creator(uid)
+        return {str(s.resource_id): s.uuid for s in rows}
+
+    async def enable_ticket(self, resource_id: str, require: bool) -> None:
+        share = await self.share_repo.get_by_resource_id(int(resource_id))
+        if share is not None:
+            await self.share_repo.update(share, {"ticket_require": require})
+
+    @staticmethod
+    def generate_temp_ticket() -> str:
+        import random
+        import string
+
+        return "".join(random.choices(string.ascii_letters + string.digits, k=8))
+
 
 async def get_share_service(session: AsyncSession = Depends(get_db)) -> ShareService:
     return ShareService(session)

@@ -118,6 +118,46 @@ class ProxyInfoResponse(BaseModel):
     uuid: str
 
 
+class ShareEditExpRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    resource_id: int = Field(validation_alias=AliasChoices("resourceId", "resource_id"))
+    exp: int = 0
+
+
+class ShareEditPwdRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    resource_id: int = Field(validation_alias=AliasChoices("resourceId", "resource_id"))
+    pwd: str = ""
+    auto_pwd: bool = Field(default=True, validation_alias=AliasChoices("autoPwd", "auto_pwd"))
+
+
+class ShareEditUuidRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    resource_id: int = Field(validation_alias=AliasChoices("resourceId", "resource_id"))
+    uuid: str
+
+
+class ShareQueryRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    type: str | None = None
+    keyword: str | None = None
+    query_from: str | None = Field(
+        default=None, validation_alias=AliasChoices("queryFrom", "query_from")
+    )
+    asc: bool = False
+
+
+class TicketSwitchRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    resource_id: str = Field(validation_alias=AliasChoices("resourceId", "resource_id"))
+    require: bool = False
+
+
 class ShareTicketResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
