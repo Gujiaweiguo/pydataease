@@ -24,6 +24,8 @@ from app.routers.datasource import router as datasource_router
 from app.routers.dataset import router as dataset_router
 from app.routers.dataset_field import router as dataset_field_router
 from app.routers.engine import router as engine_router
+from app.routers.geo import router as geo_router
+from app.routers.static_resource import router as static_resource_router
 from app.routers.visualization import router as visualization_router
 from app.routers.export import router as export_router
 from app.routers.login import router as login_router
@@ -98,6 +100,8 @@ api_router.include_router(visualization_bg_router)
 api_router.include_router(visualization_subject_router)
 api_router.include_router(custom_geo_router)
 api_router.include_router(dataset_sql_log_router)
+api_router.include_router(geo_router)
+api_router.include_router(static_resource_router)
 
 
 @app.exception_handler(HTTPException)

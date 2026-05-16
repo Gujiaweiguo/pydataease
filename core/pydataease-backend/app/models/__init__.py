@@ -7,8 +7,10 @@ from app.models.dataset_sql_log import DatasetTableSqlLog
 from app.models.datasource import CoreDatasource, CoreDatasourceTask, CoreDatasourceTaskLog
 from app.models.engine import CoreDeEngine
 from app.models.export import CoreExportTask
+from app.models.geo import MapGeo
 from app.models.log import CoreLogOperate
 from app.models.share import CoreShareTicket, XpackShare
+from app.models.static_resource import StaticResource
 from app.models.store import CoreStore
 from app.models.sys_setting import CoreSysSetting
 from app.models.system import CoreMenu
@@ -43,6 +45,8 @@ __all__ = [
     "CustomGeoSubArea",
     "DatasetTableSqlLog",
     "DataVisualizationInfo",
+    "MapGeo",
+    "StaticResource",
     "VisualizationBackground",
     "VisualizationSubject",
     "VisualizationTemplate",
