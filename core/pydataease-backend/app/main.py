@@ -29,6 +29,7 @@ from app.routers.org import router as org_router
 from app.routers.role import router as role_router
 from app.routers.row_permission import router as row_permission_router
 from app.routers.share import router as share_router
+from app.routers.template import router as template_router
 from app.routers.system import router as system_router
 from app.routers.task import router as task_router
 from app.routers.user import router as user_router
@@ -78,6 +79,7 @@ api_router.include_router(role_router)
 api_router.include_router(row_permission_router)
 api_router.include_router(column_permission_router)
 api_router.include_router(chart_router)
+api_router.include_router(template_router)
 api_router.include_router(visualization_router)
 api_router.include_router(export_router)
 api_router.include_router(task_router)

@@ -8,6 +8,11 @@ from app.models.share import CoreShareTicket, XpackShare
 from app.models.store import CoreStore
 from app.models.sys_setting import CoreSysSetting
 from app.models.system import CoreMenu
+from app.models.template import (
+    VisualizationTemplate,
+    VisualizationTemplateCategory,
+    VisualizationTemplateCategoryMap,
+)
 from app.models.user import CoreUser
 from app.models.visualization import DataVisualizationInfo
 
@@ -28,5 +33,8 @@ __all__ = [
     "CoreSysSetting",
     "CoreUser",
     "DataVisualizationInfo",
+    "VisualizationTemplate",
+    "VisualizationTemplateCategory",
+    "VisualizationTemplateCategoryMap",
     "XpackShare",
 ]
