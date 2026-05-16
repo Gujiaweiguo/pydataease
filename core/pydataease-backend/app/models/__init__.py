@@ -8,6 +8,25 @@ from app.models.datasource import CoreDatasource, CoreDatasourceTask, CoreDataso
 from app.models.engine import CoreDeEngine
 from app.models.export import CoreExportTask
 from app.models.geo import MapGeo
+from app.models.link_jump import (
+    VisualizationLinkJump,
+    VisualizationLinkJumpInfo,
+    VisualizationLinkJumpTargetViewInfo,
+)
+from app.models.linkage import (
+    SnapshotVisualizationLinkage,
+    SnapshotVisualizationLinkageField,
+    VisualizationLinkage,
+    VisualizationLinkageField,
+)
+from app.models.outer_params import (
+    SnapshotVisualizationOuterParams,
+    SnapshotVisualizationOuterParamsInfo,
+    SnapshotVisualizationOuterParamsTargetViewInfo,
+    VisualizationOuterParams,
+    VisualizationOuterParamsInfo,
+    VisualizationOuterParamsTargetViewInfo,
+)
 from app.models.log import CoreLogOperate
 from app.models.share import CoreShareTicket, XpackShare
 from app.models.static_resource import StaticResource
@@ -23,6 +42,7 @@ from app.models.user import CoreUser
 from app.models.visualization import DataVisualizationInfo
 from app.models.visualization_background import VisualizationBackground
 from app.models.visualization_subject import VisualizationSubject
+from app.models.watermark import VisualizationWatermark
 
 __all__ = [
     "Base",
@@ -52,6 +72,20 @@ __all__ = [
     "VisualizationTemplate",
     "VisualizationTemplateCategory",
     "VisualizationTemplateCategoryMap",
+    "VisualizationWatermark",
     "XpackApiKey",
     "XpackShare",
+    "VisualizationLinkage",
+    "VisualizationLinkageField",
+    "SnapshotVisualizationLinkage",
+    "SnapshotVisualizationLinkageField",
+    "VisualizationLinkJump",
+    "VisualizationLinkJumpInfo",
+    "VisualizationLinkJumpTargetViewInfo",
+    "VisualizationOuterParams",
+    "VisualizationOuterParamsInfo",
+    "VisualizationOuterParamsTargetViewInfo",
+    "SnapshotVisualizationOuterParams",
+    "SnapshotVisualizationOuterParamsInfo",
+    "SnapshotVisualizationOuterParamsTargetViewInfo",
 ]

@@ -27,7 +27,13 @@ from app.schemas.visualization import (
     VisualizationUpdateBaseRequest,
     VisualizationUpdateRequest,
 )
+from app.schemas.linkage import (
+    LinkageRemoveRequest,
+    LinkageSaveRequest,
+    LinkageUpdateActiveRequest,
+)
 from app.services.visualization_service import VisualizationService, get_visualization_service
+from app.services.linkage_service import LinkageService, get_linkage_service
 from app.services.permission_service import PermissionService, get_permission_service
 
 router = APIRouter(tags=["visualization"])
@@ -325,11 +331,12 @@ async def get_view_linkage_gather_array(
 
 @router.post("/linkage/saveLinkage")
 async def save_linkage(
-    payload: LinkageRequest,
+    payload: LinkageSaveRequest,
     _: TokenUser = Depends(get_current_user),
-    service: VisualizationService = Depends(get_visualization_service),
+    linkage_svc: LinkageService = Depends(get_linkage_service),
 ) -> object:
-    return await service.save_linkage(payload)
+    await linkage_svc.save_linkage(payload)
+    return None
 
 
 @router.get("/linkage/getVisualizationAllLinkageInfo/{dv_id}/{resource_table}")
@@ -337,27 +344,28 @@ async def get_visualization_all_linkage_info(
     dv_id: int,
     resource_table: str,
     _: TokenUser = Depends(get_current_user),
-    service: VisualizationService = Depends(get_visualization_service),
+    linkage_svc: LinkageService = Depends(get_linkage_service),
 ) -> object:
-    return await service.get_visualization_all_linkage_info(dv_id, resource_table)
+    return await linkage_svc.get_visualization_all_linkage_info(dv_id, resource_table)
 
 
 @router.post("/linkage/updateLinkageActive")
 async def update_linkage_active(
-    payload: LinkageRequest,
+    payload: LinkageUpdateActiveRequest,
     _: TokenUser = Depends(get_current_user),
-    service: VisualizationService = Depends(get_visualization_service),
+    linkage_svc: LinkageService = Depends(get_linkage_service),
 ) -> object:
-    return await service.update_linkage_active(payload)
+    return await linkage_svc.update_linkage_active(payload)
 
 
 @router.post("/linkage/removeLinkage")
 async def remove_linkage(
-    payload: LinkageRequest,
+    payload: LinkageRemoveRequest,
     _: TokenUser = Depends(get_current_user),
-    service: VisualizationService = Depends(get_visualization_service),
+    linkage_svc: LinkageService = Depends(get_linkage_service),
 ) -> object:
-    return await service.remove_linkage(payload)
+    await linkage_svc.remove_linkage(payload)
+    return None
 
 
 @router.get("/linkJump/getTableFieldWithViewId/{view_id}")

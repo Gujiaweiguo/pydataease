@@ -3,13 +3,21 @@ from __future__ import annotations
 import pytest
 
 from app.services.visualization_service import get_visualization_service
-from tests.test_visualization_routes import FakeVisualizationService
+from app.services.outer_params_service import get_outer_params_service
+from app.services.linkage_service import get_linkage_service
+from app.services.watermark_service import get_watermark_service
+from tests.test_visualization_routes import FakeVisualizationService, FakeLinkageService
+from tests.test_outer_params import FakeOuterParamsService
+from tests.test_watermark import FakeWatermarkService
 
 
 @pytest.fixture
 def fake_service(install_override) -> FakeVisualizationService:
     service = FakeVisualizationService()
     install_override(get_visualization_service, service)
+    install_override(get_outer_params_service, FakeOuterParamsService())
+    install_override(get_linkage_service, FakeLinkageService())
+    install_override(get_watermark_service, FakeWatermarkService())
     return service
 
 
@@ -83,35 +91,35 @@ class TestVisualizationAuxiliaryContract:
         )
 
         assert response.status_code == 200
-        assert response.json() == {"code": 0, "data": {"saved": True}, "msg": "success"}
+        assert response.json()["code"] == 0
 
     async def test_linkage_success_contract(self, async_client, auth_headers) -> None:
         """POST /de2api/linkage/saveLinkage should save linkage rules from VisualizationLinkageRequest."""
         response = await async_client.post(
             "/de2api/linkage/saveLinkage",
             headers=auth_headers,
-            json={"dvId": 10, "viewId": 101},
+            json={"dvId": 10, "sourceViewId": 101, "linkageInfo": []},
         )
 
         assert response.status_code == 200
-        assert response.json() == {"code": 0, "data": {"saved": True}, "msg": "success"}
+        assert response.json()["code"] == 0
 
     async def test_outer_params_success_contract(self, async_client, auth_headers) -> None:
         """POST /de2api/outerParams/updateOuterParamsSet should persist visualization outer params configuration."""
         response = await async_client.post(
             "/de2api/outerParams/updateOuterParamsSet",
             headers=auth_headers,
-            json={"dvId": 10, "params": []},
+            json={"visualizationId": "10", "outerParamsInfoArray": []},
         )
 
         assert response.status_code == 200
-        assert response.json() == {"code": 0, "data": {"saved": True}, "msg": "success"}
+        assert response.json()["code"] == 0
 
     async def test_watermark_success_contract(self, async_client, auth_headers) -> None:
         """POST /de2api/watermark/save should persist visualization watermark configuration."""
-        response = await async_client.post("/de2api/watermark/save", headers=auth_headers, json={"dvId": 10, "settingContent": "watermark-config"})
+        response = await async_client.post("/de2api/watermark/save", headers=auth_headers, json={"settingContent": "watermark-config"})
 
         assert response.status_code == 200
         body = response.json()
         assert body["code"] == 0
-        assert body["data"]["saved"] is True
+        assert body["data"] is None

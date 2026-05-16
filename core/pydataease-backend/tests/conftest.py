@@ -86,6 +86,27 @@ def install_fake_auth_backend(monkeypatch, fake_auth_users):
         async def rollback(self) -> None:
             return None
 
+        async def execute(self, statement=None, params=None):
+            return None
+
+        async def get(self, entity, ident):
+            return None
+
+        async def commit(self) -> None:
+            return None
+
+        async def flush(self) -> None:
+            return None
+
+        async def refresh(self, entity) -> None:
+            return None
+
+        def add(self, entity) -> None:
+            return None
+
+        async def delete(self, entity) -> None:
+            return None
+
     class FakeSessionContext:
         def __init__(self, session) -> None:
             self._session = session

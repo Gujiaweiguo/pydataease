@@ -33,6 +33,8 @@ from app.services.menu_service import get_menu_service
 from app.services.system_service import get_system_service
 from app.services.task_service import get_task_service
 from app.services.visualization_service import get_visualization_service
+from app.services.outer_params_service import get_outer_params_service
+from app.services.linkage_service import get_linkage_service
 from app.settings.config import get_settings
 from tests.test_auth_middleware import _ensure_test_routes
 from tests.test_chart_routes import FakeChartService
@@ -43,7 +45,8 @@ from tests.test_share_routes import FakeShareService
 from tests.test_system_routes import FakeMenuService
 from tests.test_system_routes import FakeSystemService
 from tests.test_task_routes import FakeTaskService
-from tests.test_visualization_routes import FakeVisualizationService
+from tests.test_visualization_routes import FakeVisualizationService, FakeLinkageService
+from tests.test_outer_params import FakeOuterParamsService
 
 _ensure_test_routes()
 
@@ -70,6 +73,8 @@ def integrated_fakes() -> Generator[dict[str, object], None, None]:
         "export": FakeExportService(),
         "system": FakeSystemService(),
         "task": FakeTaskService(),
+        "outer_params": FakeOuterParamsService(),
+        "linkage": FakeLinkageService(),
     }
     overrides = {
         get_datasource_service: lambda: services["datasource"],
@@ -81,6 +86,8 @@ def integrated_fakes() -> Generator[dict[str, object], None, None]:
         get_system_service: lambda: services["system"],
         get_menu_service: lambda: FakeMenuService(),
         get_task_service: lambda: services["task"],
+        get_outer_params_service: lambda: services["outer_params"],
+        get_linkage_service: lambda: services["linkage"],
     }
     app.dependency_overrides.update(overrides)
     yield services
@@ -175,15 +182,15 @@ async def test_full_system_validation_journey(client, auth_headers: dict[str, st
         json={"dvId": 10, "viewId": 101, "active": True},
     )
     assert jump.status_code == 200
-    assert jump.json()["data"]["saved"] is True
+    assert jump.json()["code"] == 0
 
     outer_params = await client.post(
         "/de2api/outerParams/updateOuterParamsSet",
         headers=auth_headers,
-        json={"dvId": 10, "params": []},
+        json={"visualizationId": "10", "outerParamsInfoArray": []},
     )
     assert outer_params.status_code == 200
-    assert outer_params.json()["data"]["saved"] is True
+    assert outer_params.json()["code"] == 0
 
     share_save = await client.post(
         "/de2api/share/save",

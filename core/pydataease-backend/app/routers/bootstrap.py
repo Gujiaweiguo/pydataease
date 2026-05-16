@@ -177,3 +177,35 @@ async def symmetric_key() -> str:
 async def support_set_key(_: TokenUser = Depends(get_current_user)) -> bool:
     """Whether the engine supports the 'set key' feature for API datasources."""
     return False
+
+
+@router.get("/sqlbot/datasource")
+async def get_sqlbot_datasource_list(
+    dsId: int | None = None,  # noqa: N803 — match Java query-param name
+    tableId: int | None = None,  # noqa: N803
+) -> list:
+    """Return available data sources for the SQL Bot assistant.
+
+    Stub — requires external AI service (SQLBot) which is not bundled in
+    the community edition.
+    """
+    return []
+
+
+@router.get("/sqlbot/dataset/{dv_info}")
+async def get_sqlbot_dataset_list(dv_info: str) -> list:
+    """Return available datasets for the SQL Bot assistant.
+
+    Stub — requires external AI service (SQLBot) which is not bundled in
+    the community edition.
+    """
+    return []
+
+
+@router.post("/resource/checkPermission/{resource_id}")
+async def check_resource_permission(resource_id: int) -> bool:
+    """Check if the current user has permission for the given resource.
+
+    Stub — community edition grants access to all resources.
+    """
+    return True

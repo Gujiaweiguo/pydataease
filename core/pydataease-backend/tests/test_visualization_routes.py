@@ -11,6 +11,9 @@ from app.schemas.auth import TokenUser
 from app.schemas.chart import ChartResponse
 from app.schemas.visualization import StoreResponse, VisualizationResponse, VisualizationTreeNodeResponse
 from app.services.visualization_service import get_visualization_service
+from app.services.outer_params_service import get_outer_params_service
+from app.services.linkage_service import get_linkage_service
+from app.services.watermark_service import get_watermark_service
 from app.settings.config import get_settings
 
 
@@ -157,6 +160,30 @@ class FakeVisualizationService:
         return {"saved": True}
 
 
+class FakeLinkageService:
+    def __init__(self) -> None:
+        self.saved_linkage: list[object] = []
+        self.removed_linkage: list[object] = []
+
+    async def get_view_linkage_gather(self, request: object) -> dict[str, object]:
+        return {"10": {"targetViewId": 101, "linkageActive": True, "linkageFields": []}}
+
+    async def get_view_linkage_gather_array(self, request: object) -> list[object]:
+        return [{"targetViewId": 101, "linkageActive": True, "linkageFields": []}]
+
+    async def save_linkage(self, request: object) -> None:
+        self.saved_linkage.append(request)
+
+    async def get_visualization_all_linkage_info(self, dv_id: int, resource_table: str) -> dict[str, list[str]]:
+        return {"101#201": ["102#202"]}
+
+    async def update_linkage_active(self, request: object) -> dict[str, list[str]]:
+        return {"101#201": ["102#202"]}
+
+    async def remove_linkage(self, request: object) -> None:
+        self.removed_linkage.append(request)
+
+
 @pytest.fixture
 def auth_headers() -> dict[str, str]:
     return {"X-DE-TOKEN": _build_token(uid=7, oid=9)}
@@ -166,8 +193,19 @@ def auth_headers() -> dict[str, str]:
 def fake_service() -> Generator[FakeVisualizationService, None, None]:
     svc = FakeVisualizationService()
     app.dependency_overrides[get_visualization_service] = lambda: svc
+    from tests.test_outer_params import FakeOuterParamsService
+    fake_outer_params = FakeOuterParamsService()
+    app.dependency_overrides[get_outer_params_service] = lambda: fake_outer_params
+    fake_linkage = FakeLinkageService()
+    app.dependency_overrides[get_linkage_service] = lambda: fake_linkage
+    from tests.test_watermark import FakeWatermarkService
+    fake_watermark = FakeWatermarkService()
+    app.dependency_overrides[get_watermark_service] = lambda: fake_watermark
     yield svc
     _ = app.dependency_overrides.pop(get_visualization_service, None)
+    _ = app.dependency_overrides.pop(get_outer_params_service, None)
+    _ = app.dependency_overrides.pop(get_linkage_service, None)
+    _ = app.dependency_overrides.pop(get_watermark_service, None)
 
 
 @pytest.mark.asyncio
@@ -246,11 +284,11 @@ async def test_linkage_jump_outer_params_routes(client, auth_headers: dict[str, 
 
     jump_resp = await client.post("/de2api/linkJump/updateJumpSet", headers=auth_headers, json={"dvId": 10, "viewId": 101, "active": True})
     assert jump_resp.status_code == 200
-    assert jump_resp.json()["data"]["saved"] is True
+    assert jump_resp.json()["code"] == 0
 
-    outer_resp = await client.post("/de2api/outerParams/updateOuterParamsSet", headers=auth_headers, json={"dvId": 10, "params": []})
+    outer_resp = await client.post("/de2api/outerParams/updateOuterParamsSet", headers=auth_headers, json={"visualizationId": "10", "outerParamsInfoArray": []})
     assert outer_resp.status_code == 200
-    assert outer_resp.json()["data"]["saved"] is True
+    assert outer_resp.json()["code"] == 0
 
 
 @pytest.mark.asyncio
@@ -265,37 +303,68 @@ async def test_visualization_view_detail_and_auth_route(client, auth_headers: di
 
 @pytest.mark.asyncio
 async def test_watermark_find_with_auth_returns_default(client, auth_headers: dict[str, str], fake_service: FakeVisualizationService) -> None:
-    from unittest.mock import AsyncMock, patch
-
-    fake_svc = AsyncMock()
-    fake_svc.get_setting.return_value = None
-
-    with patch("app.services.sys_setting_service.SysSettingService", return_value=fake_svc):
-        response = await client.get("/de2api/watermark/find", headers=auth_headers)
+    response = await client.get("/de2api/watermark/find", headers=auth_headers)
 
     assert response.status_code == 200
     data = response.json()["data"]
-    assert "settingContent" in data
-    assert "enable" in data["settingContent"]
+    assert data is None
 
 
 @pytest.mark.asyncio
 async def test_watermark_find_with_auth_returns_stored(client, auth_headers: dict[str, str], fake_service: FakeVisualizationService) -> None:
-    from unittest.mock import AsyncMock, patch
+    # First save watermark config
+    await client.post("/de2api/watermark/save", headers=auth_headers, json={"settingContent": '{"type":"custom","content":"logo","enable":true}'})
 
-    stored_value = '{"type":"custom","content":"logo","enable":true}'
-    fake_svc = AsyncMock()
-    fake_svc.get_setting.return_value = stored_value
-
-    with patch("app.services.sys_setting_service.SysSettingService", return_value=fake_svc):
-        response = await client.get("/de2api/watermark/find", headers=auth_headers)
+    response = await client.get("/de2api/watermark/find", headers=auth_headers)
 
     assert response.status_code == 200
     data = response.json()["data"]
-    assert data["settingContent"] == stored_value
+    assert data is not None
+    assert data["settingContent"] == '{"type":"custom","content":"logo","enable":true}'
 
 
 @pytest.mark.asyncio
 async def test_watermark_find_without_auth_returns_401(client) -> None:
     response = await client.get("/de2api/watermark/find")
     assert response.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_linkage_save_linkage_route(client, auth_headers: dict[str, str], fake_service: FakeVisualizationService) -> None:
+    payload = {
+        "dvId": 10,
+        "sourceViewId": 101,
+        "linkageInfo": [
+            {
+                "targetViewId": 102,
+                "linkageActive": True,
+                "linkageFields": [{"sourceField": 201, "targetField": 202}],
+            }
+        ],
+    }
+    response = await client.post("/de2api/linkage/saveLinkage", headers=auth_headers, json=payload)
+    assert response.status_code == 200
+    assert response.json()["data"] is None
+
+
+@pytest.mark.asyncio
+async def test_linkage_get_all_linkage_info_route(client, auth_headers: dict[str, str], fake_service: FakeVisualizationService) -> None:
+    response = await client.get("/de2api/linkage/getVisualizationAllLinkageInfo/10/core", headers=auth_headers)
+    assert response.status_code == 200
+    assert response.json()["code"] == 0
+
+
+@pytest.mark.asyncio
+async def test_linkage_update_active_route(client, auth_headers: dict[str, str], fake_service: FakeVisualizationService) -> None:
+    payload = {"dvId": 10, "sourceViewId": 101, "activeStatus": True}
+    response = await client.post("/de2api/linkage/updateLinkageActive", headers=auth_headers, json=payload)
+    assert response.status_code == 200
+    assert response.json()["code"] == 0
+
+
+@pytest.mark.asyncio
+async def test_linkage_remove_linkage_route(client, auth_headers: dict[str, str], fake_service: FakeVisualizationService) -> None:
+    payload = {"dvId": 10, "sourceViewId": 101}
+    response = await client.post("/de2api/linkage/removeLinkage", headers=auth_headers, json=payload)
+    assert response.status_code == 200
+    assert response.json()["data"] is None

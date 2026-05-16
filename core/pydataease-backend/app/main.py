@@ -40,8 +40,11 @@ from app.routers.system import router as system_router
 from app.routers.task import router as task_router
 from app.routers.user import router as user_router
 from app.routers.bootstrap import router as bootstrap_router
+from app.routers.link_jump import router as link_jump_router
+from app.routers.outer_params import router as outer_params_router
 from app.routers.visualization_bg import router as visualization_bg_router
 from app.routers.visualization_subject import router as visualization_subject_router
+from app.routers.watermark import router as watermark_router
 from app.routers.websocket import router as websocket_router
 from app.schemas.response import ResultMessage
 from app.settings.config import get_settings
@@ -87,7 +90,10 @@ api_router.include_router(role_router)
 api_router.include_router(row_permission_router)
 api_router.include_router(column_permission_router)
 api_router.include_router(chart_router)
+api_router.include_router(link_jump_router)
+api_router.include_router(outer_params_router)
 api_router.include_router(template_router)
+api_router.include_router(watermark_router)
 api_router.include_router(visualization_router)
 api_router.include_router(export_router)
 api_router.include_router(task_router)
