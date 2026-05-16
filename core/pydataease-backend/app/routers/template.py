@@ -5,8 +5,16 @@ from fastapi import APIRouter, Depends
 from app.dependencies.auth import get_current_user
 from app.schemas.auth import TokenUser
 from app.schemas.template import (
+    BatchDeleteRequest,
+    BatchUpdateRequest,
     CategoryFormRequest,
+    CategoryTemplateNameCheckRequest,
+    FindCategoriesByTemplateIdsRequest,
+    FindCategoriesRequest,
+    NameCheckRequest,
     StoreToggleRequest,
+    TemplateFindRequest,
+    TemplateListBodyRequest,
     TemplateListRequest,
     TemplateSaveRequest,
     TemplateUpdateRequest,
@@ -54,6 +62,15 @@ async def template_categories(
     return await service.categories()
 
 
+@router.post("/templateManage/findCategories")
+async def template_find_categories(
+    payload: FindCategoriesRequest,
+    user: TokenUser = Depends(get_current_user),
+    service: TemplateService = Depends(get_template_service),
+) -> object:
+    return await service.find_categories(payload)
+
+
 @router.post("/templateManage/categoryForm")
 async def template_category_form(
     payload: CategoryFormRequest,
@@ -63,16 +80,17 @@ async def template_category_form(
     return await service.category_form(payload.category_id)
 
 
-@router.post("/templateManage/delete/{template_id}")
+@router.post("/templateManage/delete/{template_id}/{category_id}")
 async def template_delete(
     template_id: str,
+    category_id: str,
     user: TokenUser = Depends(get_current_user),
     service: TemplateService = Depends(get_template_service),
 ) -> None:
-    await service.delete(template_id)
+    await service.delete(template_id, category_id)
 
 
-@router.post("/templateManage/findOne/{template_id}")
+@router.get("/templateManage/findOne/{template_id}")
 async def template_find_one(
     template_id: str,
     user: TokenUser = Depends(get_current_user),
@@ -82,14 +100,13 @@ async def template_find_one(
     return result
 
 
-@router.post("/templateManage/find/{template_id}")
+@router.post("/templateManage/find")
 async def template_find(
-    template_id: str,
+    payload: TemplateFindRequest,
     user: TokenUser = Depends(get_current_user),
     service: TemplateService = Depends(get_template_service),
 ) -> object:
-    result = await service.find(template_id)
-    return result
+    return await service.find_by_body(payload)
 
 
 @router.post("/templateManage/list")
@@ -101,6 +118,15 @@ async def template_list(
     return await service.list_templates(payload.keyword)
 
 
+@router.post("/templateManage/templateList")
+async def template_list_body(
+    payload: TemplateListBodyRequest,
+    user: TokenUser = Depends(get_current_user),
+    service: TemplateService = Depends(get_template_service),
+) -> object:
+    return await service.template_list(payload)
+
+
 @router.post("/templateManage/update")
 async def template_update(
     payload: TemplateUpdateRequest,
@@ -108,6 +134,60 @@ async def template_update(
     service: TemplateService = Depends(get_template_service),
 ) -> object:
     return await service.update(payload)
+
+
+@router.post("/templateManage/nameCheck")
+async def template_name_check(
+    payload: NameCheckRequest,
+    user: TokenUser = Depends(get_current_user),
+    service: TemplateService = Depends(get_template_service),
+) -> object:
+    return await service.name_check(payload)
+
+
+@router.post("/templateManage/categoryTemplateNameCheck")
+async def category_template_name_check(
+    payload: CategoryTemplateNameCheckRequest,
+    user: TokenUser = Depends(get_current_user),
+    service: TemplateService = Depends(get_template_service),
+) -> object:
+    return await service.category_template_name_check(payload)
+
+
+@router.post("/templateManage/deleteCategory/{category_id}")
+async def delete_category(
+    category_id: str,
+    user: TokenUser = Depends(get_current_user),
+    service: TemplateService = Depends(get_template_service),
+) -> object:
+    return await service.delete_category(category_id)
+
+
+@router.post("/templateManage/batchDelete")
+async def batch_delete(
+    payload: BatchDeleteRequest,
+    user: TokenUser = Depends(get_current_user),
+    service: TemplateService = Depends(get_template_service),
+) -> object:
+    return await service.batch_delete(payload)
+
+
+@router.post("/templateManage/batchUpdate")
+async def batch_update(
+    payload: BatchUpdateRequest,
+    user: TokenUser = Depends(get_current_user),
+    service: TemplateService = Depends(get_template_service),
+) -> object:
+    return await service.batch_update(payload)
+
+
+@router.post("/templateManage/findCategoriesByTemplateIds")
+async def find_categories_by_template_ids(
+    payload: FindCategoriesByTemplateIdsRequest,
+    user: TokenUser = Depends(get_current_user),
+    service: TemplateService = Depends(get_template_service),
+) -> object:
+    return await service.find_categories_by_template_ids(payload)
 
 
 @router.post("/templateManage/checkCategoryTemplate/{category_id}")

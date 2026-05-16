@@ -1,7 +1,7 @@
 """add link jump tables
 
 Revision ID: a2b3c4d5e6f7
-Revises: d4e5f6a7b8c1
+Revises: i3c4d5e6f7a8
 Create Date: 2026-01-15 10:00:00.000000
 
 """
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision: str = "a2b3c4d5e6f7"
-down_revision: Union[str, None] = "d4e5f6a7b8c1"
+down_revision: Union[str, None] = "i3c4d5e6f7a8"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

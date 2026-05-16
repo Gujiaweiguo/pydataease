@@ -84,3 +84,81 @@ class StoreToggleRequest(BaseModel):
     resource_type: int = Field(
         default=0, validation_alias=AliasChoices("resourceType", "resource_type")
     )
+
+
+class TemplateFindRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: str | None = None
+    template_id: str | None = Field(
+        None, validation_alias=AliasChoices("templateId", "template_id")
+    )
+
+
+class FindCategoriesRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    dv_type: str | None = Field(
+        None, validation_alias=AliasChoices("dvType", "dv_type")
+    )
+    template_type: str | None = Field(
+        None, validation_alias=AliasChoices("templateType", "template_type")
+    )
+
+
+class NameCheckRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    name: str
+    id: str | None = None
+    opt_type: str | None = Field(
+        None, validation_alias=AliasChoices("optType", "opt_type")
+    )
+
+
+class CategoryTemplateNameCheckRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    name: str | None = None
+    categories: list[str] | None = None
+
+
+class BatchDeleteRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    template_ids: list[str] | None = Field(
+        None, validation_alias=AliasChoices("templateIds", "template_ids")
+    )
+    categories: list[str] | None = None
+
+
+class BatchUpdateRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    template_ids: list[str] | None = Field(
+        None, validation_alias=AliasChoices("templateIds", "template_ids")
+    )
+    categories: list[str] | None = None
+
+
+class FindCategoriesByTemplateIdsRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    template_ids: list[str] = Field(
+        validation_alias=AliasChoices("templateIds", "template_ids")
+    )
+
+
+class TemplateListBodyRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    category_id: str | None = Field(
+        None, validation_alias=AliasChoices("categoryId", "category_id")
+    )
+    dv_type: str | None = Field(
+        None, validation_alias=AliasChoices("dvType", "dv_type")
+    )
+    template_type: str | None = Field(
+        None, validation_alias=AliasChoices("templateType", "template_type")
+    )
+    keyword: str | None = None

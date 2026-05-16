@@ -80,13 +80,16 @@ class FakeTemplateService:
             }
         ]
 
+    async def find_categories(self, payload: object) -> list[dict]:
+        return await self.categories()
+
     async def category_form(self, category_id: str) -> dict:
         return {
             "category": {"id": category_id, "name": "Default Category"},
             "templates": [{"id": "tpl_1", "name": "Template 1"}],
         }
 
-    async def delete(self, template_id: str) -> None:
+    async def delete(self, template_id: str, category_id: str | None = None) -> None:
         self.deleted_ids.append(template_id)
 
     async def find_one(self, template_id: str) -> dict:
@@ -100,8 +103,11 @@ class FakeTemplateService:
             "templateType": "self",
         }
 
-    async def find(self, template_id: str) -> dict:
-        return await self.find_one(template_id)
+    async def find_by_body(self, payload: object) -> list[dict]:
+        tid = getattr(payload, "id", None) or getattr(payload, "template_id", None)
+        if tid:
+            return [await self.find_one(tid)]
+        return [{"id": "tpl_1", "name": "Template 1"}]
 
     async def list_templates(self, keyword: str | None = None) -> list[dict]:
         if keyword:
@@ -111,6 +117,9 @@ class FakeTemplateService:
             {"id": "tpl_2", "name": "Template 2"},
         ]
 
+    async def template_list(self, payload: object) -> list[dict]:
+        return await self.list_templates(getattr(payload, "keyword", None))
+
     async def update(self, payload: object) -> dict:
         self.updated_payloads.append(payload)
         return {
@@ -118,6 +127,24 @@ class FakeTemplateService:
             "name": payload.name if hasattr(payload, "name") and payload.name else "Updated",
             "templateType": "self",
         }
+
+    async def name_check(self, payload: object) -> str:
+        return "none"
+
+    async def category_template_name_check(self, payload: object) -> str:
+        return "none"
+
+    async def delete_category(self, category_id: str) -> str:
+        return "success"
+
+    async def batch_delete(self, payload: object) -> None:
+        pass
+
+    async def batch_update(self, payload: object) -> None:
+        pass
+
+    async def find_categories_by_template_ids(self, payload: object) -> list[str]:
+        return ["cat1"]
 
     async def check_category_template(self, category_id: str) -> bool:
         return category_id == "cat1"
@@ -151,7 +178,7 @@ def fake_service() -> Generator[FakeTemplateService, None, None]:
 
 
 # ---------------------------------------------------------------------------
-# Tests
+# Tests — existing endpoints (unchanged)
 # ---------------------------------------------------------------------------
 
 
@@ -234,7 +261,7 @@ async def test_template_delete(
     fake_service: FakeTemplateService,
 ) -> None:
     response = await client.post(
-        "/de2api/templateManage/delete/tpl_1",
+        "/de2api/templateManage/delete/tpl_1/cat1",
         headers=auth_headers,
     )
     assert response.status_code == 200
@@ -247,7 +274,7 @@ async def test_template_find_one(
     auth_headers: dict[str, str],
     fake_service: FakeTemplateService,
 ) -> None:
-    response = await client.post(
+    response = await client.get(
         "/de2api/templateManage/findOne/tpl_1",
         headers=auth_headers,
     )
@@ -255,21 +282,6 @@ async def test_template_find_one(
     data = response.json()["data"]
     assert data["id"] == "tpl_1"
     assert data["name"] == "Found Template"
-
-
-@pytest.mark.asyncio
-async def test_template_find(
-    client: AsyncClient,
-    auth_headers: dict[str, str],
-    fake_service: FakeTemplateService,
-) -> None:
-    response = await client.post(
-        "/de2api/templateManage/find/tpl_1",
-        headers=auth_headers,
-    )
-    assert response.status_code == 200
-    data = response.json()["data"]
-    assert data["id"] == "tpl_1"
 
 
 @pytest.mark.asyncio
@@ -355,6 +367,154 @@ async def test_store_list_favorites(
 
 
 # ---------------------------------------------------------------------------
+# Tests — new/changed endpoints
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_template_find_categories(
+    client: AsyncClient,
+    auth_headers: dict[str, str],
+    fake_service: FakeTemplateService,
+) -> None:
+    response = await client.post(
+        "/de2api/templateManage/findCategories",
+        headers=auth_headers,
+        json={},
+    )
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert isinstance(data, list)
+    assert data[0]["id"] == "cat1"
+
+
+@pytest.mark.asyncio
+async def test_template_find_with_body(
+    client: AsyncClient,
+    auth_headers: dict[str, str],
+    fake_service: FakeTemplateService,
+) -> None:
+    response = await client.post(
+        "/de2api/templateManage/find",
+        headers=auth_headers,
+        json={"id": "tpl_1"},
+    )
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert isinstance(data, list)
+    assert data[0]["id"] == "tpl_1"
+
+
+@pytest.mark.asyncio
+async def test_template_template_list(
+    client: AsyncClient,
+    auth_headers: dict[str, str],
+    fake_service: FakeTemplateService,
+) -> None:
+    response = await client.post(
+        "/de2api/templateManage/templateList",
+        headers=auth_headers,
+        json={},
+    )
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert isinstance(data, list)
+    assert len(data) == 2
+
+
+@pytest.mark.asyncio
+async def test_template_name_check(
+    client: AsyncClient,
+    auth_headers: dict[str, str],
+    fake_service: FakeTemplateService,
+) -> None:
+    response = await client.post(
+        "/de2api/templateManage/nameCheck",
+        headers=auth_headers,
+        json={"name": "My Template"},
+    )
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert data == "none"
+
+
+@pytest.mark.asyncio
+async def test_category_template_name_check(
+    client: AsyncClient,
+    auth_headers: dict[str, str],
+    fake_service: FakeTemplateService,
+) -> None:
+    response = await client.post(
+        "/de2api/templateManage/categoryTemplateNameCheck",
+        headers=auth_headers,
+        json={"categoryId": "cat1"},
+    )
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert data == "none"
+
+
+@pytest.mark.asyncio
+async def test_delete_category(
+    client: AsyncClient,
+    auth_headers: dict[str, str],
+    fake_service: FakeTemplateService,
+) -> None:
+    response = await client.post(
+        "/de2api/templateManage/deleteCategory/cat1",
+        headers=auth_headers,
+    )
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert data == "success"
+
+
+@pytest.mark.asyncio
+async def test_batch_delete(
+    client: AsyncClient,
+    auth_headers: dict[str, str],
+    fake_service: FakeTemplateService,
+) -> None:
+    response = await client.post(
+        "/de2api/templateManage/batchDelete",
+        headers=auth_headers,
+        json={"templateIds": ["tpl_1", "tpl_2"]},
+    )
+    assert response.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_batch_update(
+    client: AsyncClient,
+    auth_headers: dict[str, str],
+    fake_service: FakeTemplateService,
+) -> None:
+    response = await client.post(
+        "/de2api/templateManage/batchUpdate",
+        headers=auth_headers,
+        json={"templateIds": ["tpl_1"], "categories": ["cat1"]},
+    )
+    assert response.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_find_categories_by_template_ids(
+    client: AsyncClient,
+    auth_headers: dict[str, str],
+    fake_service: FakeTemplateService,
+) -> None:
+    response = await client.post(
+        "/de2api/templateManage/findCategoriesByTemplateIds",
+        headers=auth_headers,
+        json={"templateIds": ["tpl_1"]},
+    )
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert isinstance(data, list)
+    assert "cat1" in data
+
+
+# ---------------------------------------------------------------------------
 # Auth gate tests
 # ---------------------------------------------------------------------------
 
@@ -376,7 +536,25 @@ async def test_template_save_requires_auth(client: AsyncClient) -> None:
 
 @pytest.mark.asyncio
 async def test_template_delete_requires_auth(client: AsyncClient) -> None:
-    response = await client.post("/de2api/templateManage/delete/tpl_1")
+    response = await client.post("/de2api/templateManage/delete/tpl_1/cat1")
+    assert response.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_find_categories_requires_auth(client: AsyncClient) -> None:
+    response = await client.post(
+        "/de2api/templateManage/findCategories",
+        json={},
+    )
+    assert response.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_template_list_body_requires_auth(client: AsyncClient) -> None:
+    response = await client.post(
+        "/de2api/templateManage/templateList",
+        json={},
+    )
     assert response.status_code == 401
 
 
