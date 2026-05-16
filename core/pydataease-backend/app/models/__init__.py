@@ -1,7 +1,9 @@
 from app.models.api_key import XpackApiKey
 from app.models.base import Base
 from app.models.chart import CoreChartView
+from app.models.custom_geo import CustomGeoArea, CustomGeoSubArea
 from app.models.dataset import CoreDatasetGroup, CoreDatasetTable, CoreDatasetTableField
+from app.models.dataset_sql_log import DatasetTableSqlLog
 from app.models.datasource import CoreDatasource, CoreDatasourceTask, CoreDatasourceTaskLog
 from app.models.engine import CoreDeEngine
 from app.models.export import CoreExportTask
@@ -37,6 +39,9 @@ __all__ = [
     "CoreStore",
     "CoreSysSetting",
     "CoreUser",
+    "CustomGeoArea",
+    "CustomGeoSubArea",
+    "DatasetTableSqlLog",
     "DataVisualizationInfo",
     "VisualizationBackground",
     "VisualizationSubject",

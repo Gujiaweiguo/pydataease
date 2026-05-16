@@ -18,6 +18,8 @@ from app.middleware.bigint_json import BigIntJSONResponse
 from app.middleware.response_wrapper import ResultMessageMiddleware
 from app.routers.chart import router as chart_router
 from app.routers.column_permission import router as column_permission_router
+from app.routers.custom_geo import router as custom_geo_router
+from app.routers.dataset_sql_log import router as dataset_sql_log_router
 from app.routers.datasource import router as datasource_router
 from app.routers.dataset import router as dataset_router
 from app.routers.dataset_field import router as dataset_field_router
@@ -94,6 +96,8 @@ api_router.include_router(api_key_router)
 api_router.include_router(bootstrap_router)
 api_router.include_router(visualization_bg_router)
 api_router.include_router(visualization_subject_router)
+api_router.include_router(custom_geo_router)
+api_router.include_router(dataset_sql_log_router)
 
 
 @app.exception_handler(HTTPException)
