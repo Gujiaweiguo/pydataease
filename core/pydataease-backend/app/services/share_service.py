@@ -81,12 +81,12 @@ class ShareService:
         if payload.ticket:
             ticket_record = await self.ticket_repo.get_by_ticket(payload.ticket)
             if ticket_record is None:
-                ticket_vo = TicketValidVO(ticket_valid=False, ticket_exp=False, args="")
+                ticket_vo = TicketValidVO(ticket_valid=False, ticket_exp=False)
             else:
                 ticket_expired = (
                     ticket_record.exp is not None and ticket_record.exp < current_ms
                 )
-                ticket_args = ""
+                ticket_args = None
                 if ticket_record.args is not None:
                     import json
 

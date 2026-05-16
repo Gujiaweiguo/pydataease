@@ -100,7 +100,7 @@ class TicketValidVO(BaseModel):
 
     ticket_valid: bool = Field(default=True, serialization_alias="ticketValid")
     ticket_exp: bool = Field(default=False, serialization_alias="ticketExp")
-    args: str = ""
+    args: str | None = None
 
 
 class ProxyInfoResponse(BaseModel):

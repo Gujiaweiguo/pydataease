@@ -250,7 +250,7 @@ async def test_share_proxy_info(
     assert data["peRequireValid"] is True
     assert data["ticketValidVO"]["ticketValid"] is True
     assert data["ticketValidVO"]["ticketExp"] is False
-    assert data["ticketValidVO"]["args"] == ""
+    assert data["ticketValidVO"]["args"] is None
     # Verify x-de-link-token header
     assert "x-de-link-token" in response.headers
     link_token = response.headers["x-de-link-token"]
