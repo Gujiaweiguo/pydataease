@@ -15,6 +15,8 @@ from app.models.template import (
 )
 from app.models.user import CoreUser
 from app.models.visualization import DataVisualizationInfo
+from app.models.visualization_background import VisualizationBackground
+from app.models.visualization_subject import VisualizationSubject
 
 __all__ = [
     "Base",
@@ -33,6 +35,8 @@ __all__ = [
     "CoreSysSetting",
     "CoreUser",
     "DataVisualizationInfo",
+    "VisualizationBackground",
+    "VisualizationSubject",
     "VisualizationTemplate",
     "VisualizationTemplateCategory",
     "VisualizationTemplateCategoryMap",
