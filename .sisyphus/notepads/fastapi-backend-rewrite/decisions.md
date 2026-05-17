@@ -19,3 +19,7 @@
 ## 2026-05-11 sys-setting bootstrap wiring
 - Reused a dedicated `SysSettingService` behind bootstrap dependency injection instead of touching `system.py` routes, keeping bootstrap compatibility stubs isolated from the existing system parameter endpoints the task marked out-of-scope.
 - Removed `@final` from `AsyncBaseRepository` so repository subclasses remain type-check clean; multiple existing repositories already inherit from it, so the base abstraction is intentionally extensible in practice.
+
+## 2026-05-17 snapshot table migration
+- Added a standalone Alembic revision after `a2b3c4d5e6f7` to create the five missing snapshot tables only, leaving runtime code and existing migrations untouched per bug-fix scope.
+- Matched snapshot table schemas to the current PostgreSQL Alembic definitions, including defaults and FK structure, so `uv run alembic upgrade head` can create tables that repository SQL can query immediately without follow-up normalization.

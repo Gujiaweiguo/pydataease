@@ -1,5 +1,17 @@
 export const dsTypes = [
   {
+    type: 'Excel',
+    name: 'Excel',
+    catalog: 'LOCAL',
+    extraParams: ''
+  },
+  {
+    type: 'ExcelRemote',
+    name: 'Excel Remote',
+    catalog: 'LOCAL',
+    extraParams: ''
+  },
+  {
     type: 'mysql',
     name: 'MySQL',
     catalog: 'OLTP',
@@ -14,9 +26,10 @@ export const dsTypes = [
   }
 ]
 
-export const typeList = ['OLTP']
+export const typeList = ['OLTP', 'LOCAL']
 export const nameMap = {
-  OLTP: 'OLTP'
+  OLTP: 'OLTP',
+  LOCAL: 'LOCAL'
 }
 
 export interface Configuration {

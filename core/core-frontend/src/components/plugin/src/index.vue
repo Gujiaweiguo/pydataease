@@ -30,7 +30,7 @@ const showNolic = () => {
 const generateRamStr = (len: number) => {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
   let randomStr = ''
-  for (var i = 0; i < len; i++) {
+  for (let i = 0; i < len; i++) {
     randomStr += chars.charAt(Math.floor(Math.random() * chars.length))
   }
   return randomStr
@@ -97,10 +97,18 @@ const storeCacheProxy = byteArray => {
 }
 const pluginProxy = ref(null)
 const invokeMethod = param => {
-  if (pluginProxy.value && pluginProxy.value['invokeMethod']) {
-    pluginProxy.value['invokeMethod'](param)
-  } else if (param.methodName && pluginProxy.value[param.methodName]) {
-    pluginProxy.value[param.methodName](param.args)
+  const target = pluginProxy.value as Record<string, unknown> | null
+  if (!target) {
+    return
+  }
+  const proxyInvoke = target['invokeMethod']
+  if (typeof proxyInvoke === 'function') {
+    proxyInvoke(param)
+    return
+  }
+  const method = param?.methodName ? target[param.methodName] : null
+  if (typeof method === 'function') {
+    method(param.args)
   }
 }
 const emits = defineEmits(['loadFail'])

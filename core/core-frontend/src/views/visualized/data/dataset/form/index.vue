@@ -1368,7 +1368,9 @@ const getDatasource = (weight?: number) => {
         methodName: 'execute',
         args: null
       }
-      datasetCheckRef.value?.invokeMethod(param)
+      if (typeof datasetCheckRef.value?.invokeMethod === 'function') {
+        datasetCheckRef.value.invokeMethod(param)
+      }
     })
   })
 }

@@ -223,6 +223,33 @@ const uploadSuccess = response => {
 
   sheet && handleTabClick(sheet)
 }
+
+const initFromConfiguration = () => {
+  const sheets = Array.isArray(param.value.configuration)
+    ? cloneDeep(param.value.configuration)
+    : []
+  if (!sheets.length) {
+    handleExcelDel()
+    showName.value = true
+    return
+  }
+  const excelLabel = param.value.fileName || param.value.name || 'Excel'
+  state.excelData = [
+    {
+      excelLabel,
+      fileName: excelLabel,
+      sheets
+    }
+  ]
+  tabList.value = sheets.map(ele => ({
+    value: ele.sheetId,
+    label: ele.tableName,
+    newSheet: ele.newSheet
+  }))
+  showName.value = true
+  const [sheet] = tabList.value
+  sheet && handleTabClick(sheet)
+}
 const saveExcelDs = (params, successCb, finallyCb) => {
   let validate = true
   let selectedSheet = []
@@ -238,7 +265,7 @@ const saveExcelDs = (params, successCb, finallyCb) => {
       if (selectNode[i].changeFiled) {
         changeFiled = true
       }
-      if (selectNode[i].fields.filter(field => field.checked).length == 0) {
+      if (selectNode[i].fields.filter(field => field.checked).length === 0) {
         ElMessage({
           message: selectNode[i].excelLabel + t('datasource.api_field_not_empty'),
           type: 'error'
@@ -477,7 +504,7 @@ const handleSelectionChange = val => {
       row.checked = true
     })
     columns.value.forEach(row => {
-      let item
+      let item: (typeof multipleSelection.value)[number] | undefined
       for (let i = 0; i < multipleSelection.value.length; i++) {
         if (row.dataKey === multipleSelection.value[i].dataKey) {
           item = multipleSelection.value[i]
@@ -491,8 +518,8 @@ const handleSelectionChange = val => {
     })
 
     const sheet = state.excelData[0]?.sheets.find(ele => ele.sheetId === activeTab.value)
-    sheet.fields.forEach(row => {
-      let item
+    sheet?.fields.forEach((row: Field) => {
+      let item: (typeof multipleSelection.value)[number] | undefined
       for (let i = 0; i < multipleSelection.value.length; i++) {
         if (row.originName === multipleSelection.value[i].dataKey) {
           item = multipleSelection.value[i]
@@ -530,7 +557,9 @@ const changeCurrentMode = val => {
     })
   } else {
     const sheet = state.excelData[0]?.sheets.find(ele => ele.sheetId === activeTab.value)
-    handleNodeClick(sheet)
+    if (sheet) {
+      handleNodeClick(sheet)
+    }
   }
 }
 
@@ -542,7 +571,8 @@ defineExpose({
   submitForm,
   sheetFile,
   appendReplaceExcel,
-  uploadStatus
+  uploadStatus,
+  initFromConfiguration
 })
 </script>
 

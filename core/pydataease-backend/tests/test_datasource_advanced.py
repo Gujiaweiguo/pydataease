@@ -205,11 +205,12 @@ async def test_list_datasource_types(
     response = await client.get("/de2api/datasource/types", headers=auth_headers)
     assert response.status_code == 200
     data = response.json()["data"]
-    assert len(data) == 18
+    assert len(data) == 6
     types_list = [item["type"] for item in data]
     assert "mysql" in types_list
     assert "pg" in types_list
-    assert "ck" in types_list
+    assert "Excel" in types_list
+    assert "ExcelRemote" in types_list
     assert data[0] == {"type": "folder", "name": "folder", "category": "folder"}
 
 

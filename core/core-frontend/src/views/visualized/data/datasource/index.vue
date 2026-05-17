@@ -92,6 +92,18 @@ import { iconDatasourceMap } from '@/components/icon-group/datasource-list'
 import { querySymmetricKey } from '@/api/login'
 import { symmetricDecrypt } from '@/utils/encryption'
 import { isFreeFolder } from '@/utils/utils'
+
+const safeDecrypt = (data: any, key: string): any => {
+  if (data === null || data === undefined) return data
+  // If already a plain object (new backend), return as-is
+  if (typeof data === 'object') return data
+  // If it's a string, try to decrypt (old Java backend)
+  try {
+    return JSON.parse(symmetricDecrypt(data, key))
+  } catch {
+    return data
+  }
+}
 const route = useRoute()
 const interactiveStore = interactiveStoreWithOut()
 interface Field {
@@ -346,7 +358,7 @@ const formatSimpleCron = (info?: SyncSetting) => {
       strArr.push(`${t('dataset.start_time')}: ${start}`)
       strArr.push(`${t('dataset.end_time')}: ${end}`)
       break
-    case 'SIMPLE_CRON':
+    case 'SIMPLE_CRON': {
       const type = t(`common.${simpleCronType}`)
       strArr.push(
         `${t('dataset.simple_cron')}: ${t('common.every')}${simpleCronValue}${type}${t(
@@ -356,6 +368,7 @@ const formatSimpleCron = (info?: SyncSetting) => {
       strArr.push(`${t('dataset.start_time')}: ${start}`)
       strArr.push(`${t('dataset.end_time')}: ${end}`)
       break
+    }
     default:
       break
   }
@@ -607,13 +620,13 @@ const handleNodeClick = data => {
       enableDataFill
     } = res.data
     if (configuration) {
-      configuration = JSON.parse(symmetricDecrypt(configuration, symmetricKey.value))
+      configuration = safeDecrypt(configuration, symmetricKey.value)
     }
     if (paramsStr) {
-      paramsStr = JSON.parse(symmetricDecrypt(paramsStr, symmetricKey.value))
+      paramsStr = safeDecrypt(paramsStr, symmetricKey.value)
     }
     if (apiConfigurationStr) {
-      apiConfigurationStr = JSON.parse(symmetricDecrypt(apiConfigurationStr, symmetricKey.value))
+      apiConfigurationStr = safeDecrypt(apiConfigurationStr, symmetricKey.value)
     }
     Object.assign(nodeInfo, {
       name,
@@ -713,7 +726,7 @@ const editDatasource = (editType?: number) => {
   }
   return getById(nodeInfo.id).then(res => {
     let arr = pluginDs.value.filter(ele => {
-      return ele.type == res.data.type
+      return ele.type === res.data.type
     })
     let {
       name,
@@ -734,13 +747,13 @@ const editDatasource = (editType?: number) => {
       enableDataFill
     } = res.data
     if (configuration) {
-      configuration = JSON.parse(symmetricDecrypt(configuration, symmetricKey.value))
+      configuration = safeDecrypt(configuration, symmetricKey.value)
     }
     if (paramsStr) {
-      paramsStr = JSON.parse(symmetricDecrypt(paramsStr, symmetricKey.value))
+      paramsStr = safeDecrypt(paramsStr, symmetricKey.value)
     }
     if (apiConfigurationStr) {
-      apiConfigurationStr = JSON.parse(symmetricDecrypt(apiConfigurationStr, symmetricKey.value))
+      apiConfigurationStr = safeDecrypt(apiConfigurationStr, symmetricKey.value)
     }
     let datasource = reactive<Node>(cloneDeep(defaultInfo))
     Object.assign(datasource, {
@@ -801,16 +814,16 @@ const handleCopy = async data => {
       enableDataFill
     } = res.data
     let arr = pluginDs.value.filter(ele => {
-      return ele.type == res.data.type
+      return ele.type === res.data.type
     })
     if (configuration) {
-      configuration = JSON.parse(symmetricDecrypt(configuration, symmetricKey.value))
+      configuration = safeDecrypt(configuration, symmetricKey.value)
     }
     if (paramsStr) {
-      paramsStr = JSON.parse(symmetricDecrypt(paramsStr, symmetricKey.value))
+      paramsStr = safeDecrypt(paramsStr, symmetricKey.value)
     }
     if (apiConfigurationStr) {
-      apiConfigurationStr = JSON.parse(symmetricDecrypt(apiConfigurationStr, symmetricKey.value))
+      apiConfigurationStr = safeDecrypt(apiConfigurationStr, symmetricKey.value)
     }
     let datasource = reactive<Node>(cloneDeep(defaultInfo))
     Object.assign(datasource, {
@@ -1250,18 +1263,14 @@ const getMenuList = (val: boolean) => {
                     placement="bottom-start"
                     v-if="!data.leaf"
                   ></handle-more>
-                  <el-icon
-                    class="hover-icon"
-                    @click.stop="handleEdit(data)"
-                    v-else-if="data.type !== 'Excel'"
-                  >
+                  <el-icon class="hover-icon" @click.stop="handleEdit(data)" v-else-if="data.leaf">
                     <icon name="icon_edit_outlined"><icon_edit_outlined class="svg-icon" /></icon>
                   </el-icon>
                   <handle-more
                     @handle-command="
                       cmd => operation(cmd, data, data.leaf ? 'datasource' : 'folder')
                     "
-                    :menu-list="getMenuList(!['Excel'].includes(data.type) && data.leaf)"
+                    :menu-list="getMenuList(data.leaf)"
                   ></handle-more>
                 </div>
               </span>
@@ -1803,7 +1812,7 @@ const getMenuList = (val: boolean) => {
               <el-row :gutter="24">
                 <el-col :span="12">
                   <BaseInfoItem :label="t('dataset.update_type')">{{
-                    t(`dataset.${nodeInfo.syncSetting.updateType}`)
+                    t(`dataset.${nodeInfo.syncSetting?.updateType || 'all_scope'}`)
                   }}</BaseInfoItem>
                 </el-col>
                 <el-col :span="12">
@@ -1811,7 +1820,7 @@ const getMenuList = (val: boolean) => {
                     <p
                       class="value"
                       :key="ele"
-                      v-for="ele in formatSimpleCron(nodeInfo.syncSetting)"
+                      v-for="ele in formatSimpleCron(nodeInfo.syncSetting || {})"
                     >
                       {{ ele }}
                     </p>
