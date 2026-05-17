@@ -5,7 +5,7 @@ from typing import final
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.link_jump import (
+from ..models.link_jump import (
     VisualizationLinkJump,
     VisualizationLinkJumpInfo,
     VisualizationLinkJumpTargetViewInfo,
@@ -88,7 +88,7 @@ class LinkJumpRepository:
 
     async def query_jumps_with_active_flag(
         self, dv_id: int, table_name: str
-    ) -> list[dict]:
+    ) -> list[dict[str, object]]:
         """Query jumps joined with chart view's jump_active flag.
 
         Returns rows matching the Java queryWithDvId SQL:
@@ -107,7 +107,7 @@ class LinkJumpRepository:
         sql = text(f"""
             SELECT ccv.id AS source_view_id,
                    vlj.id,
-                   :dv_id AS source_dv_id,
+                   CAST(:dv_id AS bigint) AS source_dv_id,
                    vlj.link_jump_info,
                    COALESCE(ccv.jump_active, false) AS checked
             FROM {cv} ccv
@@ -124,7 +124,7 @@ class LinkJumpRepository:
         view_id: int,
         uid: int,
         table_name: str = "snapshot",
-    ) -> dict | None:
+    ) -> dict[str, object] | None:
         """Query jump config for a specific view (queryWithViewId).
 
         Returns the jump row plus nested info.
@@ -139,7 +139,7 @@ class LinkJumpRepository:
         sql = text(f"""
             SELECT ccv.id AS source_view_id,
                    vlj.id,
-                   :dv_id AS source_dv_id,
+                   CAST(:dv_id AS bigint) AS source_dv_id,
                    vlj.link_jump_info,
                    COALESCE(vlj.checked, false) AS checked
             FROM {cv} ccv
@@ -161,7 +161,7 @@ class LinkJumpRepository:
         source_view_id: int,
         uid: int,
         table_name: str = "snapshot",
-    ) -> list[dict]:
+    ) -> list[dict[str, object]]:
         """Query jump info rows with field details (getLinkJumpInfo).
 
         This mirrors the complex Java MyBatis query that joins chart views,
@@ -227,7 +227,7 @@ class LinkJumpRepository:
         target_dv_id: int,
         source_field_id: int | None = None,
         table_name: str = "core",
-    ) -> list[dict]:
+    ) -> list[dict[str, object]]:
         """Query target visualization jump info (getTargetVisualizationJumpInfo)."""
         if "snapshot" in table_name:
             jtable = "snapshot_visualization_link_jump"
@@ -262,7 +262,7 @@ class LinkJumpRepository:
         result = await self.session.execute(sql, params)
         return [dict(row._mapping) for row in result.fetchall()]
 
-    async def get_view_table_details(self, dv_id: int) -> list[dict]:
+    async def get_view_table_details(self, dv_id: int) -> list[dict[str, object]]:
         """Get view table field details for a dashboard (getViewTableDetails)."""
         sql = text("""
             SELECT
@@ -289,7 +289,7 @@ class LinkJumpRepository:
         result = await self.session.execute(sql, {"dv_id": dv_id})
         return [dict(row._mapping) for row in result.fetchall()]
 
-    async def query_out_params_target_with_dv_id(self, dv_id: int) -> list[dict]:
+    async def query_out_params_target_with_dv_id(self, dv_id: int) -> list[dict[str, object]]:
         """Query outer params jump targets for a dashboard."""
         sql = text("""
             SELECT
@@ -408,7 +408,7 @@ class LinkJumpFieldRepository:
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
-    async def query_table_field_with_view_id(self, view_id: int) -> list[dict]:
+    async def query_table_field_with_view_id(self, view_id: int) -> list[dict[str, object]]:
         """Query table fields associated with a chart view.
 
         Mirrors extVisualizationLinkageMapper.queryTableFieldWithViewId.

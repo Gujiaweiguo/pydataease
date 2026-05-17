@@ -26,16 +26,17 @@ class OuterParamsRepository:
 
         Mirrors queryWithVisualizationIdSnapshot MyBatis query.
         """
+        vid = int(visualization_id)
         sql = text("""
             SELECT
-                :visualization_id AS visualization_id,
+                dvi.id AS visualization_id,
                 COALESCE(vop.checked, false) AS checked
             FROM snapshot_data_visualization_info dvi
-            LEFT JOIN snapshot_visualization_outer_params vop ON dvi.id = vop.visualization_id
+            LEFT JOIN snapshot_visualization_outer_params vop ON dvi.id = vop.visualization_id::bigint
             WHERE dvi.id = :visualization_id
         """)
         result = await self.session.execute(
-            sql, {"visualization_id": visualization_id}
+            sql, {"visualization_id": vid}
         )
         row = result.fetchone()
         if row is None:
@@ -126,6 +127,7 @@ class OuterParamsRepository:
 
         Mirrors queryDsWithVisualizationId MyBatis query.
         """
+        vid = int(visualization_id)
         sql = text("""
             SELECT DISTINCT
                 cdg.id,
@@ -142,7 +144,7 @@ class OuterParamsRepository:
                 cdg.sync_status,
                 cdg.update_by,
                 cdg.last_update_time,
-                :visualization_id AS "visualizationId"
+                dvi.id AS "visualizationId"
             FROM core_dataset_group cdg
             INNER JOIN snapshot_core_chart_view ccv ON cdg.id = ccv.table_id
                 AND ccv.type != 'VQuery'
@@ -152,7 +154,7 @@ class OuterParamsRepository:
               AND POSITION(CAST(ccv.id AS TEXT) IN dvi.component_data) > 0
         """)
         result = await self.session.execute(
-            sql, {"visualization_id": visualization_id}
+            sql, {"visualization_id": vid}
         )
         return [dict(row._mapping) for row in result.fetchall()]
 
@@ -173,6 +175,7 @@ class OuterParamsRepository:
         self, dataset_group_id: int, visualization_id: str
     ) -> list[dict]:
         """Query chart views for a dataset group within a visualization."""
+        vid = int(visualization_id)
         sql = text("""
             SELECT DISTINCT
                 ccv.id AS "chartId",
@@ -187,7 +190,7 @@ class OuterParamsRepository:
         """)
         result = await self.session.execute(
             sql,
-            {"dataset_group_id": dataset_group_id, "visualization_id": visualization_id},
+            {"dataset_group_id": dataset_group_id, "visualization_id": vid},
         )
         return [dict(row._mapping) for row in result.fetchall()]
 

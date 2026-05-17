@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import Any, final
 
-from sqlalchemy import delete, select
+from sqlalchemy import delete, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.dataset import CoreDatasetGroup, CoreDatasetTable, CoreDatasetTableField
@@ -37,13 +37,26 @@ class DatasetGroupRepository(AsyncBaseRepository[CoreDatasetGroup]):
         children = await self.get_children(pid)
         for child in children:
             await self._delete_descendants(child.id)
-            if child.node_type == "dataset":
-                await self._delete_dataset_tables(child.id)
+        # Always clear tables for this node (no-op if none exist)
+        await self._delete_dataset_tables(pid)
         stmt = delete(CoreDatasetGroup).where(CoreDatasetGroup.id == pid)
         await self.session.execute(stmt)
         await self.session.commit()
 
     async def _delete_dataset_tables(self, dataset_group_id: int) -> None:
+        # Clear FK references to datasource before deleting
+        clear_table_fk = (
+            update(CoreDatasetTable)
+            .where(CoreDatasetTable.dataset_group_id == dataset_group_id)
+            .values(datasource_id=None)
+        )
+        await self.session.execute(clear_table_fk)
+        clear_field_fk = (
+            update(CoreDatasetTableField)
+            .where(CoreDatasetTableField.dataset_group_id == dataset_group_id)
+            .values(datasource_id=None)
+        )
+        await self.session.execute(clear_field_fk)
         field_stmt = delete(CoreDatasetTableField).where(
             CoreDatasetTableField.dataset_group_id == dataset_group_id
         )
