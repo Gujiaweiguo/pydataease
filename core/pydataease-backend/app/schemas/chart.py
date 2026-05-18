@@ -154,3 +154,4 @@ class ChartDataResponse(BaseModel):
     total: int = 0
     chart_id: int | None = Field(default=None, serialization_alias="chartId")
     scene_id: int | None = Field(default=None, serialization_alias="sceneId")
+    error: str | None = None

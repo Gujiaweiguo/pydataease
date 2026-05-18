@@ -189,6 +189,12 @@ class AuthMiddleware:
                 return oid
             user_orgs = await org_repo.get_user_orgs(user_id)
             if user_orgs:
+                if oid > 0:
+                    import logging
+                    logging.getLogger(__name__).warning(
+                        "User %d requested oid %d but is not a member; reassigning to org %d",
+                        user_id, oid, user_orgs[0].id,
+                    )
                 return user_orgs[0].id
             return 0
 

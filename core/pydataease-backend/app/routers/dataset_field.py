@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import time
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.dependencies.auth import get_current_user
@@ -63,10 +63,10 @@ async def get_field(
     id: int,
     _: TokenUser = Depends(get_current_user),
     repo: DatasetFieldRepository = Depends(get_field_repo),
-) -> DatasetFieldResponse | None:
+) -> DatasetFieldResponse:
     field = await repo.get_by_id(id)
     if field is None:
-        return None
+        raise HTTPException(status_code=404, detail="Field not found")
     return DatasetFieldResponse.model_validate(field)
 
 

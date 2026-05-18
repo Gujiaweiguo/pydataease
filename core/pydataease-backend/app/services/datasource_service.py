@@ -550,7 +550,14 @@ class DatasourceService:
         async with httpx.AsyncClient(timeout=30.0, follow_redirects=True) as client:
             response = await client.get(url, auth=auth)
             response.raise_for_status()
-            filename = url.rstrip("/").split("/")[-1] or "remote.xlsx"
+            content_length = response.headers.get("content-length")
+            if content_length and int(content_length) > 50 * 1024 * 1024:
+                raise HTTPException(status_code=413, detail="Remote file size exceeds 50MB limit")
+            cd = response.headers.get("content-disposition", "")
+            if "filename=" in cd:
+                filename = cd.split("filename=")[-1].strip('"').strip("'")
+            else:
+                filename = url.split("?")[0].rstrip("/").split("/")[-1] or "remote.xlsx"
             return response.content, filename
 
     def _parse_uploaded_file(self, content: bytes, filename: str) -> dict[str, object]:
@@ -577,7 +584,16 @@ class DatasourceService:
             if not rows:
                 continue
             headers = [str(cell or "") for cell in rows[0]]
-            json_rows = cast(list[dict[str, object]], [dict(zip(headers, row)) for row in rows[1:] if any(cell is not None for cell in row)])
+            seen: dict[str, int] = {}
+            deduped_headers: list[str] = []
+            for h in headers:
+                if h in seen:
+                    seen[h] += 1
+                    deduped_headers.append(f"{h}_{seen[h]}")
+                else:
+                    seen[h] = 0
+                    deduped_headers.append(h)
+            json_rows = cast(list[dict[str, object]], [dict(zip(deduped_headers, row)) for row in rows[1:] if any(cell is not None for cell in row)])
             fields = [self._excel_field(header, json_rows) for header in headers]
             table_name = worksheet.title or f"sheet_{index}"
             sheets.append(
@@ -597,7 +613,10 @@ class DatasourceService:
         return sheets
 
     def _parse_csv_sheet(self, content: bytes, filename: str) -> dict[str, object]:
-        text = content.decode("utf-8-sig")
+        try:
+            text = content.decode("utf-8-sig")
+        except UnicodeDecodeError:
+            text = content.decode("latin-1")
         reader = csv.DictReader(io.StringIO(text))
         rows = cast(list[dict[str, object]], list(reader))
         headers = reader.fieldnames or []
@@ -698,6 +717,7 @@ class DatasourceService:
 
     def _excel_table_name(self, table_name: str) -> str:
         safe = "".join(ch if ch.isalnum() else "_" for ch in table_name.lower()).strip("_") or "sheet"
+        safe = safe[:46]
         return f"excel_{safe}_{hashlib.md5(table_name.encode()).hexdigest()[:10]}"
 
     def _field_de_type(self, data_type: str) -> int:
@@ -841,3 +861,7 @@ def _mask_passwords(config: dict[str, object]) -> None:
             config[key] = "******"
         elif isinstance(config[key], dict):
             _mask_passwords(cast(dict[str, object], config[key]))
+        elif isinstance(config[key], list):
+            for item in config[key]:
+                if isinstance(item, dict):
+                    _mask_passwords(cast(dict[str, object], item))

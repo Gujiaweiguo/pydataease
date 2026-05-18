@@ -130,9 +130,17 @@ class ChartService:
                 chart_id=response.chart_id,
                 scene_id=response.scene_id,
             )
-        except Exception:
+        except Exception as exc:
             logger.exception("chart get_data execution failed", extra={"chart_id": payload.id, "table_id": table_id})
-            return response
+            response_fields = list(response.fields) if response.fields else []
+            return ChartDataResponse(
+                fields=response_fields,
+                data=[],
+                total=0,
+                chart_id=response.chart_id,
+                scene_id=response.scene_id,
+                error=str(exc),
+            )
 
     async def get_detail(self, chart_id: int) -> ChartDetailResponse:
         chart = await self._get_chart(chart_id)

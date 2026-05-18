@@ -109,10 +109,15 @@ class DataPermissionService:
         field_actions: dict[int, str] = {}  # field_id -> action
         field_priorities: dict[int, int] = {}  # field_id -> priority (3=user, 2=role, 1=org)
 
+        _RESTRICTIVENESS: dict[str, int] = {"disable": 3, "desensitize": 2, "mask": 1}
+
         for rule in all_rules:
             priority = {"user": 3, "role": 2, "org": 1}.get(rule.target_type, 0)
             existing = field_priorities.get(rule.field_id, 0)
-            if priority >= existing:
+            if priority > existing or (
+                priority == existing
+                and _RESTRICTIVENESS.get(rule.action, 0) > _RESTRICTIVENESS.get(field_actions.get(rule.field_id, ""), 0)
+            ):
                 field_actions[rule.field_id] = rule.action
                 field_priorities[rule.field_id] = priority
 

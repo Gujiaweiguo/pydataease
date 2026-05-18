@@ -53,6 +53,9 @@ def _new_identifier() -> int:
 def _compute_level(all_items: list[DataVisualizationInfo], pid: int | None) -> int:
     if pid is None or pid == 0:
         return 0
+    id_set = {item.id for item in all_items}
+    if pid not in id_set:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Parent id {pid} does not exist")
     id_to_level = {item.id: item.level or 0 for item in all_items}
     return (id_to_level.get(pid, 0) or 0) + 1
 
@@ -827,7 +830,7 @@ class VisualizationService:
         for item in items:
             if item.delete_flag:
                 continue
-            if (item.pid) != pid:
+            if _normalize_int(item.pid) != pid:
                 continue
             if (item.name or "").strip() != normalized_name:
                 continue
@@ -952,9 +955,15 @@ class VisualizationService:
         except (AttributeError, TypeError):
             return {"totalCount": 0, "list": []}
 
+        resource_ids = [store.resource_id for store in stores if store.resource_id]
+        viz_map: dict[int, DataVisualizationInfo] = {}
+        if resource_ids:
+            viz_rows = await self.visualization_repo.get_by_ids(resource_ids)
+            viz_map = {viz.id: viz for viz in viz_rows}
+
         result_list = []
         for store in stores:
-            viz = await self.visualization_repo.get_by_id(store.resource_id)
+            viz = viz_map.get(store.resource_id)
             if viz is None or viz.delete_flag:
                 continue
             if keyword and keyword.lower() not in (viz.name or "").lower():
@@ -1039,10 +1048,23 @@ class VisualizationService:
         visualization = await self._get_visualization(dv_id)
         component_data = visualization.component_data if isinstance(visualization.component_data, dict | list) else None
         dataset_ids: list[dict[str, Any]] = []
-        if isinstance(component_data, list):
-            for item in component_data:
-                if isinstance(item, dict) and item.get("datasetId") is not None:
+
+        def _collect_dataset_ids(components: list[object] | None) -> None:
+            if not isinstance(components, list):
+                return
+            for item in components:
+                if not isinstance(item, dict):
+                    continue
+                if item.get("datasetId") is not None:
                     dataset_ids.append({"datasetId": item.get("datasetId")})
+                prop_value = item.get("propValue")
+                if isinstance(prop_value, list):
+                    for sub in prop_value:
+                        if isinstance(sub, dict) and isinstance(sub.get("componentData"), list):
+                            _collect_dataset_ids(sub["componentData"])
+
+        if isinstance(component_data, list):
+            _collect_dataset_ids(component_data)
         return dataset_ids
 
     async def find_dv_type(self, dv_id: int) -> str:

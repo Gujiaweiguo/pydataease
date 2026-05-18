@@ -6,6 +6,7 @@ from types import SimpleNamespace
 from typing import Any, cast
 
 import pytest
+from fastapi import HTTPException
 from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -584,7 +585,9 @@ class TestVisualizationServiceUnit:
         assert _normalize_int("12") == 12
         assert _compute_level(items, None) == 0
         assert _compute_level(items, 1) == 1
-        assert _compute_level(items, 999) == 1
+        with pytest.raises(HTTPException) as exc_info:
+            _compute_level(items, 999)
+        assert exc_info.value.status_code == 400
 
     def test_deep_merge_defaults_and_canvas_style_enrichment(self) -> None:
         merged = _deep_merge_defaults(

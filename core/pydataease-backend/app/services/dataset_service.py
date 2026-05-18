@@ -492,7 +492,7 @@ class DatasetService:
             try:
                 return json.loads(info)
             except (TypeError, ValueError):
-                return info
+                return {}
         return info
 
     @staticmethod

@@ -151,12 +151,12 @@ async def test_list_export_tasks_paginated(
 
 
 @pytest.mark.asyncio
-async def test_delete_export_task_by_get(
+async def test_delete_export_task_by_post(
     client: AsyncClient,
     auth_headers: dict[str, str],
     fake_service: FakeExportService,
 ) -> None:
-    response = await client.get(
+    response = await client.post(
         "/de2api/exportCenter/delete/task-get-delete",
         headers=auth_headers,
     )

@@ -215,8 +215,7 @@ async def test_get_field_not_found(
         "/de2api/datasetField/get/9999",
         headers=auth_headers,
     )
-    assert response.status_code == 200
-    assert response.json()["data"] is None
+    assert response.status_code == 404
 
 
 @pytest.mark.asyncio

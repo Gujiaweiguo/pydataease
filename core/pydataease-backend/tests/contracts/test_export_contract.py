@@ -29,9 +29,15 @@ class TestExportCenterContract:
 
         assert response.status_code == 401
 
-    async def test_download_success_contract(self, async_client) -> None:
-        """GET /de2api/exportCenter/download/{id} should return blob/file payload for existing export task when authorized."""
+    async def test_download_requires_auth(self, async_client) -> None:
+        """GET /de2api/exportCenter/download/{id} requires authentication (BUG-050 fix)."""
         response = await async_client.get("/de2api/exportCenter/download/task-1")
+
+        assert response.status_code == 401
+
+    async def test_download_success_with_auth(self, async_client, auth_headers) -> None:
+        """GET /de2api/exportCenter/download/{id} should return blob/file payload when authenticated."""
+        response = await async_client.get("/de2api/exportCenter/download/task-1", headers=auth_headers)
 
         assert response.status_code == 200
         assert response.json() == {

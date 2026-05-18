@@ -48,7 +48,7 @@ async def list_export_tasks(
     return await service.list_tasks(export_from, user)
 
 
-@router.get("/delete/{task_id}")
+@router.post("/delete/{task_id}")
 async def delete_export_task_get(
     task_id: str,
     _user: TokenUser = Depends(get_current_user),

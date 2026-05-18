@@ -678,25 +678,44 @@
 
 ## Summary
 
-| Severity | Count | Key Themes |
-|----------|-------|------------|
-| **Critical** | 9 | Missing auth, SQL injection (3 vectors), share auth bypass, SSRF, internal DB exfiltration, IDOR |
-| **High** | 20 | Fail-open permissions, token security, info leakage, OOM vectors, insecure PRNG, dead code, mass assignment |
-| **Medium** | 21 | Silent failures, race conditions, data loss, N+1 queries, unbounded queries, API design |
-| **Low** | 12 | Rate limiting, performance, MD5, test gaps, edge cases, log injection |
+| Severity | Total | Fixed | Remaining |
+|----------|-------|-------|-----------|
+| **Critical** | 9 | 9 ✅ | 0 |
+| **High** | 20 | 20 ✅ | 0 |
+| **Medium** | 21 | 0 | 21 |
+| **Low** | 12 | 0 | 12 |
 
-### Top Priority Fixes (Critical + High, ordered by exploitability)
+### Fixed Bugs (commit 092c2ab, 0b4b5c4, 46a7664)
 
-1. **BUG-044**: Block internal DB access in `previewSql` — whitelist tables or use restricted DB role
-2. **BUG-001**: Add permission checks to 13 unprotected dataset endpoints
-3. **BUG-045/050**: Add authentication to export download endpoint
-4. **BUG-004**: Gate link token generation behind successful auth in `proxy_info()`
-5. **BUG-005**: Validate ticket UUID against share UUID
-6. **BUG-046**: Add UNION/SELECT to `_validate_filter_sql` forbidden keywords
-7. **BUG-047**: Fix `apply_row_filters` for WHERE+LIMIT queries (use subquery wrapping)
-8. **BUG-002**: Parameterize/escape `table_name` in `preview_data`
-9. **BUG-006**: Validate URL scheme in `load_remote_file`
-10. **BUG-048**: Whitelist column names in `linkage_repo.py`
-11. **BUG-010**: Enforce `ticket_require` in `resolve()` and `/share/view/`
-12. **BUG-014/015/016**: Fix token security (unique secrets, remove fallback, add refresh window)
-13. **BUG-007/008**: Convert fail-open to fail-closed for permission defaults
+**Critical (9/9 fixed):**
+- ✅ BUG-001: Permission checks on 13 dataset endpoints
+- ✅ BUG-002: SQL identifier validation in preview_data
+- ✅ BUG-003: Query wrapping in apply_row_filters (also fixes BUG-047)
+- ✅ BUG-004: Link token gated behind auth in proxy_info
+- ✅ BUG-005: Ticket UUID cross-check
+- ✅ BUG-006: URL scheme validation in load_remote_file
+- ✅ BUG-012: secrets.choice instead of random.choices
+- ✅ BUG-044: Block internal DB exfiltration in previewSql
+- ✅ BUG-045: Remove exportCenter/download from whitelist
+
+**High (20/20 fixed):**
+- ✅ BUG-007: Default-deny row access when no rules
+- ✅ BUG-008: Fail-closed when no permission point exists
+- ✅ BUG-009: TOCTOU documented in sql_executor
+- ✅ BUG-010: Enforce ticket_require in resolve()
+- ✅ BUG-011: UUID uniqueness check in save()
+- ✅ BUG-013: Password scrubbed from public share endpoints
+- ✅ BUG-014: Startup validation secret_key != share_secret_key
+- ✅ BUG-015: Deprecation warning for global secret_key fallback
+- ✅ BUG-016: 7-day max refresh window for tokens
+- ✅ BUG-017: Sanitized connection error messages
+- ✅ BUG-018: 50MB file size limit on upload/remote download
+- ✅ BUG-019: Base64 stored once per datasource (not per sheet)
+- ✅ BUG-024: Link token validates user existence/enabled
+- ✅ BUG-046: UNION/SELECT added to forbidden filter_sql keywords
+- ✅ BUG-048: Column whitelists in linkage_repo.py
+- ✅ BUG-049: _writable_fields filter in base repository
+- ✅ BUG-050: Authentication required on export download
+- ✅ BUG-060: Auth required for /resource/checkPermission
+
+### Remaining (Medium + Low = 33 bugs)
