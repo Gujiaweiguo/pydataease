@@ -34,7 +34,7 @@ def test_is_supported_type(raw_type: str, expected: bool) -> None:
 
 
 def test_cfg_helpers_return_values_and_defaults() -> None:
-    config = {"host": "localhost", "port": "3306"}
+    config: dict[str, object] = {"host": "localhost", "port": "3306"}
 
     assert _cfg(config, "host") == "localhost"
     assert _cfg(config, "database", "analytics") == "analytics"

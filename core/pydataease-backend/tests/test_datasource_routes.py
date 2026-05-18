@@ -1,32 +1,17 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime, timedelta
+# pyright: reportMissingTypeArgument=false, reportCallIssue=false, reportIncompatibleMethodOverride=false, reportMissingImports=false
+
 from collections.abc import Generator
 
 import pytest
 from httpx import AsyncClient
-from jose import jwt
 
-from app.main import app
-from app.schemas.auth import TokenUser
-from app.schemas.datasource import (
-    DatasourceFieldResponse,
-    DatasourceResponse,
-    DatasourceTableResponse,
-    DatasourceValidateResponse,
-    EngineInfoResponse,
-)
-from app.services.datasource_service import get_datasource_service
-from app.settings.config import get_settings
-
-
-def _build_token(**claims: int) -> str:
-    settings = get_settings()
-    payload = {
-        **claims,
-        "exp": datetime.now(UTC) + timedelta(hours=1),
-    }
-    return jwt.encode(payload, settings.secret_key, algorithm=settings.jwt_algorithm)
+from app.main import app  # pyright: ignore[reportImplicitRelativeImport]
+from app.schemas.auth import TokenUser  # pyright: ignore[reportImplicitRelativeImport]
+from app.schemas.datasource import DatasourceFieldResponse, DatasourceResponse, DatasourceTableResponse, DatasourceValidateResponse, EngineInfoResponse  # pyright: ignore[reportImplicitRelativeImport]
+from app.services.datasource_service import get_datasource_service  # pyright: ignore[reportImplicitRelativeImport]
+from tests.fixtures.auth_fixtures import _build_token  # pyright: ignore[reportImplicitRelativeImport]
 
 
 class FakeDatasourceService:
