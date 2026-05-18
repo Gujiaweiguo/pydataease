@@ -72,17 +72,17 @@ class _FieldSession:
         (
             "SELECT * FROM sales WHERE active = 1",
             ["region = 'east'", "owner = 'alice'"],
-            "SELECT * FROM sales WHERE active = 1 AND (region = 'east') AND (owner = 'alice')",
+            "SELECT * FROM (SELECT * FROM sales WHERE active = 1) AS _perm_filtered WHERE (region = 'east') AND (owner = 'alice')",
         ),
         (
             "SELECT * FROM sales ORDER BY id DESC",
             ["region = 'east'"],
-            "SELECT * FROM sales  WHERE (region = 'east') ORDER BY id DESC",
+            "SELECT * FROM (SELECT * FROM sales ORDER BY id DESC) AS _perm_filtered WHERE (region = 'east')",
         ),
         (
             "SELECT region, count(*) FROM sales GROUP BY region LIMIT 5",
             ["tenant_id = 7"],
-            "SELECT region, count(*) FROM sales  WHERE (tenant_id = 7) GROUP BY region LIMIT 5",
+            "SELECT * FROM (SELECT region, count(*) FROM sales GROUP BY region LIMIT 5) AS _perm_filtered WHERE (tenant_id = 7)",
         ),
     ],
 )

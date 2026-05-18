@@ -397,6 +397,9 @@ class DatasourceService:
         datasource_cfg = _as_config_dict(datasource.configuration)
         connection = await self._open_connection(datasource_cfg, datasource.type)
         schema = self._schema_name(datasource_cfg, canonical_type(datasource.type))
+        # BUG-002 fix: Validate identifiers to prevent SQL injection
+        table_name = self._validate_identifier(table_name, "table")
+        schema = self._validate_identifier(schema, "schema")
         try:
             rows = await connection.fetch(
                 f'SELECT * FROM "{schema}"."{table_name}" LIMIT 10' if canonical_type(datasource.type) == "postgresql" else f"SELECT * FROM `{table_name}` LIMIT 10"
@@ -483,6 +486,15 @@ class DatasourceService:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Connection failed: {exc}") from exc
 
     @staticmethod
+    def _validate_identifier(name: str, field: str = "table") -> str:
+        """Validate a SQL identifier (table name, schema) to prevent injection."""
+        import re
+
+        if not re.match(r"^[a-zA-Z_][a-zA-Z0-9_.]*$", name):
+            raise HTTPException(status_code=400, detail=f"Invalid {field} name")
+        return name
+
+    @staticmethod
     def _schema_name(configuration: JSONDict, ds_type: str = "postgresql") -> str:
         schema = configuration.get("schema") or configuration.get("currentSchema")
         if schema:
@@ -500,6 +512,15 @@ class DatasourceService:
 
     async def load_remote_file(self, payload: dict[str, object]) -> dict[str, object]:
         url = str(payload.get("url") or "")
+        # BUG-006 fix: Validate URL scheme to prevent SSRF
+        from urllib.parse import urlparse
+
+        parsed = urlparse(url)
+        if parsed.scheme not in ("http", "https"):
+            raise HTTPException(status_code=400, detail="Only HTTP/HTTPS URLs are supported")
+        if not parsed.hostname:
+            raise HTTPException(status_code=400, detail="Invalid URL: missing hostname")
+
         username = self._decode_b64_string(payload.get("userName"))
         password = self._decode_b64_string(payload.get("passwd"))
         result = cast(object, self._download_remote_file(url, username, password))

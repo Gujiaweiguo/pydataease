@@ -80,7 +80,7 @@ class ShareService:
         ticket_vo = TicketValidVO()
         if payload.ticket:
             ticket_record = await self.ticket_repo.get_by_ticket(payload.ticket)
-            if ticket_record is None:
+            if ticket_record is None or ticket_record.uuid != share.uuid:
                 ticket_vo = TicketValidVO(ticket_valid=False, ticket_exp=False)
             else:
                 ticket_expired = (
@@ -103,8 +103,11 @@ class ShareService:
         # Iframe error flag
         in_iframe_error = bool(payload.in_iframe)
 
-        # Generate link token JWT
-        link_token = self._generate_link_token(share, current_ms)
+        # Generate link token JWT — only after successful auth
+        if is_expired or (share.pwd and not pwd_valid) or (share.ticket_require and not ticket_vo.ticket_valid):
+            link_token = ""
+        else:
+            link_token = self._generate_link_token(share, current_ms)
 
         response = ProxyInfoResponse(
             resource_id=str(share.resource_id),
@@ -430,10 +433,9 @@ class ShareService:
 
     @staticmethod
     def generate_temp_ticket() -> str:
-        import random
         import string
 
-        return "".join(random.choices(string.ascii_letters + string.digits, k=8))
+        return "".join(secrets.choice(string.ascii_letters + string.digits) for _ in range(8))
 
 
 async def get_share_service(session: AsyncSession = Depends(get_db)) -> ShareService:

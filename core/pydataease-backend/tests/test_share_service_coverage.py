@@ -585,3 +585,141 @@ class TestShareServiceCoverage:
             share_ids.clear()
         finally:
             await _cleanup(db_session, share_ids, ticket_ids)
+
+    async def test_proxy_info_returns_empty_link_token_when_password_wrong(
+        self,
+        db_session: AsyncSession,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        svc = _service(db_session)
+        share_repo = ShareRepository(db_session)
+        share_ids: list[int] = []
+        ticket_ids: list[int] = []
+        resource_id = _stamp()
+        try:
+            share = await share_repo.create(
+                _share_payload(
+                    resource_id=resource_id,
+                    uuid="Bug004PwdUuid12",
+                    pwd="correct-pwd",
+                    exp=_now_ms() + 300_000,
+                )
+            )
+            share_ids.append(share.id)
+
+            monkeypatch.setattr("app.utils.rsa_utils.decrypt_rsa", lambda _: "Bug004PwdUuid12,wrong-pwd")
+            result = await svc.proxy_info(
+                ShareProxyInfoRequest(uuid=share.uuid, ciphertext="bad")
+            )
+            assert result is not None
+            response, link_token = result
+            assert response.pwd_valid is False
+            assert link_token == ""
+        finally:
+            await _cleanup(db_session, share_ids, ticket_ids)
+
+    async def test_proxy_info_returns_empty_link_token_when_expired(
+        self,
+        db_session: AsyncSession,
+    ) -> None:
+        svc = _service(db_session)
+        share_repo = ShareRepository(db_session)
+        share_ids: list[int] = []
+        ticket_ids: list[int] = []
+        resource_id = _stamp()
+        try:
+            share = await share_repo.create(
+                _share_payload(
+                    resource_id=resource_id,
+                    uuid="Bug004ExpUuid12",
+                    exp=_now_ms() - 10_000,
+                )
+            )
+            share_ids.append(share.id)
+
+            result = await svc.proxy_info(ShareProxyInfoRequest(uuid=share.uuid))
+            assert result is not None
+            response, link_token = result
+            assert response.exp is True
+            assert link_token == ""
+        finally:
+            await _cleanup(db_session, share_ids, ticket_ids)
+
+    async def test_proxy_info_returns_empty_link_token_when_ticket_required_but_invalid(
+        self,
+        db_session: AsyncSession,
+    ) -> None:
+        svc = _service(db_session)
+        share_repo = ShareRepository(db_session)
+        share_ids: list[int] = []
+        ticket_ids: list[int] = []
+        resource_id = _stamp()
+        try:
+            share = await share_repo.create(
+                _share_payload(
+                    resource_id=resource_id,
+                    uuid="Bug004TktUuid12",
+                    exp=_now_ms() + 300_000,
+                    ticket_require=True,
+                )
+            )
+            share_ids.append(share.id)
+
+            result = await svc.proxy_info(
+                ShareProxyInfoRequest(uuid=share.uuid, ticket="nonexistent-ticket")
+            )
+            assert result is not None
+            response, link_token = result
+            assert response.ticket_valid_vo.ticket_valid is False
+            assert link_token == ""
+        finally:
+            await _cleanup(db_session, share_ids, ticket_ids)
+
+    async def test_proxy_info_rejects_ticket_with_wrong_uuid(
+        self,
+        db_session: AsyncSession,
+    ) -> None:
+        svc = _service(db_session)
+        share_repo = ShareRepository(db_session)
+        ticket_repo = ShareTicketRepository(db_session)
+        share_ids: list[int] = []
+        ticket_ids: list[int] = []
+        resource_id_a = _stamp()
+        resource_id_b = _stamp()
+        try:
+            share_a = await share_repo.create(
+                _share_payload(
+                    resource_id=resource_id_a,
+                    uuid="ShareAuuid12345",
+                    exp=_now_ms() + 300_000,
+                    ticket_require=True,
+                )
+            )
+            share_b = await share_repo.create(
+                _share_payload(
+                    resource_id=resource_id_b,
+                    uuid="ShareBuuid12345",
+                    exp=_now_ms() + 300_000,
+                )
+            )
+            share_ids.extend([share_a.id, share_b.id])
+
+            ticket = await ticket_repo.create(
+                _ticket_payload(uuid=share_b.uuid, ticket="cross-uuid-ticket", exp=_now_ms() + 300_000)
+            )
+            ticket_ids.append(ticket.id)
+
+            result = await svc.proxy_info(
+                ShareProxyInfoRequest(uuid=share_a.uuid, ticket="cross-uuid-ticket")
+            )
+            assert result is not None
+            response, link_token = result
+            assert response.ticket_valid_vo.ticket_valid is False
+            assert link_token == ""
+        finally:
+            await _cleanup(db_session, share_ids, ticket_ids)
+
+    async def test_generate_temp_ticket_uses_secrets(self) -> None:
+        ticket = ShareService.generate_temp_ticket()
+        assert len(ticket) == 8
+        assert ticket.isalnum()

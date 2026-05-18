@@ -293,7 +293,7 @@ class TestDatasetPermissionEndpoints:
         assert deny_all_dataset_service.saved == []
 
     @pytest.mark.asyncio
-    async def test_dataset_rename_still_works_without_permission_check(
+    async def test_dataset_rename_now_requires_permission(
         self,
         client: AsyncClient,
         auth_headers: dict[str, str],
@@ -305,12 +305,12 @@ class TestDatasetPermissionEndpoints:
             json={"id": 300, "name": "renamed"},
         )
 
-        assert response.status_code == 200
-        assert response.json()["data"]["name"] == "renamed-dataset"
-        assert len(deny_all_dataset_service.renamed) == 1
+        assert response.status_code == 403
+        assert response.json()["msg"] == "Access denied"
+        assert deny_all_dataset_service.renamed == []
 
     @pytest.mark.asyncio
-    async def test_dataset_move_still_works_without_permission_check(
+    async def test_dataset_move_now_requires_permission(
         self,
         client: AsyncClient,
         auth_headers: dict[str, str],
@@ -322,12 +322,12 @@ class TestDatasetPermissionEndpoints:
             json={"id": 400, "pid": 5},
         )
 
-        assert response.status_code == 200
-        assert response.json()["data"]["pid"] == 5
-        assert len(deny_all_dataset_service.moved) == 1
+        assert response.status_code == 403
+        assert response.json()["msg"] == "Access denied"
+        assert deny_all_dataset_service.moved == []
 
     @pytest.mark.asyncio
-    async def test_dataset_delete_still_works_without_permission_check(
+    async def test_dataset_delete_now_requires_permission(
         self,
         client: AsyncClient,
         auth_headers: dict[str, str],
@@ -335,11 +335,12 @@ class TestDatasetPermissionEndpoints:
     ) -> None:
         response = await client.post("/de2api/datasetTree/delete/999", headers=auth_headers)
 
-        assert response.status_code == 200
-        assert deny_all_dataset_service.deleted_ids == [999]
+        assert response.status_code == 403
+        assert response.json()["msg"] == "Access denied"
+        assert deny_all_dataset_service.deleted_ids == []
 
     @pytest.mark.asyncio
-    async def test_dataset_per_delete_still_works_without_permission_check(
+    async def test_dataset_per_delete_now_requires_permission(
         self,
         client: AsyncClient,
         auth_headers: dict[str, str],
@@ -347,6 +348,6 @@ class TestDatasetPermissionEndpoints:
     ) -> None:
         response = await client.post("/de2api/datasetTree/perDelete/999", headers=auth_headers)
 
-        assert response.status_code == 200
-        assert response.json()["data"] is True
+        assert response.status_code == 403
+        assert response.json()["msg"] == "Access denied"
         assert deny_all_dataset_service.deleted_ids == []

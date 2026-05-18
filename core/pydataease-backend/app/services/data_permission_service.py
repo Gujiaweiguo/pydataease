@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import re
 from typing import Any
 
 from sqlalchemy import select
@@ -12,39 +11,23 @@ from app.models.role_user import CoreRoleUser
 from app.models.row_permission import CoreRowPermission
 from app.schemas.auth import TokenUser
 
-# Regex to find WHERE clause position — looks for WHERE not inside subqueries naively
-_WHERE_RE = re.compile(r"\bWHERE\b", re.IGNORECASE)
-# Regex to find trailing clauses to insert before
-_ORDER_BY_RE = re.compile(r"\bORDER\s+BY\b", re.IGNORECASE)
-_GROUP_BY_RE = re.compile(r"\bGROUP\s+BY\b", re.IGNORECASE)
-_LIMIT_RE = re.compile(r"\bLIMIT\b", re.IGNORECASE)
-_HAVING_RE = re.compile(r"\bHAVING\b", re.IGNORECASE)
-
 
 def apply_row_filters(sql: str, filters: list[str]) -> str:
     """Inject row-level filter WHERE clauses into a SQL query.
 
-    Handles:
-    - SQL with existing WHERE: appends AND clauses
-    - SQL without WHERE: inserts WHERE clause before ORDER BY/GROUP BY/LIMIT or at end
+    Uses query wrapping to handle all cases correctly:
+    - Subqueries: filter applied to outer scope
+    - UNION queries: filter applies to ALL branches
+    - Plain queries: works like simple WHERE append
     """
     if not filters:
         return sql
 
     combined = " AND ".join(f"({f})" for f in filters)
 
-    if _WHERE_RE.search(sql):
-        # Append to existing WHERE clause
-        return f"{sql} AND {combined}"
-
-    # No WHERE — find insertion point (before ORDER BY, GROUP BY, HAVING, or LIMIT)
-    insert_pos = len(sql)
-    for pattern in (_ORDER_BY_RE, _GROUP_BY_RE, _HAVING_RE, _LIMIT_RE):
-        match = pattern.search(sql)
-        if match and match.start() < insert_pos:
-            insert_pos = match.start()
-
-    return f"{sql[:insert_pos]} WHERE {combined} {sql[insert_pos:]}"
+    # Wrap the original query in an outer SELECT to handle subqueries and UNIONs correctly.
+    # This ensures the permission filter is always applied at the outermost level.
+    return f"SELECT * FROM ({sql}) AS _perm_filtered WHERE {combined}"
 
 
 def _mask_value(value: str) -> str:
