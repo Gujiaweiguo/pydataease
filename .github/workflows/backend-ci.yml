@@ -79,6 +79,14 @@ jobs:
           --cov=app --cov-report=term-missing --cov-report=lcov:coverage.lcov
           --cov-fail-under=50
 
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: core/pydataease-backend/coverage.lcov
+          retention-days: 7
+
       - name: Run integration tests
         if: success()
         run: >-
