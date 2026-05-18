@@ -143,7 +143,7 @@ class TestPermissionServiceBehavior:
         assert await service.has_resource_permission(TokenUser(user_id=1, oid=9), "dataset", "use") is True
 
     @pytest.mark.asyncio
-    async def test_has_resource_permission_returns_true_when_permission_point_missing(
+    async def test_has_resource_permission_returns_false_when_permission_point_missing(
         self,
         monkeypatch: pytest.MonkeyPatch,
         token_user: TokenUser,
@@ -151,7 +151,7 @@ class TestPermissionServiceBehavior:
         service = build_permission_service([FakeScalarResult(None)])
         monkeypatch.setattr(PermissionService, "_enforcement_enabled", staticmethod(lambda: True))
 
-        assert await service.has_resource_permission(token_user, "dataset", "use") is True
+        assert await service.has_resource_permission(token_user, "dataset", "use") is False
 
     @pytest.mark.asyncio
     async def test_has_resource_permission_returns_true_for_role_grant(

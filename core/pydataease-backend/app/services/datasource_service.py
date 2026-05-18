@@ -565,8 +565,8 @@ class DatasourceService:
         # When preview_data sees an empty jsonArray it can re-parse from the
         # stored file content.
         _raw = base64.b64encode(content).decode()
-        for s in sheets:
-            s["_rawFileBase64"] = _raw
+        if sheets:
+            sheets[0]["_rawFileBase64"] = _raw
         return {"excelLabel": filename, "sheets": sheets, "fileName": filename}
 
     def _parse_excel_sheets(self, content: bytes) -> list[dict[str, object]]:

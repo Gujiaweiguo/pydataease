@@ -118,8 +118,9 @@ class PermissionService:
         point_result = await self.session.execute(point_stmt)
         point_id = point_result.scalar_one_or_none()
         if point_id is None:
-            # No permission point defined means no restriction
-            return True
+            # BUG-008 fix: No permission point defined means no access (fail-closed)
+            # Admin users (uid=1) are already handled above
+            return False
 
         # Check role-based grants
         role_stmt = select(CoreRoleUser.role_id).where(

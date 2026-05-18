@@ -14,10 +14,16 @@ ModelT = TypeVar("ModelT", bound=Base)
 class AsyncBaseRepository(Generic[ModelT]):
     session: AsyncSession
     model: type[ModelT]
+    _writable_fields: set[str] | None = None  # None means allow all
 
     def __init__(self, session: AsyncSession, model: type[ModelT]) -> None:
         self.session = session
         self.model = model
+
+    def _filter_payload(self, payload: dict[str, object]) -> dict[str, object]:
+        if self._writable_fields is None:
+            return payload
+        return {k: v for k, v in payload.items() if k in self._writable_fields}
 
     async def get(self, statement: Select[tuple[ModelT]]) -> Sequence[ModelT]:
         result = await self.session.execute(statement)
@@ -30,14 +36,16 @@ class AsyncBaseRepository(Generic[ModelT]):
         return await self.session.get(self.model, entity_id)
 
     async def create(self, payload: dict[str, object]) -> ModelT:
-        entity = self.model(**payload)
+        filtered = self._filter_payload(payload)
+        entity = self.model(**filtered)
         self.session.add(entity)
         await self.session.commit()
         await self.session.refresh(entity)
         return entity
 
     async def update(self, entity: ModelT, payload: dict[str, object]) -> ModelT:
-        for key, value in payload.items():
+        filtered = self._filter_payload(payload)
+        for key, value in filtered.items():
             setattr(entity, key, value)
         await self.session.commit()
         await self.session.refresh(entity)

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import time
+
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from jose import JWTError, jwt
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -53,7 +55,7 @@ async def refresh_token(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="用户不存在或已禁用")
 
     try:
-        jwt.decode(
+        claims = jwt.decode(
             token,
             derive_jwt_secret(db_user.password),
             algorithms=[get_settings().jwt_algorithm],
@@ -61,6 +63,12 @@ async def refresh_token(
         )
     except JWTError as exc:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="token is invalid") from exc
+
+    # BUG-016 fix: Reject tokens older than 7 days (maximum refresh window)
+    MAX_REFRESH_AGE_SECONDS = 7 * 24 * 3600  # 7 days
+    iat = claims.get("iat")
+    if iat is not None and (time.time() - iat) > MAX_REFRESH_AGE_SECONDS:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="token refresh window expired")
 
     return await service.refresh_with_org(db_user.id, int(oid) if oid is not None else None)
 
