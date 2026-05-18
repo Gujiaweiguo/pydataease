@@ -2,6 +2,8 @@ import pytest
 from httpx import ASGITransport, AsyncClient
 from types import SimpleNamespace
 
+from tests.fixtures.db_fixtures import *  # noqa: F401,F403
+
 from app.main import app
 from app.dependencies.database import get_db
 from app.services.permission_service import get_permission_service
