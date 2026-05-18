@@ -164,6 +164,14 @@ class ShareService:
             return ShareResponse.model_validate(updated)
 
         share_uuid = payload.uuid or _new_share_uuid()
+        # BUG-011 fix: Enforce UUID uniqueness on create
+        if payload.uuid:
+            existing_uuid = await self.share_repo.get_by_uuid(share_uuid)
+            if existing_uuid is not None:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="Share UUID already exists",
+                )
         created = await self.share_repo.create({
             "id": _new_share_id(),
             "creator": user.user_id,
@@ -199,7 +207,9 @@ class ShareService:
         share = await self.share_repo.get_by_uuid(payload.uuid)
         if share is None:
             return None
-        return ShareResponse.model_validate(share)
+        resp = ShareResponse.model_validate(share)
+        resp.pwd = None  # BUG-013 fix: Don't leak password in public endpoints
+        return resp
 
     async def get_by_id(self, resource_id: int) -> ShareResponse | None:
         share = await self.share_repo.get_by_resource_id(resource_id)
@@ -211,7 +221,9 @@ class ShareService:
         share = await self.share_repo.get_by_uuid(uuid)
         if share is None:
             return None
-        return ShareResponse.model_validate(share)
+        resp = ShareResponse.model_validate(share)
+        resp.pwd = None  # BUG-013 fix: Don't leak password in public endpoints
+        return resp
 
     async def resolve(
         self, uuid: str, password: str | None = None
@@ -232,6 +244,12 @@ class ShareService:
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail="Password incorrect",
                 )
+        # BUG-010 fix: Reject resolve() when ticket is required — use proxy_info flow
+        if share.ticket_require:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Ticket required — use proxy_info flow",
+            )
         await self.record_access(uuid)
         return ShareResponse.model_validate(share)
 

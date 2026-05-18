@@ -203,9 +203,13 @@ async def get_sqlbot_dataset_list(dv_info: str) -> list:
 
 
 @router.post("/resource/checkPermission/{resource_id}")
-async def check_resource_permission(resource_id: int) -> bool:
+async def check_resource_permission(
+    resource_id: int,
+    user: TokenUser = Depends(get_current_user),  # BUG-060 fix: require auth
+) -> bool:
     """Check if the current user has permission for the given resource.
 
-    Stub — community edition grants access to all resources.
+    Stub — community edition grants access to all authenticated resources.
     """
+    _ = user
     return True

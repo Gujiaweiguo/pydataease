@@ -207,7 +207,7 @@ async def test_collect_row_filters_returns_empty_when_no_rules(monkeypatch):
     monkeypatch.setattr(service, "_get_user_role_ids", fake_get_user_role_ids)
     monkeypatch.setattr(service, "_fetch_rules", fake_fetch_rules)
 
-    assert await service.collect_row_filters(_user(), dataset_id=88) == []
+    assert await service.collect_row_filters(_user(), dataset_id=88) == ["1=0"]
 
 
 @pytest.mark.asyncio

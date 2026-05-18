@@ -5,6 +5,7 @@ import csv
 import hashlib
 import io
 import json
+import logging
 import time
 from collections.abc import Awaitable
 from typing import Any, cast, final
@@ -35,6 +36,9 @@ from app.schemas.datasource import (
     DatasourceValidateResponse,
     EngineInfoResponse,
 )
+
+logger = logging.getLogger(__name__)
+
 
 def _build_tree(nodes: list[dict[str, Any]], pid: str = "0") -> list[dict[str, Any]]:
     children: list[dict[str, Any]] = []
@@ -470,7 +474,8 @@ class DatasourceService:
         try:
             _ = await connection.fetchval("SELECT 1")
         except Exception as exc:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Connection failed: {exc}") from exc
+            logger.warning("Datasource connection failed: %s", exc)
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Unable to connect to datasource. Please verify configuration.") from exc
         finally:
             await connection.close()
 
@@ -483,7 +488,8 @@ class DatasourceService:
         except HTTPException:
             raise
         except Exception as exc:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Connection failed: {exc}") from exc
+            logger.warning("Datasource connection failed: %s", exc)
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Unable to connect to datasource. Please verify configuration.") from exc
 
     @staticmethod
     def _validate_identifier(name: str, field: str = "table") -> str:
@@ -505,9 +511,13 @@ class DatasourceService:
         schema = "public"
         return str(schema)
 
+    _MAX_UPLOAD_SIZE = 50 * 1024 * 1024  # 50 MB
+
     async def upload_file(self, file: object, id: str | None = None, edit_type: str | None = None) -> dict[str, object]:
         filename = str(getattr(file, "filename", "") or "excel.xlsx")
         content = await cast(Any, file).read()
+        if len(content) > self._MAX_UPLOAD_SIZE:
+            raise HTTPException(status_code=413, detail="File size exceeds 50MB limit")
         return self._parse_uploaded_file(content, filename)
 
     async def load_remote_file(self, payload: dict[str, object]) -> dict[str, object]:
@@ -530,6 +540,8 @@ class DatasourceService:
             content, filename = await cast(Awaitable[tuple[bytes, str]], result)
         else:
             content, filename = cast(tuple[bytes, str], result)
+        if len(content) > self._MAX_UPLOAD_SIZE:
+            raise HTTPException(status_code=413, detail="Remote file size exceeds 50MB limit")
         return self._parse_uploaded_file(content, filename)
 
     @staticmethod

@@ -343,8 +343,12 @@ class DatasetService:
             fields = self._build_external_fields(records, rows)
             return {"sql": sql_with_limit, "data": rows, "fields": fields, "total": len(rows)}
 
-        result = await self.sql_executor.execute_select(sql)
-        return {"sql": sql, "data": result["data"], "fields": result["fields"], "total": len(result["data"])}
+        # BUG-044 fix: Do NOT execute arbitrary SQL against internal metadata DB
+        # A datasourceId is required for SQL preview execution
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="datasourceId is required for SQL preview",
+        )
 
     def _build_external_fields(self, records: Sequence[Any], rows: Sequence[list[Any]]) -> list[dict[str, str]]:
         if not records:

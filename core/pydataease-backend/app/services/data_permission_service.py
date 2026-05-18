@@ -74,7 +74,8 @@ class DataPermissionService:
         if org_rules:
             return [r.filter_sql for r in org_rules]
 
-        return []
+        # BUG-007 fix: Default deny when no rules exist for non-admin user
+        return ["1=0"]
 
     async def apply_column_rules(
         self,

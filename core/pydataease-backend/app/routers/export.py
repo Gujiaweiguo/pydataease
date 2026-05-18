@@ -133,8 +133,10 @@ async def retry_export(
 @router.get("/download/{task_id}")
 async def download_export(
     task_id: str,
+    user: TokenUser = Depends(get_current_user),  # BUG-050 fix: require auth
     service: ExportService = Depends(get_export_service),
 ) -> object:
+    _ = user
     result = await service.download(task_id)
     if "path" not in result:
         return result

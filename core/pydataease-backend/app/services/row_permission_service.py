@@ -21,7 +21,7 @@ from app.schemas.row_permission import (
 from app.services.permission_service import PermissionService
 
 _DANGEROUS_SQL_RE = re.compile(
-    r"\b(drop|delete|update|insert|alter|create|truncate|grant|revoke|exec|execute|merge|call)\b",
+    r"\b(drop|delete|update|insert|alter|create|truncate|grant|revoke|exec|execute|merge|call|union|select|copy|vacuum|analyze|comment)\b",
     re.IGNORECASE,
 )
 

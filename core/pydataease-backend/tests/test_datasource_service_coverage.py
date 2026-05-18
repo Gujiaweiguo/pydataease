@@ -440,7 +440,7 @@ async def test_open_connection_wraps_errors(monkeypatch: pytest.MonkeyPatch) -> 
     monkeypatch.setattr("app.services.datasource_service.open_connection", raise_runtime)
     with pytest.raises(HTTPException) as exc2:
         await service._open_connection({"host": "db"}, "pg")
-    assert "Connection failed: boom" in str(exc2.value.detail)
+    assert "Unable to connect" in str(exc2.value.detail)  # BUG-017: no infrastructure leakage
 
 
 @pytest.mark.asyncio
