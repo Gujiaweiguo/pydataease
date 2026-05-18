@@ -64,16 +64,28 @@ jobs:
       - name: Install dependencies
         run: uv sync
 
-      - name: Run linter
-        run: uv run ruff check .
+      - name: Run linter (source + tests)
+        run: |
+          uv run ruff check .
+          uv run ruff check tests/ --config pyproject.toml
 
       - name: Verify migrations
         run: uv run alembic upgrade head
 
-      - name: Run tests
+      - name: Run tests with coverage
         run: >-
           uv run pytest tests/ -v --tb=short -x
           --ignore=tests/test_e2e_creation_flow.py
+          --cov=app --cov-report=term-missing --cov-report=lcov:coverage.lcov
+          --cov-fail-under=50
+
+      - name: Run integration tests
+        if: success()
+        run: >-
+          DE_E2E=1 uv run pytest
+          tests/test_dataset_integration.py
+          tests/test_dataset_datasource_integration.py
+          -v --tb=short
 
   # ── Job 2: E2E user-journey test ──────────────────────────────
   e2e:
@@ -139,7 +151,8 @@ jobs:
           curl -sf http://localhost:8100/health || (echo "Server failed to start" && exit 1)
 
       - name: Run E2E tests
-        run: uv run pytest tests/test_e2e_creation_flow.py -v --tb=short
+        run: >-
+          DE_E2E=1 uv run pytest tests/test_e2e_creation_flow.py -v --tb=short
 
   # ── Job 3: Docker build verification ────────────────────────
   docker-build:
