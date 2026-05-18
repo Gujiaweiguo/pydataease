@@ -23,3 +23,6 @@
 ## 2026-05-17 snapshot table migration
 - Added a standalone Alembic revision after `a2b3c4d5e6f7` to create the five missing snapshot tables only, leaving runtime code and existing migrations untouched per bug-fix scope.
 - Matched snapshot table schemas to the current PostgreSQL Alembic definitions, including defaults and FK structure, so `uv run alembic upgrade head` can create tables that repository SQL can query immediately without follow-up normalization.
+
+## 2026-05-18 test helper cleanup
+- Chose `tests/fixtures/auth_fixtures.py` as the shared `_build_token` home instead of `tests/conftest.py` because tests need normal imports, not fixture injection semantics.
