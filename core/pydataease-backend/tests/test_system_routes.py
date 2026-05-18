@@ -1,24 +1,16 @@
 from __future__ import annotations
 
 from collections.abc import Generator
-from datetime import UTC, datetime, timedelta
 
 import pytest
 from httpx import AsyncClient
-from jose import jwt
 
-from app.main import app
-from app.schemas.menu import MenuMeta, MenuVO
-from app.schemas.system import MenuTreeNodeResponse
-from app.services.menu_service import get_menu_service
-from app.services.system_service import get_system_service
-from app.settings.config import get_settings
-
-
-def _build_token(**claims: int) -> str:
-    settings = get_settings()
-    payload = {**claims, "exp": datetime.now(UTC) + timedelta(hours=1)}
-    return jwt.encode(payload, settings.secret_key, algorithm=settings.jwt_algorithm)
+from app.main import app  # pyright: ignore[reportImplicitRelativeImport]
+from app.schemas.menu import MenuMeta, MenuVO  # pyright: ignore[reportImplicitRelativeImport]
+from app.schemas.system import MenuTreeNodeResponse  # pyright: ignore[reportImplicitRelativeImport]
+from app.services.menu_service import get_menu_service  # pyright: ignore[reportImplicitRelativeImport]
+from app.services.system_service import get_system_service  # pyright: ignore[reportImplicitRelativeImport]
+from tests.fixtures.auth_fixtures import _build_token  # pyright: ignore[reportImplicitRelativeImport]
 
 
 class FakeSystemService:

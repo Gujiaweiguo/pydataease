@@ -40,7 +40,7 @@ def _extract_public_key_pem(dekey: str) -> str:
 def _encrypt(value: str, dekey: str) -> str:
     public_key_pem = _extract_public_key_pem(dekey)
     public_key = serialization.load_pem_public_key(public_key_pem.encode("utf-8"))
-    ciphertext = public_key.encrypt(
+    ciphertext = public_key.encrypt(  # pyright: ignore[reportAttributeAccessIssue]
         value.encode("utf-8"),
         asym_padding.PKCS1v15(),
     )

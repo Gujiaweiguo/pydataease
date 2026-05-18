@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import pytest
 
-from app.services.dataset_service import get_dataset_service
-from tests.test_dataset_routes import FakeDatasetService
+from app.services.dataset_service import get_dataset_service  # pyright: ignore[reportImplicitRelativeImport]
+from tests.fixtures.dataset_fixtures import FakeDatasetService  # pyright: ignore[reportImplicitRelativeImport]
 
 
 @pytest.fixture

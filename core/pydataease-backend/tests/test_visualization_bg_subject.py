@@ -1,23 +1,16 @@
 from __future__ import annotations
 
+# pyright: reportMissingTypeArgument=false, reportAttributeAccessIssue=false
+
 from collections.abc import Generator
 
 import pytest
 from httpx import AsyncClient
-from jose import jwt
 
-from app.main import app
-from app.services.visualization_bg_service import get_bg_service
-from app.services.visualization_subject_service import get_subject_service
-from app.settings.config import get_settings
-
-
-def _build_token(**claims: int) -> str:
-    settings = get_settings()
-    from datetime import UTC, datetime, timedelta
-
-    payload = {**claims, "exp": datetime.now(UTC) + timedelta(hours=1)}
-    return jwt.encode(payload, settings.secret_key, algorithm=settings.jwt_algorithm)
+from app.main import app  # pyright: ignore[reportImplicitRelativeImport]
+from app.services.visualization_bg_service import get_bg_service  # pyright: ignore[reportImplicitRelativeImport]
+from app.services.visualization_subject_service import get_subject_service  # pyright: ignore[reportImplicitRelativeImport]
+from tests.fixtures.auth_fixtures import _build_token  # pyright: ignore[reportImplicitRelativeImport]
 
 
 # ---------------------------------------------------------------------------

@@ -3,11 +3,9 @@ from __future__ import annotations
 # pyright: reportMissingImports=false
 
 from collections.abc import Generator
-from datetime import datetime, timedelta, timezone
 from typing import Any
 
 import pytest
-from jose import jwt  # pyright: ignore[reportMissingImports]
 
 from app.main import app  # pyright: ignore[reportMissingImports, reportImplicitRelativeImport]
 from app.routers.link_jump import get_link_jump_service  # pyright: ignore[reportMissingImports, reportImplicitRelativeImport]
@@ -16,15 +14,9 @@ from app.schemas.auth import TokenUser  # pyright: ignore[reportMissingImports, 
 from app.schemas.chart import ChartResponse  # pyright: ignore[reportMissingImports, reportImplicitRelativeImport]
 from app.schemas.visualization import StoreResponse, VisualizationResponse  # pyright: ignore[reportMissingImports, reportImplicitRelativeImport]
 from app.services.visualization_service import get_visualization_service  # pyright: ignore[reportMissingImports, reportImplicitRelativeImport]
-from app.settings.config import get_settings  # pyright: ignore[reportMissingImports, reportImplicitRelativeImport]
 from tests.test_link_jump import FakeLinkJumpService  # pyright: ignore[reportMissingImports, reportImplicitRelativeImport]
 from tests.test_outer_params import FakeOuterParamsService  # pyright: ignore[reportMissingImports, reportImplicitRelativeImport]
-
-
-def _build_token(**claims: int) -> str:
-    settings = get_settings()
-    payload = {**claims, "exp": datetime.now(timezone.utc) + timedelta(hours=1)}
-    return jwt.encode(payload, settings.secret_key, algorithm=settings.jwt_algorithm)
+from tests.fixtures.auth_fixtures import _build_token  # pyright: ignore[reportMissingImports, reportImplicitRelativeImport]
 
 
 def _assert_ok(response) -> dict[str, Any]:

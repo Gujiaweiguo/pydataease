@@ -49,6 +49,7 @@ async def api_client() -> AsyncIterator[httpx.AsyncClient]:
         yield client
 
 
+@pytest.mark.skipif(os.getenv("DE_E2E") != "1", reason="Requires running server (set DE_E2E=1)")
 @pytest.mark.asyncio
 async def test_e2e_creation_flow(api_client: httpx.AsyncClient) -> None:
     ids: dict[str, int] = {}

@@ -1,26 +1,20 @@
 from __future__ import annotations
 
+# pyright: reportMissingImports=false
+
 from collections.abc import Generator
-from datetime import UTC, datetime, timedelta
 from importlib import import_module
 import sqlite3
 
 import pytest
-from fastapi import HTTPException
+from fastapi import HTTPException  # pyright: ignore[reportMissingImports]
 from httpx import AsyncClient
-from jose import jwt
 
-from app.main import app
-from app.services.dataset_service import get_dataset_service
-from app.settings.config import get_settings
+from app.main import app  # pyright: ignore[reportImplicitRelativeImport]
+from app.services.dataset_service import get_dataset_service  # pyright: ignore[reportImplicitRelativeImport]
+from tests.fixtures.auth_fixtures import _build_token  # pyright: ignore[reportImplicitRelativeImport]
 
 SQLExecutor = import_module("app.services.sql_executor").SQLExecutor
-
-
-def _build_token(**claims: int) -> str:
-    settings = get_settings()
-    payload = {**claims, "exp": datetime.now(UTC) + timedelta(hours=1)}
-    return jwt.encode(payload, settings.secret_key, algorithm=settings.jwt_algorithm)
 
 
 @pytest.fixture

@@ -16,45 +16,42 @@ Validates that all API domains are operational and compatible:
 
 from __future__ import annotations
 
-from collections.abc import Generator
-from datetime import UTC, datetime, timedelta
+from collections.abc import Generator, Mapping
 
 import pytest
-from fastapi.routing import APIWebSocketRoute
-from jose import jwt
+from fastapi.routing import APIWebSocketRoute  # pyright: ignore[reportMissingImports]
 
-from app.main import app
-from app.services.chart_service import get_chart_service
-from app.services.dataset_service import get_dataset_service
-from app.services.datasource_service import get_datasource_service
-from app.services.export_service import get_export_service
-from app.services.share_service import get_share_service
-from app.services.menu_service import get_menu_service
-from app.services.system_service import get_system_service
-from app.services.task_service import get_task_service
-from app.services.visualization_service import get_visualization_service
-from app.services.outer_params_service import get_outer_params_service
-from app.services.linkage_service import get_linkage_service
-from app.settings.config import get_settings
-from tests.test_auth_middleware import _ensure_test_routes
-from tests.test_chart_routes import FakeChartService
-from tests.test_dataset_routes import FakeDatasetService
-from tests.test_datasource_routes import FakeDatasourceService
-from tests.test_export_routes import FakeExportService
-from tests.test_share_routes import FakeShareService
-from tests.test_system_routes import FakeMenuService
-from tests.test_system_routes import FakeSystemService
-from tests.test_task_routes import FakeTaskService
-from tests.test_visualization_routes import FakeVisualizationService, FakeLinkageService
-from tests.test_outer_params import FakeOuterParamsService
+from app.main import app  # pyright: ignore[reportImplicitRelativeImport]
+from app.services.chart_service import get_chart_service  # pyright: ignore[reportImplicitRelativeImport]
+from app.services.dataset_service import get_dataset_service  # pyright: ignore[reportImplicitRelativeImport]
+from app.services.datasource_service import get_datasource_service  # pyright: ignore[reportImplicitRelativeImport]
+from app.services.export_service import get_export_service  # pyright: ignore[reportImplicitRelativeImport]
+from app.services.share_service import get_share_service  # pyright: ignore[reportImplicitRelativeImport]
+from app.services.menu_service import get_menu_service  # pyright: ignore[reportImplicitRelativeImport]
+from app.services.system_service import get_system_service  # pyright: ignore[reportImplicitRelativeImport]
+from app.services.task_service import get_task_service  # pyright: ignore[reportImplicitRelativeImport]
+from app.services.visualization_service import get_visualization_service  # pyright: ignore[reportImplicitRelativeImport]
+from app.services.outer_params_service import get_outer_params_service  # pyright: ignore[reportImplicitRelativeImport]
+from app.services.linkage_service import get_linkage_service  # pyright: ignore[reportImplicitRelativeImport]
+from tests.test_auth_middleware import _ensure_test_routes  # pyright: ignore[reportImplicitRelativeImport]
+from tests.test_chart_routes import FakeChartService  # pyright: ignore[reportImplicitRelativeImport]
+from tests.fixtures.dataset_fixtures import (  # pyright: ignore[reportImplicitRelativeImport]
+    FakeDatasetService,
+)
+from tests.fixtures.auth_fixtures import _build_token  # pyright: ignore[reportImplicitRelativeImport]
+from tests.test_datasource_routes import FakeDatasourceService  # pyright: ignore[reportImplicitRelativeImport]
+from tests.test_export_routes import FakeExportService  # pyright: ignore[reportImplicitRelativeImport]
+from tests.test_share_routes import FakeShareService  # pyright: ignore[reportImplicitRelativeImport]
+from tests.test_system_routes import FakeMenuService  # pyright: ignore[reportImplicitRelativeImport]
+from tests.test_system_routes import FakeSystemService  # pyright: ignore[reportImplicitRelativeImport]
+from tests.test_task_routes import FakeTaskService  # pyright: ignore[reportImplicitRelativeImport]
+from tests.test_visualization_routes import (  # pyright: ignore[reportImplicitRelativeImport]
+    FakeVisualizationService,
+    FakeLinkageService,
+)
+from tests.test_outer_params import FakeOuterParamsService  # pyright: ignore[reportImplicitRelativeImport]
 
 _ensure_test_routes()
-
-
-def _build_token(**claims: int) -> str:
-    settings = get_settings()
-    payload = {**claims, "exp": datetime.now(UTC) + timedelta(hours=1)}
-    return jwt.encode(payload, settings.secret_key, algorithm=settings.jwt_algorithm)
 
 
 @pytest.fixture
@@ -63,7 +60,7 @@ def auth_headers() -> dict[str, str]:
 
 
 @pytest.fixture
-def integrated_fakes() -> Generator[dict[str, object], None, None]:
+def integrated_fakes() -> Generator[Mapping[str, object], None, None]:
     services = {
         "datasource": FakeDatasourceService(),
         "dataset": FakeDatasetService(),
@@ -97,6 +94,8 @@ def integrated_fakes() -> Generator[dict[str, object], None, None]:
 
 @pytest.mark.asyncio
 async def test_full_system_validation_journey(client, auth_headers: dict[str, str], integrated_fakes: dict[str, object]) -> None:
+    datasource_fake = integrated_fakes["datasource"]
+
     health_response = await client.get("/health")
     assert health_response.status_code == 200
     assert health_response.json() == {"status": "ok"}
@@ -121,7 +120,7 @@ async def test_full_system_validation_journey(client, auth_headers: dict[str, st
     )
     assert datasource_save.status_code == 200
     assert datasource_save.json()["data"]["id"] == 202
-    assert len(integrated_fakes["datasource"].saved_payloads) == 1  # type: ignore[attr-defined]
+    assert len(datasource_fake.saved_payloads) == 1  # pyright: ignore[reportAttributeAccessIssue]
 
     dataset_tree = await client.post("/de2api/datasetTree/tree", headers=auth_headers, json={"busiFlag": "dataset"})
     assert dataset_tree.status_code == 200

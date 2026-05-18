@@ -1,28 +1,18 @@
 from __future__ import annotations
 
+# pyright: reportMissingTypeArgument=false, reportAttributeAccessIssue=false, reportMissingImports=false
+
 from collections.abc import Generator
-from datetime import UTC, datetime, timedelta
 
 import pytest
 from httpx import AsyncClient
-from jose import jwt
+from jose import jwt  # pyright: ignore[reportMissingImports, reportMissingModuleSource]
 
-from app.main import app
-from app.schemas.share import (
-    ProxyInfoResponse,
-    ShareProxyInfoRequest,
-    ShareResponse,
-    ShareTicketResponse,
-    TicketValidVO,
-)
-from app.services.share_service import get_share_service
-from app.settings.config import get_settings
-
-
-def _build_token(**claims: int) -> str:
-    settings = get_settings()
-    payload = {**claims, "exp": datetime.now(UTC) + timedelta(hours=1)}
-    return jwt.encode(payload, settings.secret_key, algorithm=settings.jwt_algorithm)
+from app.main import app  # pyright: ignore[reportImplicitRelativeImport]
+from app.schemas.share import ProxyInfoResponse, ShareProxyInfoRequest, ShareResponse, ShareTicketResponse, TicketValidVO  # pyright: ignore[reportImplicitRelativeImport]
+from app.services.share_service import get_share_service  # pyright: ignore[reportImplicitRelativeImport]
+from app.settings.config import get_settings  # pyright: ignore[reportImplicitRelativeImport]
+from tests.fixtures.auth_fixtures import _build_token  # pyright: ignore[reportImplicitRelativeImport]
 
 
 class FakeShareService:
@@ -603,9 +593,9 @@ async def test_proxy_info_rsa_password_decryption() -> None:
     """Verify proxy_info decrypts RSA ciphertext containing 'uuid,password'."""
     from unittest.mock import AsyncMock, MagicMock, patch
 
-    from app.models.share import XpackShare
-    from app.schemas.share import ShareProxyInfoRequest
-    from app.services.share_service import ShareService
+    from app.models.share import XpackShare  # pyright: ignore[reportImplicitRelativeImport]
+    from app.schemas.share import ShareProxyInfoRequest  # pyright: ignore[reportImplicitRelativeImport]
+    from app.services.share_service import ShareService  # pyright: ignore[reportImplicitRelativeImport]
 
     # Create a mock share with a known password
     mock_share = MagicMock(spec=XpackShare)

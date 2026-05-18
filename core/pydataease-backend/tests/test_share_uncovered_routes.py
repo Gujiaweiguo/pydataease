@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+# pyright: reportMissingTypeArgument=false
+
 from collections.abc import Generator
-from datetime import datetime, timedelta, timezone
 import importlib
 from typing import Any, cast
 
@@ -12,14 +13,9 @@ from app.main import app  # pyright: ignore[reportImplicitRelativeImport]
 from app.schemas.share import ProxyInfoResponse, ShareResponse, TicketValidVO  # pyright: ignore[reportImplicitRelativeImport]
 from app.services.share_service import get_share_service  # pyright: ignore[reportImplicitRelativeImport]
 from app.settings.config import get_settings  # pyright: ignore[reportImplicitRelativeImport]
+from tests.fixtures.auth_fixtures import _build_token  # pyright: ignore[reportImplicitRelativeImport]
 
 jwt = importlib.import_module("jose.jwt")
-
-
-def _build_token(**claims: int) -> str:
-    settings = get_settings()
-    payload = {**claims, "exp": datetime.now(timezone.utc) + timedelta(hours=1)}
-    return jwt.encode(payload, settings.secret_key, algorithm=settings.jwt_algorithm)
 
 
 class FakeShareService:

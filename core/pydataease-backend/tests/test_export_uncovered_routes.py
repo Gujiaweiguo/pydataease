@@ -3,11 +3,9 @@ from __future__ import annotations
 # pyright: reportMissingImports=false, reportMissingModuleSource=false
 
 from collections.abc import Generator
-from datetime import datetime, timedelta, timezone
 
 import pytest
 from httpx import AsyncClient
-from jose import jwt
 
 from app.main import app  # pyright: ignore[reportImplicitRelativeImport]
 from app.schemas.export import (  # pyright: ignore[reportImplicitRelativeImport]
@@ -16,15 +14,7 @@ from app.schemas.export import (  # pyright: ignore[reportImplicitRelativeImport
 from app.services.export_service import (  # pyright: ignore[reportImplicitRelativeImport]
     get_export_service,
 )
-from app.settings.config import (  # pyright: ignore[reportImplicitRelativeImport]
-    get_settings,
-)
-
-
-def _build_token(**claims: int) -> str:
-    settings = get_settings()
-    payload = {**claims, "exp": datetime.now(timezone.utc) + timedelta(hours=1)}
-    return jwt.encode(payload, settings.secret_key, algorithm=settings.jwt_algorithm)
+from tests.fixtures.auth_fixtures import _build_token  # pyright: ignore[reportImplicitRelativeImport]
 
 
 class FakeExportService:
