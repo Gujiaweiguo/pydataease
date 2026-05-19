@@ -1,18 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const {
-  componentDataRef,
-  canvasViewInfoRef,
-  emitMock,
-  getViewConfigMock,
-  wsCacheGetMock
-} = vi.hoisted(() => ({
-  componentDataRef: { value: [] as Array<Record<string, unknown>> },
-  canvasViewInfoRef: { value: {} as Record<string, unknown> },
-  emitMock: vi.fn(),
-  getViewConfigMock: vi.fn(() => ({ title: 'View Title', render: 'render-view' })),
-  wsCacheGetMock: vi.fn(() => 'test-version')
-}))
+const { componentDataRef, canvasViewInfoRef, emitMock, getViewConfigMock, wsCacheGetMock } =
+  vi.hoisted(() => ({
+    componentDataRef: { value: [] as Array<Record<string, unknown>> },
+    canvasViewInfoRef: { value: {} as Record<string, unknown> },
+    emitMock: vi.fn(),
+    getViewConfigMock: vi.fn(() => ({ title: 'View Title', render: 'render-view' })),
+    wsCacheGetMock: vi.fn(() => 'test-version')
+  }))
 
 vi.mock('@/custom-component/component-list', () => ({
   default: [

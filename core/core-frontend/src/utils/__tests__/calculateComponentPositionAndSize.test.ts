@@ -5,7 +5,9 @@ vi.mock('@/utils/translate', () => ({
     const radian = (rotate * Math.PI) / 180
     return {
       x:
-        (point.x - center.x) * Math.cos(radian) - (point.y - center.y) * Math.sin(radian) + center.x,
+        (point.x - center.x) * Math.cos(radian) -
+        (point.y - center.y) * Math.sin(radian) +
+        center.x,
       y:
         (point.x - center.x) * Math.sin(radian) + (point.y - center.y) * Math.cos(radian) + center.y
     }
@@ -24,17 +26,10 @@ describe('calculateComponentPositionAndSize', () => {
   it('resizes from the right handle without locked proportions', () => {
     const style = { width: 100, height: 50, left: 10, top: 20, rotate: 0 }
 
-    calculateComponentPositionAndSize(
-      'r',
-      style,
-      { x: 160, y: 45 },
-      2,
-      false,
-      {
-        symmetricPoint: { x: 10, y: 45 },
-        curPoint: { x: 110, y: 45 }
-      }
-    )
+    calculateComponentPositionAndSize('r', style, { x: 160, y: 45 }, 2, false, {
+      symmetricPoint: { x: 10, y: 45 },
+      curPoint: { x: 110, y: 45 }
+    })
 
     expect(style).toMatchObject({ width: 150, height: 50, left: 10, top: 20 })
   })
@@ -42,17 +37,10 @@ describe('calculateComponentPositionAndSize', () => {
   it('resizes from the bottom handle with locked proportions', () => {
     const style = { width: 100, height: 50, left: 10, top: 20, rotate: 0 }
 
-    calculateComponentPositionAndSize(
-      'b',
-      style,
-      { x: 60, y: 100 },
-      2,
-      true,
-      {
-        symmetricPoint: { x: 60, y: 20 },
-        curPoint: { x: 60, y: 70 }
-      }
-    )
+    calculateComponentPositionAndSize('b', style, { x: 60, y: 100 }, 2, true, {
+      symmetricPoint: { x: 60, y: 20 },
+      curPoint: { x: 60, y: 70 }
+    })
 
     expect(style).toMatchObject({ width: 160, height: 80, left: -20, top: 20 })
   })
@@ -60,17 +48,10 @@ describe('calculateComponentPositionAndSize', () => {
   it('resizes from the right handle with locked proportions', () => {
     const style = { width: 100, height: 50, left: 10, top: 20, rotate: 0 }
 
-    calculateComponentPositionAndSize(
-      'r',
-      style,
-      { x: 160, y: 45 },
-      2,
-      true,
-      {
-        symmetricPoint: { x: 10, y: 45 },
-        curPoint: { x: 110, y: 45 }
-      }
-    )
+    calculateComponentPositionAndSize('r', style, { x: 160, y: 45 }, 2, true, {
+      symmetricPoint: { x: 10, y: 45 },
+      curPoint: { x: 110, y: 45 }
+    })
 
     expect(style).toMatchObject({ width: 150, height: 75, left: 10, top: 8 })
   })

@@ -61,11 +61,7 @@ vi.mock('@/views/404/index.vue', () => ({
   }
 }))
 
-import {
-  getFirstAuthMenu,
-  pathValid,
-  usePermissionStoreWithOut
-} from '../permission'
+import { getFirstAuthMenu, pathValid, usePermissionStoreWithOut } from '../permission'
 
 describe('permission store', () => {
   beforeEach(() => {
@@ -119,7 +115,11 @@ describe('permission store', () => {
     store.clear()
     await store.generateRoutes([{ path: '/system', name: 'system' }] as any)
 
-    expect(store.getRoutersNotHidden.map(route => route.path)).toEqual(['/dashboard', '/data', '/system'])
+    expect(store.getRoutersNotHidden.map(route => route.path)).toEqual([
+      '/dashboard',
+      '/data',
+      '/system'
+    ])
 
     const addRouters = store.getAddRouters
     addRouters[0].path = '/mutated'

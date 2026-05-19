@@ -45,13 +45,10 @@ describe('decomposeComponent', () => {
       groupStyle: { left: 20, top: 10, width: 40, height: 20 }
     }
 
-    decomposeComponent(
-      component,
-      null,
-      { left: 100, top: 50 },
-      'canvas-main',
-      { width: 2, height: 3 }
-    )
+    decomposeComponent(component, null, { left: 100, top: 50 }, 'canvas-main', {
+      width: 2,
+      height: 3
+    })
 
     expect(component.style).toMatchObject({ left: 104, top: 56 })
     expect(component.groupStyle).toEqual({ left: 140, top: 80, width: 80, height: 60 })
