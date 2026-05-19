@@ -82,9 +82,9 @@ describe('drag-item utils', () => {
   })
 
   it('returns an empty string when getOriginFieldName finds no match', () => {
-    expect(getOriginFieldName([{ id: 1, name: 'Region' }], [{ id: 2, name: 'Sales' }], { id: 3 })).toBe(
-      ''
-    )
+    expect(
+      getOriginFieldName([{ id: 1, name: 'Region' }], [{ id: 2, name: 'Sales' }], { id: 3 })
+    ).toBe('')
   })
 
   it('resets formatter configuration to the default values', () => {

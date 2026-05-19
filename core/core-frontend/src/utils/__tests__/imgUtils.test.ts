@@ -84,7 +84,9 @@ describe('imgUtils', () => {
     const { imgUrlTrans } = await loadModule()
 
     expect(imgUrlTrans({ url: 'raw' })).toEqual({ url: 'raw' })
-    expect(imgUrlTrans('https://demo.com//de2api/image.png')).toBe('https://demo.com/de2api/image.png')
+    expect(imgUrlTrans('https://demo.com//de2api/image.png')).toBe(
+      'https://demo.com/de2api/image.png'
+    )
   })
 
   it('converts data urls into typed blobs', async () => {

@@ -122,7 +122,9 @@ describe('composeStore', () => {
 
   it('clears single-component alignment selections without attempting a group action', () => {
     const store = composeStore()
-    store.areaData.components = [{ id: 'single', style: { left: 0, top: 0, width: 10, height: 10 } }]
+    store.areaData.components = [
+      { id: 'single', style: { left: 0, top: 0, width: 10, height: 10 } }
+    ]
 
     store.alignment('left')
 
@@ -146,7 +148,11 @@ describe('composeStore', () => {
 
   it('removes only non-GroupArea components during batch delete', () => {
     const store = composeStore()
-    componentData.value = [{ id: 'delete-1' }, { id: 'keep-area', component: 'GroupArea' }, { id: 'delete-2' }]
+    componentData.value = [
+      { id: 'delete-1' },
+      { id: 'keep-area', component: 'GroupArea' },
+      { id: 'delete-2' }
+    ]
 
     store.batchDeleteComponent([
       { id: 'delete-1', component: 'Text' },
@@ -196,7 +202,11 @@ describe('composeStore', () => {
 
     store.compose('canvas-main')
 
-    expect(decomposeComponentMock).toHaveBeenCalledWith(existingChild, { left: 0, top: 0 }, existingGroup.style)
+    expect(decomposeComponentMock).toHaveBeenCalledWith(
+      existingChild,
+      { left: 0, top: 0 },
+      existingGroup.style
+    )
     expect(addComponentMock).toHaveBeenCalledTimes(1)
     expect(componentData.value).toHaveLength(2)
     expect(componentData.value[1]).toEqual(
@@ -214,7 +224,10 @@ describe('composeStore', () => {
       })
     )
     expect(createGroupStyleMock).toHaveBeenCalledWith(componentData.value[1])
-    expect(setCurComponentMock).toHaveBeenCalledWith({ component: componentData.value[1], index: 1 })
+    expect(setCurComponentMock).toHaveBeenCalledWith({
+      component: componentData.value[1],
+      index: 1
+    })
     expect(emitMock).toHaveBeenCalledWith('hideArea-canvas-main')
     expect(store.areaData.components).toEqual([])
   })

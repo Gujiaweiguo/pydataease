@@ -8,7 +8,6 @@ const {
   canvasStyleData,
   componentData,
   composeStoreMock,
-  contextmenuStoreMock,
   curComponent,
   curComponentIndex,
   curMultiplexingComponents,
@@ -22,8 +21,7 @@ const {
   pcMatrixCount,
   recordSnapshotCacheMock,
   setAreaDataMock,
-  setCurComponentMock,
-  snapshotStoreMock
+  setCurComponentMock
 } = vi.hoisted(() => ({
   adaptCurThemeCommonStyleMock: vi.fn(),
   addComponentMock: vi.fn(),
@@ -31,7 +29,6 @@ const {
   canvasStyleData: { value: { scale: 100, width: 1920, height: 1080 } },
   componentData: { value: [] as any[] },
   composeStoreMock: { areaData: { components: [] as any[] }, setAreaData: vi.fn() },
-  contextmenuStoreMock: { menuTop: { value: 120 }, menuLeft: { value: 240 } },
   curComponent: { value: null as any },
   curComponentIndex: { value: 0 },
   curMultiplexingComponents: { value: {} as Record<string, any> },
@@ -45,8 +42,7 @@ const {
   pcMatrixCount: { value: { x: 72, y: 36 } },
   recordSnapshotCacheMock: vi.fn(),
   setAreaDataMock: vi.fn(),
-  setCurComponentMock: vi.fn(),
-  snapshotStoreMock: { recordSnapshotCache: vi.fn() }
+  setCurComponentMock: vi.fn()
 }))
 
 vi.mock('pinia', async () => {

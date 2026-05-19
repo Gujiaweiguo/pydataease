@@ -82,14 +82,22 @@ describe('layerStore', () => {
 
   it('moves a component down unless it is already at the bottom', () => {
     const componentData = [{ id: 'a' }, { id: 'b' }, { id: 'c' }]
-    getCurInfoMock.mockReturnValueOnce({ index: 1, componentData, targetComponent: componentData[1] })
+    getCurInfoMock.mockReturnValueOnce({
+      index: 1,
+      componentData,
+      targetComponent: componentData[1]
+    })
 
     layerStore().downComponent('b')
 
     expect(componentData.map(item => item.id)).toEqual(['b', 'a', 'c'])
     expect(curComponentIndex.value).toBe(0)
 
-    getCurInfoMock.mockReturnValueOnce({ index: 0, componentData, targetComponent: componentData[0] })
+    getCurInfoMock.mockReturnValueOnce({
+      index: 0,
+      componentData,
+      targetComponent: componentData[0]
+    })
     layerStore().downComponent('b')
     expect(componentData.map(item => item.id)).toEqual(['b', 'a', 'c'])
   })
@@ -98,12 +106,20 @@ describe('layerStore', () => {
     const componentData = [{ id: 'a' }, { id: 'b' }, { id: 'c' }]
     const store = layerStore()
 
-    getCurInfoMock.mockReturnValueOnce({ index: 1, componentData, targetComponent: componentData[1] })
+    getCurInfoMock.mockReturnValueOnce({
+      index: 1,
+      componentData,
+      targetComponent: componentData[1]
+    })
     store.topComponent('b')
     expect(componentData.map(item => item.id)).toEqual(['a', 'c', 'b'])
     expect(curComponentIndex.value).toBe(2)
 
-    getCurInfoMock.mockReturnValueOnce({ index: 1, componentData, targetComponent: componentData[1] })
+    getCurInfoMock.mockReturnValueOnce({
+      index: 1,
+      componentData,
+      targetComponent: componentData[1]
+    })
     store.bottomComponent('c')
     expect(componentData.map(item => item.id)).toEqual(['c', 'a', 'b'])
     expect(curComponentIndex.value).toBe(0)

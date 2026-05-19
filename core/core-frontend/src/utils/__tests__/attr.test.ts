@@ -33,7 +33,13 @@ describe('attr', () => {
     const borderStyle = styleData.find(item => item.key === 'borderStyle')
 
     expect(opacity).toEqual({ key: 'opacity', label: '不透明度', min: 0, max: 1, step: 0.1 })
-    expect(fontWeight).toEqual({ key: 'fontWeight', label: '字体粗细', min: 100, max: 900, step: 100 })
+    expect(fontWeight).toEqual({
+      key: 'fontWeight',
+      label: '字体粗细',
+      min: 100,
+      max: 900,
+      step: 100
+    })
     expect(borderStyle).toEqual({ key: 'borderStyle', label: '边框风格' })
   })
 

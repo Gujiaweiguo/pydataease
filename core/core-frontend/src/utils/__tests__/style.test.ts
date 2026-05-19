@@ -190,7 +190,13 @@ describe('style utils', () => {
       opacity: 1
     })
 
-    const rotated = getComponentRotatedStyle({ width: 100, height: 50, left: 10, top: 20, rotate: 90 })
+    const rotated = getComponentRotatedStyle({
+      width: 100,
+      height: 50,
+      left: 10,
+      top: 20,
+      rotate: 90
+    })
     expect(rotated.left).toBe(35)
     expect(rotated.top).toBe(-5)
     expect(rotated.width).toBeCloseTo(50, 10)
@@ -213,7 +219,12 @@ describe('style utils', () => {
 
     createGroupStyle(group)
 
-    expect(group.propValue[0].groupStyle).toEqual({ left: 0.25, top: 0.25, width: 0.25, height: 0.2 })
+    expect(group.propValue[0].groupStyle).toEqual({
+      left: 0.25,
+      top: 0.25,
+      width: 0.25,
+      height: 0.2
+    })
     expect(group.propValue[0].style.left).toBe(50)
     expect(group.propValue[0].style.top).toBe(25)
 
@@ -237,6 +248,11 @@ describe('style utils', () => {
     dataVTabComponentAdd(innerComponent, { style: { width: 300, height: 200 }, showTabTitle: true })
     expect(innerComponent.style.left).toBe(0)
     expect(innerComponent.style.top).toBe(0)
-    expect(innerComponent.groupStyle).toEqual({ left: 0, top: 0, width: 40 / 300, height: 20 / 154 })
+    expect(innerComponent.groupStyle).toEqual({
+      left: 0,
+      top: 0,
+      width: 40 / 300,
+      height: 20 / 154
+    })
   })
 })

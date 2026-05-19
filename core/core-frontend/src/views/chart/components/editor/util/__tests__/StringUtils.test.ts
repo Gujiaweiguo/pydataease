@@ -28,9 +28,7 @@ describe('StringUtils', () => {
   })
 
   it('uses the computed upper bound when min and max are provided', () => {
-    vi.spyOn(Math, 'random')
-      .mockReturnValueOnce(0.99)
-      .mockReturnValue(0)
+    vi.spyOn(Math, 'random').mockReturnValueOnce(0.99).mockReturnValue(0)
 
     expect(randomRange(3, 5)).toBe('AAAAA')
   })
