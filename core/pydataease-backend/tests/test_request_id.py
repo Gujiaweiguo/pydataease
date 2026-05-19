@@ -1,3 +1,4 @@
+# pyright: reportArgumentType=false
 from __future__ import annotations
 
 import uuid
@@ -58,10 +59,10 @@ async def test_non_http_requests_skip_request_id() -> None:
 
     middleware = RequestIDMiddleware(inner_app)
 
-    async def noop_send(msg):
+    async def noop_send(msg):  # pyright: ignore[reportGeneralTypeIssues]
         pass
 
-    await middleware(
+    await middleware(  # pyright: ignore[reportArgumentType]
         {"type": "lifespan", "asgi": {"version": "3.0"}},
         noop_send,
         noop_send,

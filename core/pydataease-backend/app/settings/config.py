@@ -25,6 +25,15 @@ class BaseConfig(BaseSettings):
 
     model_config: ClassVar[SettingsConfigDict] = SettingsConfigDict(env_file=".env", env_prefix="DE_")
 
+    def validate_secrets(self) -> list[str]:
+        """Validate security-critical configuration. Returns list of warnings."""
+        warnings = []
+        if self.secret_key == self.share_secret_key:
+            warnings.append("secret_key and share_secret_key must differ — using identical secrets enables cross-token-type confusion")
+        if self.secret_key == "change-me-in-production":
+            warnings.append("secret_key is using default value — change it in production")
+        return warnings
+
 
 class DevConfig(BaseConfig):
     debug: bool = True
@@ -49,6 +58,7 @@ def get_settings() -> BaseConfig:
     global _settings
     if _settings is None:
         import os
+        import logging
 
         env = os.getenv("DE_ENV", "dev")
         if env == "prod":
@@ -57,4 +67,7 @@ def get_settings() -> BaseConfig:
             _settings = TestConfig()
         else:
             _settings = DevConfig()
+        # BUG-014 fix: Validate secrets on startup
+        for warning in _settings.validate_secrets():
+            logging.warning("Security config warning: %s", warning)
     return _settings

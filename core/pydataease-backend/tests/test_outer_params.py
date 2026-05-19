@@ -3,6 +3,8 @@
 Uses fake service injection pattern (same as test_link_jump).
 All 4 endpoints are tested via httpx AsyncClient against the FastAPI app.
 """
+
+# pyright: reportCallIssue=false
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta

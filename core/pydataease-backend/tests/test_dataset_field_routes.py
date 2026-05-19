@@ -1,27 +1,41 @@
 from __future__ import annotations
 
 from collections.abc import Generator
-from datetime import UTC, datetime, timedelta
+from dataclasses import dataclass
 
 import pytest
 from httpx import AsyncClient
-from jose import jwt
+from typing import cast
 
-from app.main import app
-from app.routers.dataset_field import get_field_repo
-from app.settings.config import get_settings
-
-
-def _build_token(**claims: int) -> str:
-    settings = get_settings()
-    payload = {**claims, "exp": datetime.now(UTC) + timedelta(hours=1)}
-    return jwt.encode(payload, settings.secret_key, algorithm=settings.jwt_algorithm)
+from app.main import app  # pyright: ignore[reportImplicitRelativeImport]
+from app.routers.dataset_field import get_field_repo  # pyright: ignore[reportImplicitRelativeImport]
+from tests.fixtures.auth_fixtures import _build_token  # pyright: ignore[reportImplicitRelativeImport]
 
 
+@dataclass(slots=True)
 class FakeField:
-    def __init__(self, **kwargs):
-        for k, v in kwargs.items():
-            setattr(self, k, v)
+    id: int = 0
+    datasource_id: int | None = None
+    dataset_table_id: int | None = None
+    dataset_group_id: int | None = None
+    chart_id: int | None = None
+    origin_name: str = ""
+    name: str = ""
+    description: str | None = None
+    dataease_name: str | None = None
+    field_short_name: str | None = None
+    group_type: str = "d"
+    type: str = "VARCHAR"
+    size: int | None = None
+    de_type: int = 0
+    de_extract_type: int = 0
+    ext_field: int = 0
+    checked: bool = True
+    column_index: int = 0
+    last_sync_time: int | None = None
+    accuracy: int | None = None
+    date_format: str | None = None
+    date_format_type: str | None = None
 
 
 def _make_field(
@@ -72,7 +86,7 @@ class FakeDatasetFieldRepository:
         ]
         self.deleted_ids: list[int] = []
         self.deleted_chart_ids: list[int] = []
-        self.saved: list[dict] = []
+        self.saved: list[dict[str, object]] = []
 
     async def list_checked_by_group(self, dataset_group_id: int) -> list[FakeField]:
         return [
@@ -100,8 +114,8 @@ class FakeDatasetFieldRepository:
         self.deleted_chart_ids.append(chart_id)
         self.fields = [f for f in self.fields if f.chart_id != chart_id]
 
-    async def list_origin_fields_by_groups(self, group_ids: list[int]) -> dict[str, list]:
-        result: dict[str, list] = {}
+    async def list_origin_fields_by_groups(self, group_ids: list[int]) -> dict[str, list[FakeField]]:
+        result: dict[str, list[FakeField]] = {}
         for gid in group_ids:
             result[str(gid)] = [
                 f for f in self.fields
@@ -112,17 +126,17 @@ class FakeDatasetFieldRepository:
             ]
         return result
 
-    async def save_field(self, field_data: dict) -> FakeField:
+    async def save_field(self, field_data: dict[str, object]) -> FakeField:
         self.saved.append(field_data)
         return _make_field(
-            fid=field_data.get("id", 9999),
-            origin_name=field_data.get("origin_name", ""),
-            name=field_data.get("name", ""),
-            group_type=field_data.get("group_type", "d"),
-            checked=field_data.get("checked", True),
-            chart_id=field_data.get("chart_id"),
-            ext_field=field_data.get("ext_field", 0),
-            dataset_group_id=field_data.get("dataset_group_id", 500),
+            fid=cast(int, field_data.get("id", 9999)),
+            origin_name=cast(str, field_data.get("origin_name", "")),
+            name=cast(str, field_data.get("name", "")),
+            group_type=cast(str, field_data.get("group_type", "d")),
+            checked=cast(bool, field_data.get("checked", True)),
+            chart_id=cast(int | None, field_data.get("chart_id")),
+            ext_field=cast(int, field_data.get("ext_field", 0)),
+            dataset_group_id=cast(int, field_data.get("dataset_group_id", 500)),
         )
 
 
@@ -201,8 +215,7 @@ async def test_get_field_not_found(
         "/de2api/datasetField/get/9999",
         headers=auth_headers,
     )
-    assert response.status_code == 200
-    assert response.json()["data"] is None
+    assert response.status_code == 404
 
 
 @pytest.mark.asyncio

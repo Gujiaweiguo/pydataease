@@ -162,6 +162,17 @@ class LinkageRepository:
         """)
         await self.session.execute(sql, params)
 
+    _LINKAGE_COLUMNS = {
+        "id", "dv_id", "source_view_id", "target_view_id",
+        "update_time", "update_people", "linkage_active",
+        "ext1", "ext2", "copy_from", "copy_id",
+    }
+
+    _LINKAGE_FIELD_COLUMNS = {
+        "id", "linkage_id", "source_field", "target_field",
+        "update_time", "copy_from", "copy_id",
+    }
+
     async def create_linkage(
         self,
         payload: dict[str, object],
@@ -169,10 +180,13 @@ class LinkageRepository:
     ) -> None:
         """Insert a linkage record."""
         lt, _, _ = _table_names(resource_table)
-        cols = ", ".join(payload.keys())
-        vals = ", ".join(f":{k}" for k in payload.keys())
+        filtered = {k: v for k, v in payload.items() if k in self._LINKAGE_COLUMNS}
+        if not filtered:
+            return
+        cols = ", ".join(filtered.keys())
+        vals = ", ".join(f":{k}" for k in filtered.keys())
         sql = text(f"INSERT INTO {lt} ({cols}) VALUES ({vals})")
-        await self.session.execute(sql, payload)
+        await self.session.execute(sql, filtered)
 
     async def create_linkage_field(
         self,
@@ -181,10 +195,13 @@ class LinkageRepository:
     ) -> None:
         """Insert a linkage field record."""
         _, lft, _ = _table_names(resource_table)
-        cols = ", ".join(payload.keys())
-        vals = ", ".join(f":{k}" for k in payload.keys())
+        filtered = {k: v for k, v in payload.items() if k in self._LINKAGE_FIELD_COLUMNS}
+        if not filtered:
+            return
+        cols = ", ".join(filtered.keys())
+        vals = ", ".join(f":{k}" for k in filtered.keys())
         sql = text(f"INSERT INTO {lft} ({cols}) VALUES ({vals})")
-        await self.session.execute(sql, payload)
+        await self.session.execute(sql, filtered)
 
     async def update_chart_linkage_active(
         self,

@@ -136,7 +136,7 @@ const defaultRule = {
 
 const rule = ref<FormRules>(cloneDeep(defaultRule))
 const activeTab = ref('')
-let time
+let time: ReturnType<typeof setTimeout>
 const initForm = type => {
   form.value.configuration = {
     url: '',
@@ -148,7 +148,7 @@ const initForm = type => {
     syncRate: 'SIMPLE_CRON',
     simpleCronValue: '1',
     simpleCronType: 'minute',
-    startTime: '',
+    startTime: new Date(),
     endTime: '',
     endLimit: '0',
     cron: '0 0/1 * * * ? *'
@@ -218,7 +218,7 @@ const validateExcel = () => {
   }
   for (let i = 0; i < selectNode.length; i++) {
     if (selectNode[i].sheet) {
-      if (selectNode[i].fields.filter(field => field.checked).length == 0) {
+      if (selectNode[i].fields.filter(field => field.checked).length === 0) {
         ElMessage({
           message: selectNode[i].excelLabel + t('datasource.api_field_not_empty'),
           type: 'error'
@@ -473,6 +473,30 @@ const uploadSuccess = response => {
   sheet && handleTabClick(sheet)
 }
 
+const initFromConfiguration = () => {
+  const configuration = form.value.configuration || {}
+  const sheets = Array.isArray(configuration.sheets) ? cloneDeep(configuration.sheets) : []
+  if (!sheets.length) {
+    clearForm()
+    return
+  }
+  const excelLabel = form.value.name || 'ExcelRemote'
+  state.excelData = [
+    {
+      excelLabel,
+      fileName: excelLabel,
+      sheets
+    }
+  ]
+  tabList.value = sheets.map(ele => ({
+    value: ele.sheetId,
+    label: ele.tableName,
+    newSheet: ele.newSheet
+  }))
+  const [sheet] = tabList.value
+  sheet && handleTabClick(sheet)
+}
+
 const changeCurrentMode = val => {
   currentMode.value = val
   if (val === 'select') {
@@ -487,7 +511,9 @@ const changeCurrentMode = val => {
     })
   } else {
     const sheet = state.excelData[0]?.sheets.find(ele => ele.sheetId === activeTab.value)
-    handleNodeClick(sheet)
+    if (sheet) {
+      handleNodeClick(sheet)
+    }
   }
 }
 
@@ -498,7 +524,7 @@ const handleSelectionChange = val => {
       row.checked = true
     })
     columns.value.forEach(row => {
-      let item
+      let item: (typeof multipleSelection.value)[number] | undefined
       for (let i = 0; i < multipleSelection.value.length; i++) {
         if (row.dataKey === multipleSelection.value[i].dataKey) {
           item = multipleSelection.value[i]
@@ -512,8 +538,8 @@ const handleSelectionChange = val => {
     })
 
     const sheet = state.excelData[0]?.sheets.find(ele => ele.sheetId === activeTab.value)
-    sheet.fields.forEach(row => {
-      let item
+    sheet?.fields.forEach((row: Field) => {
+      let item: (typeof multipleSelection.value)[number] | undefined
       for (let i = 0; i < multipleSelection.value.length; i++) {
         if (row.originName === multipleSelection.value[i].dataKey) {
           item = multipleSelection.value[i]
@@ -570,7 +596,7 @@ const saveExcelDs = (params, successCb, finallyCb) => {
       if (selectNode[i].changeFiled) {
         changeFiled = true
       }
-      if (selectNode[i].fields.filter(field => field.checked).length == 0) {
+      if (selectNode[i].fields.filter(field => field.checked).length === 0) {
         ElMessage({
           message: selectNode[i].excelLabel + t('datasource.api_field_not_empty'),
           type: 'error'
@@ -636,7 +662,16 @@ const saveExcelDs = (params, successCb, finallyCb) => {
       editType: props.form.editType ? props.form.editType : 0
     }
   }
-  table.syncSetting = form.value.syncSetting
+  table.syncSetting = form.value.syncSetting || {
+    updateType: 'all_scope',
+    syncRate: 'SIMPLE_CRON',
+    simpleCronValue: '1',
+    simpleCronType: 'minute',
+    startTime: new Date(),
+    endTime: '',
+    endLimit: '0',
+    cron: '0 0/1 * * * ? *'
+  }
   if (props.form.editType === 0 && props.form.id && (effectExtField || changeFiled)) {
     ElMessageBox.confirm(t('deDataset.replace_the_data'), {
       confirmButtonText: t('dataset.confirm'),
@@ -689,8 +724,12 @@ const saveExcelData = (sheetFileMd5, table, params, successCb, finallyCb) => {
     table.configuration.sheets[i].jsonArray = []
   }
   table.configuration = Base64.encode(JSON.stringify(table.configuration))
-  table.syncSetting.startTime = new Date(table.syncSetting.startTime).getTime()
-  table.syncSetting.endTime = new Date(table.syncSetting.endTime).getTime()
+  if (table.syncSetting?.startTime) {
+    table.syncSetting.startTime = new Date(table.syncSetting.startTime).getTime()
+  }
+  if (table.syncSetting?.endTime) {
+    table.syncSetting.endTime = new Date(table.syncSetting.endTime).getTime()
+  }
   let method = save
   if (!table.id || table.id === '0') {
     delete table.id
@@ -719,6 +758,7 @@ defineExpose({
   submitForm,
   resetForm,
   initForm,
+  initFromConfiguration,
   clearForm,
   submitSyncSettingForm,
   validateExcel,

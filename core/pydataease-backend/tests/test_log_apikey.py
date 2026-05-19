@@ -1,21 +1,14 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime, timedelta
+# pyright: reportMissingTypeArgument=false, reportAttributeAccessIssue=false
 
 import pytest
 from httpx import AsyncClient
-from jose import jwt
 
-from app.main import app
-from app.services.log_service import get_log_service
-from app.services.api_key_service import get_api_key_service
-from app.settings.config import get_settings
-
-
-def _build_token(**claims: int) -> str:
-    settings = get_settings()
-    payload = {**claims, "exp": datetime.now(UTC) + timedelta(hours=1)}
-    return jwt.encode(payload, settings.secret_key, algorithm=settings.jwt_algorithm)
+from app.main import app  # pyright: ignore[reportImplicitRelativeImport]
+from app.services.log_service import get_log_service  # pyright: ignore[reportImplicitRelativeImport]
+from app.services.api_key_service import get_api_key_service  # pyright: ignore[reportImplicitRelativeImport]
+from tests.fixtures.auth_fixtures import _build_token  # pyright: ignore[reportImplicitRelativeImport]
 
 
 # ---------------------------------------------------------------------------
@@ -74,7 +67,7 @@ class FakeApiKeyService:
         for k in self.keys:
             if k["id"] == key_id:
                 if k["_creator"] != uid:
-                    from fastapi import HTTPException
+                    from fastapi import HTTPException  # pyright: ignore[reportMissingImports]
                     raise HTTPException(403, "Not your API key")
                 k["enable"] = payload.enable if hasattr(payload, "enable") else False
 

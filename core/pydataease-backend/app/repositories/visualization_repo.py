@@ -17,11 +17,19 @@ class VisualizationRepository(AsyncBaseRepository[DataVisualizationInfo]):
         super().__init__(session, DataVisualizationInfo)
 
     async def list_all_ordered(self) -> Sequence[DataVisualizationInfo]:
-        statement: Select[tuple[DataVisualizationInfo]] = select(DataVisualizationInfo).order_by(
+        statement: Select[tuple[DataVisualizationInfo]] = select(DataVisualizationInfo).where(
+            DataVisualizationInfo.delete_flag.is_(False),
+        ).order_by(
             DataVisualizationInfo.sort.asc(),
             DataVisualizationInfo.update_time.desc(),
             DataVisualizationInfo.create_time.desc(),
         )
+        return await self.get(statement)
+
+    async def get_by_ids(self, ids: list[int]) -> Sequence[DataVisualizationInfo]:
+        if not ids:
+            return []
+        statement = select(DataVisualizationInfo).where(DataVisualizationInfo.id.in_(ids))
         return await self.get(statement)
 
     async def list_recent(self, size: int, type_filter: str | None = None, keyword: str | None = None, asc: bool | None = None) -> Sequence[DataVisualizationInfo]:

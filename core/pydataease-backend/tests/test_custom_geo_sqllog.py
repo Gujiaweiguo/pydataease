@@ -1,21 +1,14 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime, timedelta
+# pyright: reportMissingTypeArgument=false
 
 import pytest
 from httpx import AsyncClient
-from jose import jwt
 
-from app.main import app
-from app.services.custom_geo_service import get_custom_geo_service
-from app.services.dataset_sql_log_service import get_dataset_sql_log_service
-from app.settings.config import get_settings
-
-
-def _build_token(**claims: int) -> str:
-    settings = get_settings()
-    payload = {**claims, "exp": datetime.now(UTC) + timedelta(hours=1)}
-    return jwt.encode(payload, settings.secret_key, algorithm=settings.jwt_algorithm)
+from app.main import app  # pyright: ignore[reportImplicitRelativeImport]
+from app.services.custom_geo_service import get_custom_geo_service  # pyright: ignore[reportImplicitRelativeImport]
+from app.services.dataset_sql_log_service import get_dataset_sql_log_service  # pyright: ignore[reportImplicitRelativeImport]
+from tests.fixtures.auth_fixtures import _build_token  # pyright: ignore[reportImplicitRelativeImport]
 
 
 def _auth_header(user_id: int = 1, oid: int = 1) -> dict[str, str]:

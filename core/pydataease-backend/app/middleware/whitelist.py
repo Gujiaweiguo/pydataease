@@ -60,7 +60,7 @@ WHITE_PREFIXES = (
     "/typeface/download",
     "/typeface/defaultFont",
     "/typeface/listFont",
-    "/exportCenter/download",
+
     "/i18n/",
     "/communicate/image/",
     "/saml/",

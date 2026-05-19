@@ -343,8 +343,12 @@ class DatasetService:
             fields = self._build_external_fields(records, rows)
             return {"sql": sql_with_limit, "data": rows, "fields": fields, "total": len(rows)}
 
-        result = await self.sql_executor.execute_select(sql)
-        return {"sql": sql, "data": result["data"], "fields": result["fields"], "total": len(result["data"])}
+        # BUG-044 fix: Do NOT execute arbitrary SQL against internal metadata DB
+        # A datasourceId is required for SQL preview execution
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="datasourceId is required for SQL preview",
+        )
 
     def _build_external_fields(self, records: Sequence[Any], rows: Sequence[list[Any]]) -> list[dict[str, str]]:
         if not records:
@@ -463,12 +467,32 @@ class DatasetService:
         }
 
     @staticmethod
+    def _datasource_field_to_dataset_field(field: DatasourceFieldResponse, datasource_id: int):
+        class _MappedField:
+            datasource_id: int
+            origin_name: str
+            name: str
+            type: str
+            de_type: int
+            checked: bool
+
+        payload = DatasetService._field_to_storage_payload(field, datasource_id, 0)
+        mapped = _MappedField()
+        mapped.datasource_id = datasource_id
+        mapped.origin_name = str(payload["originName"])
+        mapped.name = str(payload["name"])
+        mapped.type = str(payload["type"])
+        mapped.de_type = 1 if field.data_type == "DATETIME" else 0 if payload["deType"] == 0 else int(payload["deType"])
+        mapped.checked = True
+        return mapped
+
+    @staticmethod
     def _normalize_info(info: object) -> object:
         if isinstance(info, str):
             try:
                 return json.loads(info)
             except (TypeError, ValueError):
-                return info
+                return {}
         return info
 
     @staticmethod

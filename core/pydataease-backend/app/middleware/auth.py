@@ -124,11 +124,15 @@ class AuthMiddleware:
         if user is None or not user.enable:
             raise AuthError(status.HTTP_401_UNAUTHORIZED, "用户不存在或已禁用")
 
+        # BUG-015 fix: Prefer password-derived secret; global secret_key fallback is deprecated
+        # and will be removed once all token issuers use password-derived secrets.
         try:
             return self._decode_token(token, derive_jwt_secret(user.password), token_kind="token")
         except AuthError as exc:
             if exc.message != "token is invalid":
                 raise
+            import logging
+            logging.warning("Token fallback to global secret_key used — migrate to password-derived secret")
             return self._decode_token(token, self.settings.secret_key, token_kind="token")
 
     async def _load_user(self, user_id: int) -> CoreUser | None:
@@ -169,6 +173,9 @@ class AuthMiddleware:
         resolved_user_id = _to_int(user_id)
         resolved_oid = _to_int(oid) if oid is not None else 0
         if link_token:
+            user = await self._load_user(resolved_user_id)
+            if user is None or not user.enable:
+                raise AuthError(status.HTTP_401_UNAUTHORIZED, "用户不存在或已禁用")
             return TokenUser(user_id=resolved_user_id, oid=resolved_oid)
         validated_oid = await self._validate_org_membership(resolved_user_id, resolved_oid)
         return TokenUser(user_id=resolved_user_id, oid=validated_oid)
@@ -182,6 +189,12 @@ class AuthMiddleware:
                 return oid
             user_orgs = await org_repo.get_user_orgs(user_id)
             if user_orgs:
+                if oid > 0:
+                    import logging
+                    logging.getLogger(__name__).warning(
+                        "User %d requested oid %d but is not a member; reassigning to org %d",
+                        user_id, oid, user_orgs[0].id,
+                    )
                 return user_orgs[0].id
             return 0
 

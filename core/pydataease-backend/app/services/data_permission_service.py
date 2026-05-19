@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import re
 from typing import Any
 
 from sqlalchemy import select
@@ -12,43 +11,29 @@ from app.models.role_user import CoreRoleUser
 from app.models.row_permission import CoreRowPermission
 from app.schemas.auth import TokenUser
 
-# Regex to find WHERE clause position — looks for WHERE not inside subqueries naively
-_WHERE_RE = re.compile(r"\bWHERE\b", re.IGNORECASE)
-# Regex to find trailing clauses to insert before
-_ORDER_BY_RE = re.compile(r"\bORDER\s+BY\b", re.IGNORECASE)
-_GROUP_BY_RE = re.compile(r"\bGROUP\s+BY\b", re.IGNORECASE)
-_LIMIT_RE = re.compile(r"\bLIMIT\b", re.IGNORECASE)
-_HAVING_RE = re.compile(r"\bHAVING\b", re.IGNORECASE)
-
 
 def apply_row_filters(sql: str, filters: list[str]) -> str:
     """Inject row-level filter WHERE clauses into a SQL query.
 
-    Handles:
-    - SQL with existing WHERE: appends AND clauses
-    - SQL without WHERE: inserts WHERE clause before ORDER BY/GROUP BY/LIMIT or at end
+    Uses query wrapping to handle all cases correctly:
+    - Subqueries: filter applied to outer scope
+    - UNION queries: filter applies to ALL branches
+    - Plain queries: works like simple WHERE append
     """
     if not filters:
         return sql
 
     combined = " AND ".join(f"({f})" for f in filters)
 
-    if _WHERE_RE.search(sql):
-        # Append to existing WHERE clause
-        return f"{sql} AND {combined}"
-
-    # No WHERE — find insertion point (before ORDER BY, GROUP BY, HAVING, or LIMIT)
-    insert_pos = len(sql)
-    for pattern in (_ORDER_BY_RE, _GROUP_BY_RE, _HAVING_RE, _LIMIT_RE):
-        match = pattern.search(sql)
-        if match and match.start() < insert_pos:
-            insert_pos = match.start()
-
-    return f"{sql[:insert_pos]} WHERE {combined} {sql[insert_pos:]}"
+    # Wrap the original query in an outer SELECT to handle subqueries and UNIONs correctly.
+    # This ensures the permission filter is always applied at the outermost level.
+    return f"SELECT * FROM ({sql}) AS _perm_filtered WHERE {combined}"
 
 
 def _mask_value(value: str) -> str:
     """Mask a string value: keep first and last char, replace middle with *."""
+    if not value:
+        return ""
     if len(value) <= 2:
         return value[0] + "*" if len(value) == 2 else "*"
     return value[0] + "*" * (len(value) - 2) + value[-1]
@@ -91,7 +76,8 @@ class DataPermissionService:
         if org_rules:
             return [r.filter_sql for r in org_rules]
 
-        return []
+        # BUG-007 fix: Default deny when no rules exist for non-admin user
+        return ["1=0"]
 
     async def apply_column_rules(
         self,
@@ -125,10 +111,15 @@ class DataPermissionService:
         field_actions: dict[int, str] = {}  # field_id -> action
         field_priorities: dict[int, int] = {}  # field_id -> priority (3=user, 2=role, 1=org)
 
+        _RESTRICTIVENESS: dict[str, int] = {"disable": 3, "desensitize": 2, "mask": 1}
+
         for rule in all_rules:
             priority = {"user": 3, "role": 2, "org": 1}.get(rule.target_type, 0)
             existing = field_priorities.get(rule.field_id, 0)
-            if priority >= existing:
+            if priority > existing or (
+                priority == existing
+                and _RESTRICTIVENESS.get(rule.action, 0) > _RESTRICTIVENESS.get(field_actions.get(rule.field_id, ""), 0)
+            ):
                 field_actions[rule.field_id] = rule.action
                 field_priorities[rule.field_id] = priority
 

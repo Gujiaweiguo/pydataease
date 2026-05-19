@@ -1,26 +1,20 @@
 from __future__ import annotations
 
+# pyright: reportMissingTypeArgument=false
+
 from collections.abc import Generator
-from datetime import UTC, datetime, timedelta
 
 import pytest
-from jose import jwt
 
-from app.main import app
-from app.schemas.auth import TokenUser
-from app.schemas.chart import ChartResponse
-from app.schemas.visualization import StoreResponse, VisualizationResponse, VisualizationTreeNodeResponse
-from app.services.visualization_service import get_visualization_service
-from app.services.outer_params_service import get_outer_params_service
-from app.services.linkage_service import get_linkage_service
-from app.services.watermark_service import get_watermark_service
-from app.settings.config import get_settings
-
-
-def _build_token(**claims: int) -> str:
-    settings = get_settings()
-    payload = {**claims, "exp": datetime.now(UTC) + timedelta(hours=1)}
-    return jwt.encode(payload, settings.secret_key, algorithm=settings.jwt_algorithm)
+from app.main import app  # pyright: ignore[reportImplicitRelativeImport]
+from app.schemas.auth import TokenUser  # pyright: ignore[reportImplicitRelativeImport]
+from app.schemas.chart import ChartResponse  # pyright: ignore[reportImplicitRelativeImport]
+from app.schemas.visualization import StoreResponse, VisualizationResponse, VisualizationTreeNodeResponse  # pyright: ignore[reportImplicitRelativeImport]
+from app.services.visualization_service import get_visualization_service  # pyright: ignore[reportImplicitRelativeImport]
+from app.services.outer_params_service import get_outer_params_service  # pyright: ignore[reportImplicitRelativeImport]
+from app.services.linkage_service import get_linkage_service  # pyright: ignore[reportImplicitRelativeImport]
+from app.services.watermark_service import get_watermark_service  # pyright: ignore[reportImplicitRelativeImport]
+from tests.fixtures.auth_fixtures import _build_token  # pyright: ignore[reportImplicitRelativeImport]
 
 
 class FakeVisualizationService:
@@ -193,12 +187,12 @@ def auth_headers() -> dict[str, str]:
 def fake_service() -> Generator[FakeVisualizationService, None, None]:
     svc = FakeVisualizationService()
     app.dependency_overrides[get_visualization_service] = lambda: svc
-    from tests.test_outer_params import FakeOuterParamsService
+    from tests.test_outer_params import FakeOuterParamsService  # pyright: ignore[reportImplicitRelativeImport]
     fake_outer_params = FakeOuterParamsService()
     app.dependency_overrides[get_outer_params_service] = lambda: fake_outer_params
     fake_linkage = FakeLinkageService()
     app.dependency_overrides[get_linkage_service] = lambda: fake_linkage
-    from tests.test_watermark import FakeWatermarkService
+    from tests.test_watermark import FakeWatermarkService  # pyright: ignore[reportImplicitRelativeImport]
     fake_watermark = FakeWatermarkService()
     app.dependency_overrides[get_watermark_service] = lambda: fake_watermark
     yield svc

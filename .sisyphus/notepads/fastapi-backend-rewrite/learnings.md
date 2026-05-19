@@ -114,3 +114,20 @@
 ## 2026-05-13 refresh + chart metadata fix
 - `/login/refresh` must bypass middleware whitelist checks and decode `X-DE-TOKEN`/`X-EMBEDDED-TOKEN` with `verify_exp=False` after loading the user-specific derived JWT secret, so expired-but-authentic tokens can refresh without changing global JWT behavior.
 - Visualization `find_by_id()` already serializes `x_axis`/`y_axis` to `xAxis`/`yAxis` and parses JSON-compatible values; missing bar-chart labels here were caused by empty DB axis arrays, not service serialization.
+
+## 2026-05-17 export uncovered route tests
+- Export route tests can mirror `tests/test_export_routes.py` with a dependency-overridden `FakeExportService`, while still covering mixed body parsing paths like `POST /exportCenter/delete` accepting either a raw ID list or `{id: ...}` payloads.
+- Wrapped FastAPI route tests should assert the compatibility envelope `{code, data, msg}` in addition to endpoint-specific payloads; for auth-protected export routes, missing `X-DE-TOKEN` continues to surface plain HTTP 401s.
+
+## 2026-05-18 dataset integration tests
+- Real PostgreSQL integration tests for dataset repositories/services work cleanly with per-test async engines plus `time.time_ns()` IDs, as long as cleanup cascades delete root groups in reverse creation order.
+- SQLAlchemy identity-map reuse can make a previously fetched ORM object reflect later updates in the same session; integration assertions that compare intermediate states should assert immediately after each mutation or explicitly refresh/reload.
+
+## 2026-05-17 snapshot table migration
+- Snapshot visualization queries depend on dedicated snapshot copies of `data_visualization_info` and `core_chart_view`; using self-referential/parallel snapshot table FKs keeps the migration aligned with how runtime repos join snapshot-only tables.
+- For schema-parity migrations in this backend, the safest pattern is to copy the exact Alembic column definitions from the original table-creation migration, including PostgreSQL `JSONB` types and server defaults, rather than re-deriving them from ORM models alone.
+- Added focused DatasetService unit tests for tree helpers, info normalization/merge logic, type mapping, and field serialization helpers using SimpleNamespace/Pydantic fixtures.
+
+## 2026-05-18 test helper cleanup
+- Standard JWT test helper duplication can be removed safely by centralizing `_build_token(**claims: int)` in `tests/fixtures/auth_fixtures.py`; files with custom signatures (`secret`, `user_id`, or extra positional semantics) should remain local.
+- Replacing dynamic `FakeField(**kwargs)` test doubles with explicit typed dataclasses removes BasedPyright/LSP noise without changing route-test behavior; targeted verification for this slice was `uv run pytest tests/test_dataset_field_routes.py -v`.

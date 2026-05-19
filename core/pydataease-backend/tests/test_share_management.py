@@ -1,23 +1,17 @@
 """Tests for the 9 new share management + ticket endpoints."""
 from __future__ import annotations
 
+# pyright: reportMissingTypeArgument=false
+
 from collections.abc import Generator
-from datetime import UTC, datetime, timedelta
 
 import pytest
 from httpx import AsyncClient
-from jose import jwt
 
-from app.main import app
-from app.schemas.share import ShareResponse
-from app.services.share_service import get_share_service
-from app.settings.config import get_settings
-
-
-def _build_token(**claims: int) -> str:
-    settings = get_settings()
-    payload = {**claims, "exp": datetime.now(UTC) + timedelta(hours=1)}
-    return jwt.encode(payload, settings.secret_key, algorithm=settings.jwt_algorithm)
+from app.main import app  # pyright: ignore[reportImplicitRelativeImport]
+from app.schemas.share import ShareResponse  # pyright: ignore[reportImplicitRelativeImport]
+from app.services.share_service import get_share_service  # pyright: ignore[reportImplicitRelativeImport]
+from tests.fixtures.auth_fixtures import _build_token  # pyright: ignore[reportImplicitRelativeImport]
 
 
 # ---------------------------------------------------------------------------

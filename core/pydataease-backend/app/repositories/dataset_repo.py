@@ -31,12 +31,14 @@ class DatasetGroupRepository(AsyncBaseRepository[CoreDatasetGroup]):
         return await self.get(stmt)
 
     async def delete_cascade(self, group_id: int) -> None:
-        await self._delete_descendants(group_id)
+        await self._delete_descendants(group_id, depth=0)
 
-    async def _delete_descendants(self, pid: int) -> None:
+    async def _delete_descendants(self, pid: int, depth: int = 0) -> None:
+        if depth > 50:
+            return
         children = await self.get_children(pid)
         for child in children:
-            await self._delete_descendants(child.id)
+            await self._delete_descendants(child.id, depth + 1)
         # Always clear tables for this node (no-op if none exist)
         await self._delete_dataset_tables(pid)
         stmt = delete(CoreDatasetGroup).where(CoreDatasetGroup.id == pid)

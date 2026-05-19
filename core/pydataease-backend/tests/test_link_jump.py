@@ -3,6 +3,8 @@
 Uses fake service injection pattern (same as test_dataset_field_routes).
 All 8 endpoints are tested via httpx AsyncClient against the FastAPI app.
 """
+
+# pyright: reportCallIssue=false
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta

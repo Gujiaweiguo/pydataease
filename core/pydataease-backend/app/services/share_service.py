@@ -80,7 +80,7 @@ class ShareService:
         ticket_vo = TicketValidVO()
         if payload.ticket:
             ticket_record = await self.ticket_repo.get_by_ticket(payload.ticket)
-            if ticket_record is None:
+            if ticket_record is None or ticket_record.uuid != share.uuid:
                 ticket_vo = TicketValidVO(ticket_valid=False, ticket_exp=False)
             else:
                 ticket_expired = (
@@ -103,8 +103,11 @@ class ShareService:
         # Iframe error flag
         in_iframe_error = bool(payload.in_iframe)
 
-        # Generate link token JWT
-        link_token = self._generate_link_token(share, current_ms)
+        # Generate link token JWT — only after successful auth
+        if is_expired or (share.pwd and not pwd_valid) or (share.ticket_require and not ticket_vo.ticket_valid):
+            link_token = ""
+        else:
+            link_token = self._generate_link_token(share, current_ms)
 
         response = ProxyInfoResponse(
             resource_id=str(share.resource_id),
@@ -161,6 +164,14 @@ class ShareService:
             return ShareResponse.model_validate(updated)
 
         share_uuid = payload.uuid or _new_share_uuid()
+        # BUG-011 fix: Enforce UUID uniqueness on create
+        if payload.uuid:
+            existing_uuid = await self.share_repo.get_by_uuid(share_uuid)
+            if existing_uuid is not None:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="Share UUID already exists",
+                )
         created = await self.share_repo.create({
             "id": _new_share_id(),
             "creator": user.user_id,
@@ -196,7 +207,9 @@ class ShareService:
         share = await self.share_repo.get_by_uuid(payload.uuid)
         if share is None:
             return None
-        return ShareResponse.model_validate(share)
+        resp = ShareResponse.model_validate(share)
+        resp.pwd = None  # BUG-013 fix: Don't leak password in public endpoints
+        return resp
 
     async def get_by_id(self, resource_id: int) -> ShareResponse | None:
         share = await self.share_repo.get_by_resource_id(resource_id)
@@ -208,7 +221,9 @@ class ShareService:
         share = await self.share_repo.get_by_uuid(uuid)
         if share is None:
             return None
-        return ShareResponse.model_validate(share)
+        resp = ShareResponse.model_validate(share)
+        resp.pwd = None  # BUG-013 fix: Don't leak password in public endpoints
+        return resp
 
     async def resolve(
         self, uuid: str, password: str | None = None
@@ -229,6 +244,12 @@ class ShareService:
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail="Password incorrect",
                 )
+        # BUG-010 fix: Reject resolve() when ticket is required — use proxy_info flow
+        if share.ticket_require:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Ticket required — use proxy_info flow",
+            )
         await self.record_access(uuid)
         return ShareResponse.model_validate(share)
 
@@ -284,6 +305,8 @@ class ShareService:
             await self.share_repo.increment_access_count(uuid)
         except Exception:
             logging.exception("Failed to record share access for uuid=%s", uuid)
+            # BUG-036 fix: Rollback to isolate this transaction
+            await self.session.rollback()
 
     async def save_ticket(self, payload: ShareTicketSaveRequest) -> ShareTicketResponse:
         if payload.generate_new or payload.uuid is None:
@@ -424,16 +447,19 @@ class ShareService:
         return {str(s.resource_id): s.uuid for s in rows}
 
     async def enable_ticket(self, resource_id: str, require: bool) -> None:
-        share = await self.share_repo.get_by_resource_id(int(resource_id))
+        try:
+            rid = int(resource_id)
+        except (ValueError, TypeError):
+            raise HTTPException(status_code=400, detail="Invalid resource_id") from None
+        share = await self.share_repo.get_by_resource_id(rid)
         if share is not None:
             await self.share_repo.update(share, {"ticket_require": require})
 
     @staticmethod
     def generate_temp_ticket() -> str:
-        import random
         import string
 
-        return "".join(random.choices(string.ascii_letters + string.digits, k=8))
+        return "".join(secrets.choice(string.ascii_letters + string.digits) for _ in range(8))
 
 
 async def get_share_service(session: AsyncSession = Depends(get_db)) -> ShareService:

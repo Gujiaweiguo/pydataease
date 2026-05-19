@@ -295,7 +295,13 @@ const continueCreating = () => {
   init(null, pid.value)
 }
 
-const handleShowFinishPage = ({ id, name, pid: pidVal }) => {
+const handleShowFinishPage = payload => {
+  if (!payload) {
+    emits('refresh')
+    visible.value = false
+    return
+  }
+  const { id, name, pid: pidVal } = payload
   isShowFinishPage()
     .then(res => {
       if (editDs.value || !res.data) {
@@ -422,9 +428,13 @@ const doValidateDs = request => {
   }
   validate(request)
     .then(res => {
-      if (res.data.type.includes('API')) {
+      const currentType = res.data.type || res.data.datasource_type || request.type || ''
+      if (currentType.includes('API')) {
         let error = 0
-        const status = JSON.parse(res.data.status) as Array<{ status: string; name: string }>
+        const rawStatus = res.data.status
+        const status = rawStatus
+          ? (JSON.parse(rawStatus) as Array<{ status: string; name: string }>)
+          : []
         for (let i = 0; i < status.length; i++) {
           if (status[i].status === 'Error') {
             error++
@@ -633,7 +643,17 @@ const defaultForm2 = {
   editType: 0,
   name: '',
   creator: '',
-  configuration: {}
+  configuration: {},
+  syncSetting: {
+    updateType: 'all_scope',
+    syncRate: 'SIMPLE_CRON',
+    simpleCronValue: '1',
+    simpleCronType: 'minute',
+    startTime: new Date(),
+    endTime: '',
+    endLimit: '0',
+    cron: '0 0/1 * * * ? *'
+  }
 }
 const origin = reactive<Form>(cloneDeep(defaultForm))
 const form = reactive<Form>(cloneDeep(defaultForm))
@@ -642,6 +662,7 @@ const form2 = reactive<Param>(cloneDeep(defaultForm2))
 const visible = ref(false)
 const editDs = ref(false)
 const pid = ref('0')
+const excelUploadMode = ref(false)
 
 watch(
   () => form,
@@ -676,10 +697,10 @@ const init = (nodeInfo: Form | Param, id?: string, res?: object, supportSetKey: 
     } else {
       Object.assign(form, cloneDeep(nodeInfo))
       Object.assign(origin, cloneDeep(nodeInfo))
-      if (form.hasOwnProperty('configuration') && form.configuration.urlType == undefined) {
+      if (form.hasOwnProperty('configuration') && form.configuration.urlType === undefined) {
         form.configuration.urlType = 'hostName'
       }
-      if (form.hasOwnProperty('configuration') && form.configuration.sshType == undefined) {
+      if (form.hasOwnProperty('configuration') && form.configuration.sshType === undefined) {
         form.configuration.sshType = 'password'
       }
     }
@@ -691,6 +712,7 @@ const init = (nodeInfo: Form | Param, id?: string, res?: object, supportSetKey: 
   }
   activeStep.value = Number(editDs.value)
   activeApiStep.value = activeStep.value
+  excelUploadMode.value = !!res
 
   visible.value = true
   nextTick(() => {
@@ -706,6 +728,10 @@ const init = (nodeInfo: Form | Param, id?: string, res?: object, supportSetKey: 
         nextTick(() => {
           excel.value.appendReplaceExcel(res)
         })
+      } else if (nodeInfo.type === 'Excel') {
+        nextTick(() => {
+          excel.value?.initFromConfiguration()
+        })
       }
       nextTick(() => {
         detail?.value?.clearForm()
@@ -714,6 +740,9 @@ const init = (nodeInfo: Form | Param, id?: string, res?: object, supportSetKey: 
           methodName: 'clearForm',
           args: []
         })
+        if (nodeInfo.type === 'ExcelRemote') {
+          excelRemote?.value?.initFromConfiguration()
+        }
       })
     })
   }
@@ -721,10 +750,10 @@ const init = (nodeInfo: Form | Param, id?: string, res?: object, supportSetKey: 
 
 const drawTitle = computed(() => {
   const { id, editType, creator } = form2
-  if (creator && id && currentDsType.value == 'Excel') {
+  if (creator && id && currentDsType.value === 'Excel' && excelUploadMode.value) {
     return editType === 1 ? t('data_source.append_data') : t('data_source.replace_data')
   }
-  if (currentDsType.value == 'ExcelRemote') {
+  if (currentDsType.value === 'ExcelRemote') {
     return editDs.value
       ? !form2.id
         ? t('data_source.copy_data_source')

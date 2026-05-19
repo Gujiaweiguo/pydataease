@@ -1,31 +1,17 @@
 from __future__ import annotations
 
+# pyright: reportMissingTypeArgument=false, reportCallIssue=false
+
 from collections.abc import Generator
 
 import pytest
 from httpx import AsyncClient
-from jose import jwt
 
-from app.main import app
-from app.schemas.auth import TokenUser
-from app.schemas.datasource import (
-    DatasourceResponse,
-    DatasourceSimpleResponse,
-    DatasourceTableResponse,
-)
-from app.services.datasource_service import get_datasource_service
-from app.settings.config import get_settings
-
-
-def _build_token(**claims: int) -> str:
-    settings = get_settings()
-    from datetime import UTC, datetime, timedelta
-
-    payload = {
-        **claims,
-        "exp": datetime.now(UTC) + timedelta(hours=1),
-    }
-    return jwt.encode(payload, settings.secret_key, algorithm=settings.jwt_algorithm)
+from app.main import app  # pyright: ignore[reportImplicitRelativeImport]
+from app.schemas.auth import TokenUser  # pyright: ignore[reportImplicitRelativeImport]
+from app.schemas.datasource import DatasourceResponse, DatasourceSimpleResponse, DatasourceTableResponse  # pyright: ignore[reportImplicitRelativeImport]
+from app.services.datasource_service import get_datasource_service  # pyright: ignore[reportImplicitRelativeImport]
+from tests.fixtures.auth_fixtures import _build_token  # pyright: ignore[reportImplicitRelativeImport]
 
 
 class FakeAdvancedDatasourceService:
@@ -107,7 +93,7 @@ class FakeAdvancedDatasourceService:
         )
 
     async def validate_by_id(self, datasource_id: int) -> dict[str, str]:
-        return {"status": "Success"}
+        return {"status": "Success", "type": "pg"}
 
     async def check_in_use(self, datasource_id: int) -> bool:
         return datasource_id == 100
@@ -205,11 +191,12 @@ async def test_list_datasource_types(
     response = await client.get("/de2api/datasource/types", headers=auth_headers)
     assert response.status_code == 200
     data = response.json()["data"]
-    assert len(data) == 18
+    assert len(data) == 6
     types_list = [item["type"] for item in data]
     assert "mysql" in types_list
     assert "pg" in types_list
-    assert "ck" in types_list
+    assert "Excel" in types_list
+    assert "ExcelRemote" in types_list
     assert data[0] == {"type": "folder", "name": "folder", "category": "folder"}
 
 
@@ -234,7 +221,7 @@ async def test_validate_by_id(
 ) -> None:
     response = await client.get("/de2api/datasource/validate/42", headers=auth_headers)
     assert response.status_code == 200
-    assert response.json()["data"] == {"status": "Success"}
+    assert response.json()["data"] == {"status": "Success", "type": "pg"}
 
 
 @pytest.mark.asyncio
@@ -246,6 +233,7 @@ async def test_get_datasource(
     data = response.json()["data"]
     assert data["id"] == 42
     assert data["name"] == "test-ds"
+    # Admin endpoint returns full configuration including plaintext password (by design)
     assert data["configuration"]["password"] == "secret123"
 
 

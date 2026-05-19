@@ -78,6 +78,7 @@ def _find_node_by_id(nodes: object, target_id: int) -> dict[str, object] | None:
     return None
 
 
+@pytest.mark.skipif(os.getenv("DE_E2E") != "1", reason="Requires running server (set DE_E2E=1)")
 @pytest.mark.asyncio
 async def test_e2e_dashboard_full() -> None:
     ids: dict[str, int | str] = {}

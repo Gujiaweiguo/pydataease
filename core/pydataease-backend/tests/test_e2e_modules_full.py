@@ -117,6 +117,7 @@ async def _pg_execute(query: str, *args: object) -> str:
         await conn.close()
 
 
+@pytest.mark.skipif(os.getenv("DE_E2E") != "1", reason="Requires running server (set DE_E2E=1)")
 @pytest.mark.asyncio
 async def test_e2e_modules_full() -> None:
     ids: dict[str, Any] = {}

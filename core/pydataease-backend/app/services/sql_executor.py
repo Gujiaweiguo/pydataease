@@ -127,6 +127,11 @@ class SQLExecutor:
 
         async with async_session() as session:
             perm_svc = DataPermissionService(session)
+            # NOTE(BUG-009): Permission filters and query execution happen in
+            # the same logical request but use separate database connections.
+            # This is a known TOCTOU window. A full fix would require running
+            # both in the same database transaction, which needs architectural
+            # changes to session management.
             row_filters = await perm_svc.collect_row_filters(user, dataset_id)
             if row_filters:
                 from app.services.data_permission_service import apply_row_filters

@@ -1,32 +1,17 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime, timedelta
+# pyright: reportMissingTypeArgument=false, reportCallIssue=false, reportIncompatibleMethodOverride=false, reportMissingImports=false
+
 from collections.abc import Generator
 
 import pytest
 from httpx import AsyncClient
-from jose import jwt
 
-from app.main import app
-from app.schemas.auth import TokenUser
-from app.schemas.datasource import (
-    DatasourceFieldResponse,
-    DatasourceResponse,
-    DatasourceTableResponse,
-    DatasourceValidateResponse,
-    EngineInfoResponse,
-)
-from app.services.datasource_service import get_datasource_service
-from app.settings.config import get_settings
-
-
-def _build_token(**claims: int) -> str:
-    settings = get_settings()
-    payload = {
-        **claims,
-        "exp": datetime.now(UTC) + timedelta(hours=1),
-    }
-    return jwt.encode(payload, settings.secret_key, algorithm=settings.jwt_algorithm)
+from app.main import app  # pyright: ignore[reportImplicitRelativeImport]
+from app.schemas.auth import TokenUser  # pyright: ignore[reportImplicitRelativeImport]
+from app.schemas.datasource import DatasourceFieldResponse, DatasourceResponse, DatasourceTableResponse, DatasourceValidateResponse, EngineInfoResponse  # pyright: ignore[reportImplicitRelativeImport]
+from app.services.datasource_service import get_datasource_service  # pyright: ignore[reportImplicitRelativeImport]
+from tests.fixtures.auth_fixtures import _build_token  # pyright: ignore[reportImplicitRelativeImport]
 
 
 class FakeDatasourceService:
@@ -106,13 +91,39 @@ class FakeDatasourceService:
         return [DatasourceTableResponse(name="orders", schema_name="public")]
 
     async def get_fields(self, datasource_id: int, table_name: str) -> list[DatasourceFieldResponse]:
-        return [DatasourceFieldResponse(name="id", data_type="bigint", nullable=False)]
+        return [DatasourceFieldResponse(name="id", origin_name="id", data_type="bigint", de_type=2, type="bigint", nullable=False)]
 
     async def get_engine_info(self) -> EngineInfoResponse:
         return EngineInfoResponse(configured=True, type="postgresql", status="Success", name="postgresql-engine")
 
     async def upload_file(self, file, id=None, edit_type=None) -> dict:
         return {"sheets": ["Sheet1"], "fileName": "test.xlsx"}
+
+
+class FakeDecoratedDatasourceService(FakeDatasourceService):
+    async def save(self, payload: object, user: TokenUser) -> dict[str, object]:
+        self.saved_payloads.append((payload, user))
+        return {
+            "id": 303,
+            "name": "api-ds",
+            "type": "API",
+            "configuration": {},
+            "apiConfigurationStr": [{"name": "orders", "type": "table"}],
+            "paramsStr": [{"name": "runtime", "type": "params"}],
+            "syncSetting": {"syncRate": "SIMPLE_CRON"},
+        }
+
+    async def update(self, payload: object, user: TokenUser) -> dict[str, object]:
+        self.updated_payloads.append((payload, user))
+        return {
+            "id": 303,
+            "name": "excel-remote",
+            "type": "ExcelRemote",
+            "configuration": {"sheets": []},
+            "syncSetting": {"syncRate": "SIMPLE_CRON"},
+            "fileName": "orders.xlsx",
+            "size": 12,
+        }
 
 
 @pytest.fixture
@@ -196,7 +207,7 @@ async def test_datasource_validate_tables_and_fields_routes(
         "datasource_type": "pg",
     }
     assert schema_response.json()["data"] == [{"name": "orders", "schema": "public", "type": "TABLE"}]
-    assert field_response.json()["data"] == [{"name": "id", "data_type": "bigint", "nullable": False}]
+    assert field_response.json()["data"] == [{"name": "id", "originName": "id", "fieldType": "bigint", "deType": 2, "type": "bigint", "nullable": False}]
 
 
 @pytest.mark.asyncio
@@ -209,3 +220,117 @@ async def test_datasource_routes_require_auth(client: AsyncClient) -> None:
         "data": None,
         "msg": "token is empty for uri {/de2api/datasource/query/ware}",
     }
+
+
+@pytest.mark.asyncio
+async def test_datasource_save_update_preserve_decorated_contract(
+    client: AsyncClient, auth_headers: dict[str, str]
+) -> None:
+    service = FakeDecoratedDatasourceService()
+    app.dependency_overrides[get_datasource_service] = lambda: service
+    try:
+        save_response = await client.post(
+            "/de2api/datasource/save",
+            headers=auth_headers,
+            json={
+                "name": "api-ds",
+                "type": "API",
+                "configuration": "W3sibmFtZSI6ICJvcmRlcnMiLCAidHlwZSI6ICJ0YWJsZSJ9XQ==",
+                "syncSetting": {"syncRate": "SIMPLE_CRON"},
+            },
+        )
+        update_response = await client.post(
+            "/de2api/datasource/update",
+            headers=auth_headers,
+            json={
+                "id": 303,
+                "name": "excel-remote",
+                "type": "ExcelRemote",
+                "configuration": "W3sidGFibGVOYW1lIjogIm9yZGVycyJ9XQ==",
+                "syncSetting": {"syncRate": "SIMPLE_CRON"},
+            },
+        )
+    finally:
+        _ = app.dependency_overrides.pop(get_datasource_service, None)
+
+    assert save_response.status_code == 200
+    save_data = save_response.json()["data"]
+    assert save_data["configuration"] == {}
+    assert save_data["apiConfigurationStr"] == [{"name": "orders", "type": "table"}]
+    assert save_data["paramsStr"] == [{"name": "runtime", "type": "params"}]
+    assert save_data["syncSetting"] == {"syncRate": "SIMPLE_CRON"}
+
+    assert update_response.status_code == 200
+    update_data = update_response.json()["data"]
+    assert update_data["type"] == "ExcelRemote"
+    assert update_data["syncSetting"] == {"syncRate": "SIMPLE_CRON"}
+    assert update_data["fileName"] == "orders.xlsx"
+    assert update_data["size"] == 12
+
+
+@pytest.mark.asyncio
+async def test_datasource_save_accepts_blank_copy_id_payload(
+    client: AsyncClient, auth_headers: dict[str, str], fake_service: FakeDatasourceService
+) -> None:
+    response = await client.post(
+        "/de2api/datasource/save",
+        headers=auth_headers,
+        json={
+            "id": "",
+            "name": "demo-pg-copy-e2e",
+            "type": "pg",
+            "pid": "0",
+            "configuration": "eyJob3N0IjoibG9jYWxob3N0IiwicG9ydCI6NTQzMiwic2NoZW1hIjoicHVibGljIiwic3NoVHlwZSI6InBhc3N3b3JkIiwidXJsVHlwZSI6Imhvc3ROYW1lIiwiZGF0YUJhc2UiOiJkYXRhZWFzZSIsInBhc3N3b3JkIjoiZGF0YWVhc2UiLCJ1c2VybmFtZSI6ImRhdGFlYXNlIn0=",
+            "copy": True,
+        },
+    )
+
+    assert response.status_code == 200
+    assert len(fake_service.saved_payloads) == 1
+    payload, _ = fake_service.saved_payloads[0]
+    assert getattr(payload, "id") is None
+    assert getattr(payload, "pid") == 0
+
+
+@pytest.mark.asyncio
+async def test_datasource_save_accepts_numeric_edit_type_for_excel(
+    client: AsyncClient, auth_headers: dict[str, str], fake_service: FakeDatasourceService
+) -> None:
+    response = await client.post(
+        "/de2api/datasource/save",
+        headers=auth_headers,
+        json={
+            "name": "excel-local-e2e",
+            "type": "Excel",
+            "editType": 0,
+            "configuration": "W3sic2hlZXRJZCI6IjEiLCJ0YWJsZU5hbWUiOiJvcmRlcnMiLCJmaWVsZHMiOltdLCJqc29uQXJyYXkiOltdfV0=",
+        },
+    )
+
+    assert response.status_code == 200
+    assert len(fake_service.saved_payloads) == 1
+    payload, _ = fake_service.saved_payloads[0]
+    assert getattr(payload, "edit_type") == "0"
+
+
+@pytest.mark.asyncio
+async def test_datasource_delete_conflict_is_exposed(
+    client: AsyncClient, auth_headers: dict[str, str]
+) -> None:
+    class ConflictDatasourceService(FakeDatasourceService):
+        async def delete(self, datasource_id: int) -> None:
+            from fastapi import HTTPException, status
+
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Datasource is still referenced by datasets and cannot be deleted",
+            )
+
+    service = ConflictDatasourceService()
+    app.dependency_overrides[get_datasource_service] = lambda: service
+    try:
+        response = await client.post("/de2api/datasource/delete/999", headers=auth_headers)
+    finally:
+        _ = app.dependency_overrides.pop(get_datasource_service, None)
+
+    assert response.status_code == 409
