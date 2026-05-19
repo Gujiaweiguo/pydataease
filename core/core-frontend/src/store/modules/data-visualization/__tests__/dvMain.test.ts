@@ -219,7 +219,9 @@ describe('dvMainStore', () => {
       {
         id: 'tabs-1',
         component: 'DeTabs',
-        propValue: [{ name: 'tab-a', componentData: [null, { id: 'tab-child', component: 'Text' }] }]
+        propValue: [
+          { name: 'tab-a', componentData: [null, { id: 'tab-child', component: 'Text' }] }
+        ]
       }
     ] as any)
 

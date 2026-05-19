@@ -126,6 +126,8 @@ describe('ColumnList', () => {
     await nextTick()
 
     expect(wrapper.emitted('columnChange')).toEqual([[['name']]])
-    expect(wrapper.findAllComponents(ElCheckboxStub)[0].attributes('data-indeterminate')).toBe('true')
+    expect(wrapper.findAllComponents(ElCheckboxStub)[0].attributes('data-indeterminate')).toBe(
+      'true'
+    )
   })
 })
