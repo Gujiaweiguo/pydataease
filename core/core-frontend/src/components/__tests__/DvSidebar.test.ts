@@ -23,6 +23,8 @@ vi.mock('@/hooks/web/useI18n', () => ({
 }))
 
 vi.mock('pinia', () => ({
+  defineStore: () => () => ({}),
+  createPinia: () => ({}),
   storeToRefs: (store: Record<string, unknown>) => store
 }))
 

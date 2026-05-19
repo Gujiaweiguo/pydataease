@@ -75,7 +75,9 @@ vi.mock('lodash-es', () => ({
   map: (arr: any[], fn: any) => arr.map(fn),
   isEmpty: (v: any) => !v || (Array.isArray(v) && v.length === 0)
 }))
-vi.mock('pinia', () => ({ storeToRefs: (s: any) => ({ batchOptStatus: { value: false } }) }))
+vi.mock('pinia', () => ({
+  defineStore: () => () => ({}),
+  createPinia: () => ({}), storeToRefs: (s: any) => ({ batchOptStatus: { value: false } }) }))
 vi.mock('@/components/icon-custom/src/Icon.vue', () => ({
   default: { template: '<span><slot /></span>' }
 }))

@@ -10,6 +10,8 @@ const storeState = vi.hoisted(() => ({
 }))
 
 vi.mock('pinia', () => ({
+  defineStore: () => () => ({}),
+  createPinia: () => ({}),
   storeToRefs: (store: Record<string, unknown>) => store
 }))
 

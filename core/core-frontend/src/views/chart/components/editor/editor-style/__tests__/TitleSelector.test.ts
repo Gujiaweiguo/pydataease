@@ -37,6 +37,8 @@ vi.mock('lodash-es', () => ({
   defaultsDeep: (target: any, ...sources: any[]) => Object.assign({}, ...sources, target)
 }))
 vi.mock('pinia', () => ({
+  defineStore: () => () => ({}),
+  createPinia: () => ({}),
   storeToRefs: (store: any) => ({
     batchOptStatus: { value: false },
     mobileInPc: { value: false }

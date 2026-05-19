@@ -23,6 +23,8 @@ vi.mock('@/router', () => ({
 }))
 
 vi.mock('pinia', () => ({
+  defineStore: () => () => ({}),
+  createPinia: () => ({}),
   storeToRefs: (store: Record<string, unknown>) => store
 }))
 

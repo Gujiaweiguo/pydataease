@@ -60,6 +60,8 @@ vi.mock('lodash-es', () => ({
   isEmpty: (v: any) => !v || (Array.isArray(v) && v.length === 0)
 }))
 vi.mock('pinia', () => ({
+  defineStore: () => () => ({}),
+  createPinia: () => ({}),
   storeToRefs: (s: any) => ({ batchOptStatus: { value: false }, mobileInPc: { value: false } })
 }))
 vi.mock('@/hooks/web/useEmitt', () => ({ useEmitt: () => undefined }))

@@ -126,6 +126,8 @@ vi.mock('lodash-es', () => ({
   find: (arr: any[], fn: any) => arr.find(fn)
 }))
 vi.mock('pinia', () => ({
+  defineStore: () => () => ({}),
+  createPinia: () => ({}),
   storeToRefs: (s: any) => ({ batchOptStatus: { value: false }, mobileInPc: { value: false } })
 }))
 vi.mock('element-plus-secondary', () => ({

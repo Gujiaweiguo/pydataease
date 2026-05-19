@@ -46,6 +46,8 @@ vi.mock('@/store/modules/data-visualization/dvMain', () => ({
 }))
 
 vi.mock('pinia', () => ({
+  defineStore: () => () => ({}),
+  createPinia: () => ({}),
   storeToRefs: (store: { __refs: Record<string, unknown> }) => store.__refs
 }))
 

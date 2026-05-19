@@ -41,7 +41,9 @@ vi.mock('lodash-es', () => ({
     r[keys[keys.length - 1]] = v
   }
 }))
-vi.mock('pinia', () => ({ storeToRefs: (s: any) => ({ batchOptStatus: { value: false } }) }))
+vi.mock('pinia', () => ({
+  defineStore: () => () => ({}),
+  createPinia: () => ({}), storeToRefs: (s: any) => ({ batchOptStatus: { value: false } }) }))
 vi.mock('@/assets/svg/icon_left-align_outlined.svg', () => ({ default: 'icon' }))
 vi.mock('@/assets/svg/icon_horizontal-align_outlined.svg', () => ({ default: 'icon' }))
 vi.mock('@/assets/svg/icon_right-align_outlined.svg', () => ({ default: 'icon' }))
