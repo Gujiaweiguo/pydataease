@@ -93,7 +93,6 @@ describe('DrawerFilter', () => {
     wrapper.getComponent(ElSelectStub).vm.$emit('update:modelValue', selected)
     await nextTick()
     expect(wrapper.get('.select-stub').attributes('data-count')).toBe('1')
-
     ;(wrapper.vm as unknown as { clear: () => void }).clear()
     await nextTick()
 

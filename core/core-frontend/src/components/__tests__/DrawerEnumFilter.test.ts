@@ -41,7 +41,6 @@ describe('DrawerEnumFilter', () => {
 
     await wrapper.findAll('.item')[1].trigger('click')
     expect(wrapper.findAll('.item')[1].classes()).toContain('active')
-
     ;(wrapper.vm as unknown as { clear: () => void }).clear()
     await wrapper.vm.$nextTick()
 
