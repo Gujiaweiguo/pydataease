@@ -24,7 +24,10 @@ const globalStubs = {
   ElFormItem: { template: '<div><slot /></div>', props: ['label', 'prop', 'style'] },
   ElInput: { template: '<input />', props: ['modelValue', 'placeholder', 'clearable'] },
   ElButton: { template: '<button><slot /></button>', props: ['style', 'icon', 'secondary'] },
-  ElSelect: { template: '<select><slot /></select>', props: ['modelValue', 'multiple', 'style', 'popperClass'] },
+  ElSelect: {
+    template: '<select><slot /></select>',
+    props: ['modelValue', 'multiple', 'style', 'popperClass']
+  },
   ElOption: { template: '<option><slot /></option>', props: ['key', 'label', 'value'] },
   ElIcon: { template: '<i><slot /></i>' },
   ElRow: { template: '<div><slot /></div>', props: ['class'] },
@@ -33,9 +36,7 @@ const globalStubs = {
 
 const defaultProps = () => ({
   pid: 'root',
-  templateCategories: [
-    { id: 'cat1', name: 'Category 1' }
-  ],
+  templateCategories: [{ id: 'cat1', name: 'Category 1' }],
   optType: 'insert'
 })
 

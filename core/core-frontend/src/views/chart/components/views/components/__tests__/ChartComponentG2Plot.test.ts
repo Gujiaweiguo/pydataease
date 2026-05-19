@@ -70,14 +70,20 @@ vi.mock('@/views/chart/components/js/panel/common/common_antv', () => ({
 }))
 vi.mock('@antv/l7', () => ({
   ExportImage: class {
-    hide() { return undefined }
+    hide() {
+      return undefined
+    }
   }
 }))
 
 import ChartComponentG2Plot from '../ChartComponentG2Plot.vue'
 
 const globalStubs = {
-  ViewTrackBar: { template: '<div />', props: ['trackMenu', 'fontFamily', 'isDataVMobile', 'style'], methods: { trackButtonClick: () => undefined } },
+  ViewTrackBar: {
+    template: '<div />',
+    props: ['trackMenu', 'fontFamily', 'isDataVMobile', 'style'],
+    methods: { trackButtonClick: () => undefined }
+  },
   ChartError: { template: '<div />', props: ['errMsg'] }
 }
 
@@ -103,7 +109,18 @@ describe('ChartComponentG2Plot', () => {
     const wrapper = shallowMount(ChartComponentG2Plot, {
       props: {
         element: { propValue: null, actionSelection: { linkageActive: 'auto' } },
-        view: { id: 'test-view', type: 'bar', render: 'antv', xAxis: [], yAxis: [], xAxisExt: [], extStack: [], drillFields: [], customAttr: '{}', customStyle: '{}' }
+        view: {
+          id: 'test-view',
+          type: 'bar',
+          render: 'antv',
+          xAxis: [],
+          yAxis: [],
+          xAxisExt: [],
+          extStack: [],
+          drillFields: [],
+          customAttr: '{}',
+          customStyle: '{}'
+        }
       },
       global: { stubs: globalStubs }
     })
@@ -114,7 +131,18 @@ describe('ChartComponentG2Plot', () => {
     const wrapper = shallowMount(ChartComponentG2Plot, {
       props: {
         element: { propValue: null, actionSelection: { linkageActive: 'auto' } },
-        view: { id: 'test-view', type: 'bar', render: 'antv', xAxis: [], yAxis: [], xAxisExt: [], extStack: [], drillFields: [], customAttr: '{}', customStyle: '{}' },
+        view: {
+          id: 'test-view',
+          type: 'bar',
+          render: 'antv',
+          xAxis: [],
+          yAxis: [],
+          xAxisExt: [],
+          extStack: [],
+          drillFields: [],
+          customAttr: '{}',
+          customStyle: '{}'
+        },
         showPosition: 'multiplexing'
       },
       global: { stubs: globalStubs }
@@ -127,7 +155,18 @@ describe('ChartComponentG2Plot', () => {
     const wrapper = shallowMount(ChartComponentG2Plot, {
       props: {
         element: { propValue: null, actionSelection: { linkageActive: 'auto' } },
-        view: { id: 'test-view', type: 'bar', render: 'antv', xAxis: [], yAxis: [], xAxisExt: [], extStack: [], drillFields: [], customAttr: '{}', customStyle: '{}' }
+        view: {
+          id: 'test-view',
+          type: 'bar',
+          render: 'antv',
+          xAxis: [],
+          yAxis: [],
+          xAxisExt: [],
+          extStack: [],
+          drillFields: [],
+          customAttr: '{}',
+          customStyle: '{}'
+        }
       },
       global: { stubs: globalStubs }
     })

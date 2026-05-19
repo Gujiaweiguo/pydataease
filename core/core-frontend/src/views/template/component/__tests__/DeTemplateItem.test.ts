@@ -12,7 +12,10 @@ import DeTemplateItem from '../DeTemplateItem.vue'
 const globalStubs = {
   ElCheckbox: { template: '<input type="checkbox" />', props: ['modelValue'] },
   ElTooltip: { template: '<div><slot /></div>', props: ['effect', 'content', 'placement'] },
-  ElDropdown: { template: '<div><slot /><slot name="dropdown" /></div>', props: ['size', 'trigger'] },
+  ElDropdown: {
+    template: '<div><slot /><slot name="dropdown" /></div>',
+    props: ['size', 'trigger']
+  },
   ElDropdownMenu: { template: '<div><slot /></div>' },
   ElDropdownItem: { template: '<div><slot /></div>', props: ['command'] },
   ElIcon: { template: '<i><slot /></i>', props: ['class'] },

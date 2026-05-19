@@ -23,9 +23,7 @@ vi.mock('@/views/chart/components/editor/util/chart', () => ({
       category: 'quota',
       title: 'Quota',
       display: 'show',
-      details: [
-        { title: 'Bar', value: 'bar', icon: 'bar-icon' }
-      ]
+      details: [{ title: 'Bar', value: 'bar', icon: 'bar-icon' }]
     }
   ]
 }))

@@ -2,7 +2,11 @@ import { ref } from 'vue'
 import { shallowMount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-vi.mock('@/api/visualization/dataVisualization', () => ({ queryTreeApi: () => Promise.resolve([]) }))
+vi.mock('@/config/axios', () => ({}))
+vi.mock('@/config/axios/service', () => ({ service: {} as any, PATH_URL: './', cancelMap: new Map() }))
+vi.mock('@/api/visualization/dataVisualization', () => ({
+  queryTreeApi: () => Promise.resolve([])
+}))
 vi.mock('pinia', () => ({
   defineStore: () => () => ({}),
   createPinia: () => ({}),
@@ -79,7 +83,6 @@ vi.mock('@/utils/changeComponentsSizeWithScale', () => ({
   changeSizeWithScale: vi.fn()
 }))
 
-
 vi.mock('@/components/plugin', () => ({
   XpackComponent: { template: '<div />' }
 }))
@@ -100,8 +103,14 @@ import DvToolbar from '../DvToolbar.vue'
 const stubs = {
   ElButton: { template: '<button><slot /></button>', props: ['type', 'icon', 'disabled'] },
   ElIcon: { template: '<i><slot /></i>' },
-  ElTooltip: { template: '<div><slot /></div>', props: ['content', 'effect', 'placement', 'offset'] },
-  ElDropdown: { template: '<div><slot /><slot name="dropdown" /></div>', props: ['trigger', 'disabled'] },
+  ElTooltip: {
+    template: '<div><slot /></div>',
+    props: ['content', 'effect', 'placement', 'offset']
+  },
+  ElDropdown: {
+    template: '<div><slot /><slot name="dropdown" /></div>',
+    props: ['trigger', 'disabled']
+  },
   ElDropdownMenu: { template: '<div><slot /></div>' },
   ElDropdownItem: { template: '<div><slot /></div>' },
   Icon: { template: '<span><slot /></span>' },
@@ -114,9 +123,9 @@ const stubs = {
   OuterParamsSet: { template: '<div />' },
   DeFullscreen: { template: '<div />' },
   XpackComponent: { template: '<div />' },
-  'icon_left_outlined': { template: '<svg />' },
-  'icon_undo_outlined': { template: '<svg />' },
-  'icon_redo_outlined': { template: '<svg />' }
+  icon_left_outlined: { template: '<svg />' },
+  icon_undo_outlined: { template: '<svg />' },
+  icon_redo_outlined: { template: '<svg />' }
 }
 
 describe('DvToolbar', () => {

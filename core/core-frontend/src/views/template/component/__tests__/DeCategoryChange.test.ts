@@ -16,7 +16,10 @@ import DeCategoryChange from '../DeCategoryChange.vue'
 const globalStubs = {
   ElForm: { template: '<form><slot /></form>', props: ['model', 'rules', 'labelPosition'] },
   ElFormItem: { template: '<div><slot /></div>', props: ['label', 'prop', 'style'] },
-  ElSelect: { template: '<select><slot /></select>', props: ['modelValue', 'multiple', 'style', 'popperClass'] },
+  ElSelect: {
+    template: '<select><slot /></select>',
+    props: ['modelValue', 'multiple', 'style', 'popperClass']
+  },
   ElOption: { template: '<option><slot /></option>', props: ['key', 'label', 'value'] },
   ElRow: { template: '<div><slot /></div>', props: ['class'] },
   ElButton: { template: '<button><slot /></button>', props: ['secondary', 'type'] }

@@ -48,7 +48,10 @@ const stubs = {
   ElFormItem: { template: '<div><slot /></div>', props: ['label', 'effect', 'class'] },
   ElRow: { template: '<div><slot /></div>', props: ['gutter'] },
   ElCol: { template: '<div><slot /></div>', props: ['span'] },
-  ElColorPicker: { template: '<input type="color" />', props: ['modelValue', 'effect', 'size', 'triggerWidth', 'isCustom', 'predefine'] }
+  ElColorPicker: {
+    template: '<input type="color" />',
+    props: ['modelValue', 'effect', 'size', 'triggerWidth', 'isCustom', 'predefine']
+  }
 }
 
 describe('SeniorStyleSetting', () => {

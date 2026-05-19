@@ -71,7 +71,13 @@ const globalStubs = {
 }
 
 describe('ExportExcel', () => {
-  const mountOpts = { global: { stubs: globalStubs, mocks: { $t: (k: string) => k }, directives: { loading: () => undefined } } }
+  const mountOpts = {
+    global: {
+      stubs: globalStubs,
+      mocks: { $t: (k: string) => k },
+      directives: { loading: () => undefined }
+    }
+  }
 
   it('renders without errors', () => {
     const wrapper = shallowMount(ExportExcel, mountOpts)

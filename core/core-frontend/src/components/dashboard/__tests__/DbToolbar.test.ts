@@ -2,12 +2,23 @@ import { ref } from 'vue'
 import { shallowMount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-vi.mock('@/api/visualization/dataVisualization', () => ({ queryTreeApi: () => Promise.resolve([]) }))
+vi.mock('@/config/axios', () => ({}))
+vi.mock('@/config/axios/service', () => ({ service: {} as any, PATH_URL: './', cancelMap: new Map() }))
+vi.mock('@/api/visualization/dataVisualization', () => ({
+  queryTreeApi: () => Promise.resolve([])
+}))
 vi.mock('pinia', () => ({
   defineStore: () => () => ({}),
   createPinia: () => ({}),
   storeToRefs: () => ({
-    dvInfo: ref({ id: 'dv1', type: 'dashboard', name: 'Test Dashboard', dataState: 'ready', status: 1, pid: '0' }),
+    dvInfo: ref({
+      id: 'dv1',
+      type: 'dashboard',
+      name: 'Test Dashboard',
+      dataState: 'ready',
+      status: 1,
+      pid: '0'
+    }),
     componentData: ref([]),
     canvasViewInfo: ref({}),
     editMode: ref('edit'),
@@ -87,15 +98,16 @@ vi.mock('@/utils/canvasUtils', () => ({
   initCanvasData: vi.fn()
 }))
 
+vi.mock('@/config/axios', () => ({}))
 vi.mock('@/api/visualization/linkage', () => ({
   getPanelAllLinkageInfo: vi.fn(() => Promise.resolve({ data: {} })),
   saveLinkage: vi.fn(() => Promise.resolve())
 }))
 
+vi.mock('@/config/axios', () => ({}))
 vi.mock('@/api/visualization/linkJump', () => ({
   queryVisualizationJumpInfo: vi.fn(() => Promise.resolve({ data: {} }))
 }))
-
 
 vi.mock('@/components/plugin', () => ({
   XpackComponent: { template: '<div />' }
@@ -118,7 +130,10 @@ const stubs = {
   ElButton: { template: '<button><slot /></button>', props: ['type', 'icon', 'disabled', 'text'] },
   ElIcon: { template: '<i><slot /></i>' },
   ElTooltip: { template: '<div><slot /></div>', props: ['content', 'effect', 'placement'] },
-  ElDropdown: { template: '<div><slot /><slot name="dropdown" /></div>', props: ['trigger', 'disabled'] },
+  ElDropdown: {
+    template: '<div><slot /><slot name="dropdown" /></div>',
+    props: ['trigger', 'disabled']
+  },
   ElDropdownMenu: { template: '<div><slot /></div>' },
   ElDropdownItem: { template: '<div><slot /></div>' },
   ElCol: { template: '<div><slot /></div>' },
@@ -132,9 +147,9 @@ const stubs = {
   DeFullscreen: { template: '<div />' },
   DeAppApply: { template: '<div />' },
   XpackComponent: { template: '<div />' },
-  'icon_left_outlined': { template: '<svg />' },
-  'icon_undo_outlined': { template: '<svg />' },
-  'icon_redo_outlined': { template: '<svg />' }
+  icon_left_outlined: { template: '<svg />' },
+  icon_undo_outlined: { template: '<svg />' },
+  icon_redo_outlined: { template: '<svg />' }
 }
 
 describe('DbToolbar', () => {

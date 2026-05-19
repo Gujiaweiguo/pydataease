@@ -16,7 +16,10 @@ vi.mock('../form/ApiTestModel.js', () => ({
 }))
 
 vi.mock('vuedraggable', () => ({
-  default: { template: '<div class="draggable-stub"><slot name="item" element="{ element: {}, index: 0 }" /></div>' }
+  default: {
+    template:
+      '<div class="draggable-stub"><slot name="item" element="{ element: {}, index: 0 }" /></div>'
+  }
 }))
 
 import ApiKeyValue from '../form/ApiKeyValue.vue'

@@ -9,7 +9,12 @@ vi.mock('@/api/chart', () => ({
 vi.mock('@/views/chart/components/js/panel', () => ({
   default: {
     getChartView: () => ({
-      drawChart: () => ({ render: () => undefined, destroy: () => undefined, facet: { timer: { stop: () => undefined } }, getCanvasElement: () => ({ remove: () => undefined }) })
+      drawChart: () => ({
+        render: () => undefined,
+        destroy: () => undefined,
+        facet: { timer: { stop: () => undefined } },
+        getCanvasElement: () => ({ remove: () => undefined })
+      })
     })
   }
 }))
@@ -35,7 +40,9 @@ vi.mock('pinia', () => ({
     nowPanelTrackInfo: { value: {} },
     nowPanelJumpInfo: { value: {} },
     mobileInPc: { value: false },
-    canvasStyleData: { value: { component: { seniorStyleSetting: { pagerSize: 14, pagerColor: '#333' } } } },
+    canvasStyleData: {
+      value: { component: { seniorStyleSetting: { pagerSize: 14, pagerColor: '#333' } } }
+    },
     embeddedCallBack: { value: 'no' },
     inMobile: { value: false }
   }),
@@ -66,7 +73,10 @@ vi.mock('lodash-es', () => ({
   debounce: (fn: any) => fn
 }))
 vi.mock('element-plus-secondary', () => ({
-  ElPagination: { template: '<div />', props: ['layout', 'pageSize', 'currentPage', 'pagerCount', 'total'] }
+  ElPagination: {
+    template: '<div />',
+    props: ['layout', 'pageSize', 'currentPage', 'pagerCount', 'total']
+  }
 }))
 vi.mock('@antv/s2', () => ({
   SpreadSheet: {}
@@ -75,11 +85,18 @@ vi.mock('@antv/s2', () => ({
 import ChartComponentS2 from '../ChartComponentS2.vue'
 
 const globalStubs = {
-  ViewTrackBar: { template: '<div />', props: ['trackMenu', 'fontFamily', 'isDataVMobile', 'style'], methods: { trackButtonClick: () => undefined } },
+  ViewTrackBar: {
+    template: '<div />',
+    props: ['trackMenu', 'fontFamily', 'isDataVMobile', 'style'],
+    methods: { trackButtonClick: () => undefined }
+  },
   ChartError: { template: '<div />', props: ['errMsg'] },
   ElRow: { template: '<div><slot /></div>', props: ['style'] },
   ElDialog: { template: '<div><slot /></div>', props: ['modelValue'] },
-  ElPagination: { template: '<div />', props: ['layout', 'pageSize', 'currentPage', 'pagerCount', 'total'] }
+  ElPagination: {
+    template: '<div />',
+    props: ['layout', 'pageSize', 'currentPage', 'pagerCount', 'total']
+  }
 }
 
 const defaultView = () => ({

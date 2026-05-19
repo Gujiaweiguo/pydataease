@@ -33,7 +33,10 @@ const globalStubs = {
   },
   ElSelect: { template: '<select><slot /></select>', props: ['modelValue', 'placeholder'] },
   ElOption: { template: '<option><slot /></option>', props: ['key', 'label', 'value'] },
-  ElInput: { template: '<input />', props: ['modelValue', 'clearable', 'maxlength', 'placeholder'] },
+  ElInput: {
+    template: '<input />',
+    props: ['modelValue', 'clearable', 'maxlength', 'placeholder']
+  },
   ElCheckbox: { template: '<input type="checkbox" />', props: ['modelValue', 'label'] },
   ElRow: { template: '<div><slot /></div>', props: ['gutter'] },
   ElCol: { template: '<div><slot /></div>', props: ['span'] }

@@ -10,11 +10,22 @@ vi.mock('@/views/chart/components/editor/util/chart', () => ({
   ]
 }))
 vi.mock('@/views/chart/components/js/util', () => ({
-  getMapColorCases: (cases: any[]) =>
-    cases.map(c => ({ ...c, value: c.value + '_split_gradient' }))
+  getMapColorCases: (cases: any[]) => cases.map(c => ({ ...c, value: c.value + '_split_gradient' }))
 }))
 vi.mock('element-plus-secondary', () => ({
-  ElPopover: { template: '<div><slot /></div>', props: ['placement', 'width', 'trigger', 'persistent', 'showArrow', 'popperStyle', 'effect', 'offset'] }
+  ElPopover: {
+    template: '<div><slot /></div>',
+    props: [
+      'placement',
+      'width',
+      'trigger',
+      'persistent',
+      'showArrow',
+      'popperStyle',
+      'effect',
+      'offset'
+    ]
+  }
 }))
 
 import GradientColorSelector from '../GradientColorSelector.vue'

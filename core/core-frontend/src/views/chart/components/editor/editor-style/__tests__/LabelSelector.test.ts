@@ -77,7 +77,9 @@ vi.mock('lodash-es', () => ({
 }))
 vi.mock('pinia', () => ({
   defineStore: () => () => ({}),
-  createPinia: () => ({}), storeToRefs: (s: any) => ({ batchOptStatus: { value: false } }) }))
+  createPinia: () => ({}),
+  storeToRefs: (s: any) => ({ batchOptStatus: { value: false } })
+}))
 vi.mock('@/components/icon-custom/src/Icon.vue', () => ({
   default: { template: '<span><slot /></span>' }
 }))

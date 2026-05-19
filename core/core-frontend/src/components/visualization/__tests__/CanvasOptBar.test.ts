@@ -70,9 +70,7 @@ describe('CanvasOptBar', () => {
     const wrapper = shallowMount(CanvasOptBar, {
       props: {
         canvasStyleData: {},
-        componentData: [
-          { component: 'UserView', linkageFilters: [] }
-        ]
+        componentData: [{ component: 'UserView', linkageFilters: [] }]
       },
       global: globalMocks
     })
@@ -83,9 +81,7 @@ describe('CanvasOptBar', () => {
     const wrapper = shallowMount(CanvasOptBar, {
       props: {
         canvasStyleData: {},
-        componentData: [
-          { component: 'UserView', linkageFilters: [{ fieldId: 'f1' }] }
-        ]
+        componentData: [{ component: 'UserView', linkageFilters: [{ fieldId: 'f1' }] }]
       },
       global: globalMocks
     })
@@ -97,9 +93,7 @@ describe('CanvasOptBar', () => {
     const wrapper = shallowMount(CanvasOptBar, {
       props: {
         canvasStyleData: {},
-        componentData: [
-          { component: 'UserView', linkageFilters: [{ fieldId: 'f1' }] }
-        ]
+        componentData: [{ component: 'UserView', linkageFilters: [{ fieldId: 'f1' }] }]
       },
       global: globalMocks
     })
@@ -113,9 +107,7 @@ describe('CanvasOptBar', () => {
     const wrapper = shallowMount(CanvasOptBar, {
       props: {
         canvasStyleData: {},
-        componentData: [
-          { component: 'UserView', linkageFilters: [{ fieldId: 'f1' }] }
-        ],
+        componentData: [{ component: 'UserView', linkageFilters: [{ fieldId: 'f1' }] }],
         isFixed: true
       },
       global: globalMocks
@@ -127,9 +119,7 @@ describe('CanvasOptBar', () => {
     const wrapper = shallowMount(CanvasOptBar, {
       props: {
         canvasStyleData: {},
-        componentData: [
-          { component: 'UserView', linkageFilters: [{ fieldId: 'f1' }] }
-        ],
+        componentData: [{ component: 'UserView', linkageFilters: [{ fieldId: 'f1' }] }],
         canvasId: 'canvas-0-1'
       },
       global: globalMocks

@@ -44,7 +44,12 @@ describe('Pagination', () => {
         page: {
           pageType: 'pageNumber',
           requestData: [
-            { parameterName: 'Page', builtInParameterName: '${pageNumber}', requestParameterName: '', parameterDefaultValue: '' }
+            {
+              parameterName: 'Page',
+              builtInParameterName: '${pageNumber}',
+              requestParameterName: '',
+              parameterDefaultValue: ''
+            }
           ],
           responseData: [
             { parameterName: 'Total', resolutionPath: '', resolutionPathType: 'totalNumber' }

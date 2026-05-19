@@ -13,9 +13,7 @@ vi.mock('@/custom-component/common/ComponentConfig', () => ({
       category: 'CanvasBoard',
       title: 'Canvas Board',
       span: 8,
-      details: [
-        { title: 'Rect', value: 'rect', type: 'common', icon: 'rect-icon' }
-      ]
+      details: [{ title: 'Rect', value: 'rect', type: 'common', icon: 'rect-icon' }]
     }
   ]
 }))

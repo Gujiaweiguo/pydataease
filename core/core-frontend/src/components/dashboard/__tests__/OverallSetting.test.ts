@@ -114,8 +114,14 @@ const stubs = {
   ElCheckbox: { template: '<input type="checkbox" />', props: ['modelValue', 'effect', 'size'] },
   ElRadioGroup: { template: '<div><slot /></div>', props: ['modelValue', 'effect'] },
   ElRadio: { template: '<label><slot /></label>', props: ['label', 'effect', 'value'] },
-  ElInputNumber: { template: '<input type="number" />', props: ['modelValue', 'effect', 'min', 'max', 'disabled'] },
-  ElInput: { template: '<input />', props: ['modelValue', 'effect', 'type', 'disabled', 'min', 'max'] },
+  ElInputNumber: {
+    template: '<input type="number" />',
+    props: ['modelValue', 'effect', 'min', 'max', 'disabled']
+  },
+  ElInput: {
+    template: '<input />',
+    props: ['modelValue', 'effect', 'type', 'disabled', 'min', 'max']
+  },
   ElTooltip: { template: '<div><slot /></div>', props: ['effect', 'placement'] },
   ElIcon: { template: '<i><slot /></i>' },
   Icon: { template: '<span><slot /></span>' },

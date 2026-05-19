@@ -52,11 +52,20 @@ const globalStubs = {
     template: '<input type="number" />',
     props: ['modelValue', 'effect', 'min', 'max', 'size', 'controlsPosition', 'disabled']
   },
-  ElSelect: { template: '<select><slot /></select>', props: ['modelValue', 'effect', 'placeholder', 'class', 'disabled'] },
+  ElSelect: {
+    template: '<select><slot /></select>',
+    props: ['modelValue', 'effect', 'placeholder', 'class', 'disabled']
+  },
   ElOption: { template: '<option><slot /></option>', props: ['key', 'label', 'value'] },
-  ElRadioGroup: { template: '<div><slot /></div>', props: ['modelValue', 'effect', 'size', 'disabled'] },
+  ElRadioGroup: {
+    template: '<div><slot /></div>',
+    props: ['modelValue', 'effect', 'size', 'disabled']
+  },
   ElRadio: { template: '<label><slot /></label>', props: ['effect', 'label'] },
-  ElCheckbox: { template: '<input type="checkbox" />', props: ['modelValue', 'effect', 'size', 'label'] },
+  ElCheckbox: {
+    template: '<input type="checkbox" />',
+    props: ['modelValue', 'effect', 'size', 'label']
+  },
   ElSlider: { template: '<div />', props: ['modelValue', 'effect', 'min', 'max', 'range'] },
   ElTooltip: { template: '<div><slot /></div>', props: ['effect', 'placement'] },
   ElIcon: { template: '<i><slot /></i>' },
