@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { mockRequest, originNameHandleWithArr, originNameHandleBackWithArr, mockCloneDeep } = vi.hoisted(
-  () => ({
+const { mockRequest, originNameHandleWithArr, originNameHandleBackWithArr, mockCloneDeep } =
+  vi.hoisted(() => ({
     mockRequest: {
       get: vi.fn(),
       post: vi.fn()
@@ -9,8 +9,7 @@ const { mockRequest, originNameHandleWithArr, originNameHandleBackWithArr, mockC
     originNameHandleWithArr: vi.fn(),
     originNameHandleBackWithArr: vi.fn(),
     mockCloneDeep: vi.fn((value: any) => structuredClone(value))
-  })
-)
+  }))
 
 vi.mock('@/config/axios', () => ({ default: mockRequest }))
 vi.mock('@/utils/CalculateFields', () => ({
@@ -19,13 +18,7 @@ vi.mock('@/utils/CalculateFields', () => ({
 }))
 vi.mock('lodash-es', () => ({ cloneDeep: mockCloneDeep }))
 
-import {
-  checkSameDataSet,
-  getChart,
-  getData,
-  innerExportDetails,
-  saveChart
-} from '../chart'
+import { checkSameDataSet, getChart, getData, innerExportDetails, saveChart } from '../chart'
 
 describe('API: chart', () => {
   beforeEach(() => {

@@ -11,13 +11,7 @@ const { mockRequest, nameTrim } = vi.hoisted(() => ({
 vi.mock('@/config/axios', () => ({ default: mockRequest }))
 vi.mock('@/utils/utils', () => ({ nameTrim }))
 
-import {
-  createFolder,
-  getDatasetTree,
-  listDatasources,
-  save,
-  uploadFile
-} from '../datasource'
+import { createFolder, getDatasetTree, listDatasources, save, uploadFile } from '../datasource'
 
 describe('API: datasource', () => {
   beforeEach(() => {
