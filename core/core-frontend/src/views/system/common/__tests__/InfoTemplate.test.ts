@@ -2,7 +2,9 @@ import { shallowMount } from '@vue/test-utils'
 import { describe, expect, it, vi } from 'vitest'
 vi.mock('@/hooks/web/useI18n', () => ({ useI18n: () => ({ t: (k: string) => k }) }))
 vi.mock('@/config/axios', () => ({}))
-vi.mock('vue-clipboard3', () => ({ default: () => ({ toClipboard: vi.fn(() => Promise.resolve()) }) }))
+vi.mock('vue-clipboard3', () => ({
+  default: () => ({ toClipboard: vi.fn(() => Promise.resolve()) })
+}))
 vi.mock('@/assets/svg/eye.svg', () => ({ default: '' }))
 vi.mock('@/assets/svg/eye-open.svg', () => ({ default: '' }))
 vi.mock('@/assets/svg/dv-info.svg', () => ({ default: '' }))

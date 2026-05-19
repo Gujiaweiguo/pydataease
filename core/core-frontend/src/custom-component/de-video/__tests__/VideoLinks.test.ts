@@ -45,7 +45,10 @@ const globalStubs = {
   'el-form-item': { template: '<div class="form-item"><slot /></div>', props: ['effect', 'label'] },
   'el-input': { template: '<input class="el-input" />', props: ['modelValue', 'effect'] },
   'el-switch': { template: '<div class="el-switch" />', props: ['modelValue', 'effect', 'size'] },
-  'el-radio-group': { template: '<div class="radio-group"><slot /></div>', props: ['modelValue', 'effect'] },
+  'el-radio-group': {
+    template: '<div class="radio-group"><slot /></div>',
+    props: ['modelValue', 'effect']
+  },
   'el-radio': { template: '<label><slot /></label>', props: ['effect', 'label'] }
 }
 

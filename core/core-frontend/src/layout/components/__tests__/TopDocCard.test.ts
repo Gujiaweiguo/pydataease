@@ -37,7 +37,11 @@ describe('TopDocCard', () => {
   })
 
   it('displays card name', () => {
-    const wrapper = mountComponent({ name: 'Help Center', url: 'https://help.com', icon: 'help-icon' })
+    const wrapper = mountComponent({
+      name: 'Help Center',
+      url: 'https://help.com',
+      icon: 'help-icon'
+    })
     expect(wrapper.text()).toContain('Help Center')
   })
 

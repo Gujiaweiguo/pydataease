@@ -12,7 +12,10 @@ vi.mock('@/store/modules/data-visualization/snapshot', () => ({
   snapshotStoreWithOut: () => ({ recordSnapshotCache: vi.fn() })
 }))
 vi.mock('@/components/visualization/component-background/BackgroundOverallCommon.vue', () => ({
-  default: { template: '<div class="bg-overall-common" />', props: ['themes', 'editPosition', 'commonBackgroundPop', 'componentPosition'] }
+  default: {
+    template: '<div class="bg-overall-common" />',
+    props: ['themes', 'editPosition', 'commonBackgroundPop', 'componentPosition']
+  }
 }))
 
 import TabBackgroundOverall from '../TabBackgroundOverall.vue'
@@ -85,7 +88,7 @@ describe('de-tabs/TabBackgroundOverall.vue', () => {
     expect(wrapper.findAll('.el-tab-pane').length).toBe(2)
   })
 
-    it('has element prop with titleBackground', async () => {
+  it('has element prop with titleBackground', async () => {
     const el = createElement()
     shallowMount(TabBackgroundOverall, {
       props: { element: el },

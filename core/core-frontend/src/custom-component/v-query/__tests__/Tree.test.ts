@@ -17,9 +17,21 @@ const stubs = {
   'el-tree-select': {
     template: '<div class="el-tree-select" />',
     props: [
-      'modelValue', 'data', 'clearable', 'multiple', 'filterable', 'placeholder',
-      'showCheckbox', 'checkStrictly', 'renderAfterExpand', 'filterNodeMethod',
-      'collapseTags', 'collapseTagsTooltip', 'tagColor', 'showWholePath', 'style',
+      'modelValue',
+      'data',
+      'clearable',
+      'multiple',
+      'filterable',
+      'placeholder',
+      'showCheckbox',
+      'checkStrictly',
+      'renderAfterExpand',
+      'filterNodeMethod',
+      'collapseTags',
+      'collapseTagsTooltip',
+      'tagColor',
+      'showWholePath',
+      'style',
       'showBtn'
     ]
   }
@@ -51,7 +63,10 @@ const baseConfig = {
   field: { id: 'f1' }
 }
 
-const mountTree = (configOverrides: Record<string, any> = {}, propsOverrides: Record<string, any> = {}) =>
+const mountTree = (
+  configOverrides: Record<string, any> = {},
+  propsOverrides: Record<string, any> = {}
+) =>
   shallowMount(Tree, {
     props: {
       config: { ...baseConfig, ...configOverrides },

@@ -10,7 +10,10 @@ import GeometryEdit from '../GeometryEdit.vue'
 
 describe('GeometryEdit', () => {
   const stubs = {
-    ElDrawer: { template: '<div class="el-drawer"><slot /><slot name="footer" /></div>', props: ['modelValue'] },
+    ElDrawer: {
+      template: '<div class="el-drawer"><slot /><slot name="footer" /></div>',
+      props: ['modelValue']
+    },
     ElButton: { template: '<button><slot /></button>' },
     ElInput: { template: '<input />', props: ['modelValue'] },
     ElForm: { template: '<form><slot /></form>' },

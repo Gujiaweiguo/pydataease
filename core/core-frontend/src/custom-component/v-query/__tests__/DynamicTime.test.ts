@@ -9,9 +9,7 @@ import DynamicTime from '../DynamicTime.vue'
 const stubs = {
   'el-date-picker': {
     template: '<div class="el-date-picker" />',
-    props: [
-      'modelValue', 'type', 'disabled', 'placeholder', 'prefixIcon', 'popperClass', 'key'
-    ]
+    props: ['modelValue', 'type', 'disabled', 'placeholder', 'prefixIcon', 'popperClass', 'key']
   }
 }
 
@@ -32,7 +30,7 @@ const baseConfig = {
 const mountDynamicTime = (configOverrides: Record<string, any> = {}) =>
   shallowMount(DynamicTime, {
     props: {
-      config: { ...baseConfig, ...configOverrides },
+      config: { ...baseConfig, ...configOverrides }
     },
     global: {
       stubs,

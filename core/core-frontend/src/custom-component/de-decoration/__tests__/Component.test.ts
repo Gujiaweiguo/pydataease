@@ -10,9 +10,19 @@ vi.mock('@/custom-component/de-decoration/component_details/config', () => ({
     }
     return undefined
   },
-  calcTwoPointDistance: (a: number[], b: number[]) => Math.sqrt(Math.pow(a[0] - b[0], 2) + Math.pow(a[1] - b[1], 2)),
-  getPointDistances: (points: number[][]) => points.slice(0, -1).map((_, i) => Math.sqrt(Math.pow(points[i][0] - points[i + 1][0], 2) + Math.pow(points[i][1] - points[i + 1][1], 2))),
-  customMergeColor: (defaults: string[], colors: string[]) => defaults.map((d, i) => (colors && colors[i] !== null ? colors[i] : d))
+  calcTwoPointDistance: (a: number[], b: number[]) =>
+    Math.sqrt(Math.pow(a[0] - b[0], 2) + Math.pow(a[1] - b[1], 2)),
+  getPointDistances: (points: number[][]) =>
+    points
+      .slice(0, -1)
+      .map((_, i) =>
+        Math.sqrt(
+          Math.pow(points[i][0] - points[i + 1][0], 2) +
+            Math.pow(points[i][1] - points[i + 1][1], 2)
+        )
+      ),
+  customMergeColor: (defaults: string[], colors: string[]) =>
+    defaults.map((d, i) => (colors && colors[i] !== null ? colors[i] : d))
 }))
 
 import Component from '../Component.vue'

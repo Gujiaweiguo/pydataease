@@ -6,8 +6,8 @@ vi.mock('@/config/axios', () => ({}))
 vi.mock('@/store/modules/data-visualization/dvMain', () => ({
   dvMainStoreWithOut: () => ({ dvInfo: { type: 'dashboard' }, mobileInPc: false })
 }))
-vi.mock('pinia', async (importOriginal) => {
-  const actual = await importOriginal() as any
+vi.mock('pinia', async importOriginal => {
+  const actual = (await importOriginal()) as any
   return { ...actual, storeToRefs: () => ({ dvInfo: { value: { type: 'dashboard' } } }) }
 })
 vi.mock('@/utils/eventBus', () => ({ default: { on: vi.fn(), off: vi.fn(), emit: vi.fn() } }))
@@ -15,9 +15,15 @@ vi.mock('@/utils/eventBus', () => ({ default: { on: vi.fn(), off: vi.fn(), emit:
 import TextSearch from '../TextSearch.vue'
 
 const stubs = {
-  'el-select': { template: '<select class="el-select-stub"><slot /></select>', props: ['modelValue', 'effect', 'popperClass'] },
+  'el-select': {
+    template: '<select class="el-select-stub"><slot /></select>',
+    props: ['modelValue', 'effect', 'popperClass']
+  },
   'el-option': { template: '<option><slot /></option>', props: ['label', 'value', 'key'] },
-  'el-input': { template: '<input class="el-input-stub" />', props: ['modelValue', 'placeholder', 'style'] }
+  'el-input': {
+    template: '<input class="el-input-stub" />',
+    props: ['modelValue', 'placeholder', 'style']
+  }
 }
 
 const defaultProvide = {
@@ -28,11 +34,19 @@ const defaultProvide = {
 }
 
 const baseConfig = {
-  id: 'test-text', conditionType: 0, queryConditionWidth: 0,
-  conditionValueOperatorF: 'eq', conditionValueF: '', conditionValueOperatorS: 'like',
-  conditionValueS: '', defaultConditionValueOperatorF: 'eq', defaultConditionValueF: '',
-  defaultConditionValueOperatorS: 'like', defaultConditionValueS: '',
-  hideConditionSwitching: false, placeholder: 'Search...'
+  id: 'test-text',
+  conditionType: 0,
+  queryConditionWidth: 0,
+  conditionValueOperatorF: 'eq',
+  conditionValueF: '',
+  conditionValueOperatorS: 'like',
+  conditionValueS: '',
+  defaultConditionValueOperatorF: 'eq',
+  defaultConditionValueF: '',
+  defaultConditionValueOperatorS: 'like',
+  defaultConditionValueS: '',
+  hideConditionSwitching: false,
+  placeholder: 'Search...'
 }
 
 const mountTextSearch = (configOverrides: Record<string, any> = {}) =>
@@ -42,8 +56,12 @@ const mountTextSearch = (configOverrides: Record<string, any> = {}) =>
   })
 
 describe('TextSearch', () => {
-  it('renders successfully with default props', () => { expect(mountTextSearch().exists()).toBe(true) })
-  it('renders the text-search-select wrapper', () => { expect(mountTextSearch().find('.text-search-select').exists()).toBe(true) })
+  it('renders successfully with default props', () => {
+    expect(mountTextSearch().exists()).toBe(true)
+  })
+  it('renders the text-search-select wrapper', () => {
+    expect(mountTextSearch().find('.text-search-select').exists()).toBe(true)
+  })
   it('shows operator select when hideConditionSwitching is false', () => {
     expect(mountTextSearch().findAll('.el-select-stub').length).toBeGreaterThanOrEqual(1)
   })

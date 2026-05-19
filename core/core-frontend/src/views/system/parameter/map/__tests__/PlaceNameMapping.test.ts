@@ -14,7 +14,10 @@ import PlaceNameMapping from '../PlaceNameMapping.vue'
 
 describe('PlaceNameMapping', () => {
   const stubs = {
-    ElDrawer: { template: '<div class="el-drawer"><slot /><slot name="footer" /></div>', props: ['modelValue'] },
+    ElDrawer: {
+      template: '<div class="el-drawer"><slot /><slot name="footer" /></div>',
+      props: ['modelValue']
+    },
     ElButton: { template: '<button><slot /></button>' },
     ElInput: { template: '<input />', props: ['modelValue'] },
     ElTable: { template: '<table><slot /></table>' },
@@ -24,7 +27,7 @@ describe('PlaceNameMapping', () => {
   }
 
   const defaultProps = {
-    selectedData: { geoJson: JSON.stringify({ deMapping: { '北京': '北京' }, features: [] }) },
+    selectedData: { geoJson: JSON.stringify({ deMapping: { 北京: '北京' }, features: [] }) },
     themes: 'plain'
   }
 

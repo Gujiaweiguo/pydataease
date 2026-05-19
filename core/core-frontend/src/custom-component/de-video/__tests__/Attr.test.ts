@@ -11,7 +11,10 @@ vi.mock('@/config/axios', () => ({}))
 vi.mock('@/store/modules/data-visualization/dvMain', () => ({
   dvMainStoreWithOut: () => ({
     curComponent: {
-      videoLinks: { web: { src: 'https://video.com', autoplay: false, loop: false }, videoType: 'web' }
+      videoLinks: {
+        web: { src: 'https://video.com', autoplay: false, loop: false },
+        videoType: 'web'
+      }
     },
     mobileInPc: false
   })

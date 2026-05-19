@@ -3,7 +3,9 @@ import { describe, expect, it, vi } from 'vitest'
 vi.mock('@/hooks/web/useI18n', () => ({ useI18n: () => ({ t: (k: string) => k }) }))
 vi.mock('@/config/axios', () => ({}))
 vi.mock('@/utils/imgUtils', () => ({ imgUrlTrans: (url: string) => url }))
-vi.mock('../TemplateMarketV2Item.vue', () => ({ default: { template: '<div class="template-item" />' } }))
+vi.mock('../TemplateMarketV2Item.vue', () => ({
+  default: { template: '<div class="template-item" />' }
+}))
 import CategoryTemplateV2 from '../CategoryTemplateV2.vue'
 
 describe('CategoryTemplateV2', () => {

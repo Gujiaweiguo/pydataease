@@ -21,9 +21,23 @@ import Time from '../Time.vue'
 const stubs = {
   'el-date-picker': {
     template: '<div class="el-date-picker" />',
-    props: ['modelValue', 'type', 'placeholder', 'disabledDate', 'shortcuts', 'format',
-      'startPlaceholder', 'endPlaceholder', 'rangeSeparator', 'disabled', 'prefixIcon',
-      'popperClass', 'editable', 'style', 'key']
+    props: [
+      'modelValue',
+      'type',
+      'placeholder',
+      'disabledDate',
+      'shortcuts',
+      'format',
+      'startPlaceholder',
+      'endPlaceholder',
+      'rangeSeparator',
+      'disabled',
+      'prefixIcon',
+      'popperClass',
+      'editable',
+      'style',
+      'key'
+    ]
   }
 }
 
@@ -34,13 +48,30 @@ const defaultProvide = {
 }
 
 const baseConfig = {
-  selectValue: '', defaultValue: '', queryConditionWidth: 0, defaultValueCheck: false,
-  displayType: '1', timeGranularity: 'date', setTimeRange: false,
-  timeGranularityMultiple: 'daterange', id: 'test-time', placeholder: '',
-  timeRange: { intervalType: 'none', dynamicWindow: false, maximumSingleQuery: 0,
-    regularOrTrends: 'fixed', regularOrTrendsValue: '', relativeToCurrent: 'custom',
-    timeNum: 0, relativeToCurrentType: 'year', around: 'f', timeNumRange: 0,
-    relativeToCurrentTypeRange: 'year', aroundRange: 'f' }
+  selectValue: '',
+  defaultValue: '',
+  queryConditionWidth: 0,
+  defaultValueCheck: false,
+  displayType: '1',
+  timeGranularity: 'date',
+  setTimeRange: false,
+  timeGranularityMultiple: 'daterange',
+  id: 'test-time',
+  placeholder: '',
+  timeRange: {
+    intervalType: 'none',
+    dynamicWindow: false,
+    maximumSingleQuery: 0,
+    regularOrTrends: 'fixed',
+    regularOrTrendsValue: '',
+    relativeToCurrent: 'custom',
+    timeNum: 0,
+    relativeToCurrentType: 'year',
+    around: 'f',
+    timeNumRange: 0,
+    relativeToCurrentTypeRange: 'year',
+    aroundRange: 'f'
+  }
 }
 
 const mountTime = (configOverrides: Record<string, any> = {}) =>
@@ -50,8 +81,16 @@ const mountTime = (configOverrides: Record<string, any> = {}) =>
   })
 
 describe('Time', () => {
-  it('renders successfully with default config', () => { expect(mountTime().exists()).toBe(true) })
-  it('renders el-date-picker component', () => { expect(mountTime().find('.el-date-picker').exists()).toBe(true) })
-  it('exposes displayTypeChange method', () => { expect(typeof (mountTime().vm as any).displayTypeChange).toBe('function') })
-  it('renders range picker when displayType is 7', () => { expect(mountTime({ displayType: '7', selectValue: [], defaultValue: [] }).exists()).toBe(true) })
+  it('renders successfully with default config', () => {
+    expect(mountTime().exists()).toBe(true)
+  })
+  it('renders el-date-picker component', () => {
+    expect(mountTime().find('.el-date-picker').exists()).toBe(true)
+  })
+  it('exposes displayTypeChange method', () => {
+    expect(typeof (mountTime().vm as any).displayTypeChange).toBe('function')
+  })
+  it('renders range picker when displayType is 7', () => {
+    expect(mountTime({ displayType: '7', selectValue: [], defaultValue: [] }).exists()).toBe(true)
+  })
 })

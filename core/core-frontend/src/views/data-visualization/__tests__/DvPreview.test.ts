@@ -38,7 +38,10 @@ vi.mock('@/utils/imgUtils', () => ({
 vi.mock('@/components/data-visualization/canvas/DePreview.vue', () => ({
   default: {
     template: '<div class="de-preview-stub" />',
-    methods: { restore: vi.fn(), getPreviewCanvasSize: vi.fn(() => ({ innerWidth: 1920, innerHeight: 1080 })) }
+    methods: {
+      restore: vi.fn(),
+      getPreviewCanvasSize: vi.fn(() => ({ innerWidth: 1920, innerHeight: 1080 }))
+    }
   }
 }))
 
@@ -49,7 +52,7 @@ vi.mock('@/store/modules/data-visualization/dvMain', () => ({
 }))
 
 vi.mock('pinia', async importOriginal => {
-  const actual = await importOriginal() as Record<string, unknown>
+  const actual = (await importOriginal()) as Record<string, unknown>
   return {
     ...actual,
     storeToRefs: vi.fn(() => ({

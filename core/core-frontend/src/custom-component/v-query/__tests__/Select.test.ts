@@ -70,7 +70,10 @@ const baseConfig = {
   name: 'Test'
 }
 
-const mountSelect = (configOverrides: Record<string, any> = {}, propsOverrides: Record<string, any> = {}) =>
+const mountSelect = (
+  configOverrides: Record<string, any> = {},
+  propsOverrides: Record<string, any> = {}
+) =>
   shallowMount(Select, {
     props: {
       config: { ...baseConfig, ...configOverrides },

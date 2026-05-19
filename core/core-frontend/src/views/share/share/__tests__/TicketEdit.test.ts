@@ -1,8 +1,15 @@
 import { shallowMount } from '@vue/test-utils'
 import { describe, expect, it, vi } from 'vitest'
 vi.mock('@/hooks/web/useI18n', () => ({ useI18n: () => ({ t: (k: string) => k }) }))
-vi.mock('@/config/axios', () => ({ default: { get: vi.fn(() => Promise.resolve({ data: '' })), post: vi.fn(() => Promise.resolve({})) } }))
-vi.mock('vue-clipboard3', () => ({ default: () => ({ toClipboard: vi.fn(() => Promise.resolve()) }) }))
+vi.mock('@/config/axios', () => ({
+  default: {
+    get: vi.fn(() => Promise.resolve({ data: '' })),
+    post: vi.fn(() => Promise.resolve({}))
+  }
+}))
+vi.mock('vue-clipboard3', () => ({
+  default: () => ({ toClipboard: vi.fn(() => Promise.resolve()) })
+}))
 vi.mock('@/assets/svg/de-copy.svg', () => ({ default: '' }))
 vi.mock('@/assets/svg/icon_refresh_outlined.svg', () => ({ default: '' }))
 vi.mock('@/assets/svg/icon_delete-trash_outlined.svg', () => ({ default: '' }))
@@ -12,7 +19,10 @@ import TicketEdit from '../TicketEdit.vue'
 
 describe('TicketEdit', () => {
   const stubs = {
-    ElDrawer: { template: '<div class="el-drawer"><slot /><slot name="footer" /></div>', props: ['modelValue'] },
+    ElDrawer: {
+      template: '<div class="el-drawer"><slot /><slot name="footer" /></div>',
+      props: ['modelValue']
+    },
     ElButton: { template: '<button><slot /></button>' },
     ElInput: { template: '<input />', props: ['modelValue'] },
     ElInputNumber: { template: '<input type="number" />', props: ['modelValue'] },

@@ -31,7 +31,10 @@ const baseConfig = {
   placeholder: 'Enter number'
 }
 
-const mountNumberInput = (configOverrides: Record<string, any> = {}, propsOverrides: Record<string, any> = {}) =>
+const mountNumberInput = (
+  configOverrides: Record<string, any> = {},
+  propsOverrides: Record<string, any> = {}
+) =>
   shallowMount(NumberInput, {
     props: {
       config: { ...baseConfig, ...configOverrides },

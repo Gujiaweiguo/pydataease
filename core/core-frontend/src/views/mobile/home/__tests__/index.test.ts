@@ -28,7 +28,10 @@ vi.mock('vant/es/sticky/style', () => ({}))
 vi.mock('vant/es/tab/style', () => ({}))
 vi.mock('vant/es/nav-bar/style', () => ({}))
 vi.mock('vant/es/tabs/style', () => ({}))
-vi.mock('lodash-es', () => ({ cloneDeep: (v: any) => JSON.parse(JSON.stringify(v)), map: (arr: any, fn: any) => arr.map(fn) }))
+vi.mock('lodash-es', () => ({
+  cloneDeep: (v: any) => JSON.parse(JSON.stringify(v)),
+  map: (arr: any, fn: any) => arr.map(fn)
+}))
 vi.mock('@/components/plugin', () => ({ XpackComponent: { template: '<div />' } }))
 vi.mock('@/assets/img/none.png', () => ({ default: 'none.png' }))
 import MobileHome from '../index.vue'

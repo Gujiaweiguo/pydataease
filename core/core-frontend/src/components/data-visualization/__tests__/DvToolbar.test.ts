@@ -3,7 +3,11 @@ import { shallowMount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('@/config/axios', () => ({}))
-vi.mock('@/config/axios/service', () => ({ service: {} as any, PATH_URL: './', cancelMap: new Map() }))
+vi.mock('@/config/axios/service', () => ({
+  service: {} as any,
+  PATH_URL: './',
+  cancelMap: new Map()
+}))
 vi.mock('@/api/visualization/dataVisualization', () => ({
   queryTreeApi: () => Promise.resolve([])
 }))

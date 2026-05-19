@@ -12,7 +12,9 @@ vi.mock('@/api/dataset', () => ({
   getFieldTree: () => Promise.resolve([])
 }))
 vi.mock('@/utils/eventBus', () => ({ default: { on: vi.fn(), off: vi.fn(), emit: vi.fn() } }))
-vi.mock('@/hooks/web/useEmitt', () => ({ useEmitt: () => ({ emitter: { emit: vi.fn(), on: vi.fn() } }) }))
+vi.mock('@/hooks/web/useEmitt', () => ({
+  useEmitt: () => ({ emitter: { emit: vi.fn(), on: vi.fn() } })
+}))
 vi.mock('@/utils/color', () => ({ colorStringToHex: (c: string) => c }))
 vi.mock('@/utils/utils', () => ({ isMobile: () => false }))
 vi.mock('./shortcuts', () => ({ useShortcuts: () => ({ shortcuts: [] }) }))
@@ -48,21 +50,44 @@ const defaultProvide = {
 }
 
 const baseConfig = {
-  selectValue: '', defaultValue: '', displayType: '0', defaultValueCheck: false,
-  optionValueSource: 0, multiple: false, checkedFieldsMap: {}, id: 'test-style',
-  field: { id: 'f1' }, checkedFields: [], valueSource: [], displayFormat: 0, name: 'Test'
+  selectValue: '',
+  defaultValue: '',
+  displayType: '0',
+  defaultValueCheck: false,
+  optionValueSource: 0,
+  multiple: false,
+  checkedFieldsMap: {},
+  id: 'test-style',
+  field: { id: 'f1' },
+  checkedFields: [],
+  valueSource: [],
+  displayFormat: 0,
+  name: 'Test'
 }
 
 const mountStyleInject = (displayType = '0') =>
   shallowMount(StyleInject, {
-    props: { config: { ...baseConfig, displayType }, customStyle: { border: '', background: '', text: '' } },
+    props: {
+      config: { ...baseConfig, displayType },
+      customStyle: { border: '', background: '', text: '' }
+    },
     global: { stubs, provide: defaultProvide, directives: { loading: () => undefined } }
   })
 
 describe('StyleInject', () => {
-  it('renders successfully', () => { expect(mountStyleInject().exists()).toBe(true) })
-  it('renders Select for displayType 0', () => { expect(mountStyleInject('0').find('.select-stub').exists()).toBe(true) })
-  it('renders Time for displayType 1', () => { expect(mountStyleInject('1').find('.time-stub').exists()).toBe(true) })
-  it('renders TextSearch for displayType 8', () => { expect(mountStyleInject('8').find('.text-search-stub').exists()).toBe(true) })
-  it('renders NumberInput for displayType 22', () => { expect(mountStyleInject('22').find('.number-input-stub').exists()).toBe(true) })
+  it('renders successfully', () => {
+    expect(mountStyleInject().exists()).toBe(true)
+  })
+  it('renders Select for displayType 0', () => {
+    expect(mountStyleInject('0').find('.select-stub').exists()).toBe(true)
+  })
+  it('renders Time for displayType 1', () => {
+    expect(mountStyleInject('1').find('.time-stub').exists()).toBe(true)
+  })
+  it('renders TextSearch for displayType 8', () => {
+    expect(mountStyleInject('8').find('.text-search-stub').exists()).toBe(true)
+  })
+  it('renders NumberInput for displayType 22', () => {
+    expect(mountStyleInject('22').find('.number-input-stub').exists()).toBe(true)
+  })
 })

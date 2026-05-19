@@ -10,8 +10,17 @@ const stubs = {
   'el-date-picker': {
     template: '<div class="el-date-picker" />',
     props: [
-      'modelValue', 'type', 'disabled', 'placeholder', 'prefixIcon', 'popperClass',
-      'rangeSeparator', 'startPlaceholder', 'endPlaceholder', 'format', 'key'
+      'modelValue',
+      'type',
+      'disabled',
+      'placeholder',
+      'prefixIcon',
+      'popperClass',
+      'rangeSeparator',
+      'startPlaceholder',
+      'endPlaceholder',
+      'format',
+      'key'
     ]
   }
 }
@@ -38,7 +47,7 @@ const baseConfig = {
 const mountDynamicTimeRange = (configOverrides: Record<string, any> = {}) =>
   shallowMount(DynamicTimeRange, {
     props: {
-      config: { ...baseConfig, ...configOverrides },
+      config: { ...baseConfig, ...configOverrides }
     },
     global: {
       stubs,

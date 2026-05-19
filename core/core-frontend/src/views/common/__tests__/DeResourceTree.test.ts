@@ -121,7 +121,7 @@ vi.mock('vue-clipboard3', () => ({
 }))
 
 vi.mock('pinia', async importOriginal => {
-  const actual = await importOriginal() as Record<string, unknown>
+  const actual = (await importOriginal()) as Record<string, unknown>
   return {
     ...actual,
     storeToRefs: vi.fn(() => ({

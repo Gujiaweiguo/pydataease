@@ -16,9 +16,15 @@ vi.mock('@/store/modules/interactive', () => ({
 vi.mock('@/store/modules/user', () => ({ useUserStoreWithOut: () => ({ getName: 'test' }) }))
 vi.mock('@/store/modules/app', () => ({ useAppStoreWithOut: () => ({ getIsIframe: false }) }))
 vi.mock('@/store/modules/embedded', () => ({ useEmbedded: () => ({ getToken: null }) }))
-vi.mock('@/store/modules/share', () => ({ useShareStoreWithOut: () => ({ getShareDisable: false }) }))
-vi.mock('@/api/visualization/dataVisualization', () => ({ storeApi: vi.fn(() => Promise.resolve()) }))
-vi.mock('vue-router_2', () => ({ useRouter: () => ({ push: vi.fn(), resolve: vi.fn(() => ({ href: '' })) }) }))
+vi.mock('@/store/modules/share', () => ({
+  useShareStoreWithOut: () => ({ getShareDisable: false })
+}))
+vi.mock('@/api/visualization/dataVisualization', () => ({
+  storeApi: vi.fn(() => Promise.resolve())
+}))
+vi.mock('vue-router_2', () => ({
+  useRouter: () => ({ push: vi.fn(), resolve: vi.fn(() => ({ href: '' })) })
+}))
 vi.mock('@/components/plugin', () => ({ XpackComponent: { template: '<div />' } }))
 vi.mock('@/views/workbranch/ShortcutOption', () => ({
   shortcutOption: {
@@ -39,7 +45,9 @@ vi.mock('@/assets/svg/icon_operation-analysis_outlined.svg', () => ({ default: '
 vi.mock('@/assets/svg/dv-dashboard-spine-mobile.svg', () => ({ default: '' }))
 vi.mock('@/assets/svg/icon_pc_outlined.svg', () => ({ default: '' }))
 vi.mock('@/assets/svg/dv-dashboard-spine-mobile-disabled.svg', () => ({ default: '' }))
-vi.mock('vue-clipboard3', () => ({ default: () => ({ toClipboard: vi.fn(() => Promise.resolve()) }) }))
+vi.mock('vue-clipboard3', () => ({
+  default: () => ({ toClipboard: vi.fn(() => Promise.resolve()) })
+}))
 vi.mock('@/views/share/share/ShareGrid.vue', () => ({ default: { template: '<div />' } }))
 vi.mock('@/views/share/share/ShareHandler.vue', () => ({ default: { template: '<div />' } }))
 import ShortcutTable from '../ShortcutTable.vue'

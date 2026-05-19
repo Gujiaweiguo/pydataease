@@ -2,7 +2,9 @@ import { shallowMount } from '@vue/test-utils'
 import { describe, expect, it, vi } from 'vitest'
 vi.mock('@/hooks/web/useI18n', () => ({ useI18n: () => ({ t: (k: string) => k }) }))
 vi.mock('@/config/axios', () => ({}))
-vi.mock('@/api/aiSqlBot', () => ({ findDvSqlBotDataset: vi.fn(() => Promise.resolve({ data: [] })) }))
+vi.mock('@/api/aiSqlBot', () => ({
+  findDvSqlBotDataset: vi.fn(() => Promise.resolve({ data: [] }))
+}))
 vi.mock('@/store/modules/data-visualization/dvMain', () => {
   const dvInfo = { value: { id: null }, __v_isRef: true }
   return { dvMainStoreWithOut: () => ({ dvInfo }) }

@@ -18,7 +18,15 @@ vi.mock('@/hooks/web/useCache', () => ({
 
 vi.mock('@/store/modules/data-visualization/dvMain', () => ({
   dvMainStoreWithOut: () => ({
-    dvInfo: { id: '123', name: 'Test Dashboard', type: 'dataV', status: 1, weight: 9, ext: 0, creatorName: 'admin' }
+    dvInfo: {
+      id: '123',
+      name: 'Test Dashboard',
+      type: 'dataV',
+      status: 1,
+      weight: 9,
+      ext: 0,
+      creatorName: 'admin'
+    }
   })
 }))
 
@@ -72,11 +80,21 @@ vi.mock('vue-clipboard3', () => ({
 }))
 
 vi.mock('pinia', async importOriginal => {
-  const actual = await importOriginal() as Record<string, unknown>
+  const actual = (await importOriginal()) as Record<string, unknown>
   return {
     ...actual,
     storeToRefs: vi.fn(() => ({
-      dvInfo: { value: { id: '123', name: 'Test Dashboard', type: 'dataV', status: 1, weight: 9, ext: 0, creatorName: 'admin' } }
+      dvInfo: {
+        value: {
+          id: '123',
+          name: 'Test Dashboard',
+          type: 'dataV',
+          status: 1,
+          weight: 9,
+          ext: 0,
+          creatorName: 'admin'
+        }
+      }
     }))
   }
 })
@@ -92,7 +110,10 @@ const globalStubs = {
   ElDropdown: { template: '<div><slot /><slot name="dropdown" /></div>' },
   ElDropdownMenu: { template: '<div><slot /></div>' },
   ElDropdownItem: { template: '<div><slot /></div>' },
-  ShareVisualHead: { template: '<div />', props: ['disabled', 'resourceId', 'weight', 'resourceType'] },
+  ShareVisualHead: {
+    template: '<div />',
+    props: ['disabled', 'resourceId', 'weight', 'resourceType']
+  },
   DvDetailInfo: { template: '<div />' }
 }
 

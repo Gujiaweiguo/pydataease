@@ -1,10 +1,19 @@
 import { shallowMount } from '@vue/test-utils'
 import { describe, expect, it, vi } from 'vitest'
 vi.mock('@/hooks/web/useI18n', () => ({ useI18n: () => ({ t: (k: string) => k }) }))
-vi.mock('@/config/axios', () => ({ default: { get: vi.fn(() => Promise.resolve({ data: {} })), post: vi.fn(() => Promise.resolve({})) } }))
-vi.mock('vue-clipboard3', () => ({ default: () => ({ toClipboard: vi.fn(() => Promise.resolve()) }) }))
+vi.mock('@/config/axios', () => ({
+  default: {
+    get: vi.fn(() => Promise.resolve({ data: {} })),
+    post: vi.fn(() => Promise.resolve({}))
+  }
+}))
+vi.mock('vue-clipboard3', () => ({
+  default: () => ({ toClipboard: vi.fn(() => Promise.resolve()) })
+}))
 vi.mock('@/store/modules/embedded', () => ({ useEmbedded: () => ({ baseUrl: '' }) }))
-vi.mock('@/store/modules/share', () => ({ useShareStoreWithOut: () => ({ getShareDisable: false, getSharePeRequire: false }) }))
+vi.mock('@/store/modules/share', () => ({
+  useShareStoreWithOut: () => ({ getShareDisable: false, getSharePeRequire: false })
+}))
 vi.mock('@/assets/svg/icon_share-label_outlined.svg', () => ({ default: '' }))
 vi.mock('@/assets/svg/icon_edit_outlined.svg', () => ({ default: '' }))
 vi.mock('@/assets/svg/icon_close_outlined.svg', () => ({ default: '' }))

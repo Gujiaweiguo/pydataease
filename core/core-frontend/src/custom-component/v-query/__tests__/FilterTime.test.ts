@@ -7,9 +7,15 @@ vi.mock('@/config/axios', () => ({}))
 import FilterTime from '../FilterTime.vue'
 
 const stubs = {
-  'el-radio-group': { template: '<div class="el-radio-group"><slot /></div>', props: ['modelValue'] },
+  'el-radio-group': {
+    template: '<div class="el-radio-group"><slot /></div>',
+    props: ['modelValue']
+  },
   'el-radio': { template: '<label class="el-radio"><slot /></label>', props: ['label', 'value'] },
-  'el-select': { template: '<select class="el-select"><slot /></select>', props: ['modelValue', 'teleported'] },
+  'el-select': {
+    template: '<select class="el-select"><slot /></select>',
+    props: ['modelValue', 'teleported']
+  },
   'el-option': { template: '<option><slot /></option>', props: ['label', 'value', 'key'] },
   'el-input-number': {
     template: '<input type="number" class="el-input-number" />',
@@ -17,8 +23,14 @@ const stubs = {
   },
   DynamicTimeFiltering: { template: '<div class="dynamic-time-filtering" />' },
   DynamicTimeRangeFiltering: { template: '<div class="dynamic-time-range-filtering" />' },
-  DynamicTime: { template: '<div class="dynamic-time" />', props: ['config', 'timeGranularityMultiple'] },
-  DynamicTimeRange: { template: '<div class="dynamic-time-range" />', props: ['config', 'timeGranularityMultiple'] }
+  DynamicTime: {
+    template: '<div class="dynamic-time" />',
+    props: ['config', 'timeGranularityMultiple']
+  },
+  DynamicTimeRange: {
+    template: '<div class="dynamic-time-range" />',
+    props: ['config', 'timeGranularityMultiple']
+  }
 }
 
 const mountFilterTime = (propsOverrides: Record<string, any> = {}) =>
