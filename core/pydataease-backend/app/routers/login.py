@@ -32,6 +32,7 @@ async def local_login(
 
 
 @router.get("/login/refresh")
+@limiter.limit("20/minute")
 async def refresh_token(
     request: Request,
     service: AuthService = Depends(get_auth_service),

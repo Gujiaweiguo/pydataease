@@ -32,6 +32,8 @@ def apply_row_filters(sql: str, filters: list[str]) -> str:
 
 def _mask_value(value: str) -> str:
     """Mask a string value: keep first and last char, replace middle with *."""
+    if not value:
+        return ""
     if len(value) <= 2:
         return value[0] + "*" if len(value) == 2 else "*"
     return value[0] + "*" * (len(value) - 2) + value[-1]

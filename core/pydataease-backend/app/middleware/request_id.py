@@ -55,8 +55,11 @@ class RequestIDMiddleware:
 
     @staticmethod
     def _get_existing_id(scope: Scope) -> str:
-        """Return the first ``X-Request-ID`` header value, or empty string."""
+        """Return the first ``X-Request-ID`` header value, validated."""
         for key, value in scope.get("headers", []):
             if key.lower() == HEADER_NAME:
-                return value.decode("latin-1")
+                raw = value.decode("latin-1")
+                # BUG-065 fix: Validate format and length
+                if len(raw) <= 64 and all(c.isalnum() or c in "-_" for c in raw):
+                    return raw
         return ""

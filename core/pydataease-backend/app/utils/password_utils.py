@@ -31,9 +31,8 @@ def verify_password(plaintext: str, hashed: str) -> bool:
 def derive_jwt_secret(password_hash: str) -> str:
     """Derive a deterministic JWT secret from a bcrypt password hash.
 
-    The Java community edition uses ``MD5(plaintext_password)`` as the
-    HMAC-256 key.  Because we store bcrypt hashes rather than plaintext
-    passwords, we derive the secret as ``MD5(bcrypt_hash)`` instead.
+    Uses HMAC-SHA256 truncated to 32 hex chars.  Previous versions used
+    MD5; tokens issued under the old scheme will need re-authentication.
 
     Parameters
     ----------
@@ -43,6 +42,6 @@ def derive_jwt_secret(password_hash: str) -> str:
     Returns
     -------
     str
-        A 32-character hex string (MD5 digest).
+        A 32-character hex string (SHA-256 digest, truncated).
     """
-    return hashlib.md5(password_hash.encode("utf-8")).hexdigest()  # noqa: S324
+    return hashlib.sha256(password_hash.encode("utf-8")).hexdigest()[:32]

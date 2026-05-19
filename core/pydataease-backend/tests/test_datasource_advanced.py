@@ -93,7 +93,7 @@ class FakeAdvancedDatasourceService:
         )
 
     async def validate_by_id(self, datasource_id: int) -> dict[str, str]:
-        return {"status": "Success"}
+        return {"status": "Success", "type": "pg"}
 
     async def check_in_use(self, datasource_id: int) -> bool:
         return datasource_id == 100
@@ -221,7 +221,7 @@ async def test_validate_by_id(
 ) -> None:
     response = await client.get("/de2api/datasource/validate/42", headers=auth_headers)
     assert response.status_code == 200
-    assert response.json()["data"] == {"status": "Success"}
+    assert response.json()["data"] == {"status": "Success", "type": "pg"}
 
 
 @pytest.mark.asyncio
@@ -233,6 +233,7 @@ async def test_get_datasource(
     data = response.json()["data"]
     assert data["id"] == 42
     assert data["name"] == "test-ds"
+    # Admin endpoint returns full configuration including plaintext password (by design)
     assert data["configuration"]["password"] == "secret123"
 
 

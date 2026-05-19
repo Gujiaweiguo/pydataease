@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 from typing import final
 
 from fastapi import Depends
@@ -8,6 +9,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.dependencies.database import get_db
 from app.repositories.sys_setting_repo import SysSettingRepository
+
+logger = logging.getLogger(__name__)
 
 
 @final
@@ -20,21 +23,24 @@ class SysSettingService:
         """Return UI settings as list of {key, value} dicts (frontend expects array)."""
         try:
             rows = await self.repo.list_by_type("ui")
-        except (AttributeError, TypeError):
+        except (AttributeError, TypeError) as exc:
+            logger.warning("SysSetting lookup failed for key 'ui': %s", exc)
             return {}
         return [{"key": row.setting_key, "value": row.setting_value or ""} for row in rows]
 
     async def get_setting(self, key: str) -> str | None:
         try:
             row = await self.repo.get_by_key(key)
-        except (AttributeError, TypeError):
+        except (AttributeError, TypeError) as exc:
+            logger.warning("SysSetting lookup failed for key '%s': %s", key, exc)
             return None
         return row.setting_value if row else None
 
     async def get_default_settings(self) -> dict:
         try:
             value = await self.get_setting("defaultSettings.sort")
-        except (AttributeError, TypeError):
+        except (AttributeError, TypeError) as exc:
+            logger.warning("SysSetting lookup failed: %s", exc)
             return {}
         return {"sort": value or "asc"}
 
@@ -43,15 +49,16 @@ class SysSettingService:
             value = await self.get_setting("i18nOptions")
             if value:
                 return json.loads(value)
-        except (AttributeError, TypeError, json.JSONDecodeError):
-            pass
+        except (AttributeError, TypeError, json.JSONDecodeError) as exc:
+            logger.warning("SysSetting i18n lookup failed: %s", exc)
         return {}
 
     async def get_share_base(self) -> dict:
         try:
             disable = await self.get_setting("shareBase.disable")
             pe_require = await self.get_setting("shareBase.peRequire")
-        except (AttributeError, TypeError):
+        except (AttributeError, TypeError) as exc:
+            logger.warning("SysSetting shareBase lookup failed: %s", exc)
             return {"disable": True, "peRequire": False}
         return {
             "disable": disable != "false",
@@ -61,7 +68,8 @@ class SysSettingService:
     async def get_default_login(self) -> int:
         try:
             value = await self.get_setting("defaultLogin")
-        except (AttributeError, TypeError):
+        except (AttributeError, TypeError) as exc:
+            logger.warning("SysSetting defaultLogin lookup failed: %s", exc)
             return 0
         return int(value) if value else 0
 

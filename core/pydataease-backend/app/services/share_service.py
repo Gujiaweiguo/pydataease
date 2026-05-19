@@ -305,6 +305,8 @@ class ShareService:
             await self.share_repo.increment_access_count(uuid)
         except Exception:
             logging.exception("Failed to record share access for uuid=%s", uuid)
+            # BUG-036 fix: Rollback to isolate this transaction
+            await self.session.rollback()
 
     async def save_ticket(self, payload: ShareTicketSaveRequest) -> ShareTicketResponse:
         if payload.generate_new or payload.uuid is None:
@@ -445,7 +447,11 @@ class ShareService:
         return {str(s.resource_id): s.uuid for s in rows}
 
     async def enable_ticket(self, resource_id: str, require: bool) -> None:
-        share = await self.share_repo.get_by_resource_id(int(resource_id))
+        try:
+            rid = int(resource_id)
+        except (ValueError, TypeError):
+            raise HTTPException(status_code=400, detail="Invalid resource_id") from None
+        share = await self.share_repo.get_by_resource_id(rid)
         if share is not None:
             await self.share_repo.update(share, {"ticket_require": require})
 
