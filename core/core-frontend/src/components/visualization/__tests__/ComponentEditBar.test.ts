@@ -118,7 +118,11 @@ const stubs = {
   }),
   ElDropdown: defineComponent({
     name: 'ElDropdown',
-    methods: { handleClose() { /* noop */ } },
+    methods: {
+      handleClose() {
+        /* noop */
+      }
+    },
     template: '<div class="dropdown-stub"><slot /><slot name="dropdown" /></div>'
   }),
   ElDropdownMenu: defineComponent({ name: 'ElDropdownMenu', template: '<div><slot /></div>' }),
@@ -134,7 +138,11 @@ const stubs = {
   FieldsList: defineComponent({ name: 'FieldsList', template: '<div class="fields-list-stub" />' }),
   CustomTabsSort: defineComponent({
     name: 'CustomTabsSort',
-    methods: { sortInit() { /* noop */ } },
+    methods: {
+      sortInit() {
+        /* noop */
+      }
+    },
     template: '<div />'
   }),
   Icon: defineComponent({ name: 'Icon', template: '<span><slot /></span>' }),
