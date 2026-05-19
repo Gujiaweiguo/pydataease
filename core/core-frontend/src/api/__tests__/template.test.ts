@@ -11,13 +11,7 @@ vi.mock('@/config/axios', () => ({
   default: mockRequest
 }))
 
-import {
-  batchUpdate,
-  findCategories,
-  findOne,
-  save,
-  templateDelete
-} from '../template'
+import { batchUpdate, findCategories, findOne, save, templateDelete } from '../template'
 
 describe('API: template', () => {
   beforeEach(() => {

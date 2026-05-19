@@ -13,7 +13,8 @@ vi.mock('vue', async () => {
   return {
     ...actual,
     nextTick: nextTickMock,
-    unref: (value: { value?: string } | string) => (typeof value === 'object' ? value?.value : value)
+    unref: (value: { value?: string } | string) =>
+      typeof value === 'object' ? value?.value : value
   }
 })
 

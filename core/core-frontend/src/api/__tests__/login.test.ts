@@ -11,14 +11,7 @@ vi.mock('@/config/axios', () => ({
   default: mockRequest
 }))
 
-import {
-  loginApi,
-  logoutApi,
-  platformLoginApi,
-  queryDekey,
-  refreshApi,
-  uiLoadApi
-} from '../login'
+import { loginApi, logoutApi, platformLoginApi, queryDekey, refreshApi, uiLoadApi } from '../login'
 
 describe('API: login', () => {
   beforeEach(() => {

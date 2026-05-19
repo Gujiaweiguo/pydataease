@@ -4,27 +4,11 @@ import checkArrayRepeat from '../check'
 
 describe('checkArrayRepeat', () => {
   it('returns true when duplicate names exist', () => {
-    expect(
-      checkArrayRepeat(
-        [
-          { name: 'a' },
-          { name: 'a' }
-        ],
-        'name'
-      )
-    ).toBe(true)
+    expect(checkArrayRepeat([{ name: 'a' }, { name: 'a' }], 'name')).toBe(true)
   })
 
   it('returns false when all names are unique', () => {
-    expect(
-      checkArrayRepeat(
-        [
-          { name: 'a' },
-          { name: 'b' }
-        ],
-        'name'
-      )
-    ).toBe(false)
+    expect(checkArrayRepeat([{ name: 'a' }, { name: 'b' }], 'name')).toBe(false)
   })
 
   it('returns false for an empty array', () => {
@@ -36,15 +20,6 @@ describe('checkArrayRepeat', () => {
   })
 
   it('supports non-string keys such as numeric ids', () => {
-    expect(
-      checkArrayRepeat(
-        [
-          { id: 1 },
-          { id: 1 },
-          { id: 2 }
-        ],
-        'id'
-      )
-    ).toBe(true)
+    expect(checkArrayRepeat([{ id: 1 }, { id: 1 }, { id: 2 }], 'id')).toBe(true)
   })
 })
