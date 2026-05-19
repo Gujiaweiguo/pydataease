@@ -74,9 +74,10 @@ describe('TreeSelect', () => {
 
   it('filters tree nodes by matching the entered name', () => {
     const wrapper = mountComponent()
-    const filterNodeMethod = wrapper
-      .getComponent(ElTreeSelectStub)
-      .props('filterNodeMethod') as (query: string, data: Record<string, unknown>) => boolean
+    const filterNodeMethod = wrapper.getComponent(ElTreeSelectStub).props('filterNodeMethod') as (
+      query: string,
+      data: Record<string, unknown>
+    ) => boolean
 
     expect(filterNodeMethod('wei', { name: 'wei的组织' })).toBe(true)
     expect(filterNodeMethod('sales', { name: 'wei的组织' })).toBe(false)
@@ -85,7 +86,10 @@ describe('TreeSelect', () => {
   it('loads root nodes lazily and resolves top-level organizations', () => {
     vi.useFakeTimers()
     const wrapper = mountComponent()
-    const loadNode = wrapper.getComponent(ElTreeSelectStub).props('load') as (node: { level: number }, resolve: (data: unknown[]) => void) => void
+    const loadNode = wrapper.getComponent(ElTreeSelectStub).props('load') as (
+      node: { level: number },
+      resolve: (data: unknown[]) => void
+    ) => void
     const resolve = vi.fn()
 
     loadNode({ level: 0 }, resolve)
@@ -101,7 +105,10 @@ describe('TreeSelect', () => {
 
   it('stops loading once the node depth is beyond the supported level', () => {
     const wrapper = mountComponent()
-    const loadNode = wrapper.getComponent(ElTreeSelectStub).props('load') as (node: { level: number }, resolve: (data: unknown[]) => void) => void
+    const loadNode = wrapper.getComponent(ElTreeSelectStub).props('load') as (
+      node: { level: number },
+      resolve: (data: unknown[]) => void
+    ) => void
     const resolve = vi.fn()
 
     loadNode({ level: 2 }, resolve)
