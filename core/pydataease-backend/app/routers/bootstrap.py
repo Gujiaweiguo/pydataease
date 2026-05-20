@@ -6,7 +6,6 @@ from fastapi import APIRouter, Depends, UploadFile
 from app.dependencies.auth import get_current_user
 from app.schemas.auth import TokenUser
 from app.services.font_service import FontPayload, get_font_service
-from app.services.interactive_tree_service import get_interactive_tree_service
 from app.services.sys_setting_service import get_sys_setting_service
 from app.services.template_market_service import get_template_market_service
 from app.utils.rsa_utils import get_dekey_response
@@ -118,13 +117,6 @@ async def get_template_market_categories_object(service=Depends(get_template_mar
 @router.get("/templateMarket/searchRecommend")
 async def get_template_market_search_recommend(service=Depends(get_template_market_service)):
     return await service.search_recommend()
-
-
-@router.post("/dataVisualization/interactiveTree")
-async def get_interactive_tree(
-    service=Depends(get_interactive_tree_service),
-):
-    return await service.get_tree()
 
 
 @router.post("/license/validate")

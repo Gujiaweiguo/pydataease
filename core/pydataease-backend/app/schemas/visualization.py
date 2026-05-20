@@ -155,6 +155,17 @@ class VisualizationMoveRequest(BaseModel):
     pid: int = 0
 
 
+class VisualizationCopyRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: int = Field(validation_alias=AliasChoices("id", "dvId", "dv_id", "sourceId", "source_id"))
+    name: str | None = None
+    pid: int | str | None = 0
+    node_type: str | None = Field(default=None, validation_alias=AliasChoices("nodeType", "node_type"), serialization_alias="nodeType")
+    type: str | None = None
+    busi_flag: str | None = Field(default=None, validation_alias=AliasChoices("busiFlag", "busi_flag"), serialization_alias="busiFlag")
+
+
 class VisualizationRenameRequest(BaseModel):
     id: int
     name: str = Field(min_length=1, max_length=255)
@@ -223,6 +234,14 @@ class StoreCreateRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     resource_type: int = Field(default=0, validation_alias=AliasChoices("resourceType", "resource_type"), serialization_alias="resourceType")
+
+
+class StoreExecuteRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    resource_id: int = Field(validation_alias=AliasChoices("resourceId", "resource_id", "id"), serialization_alias="resourceId")
+    resource_type: int | None = Field(default=None, validation_alias=AliasChoices("resourceType", "resource_type"), serialization_alias="resourceType")
+    type: str | None = None
 
 
 class StoreResponse(BaseModel):

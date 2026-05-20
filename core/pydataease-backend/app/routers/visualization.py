@@ -11,10 +11,12 @@ from app.schemas.visualization import (
     LinkageRequest,
     OuterParamsRequest,
     StoreCreateRequest,
+    StoreExecuteRequest,
     StoreFavoritedRequest,
     VisualizationAppCanvasNameCheckRequest,
     VisualizationCanvasChangeRequest,
     VisualizationCanvasRequest,
+    VisualizationCopyRequest,
     VisualizationDeleteLogicRequest,
     VisualizationFindByIdRequest,
     VisualizationMoveRequest,
@@ -202,6 +204,53 @@ async def find_copy_resource(
     return await service.find_copy_resource(dv_id, busi_flag)
 
 
+@router.post("/dataVisualization/copy")
+async def copy_visualization(
+    payload: VisualizationCopyRequest,
+    user: TokenUser = Depends(get_current_user),
+    service: VisualizationService = Depends(get_visualization_service),
+) -> object:
+    return await service.copy(payload, user)
+
+
+@router.post("/dataVisualization/interactiveTree")
+async def interactive_tree(
+    payload: dict[str, object],
+    user: TokenUser = Depends(get_current_user),
+    service: VisualizationService = Depends(get_visualization_service),
+    perm: PermissionService = Depends(get_permission_service),
+) -> object:
+    permission_map = {
+        "dashboard": "dashboard",
+        "dashboard-copy": "dashboard",
+        "panel": "dashboard",
+        "datav": "screen",
+        "datav-copy": "screen",
+        "screen": "screen",
+        "dataset": "dataset",
+        "datasource": "datasource",
+    }
+    if "busiFlag" in payload or "busi_flag" in payload:
+        raw_flag = payload.get("busiFlag") or payload.get("busi_flag")
+        if not isinstance(raw_flag, str):
+            return []
+        resource_type = permission_map.get(raw_flag.lower())
+        if resource_type and not await perm.has_resource_permission(user, resource_type, "use"):
+            return []
+        return await service.interactive_tree(payload, user)
+
+    filtered_payload: dict[str, object] = {}
+    for key, value in payload.items():
+        raw_request = value if isinstance(value, dict) else {"busiFlag": key}
+        busi_flag = raw_request.get("busiFlag") or raw_request.get("busi_flag") or key
+        if not isinstance(busi_flag, str):
+            continue
+        resource_type = permission_map.get(busi_flag.lower())
+        if resource_type and await perm.has_resource_permission(user, resource_type, "use"):
+            filtered_payload[key] = value
+    return await service.interactive_tree(filtered_payload, user)
+
+
 @router.post("/dataVisualization/appCanvasNameCheck")
 async def app_canvas_name_check(
     payload: VisualizationAppCanvasNameCheckRequest,
@@ -236,6 +285,60 @@ async def update_check_version(
     service: VisualizationService = Depends(get_visualization_service),
 ) -> object:
     return await service.update_check_version(dv_id)
+
+
+@router.post("/dataVisualization/exportLogApp")
+async def export_log_app(
+    payload: dict[str, object],
+    _: TokenUser = Depends(get_current_user),
+    service: VisualizationService = Depends(get_visualization_service),
+) -> object:
+    return await service.export_log_stub(payload)
+
+
+@router.post("/dataVisualization/exportLogTemplate")
+async def export_log_template(
+    payload: dict[str, object],
+    _: TokenUser = Depends(get_current_user),
+    service: VisualizationService = Depends(get_visualization_service),
+) -> object:
+    return await service.export_log_stub(payload)
+
+
+@router.post("/dataVisualization/exportLogPDF")
+async def export_log_pdf(
+    payload: dict[str, object],
+    _: TokenUser = Depends(get_current_user),
+    service: VisualizationService = Depends(get_visualization_service),
+) -> object:
+    return await service.export_log_stub(payload)
+
+
+@router.post("/dataVisualization/exportLogImg")
+async def export_log_img(
+    payload: dict[str, object],
+    _: TokenUser = Depends(get_current_user),
+    service: VisualizationService = Depends(get_visualization_service),
+) -> object:
+    return await service.export_log_stub(payload)
+
+
+@router.get("/panel/view/getComponentInfo/{dv_id}")
+async def get_component_info(
+    dv_id: int,
+    _: TokenUser = Depends(get_current_user),
+    service: VisualizationService = Depends(get_visualization_service),
+) -> object:
+    return await service.get_component_info(dv_id)
+
+
+@router.post("/dataVisualization/export2AppCheck")
+async def export_to_app_check(
+    payload: dict[str, object],
+    _: TokenUser = Depends(get_current_user),
+    service: VisualizationService = Depends(get_visualization_service),
+) -> object:
+    return await service.export_to_app_check(payload)
 
 
 @router.get("/dataVisualization/perResource/{visualization_id}")
@@ -289,6 +392,15 @@ async def query_stores(
         type_filter=type_filter if isinstance(type_filter, str) else None,
         asc=asc if isinstance(asc, bool) else None,
     )
+
+
+@router.post("/store/execute")
+async def execute_store(
+    payload: StoreExecuteRequest,
+    user: TokenUser = Depends(get_current_user),
+    service: VisualizationService = Depends(get_visualization_service),
+) -> object:
+    return await service.execute_store(payload, user)
 
 
 @router.post("/store/{resource_id}")

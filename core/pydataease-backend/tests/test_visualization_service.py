@@ -1,8 +1,15 @@
 from __future__ import annotations
 
 import json
+from types import SimpleNamespace
+from typing import cast
+from unittest.mock import AsyncMock
+
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.visualization import DataVisualizationInfo
+from app.schemas.auth import TokenUser
+from app.schemas.visualization import StoreExecuteRequest, StoreResponse
 from app.services.visualization_service import VisualizationService, _enrich_component_data
 
 
@@ -78,3 +85,41 @@ def test_enrich_component_data_handles_nested_tabs_and_groups() -> None:
     assert tab_chart["canvasId"] == "tabs-1--tab-a"
     assert group_chart["canvasId"] == "group-1"
     assert tab_chart["commonBackground"]["backgroundColor"] == "rgba(19,28,66,1)"
+
+
+def test_duplicate_canvas_view_info_and_replace_nested_ids_remap_chart_identifiers() -> None:
+    duplicated_view_info, id_map = VisualizationService._duplicate_canvas_view_info(
+        {
+            "101": {"id": 101, "title": "Sales"},
+            "202": {"id": 202, "title": "Profit"},
+        }
+    )
+
+    assert sorted(duplicated_view_info.keys()) != ["101", "202"]
+    assert id_map["101"] != 101
+    remapped = cast(
+        list[dict[str, object]],
+        VisualizationService._replace_nested_ids(
+            [{"id": "101", "viewId": 202}, {"children": [{"id": 101}]}],
+            id_map,
+        ),
+    )
+    assert remapped[0]["id"] == id_map["101"]
+    assert remapped[0]["viewId"] == id_map[202]
+    assert cast(list[dict[str, object]], remapped[1]["children"])[0]["id"] == id_map[101]
+
+
+async def test_execute_store_toggles_between_add_and_remove() -> None:
+    service = VisualizationService(cast(AsyncSession, SimpleNamespace()))
+    user = TokenUser(user_id=7, oid=9)
+    service.store_repo.get_by_resource = AsyncMock(side_effect=[None, SimpleNamespace(id=1)])  # type: ignore[attr-defined]
+    service.add_store = AsyncMock(return_value=StoreResponse(resource_id=10, favorited=True))  # type: ignore[method-assign]
+    service.remove_store = AsyncMock(return_value=StoreResponse(resource_id=10, favorited=False))  # type: ignore[method-assign]
+
+    added = await service.execute_store(StoreExecuteRequest(resource_id=10, type="panel"), user)
+    removed = await service.execute_store(StoreExecuteRequest(resource_id=10, type="panel"), user)
+
+    assert added.favorited is True
+    assert removed.favorited is False
+    service.add_store.assert_awaited_once_with(10, 1, user)  # type: ignore[attr-defined]
+    service.remove_store.assert_awaited_once_with(10, 1, user)  # type: ignore[attr-defined]

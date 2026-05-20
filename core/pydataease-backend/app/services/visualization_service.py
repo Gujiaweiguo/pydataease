@@ -21,10 +21,12 @@ from app.schemas.visualization import (
     JumpRequest,
     LinkageRequest,
     OuterParamsRequest,
+    StoreExecuteRequest,
     StoreResponse,
     VisualizationAppCanvasNameCheckRequest,
     VisualizationCanvasChangeRequest,
     VisualizationCanvasRequest,
+    VisualizationCopyRequest,
     VisualizationDeleteLogicRequest,
     VisualizationDecompressionRequest,
     VisualizationFindByIdRequest,
@@ -40,6 +42,7 @@ from app.schemas.visualization import (
     VisualizationUpdateBaseRequest,
     VisualizationUpdateRequest,
 )
+from app.services.interactive_tree_service import InteractiveTreeService
 
 
 def _timestamp_ms() -> int:
@@ -859,6 +862,70 @@ class VisualizationService:
     async def find_copy_resource(self, dv_id: int, busi_flag: str) -> object:
         return await self.find_by_id(VisualizationFindByIdRequest(id=dv_id, busi_flag=busi_flag))
 
+    async def copy(self, payload: VisualizationCopyRequest, user: TokenUser) -> str:
+        source = await self._get_visualization(payload.id)
+        copied_payload = cast(
+            dict[str, Any],
+            await self.find_copy_resource(payload.id, payload.busi_flag or self._copy_busi_flag_for_type(payload.type or source.type)),
+        )
+        component_data = _parse_json_value(cast(str | None, copied_payload.get("componentData")))
+        canvas_style_data = _parse_json_value(cast(str | None, copied_payload.get("canvasStyleData")))
+        canvas_view_info = copied_payload.get("canvasViewInfo")
+        if not isinstance(canvas_view_info, dict):
+            canvas_view_info = {}
+
+        copied_view_info, id_map = self._duplicate_canvas_view_info(cast(dict[str, dict[str, object]], canvas_view_info))
+        duplicated_component_data = self._replace_nested_ids(component_data, id_map)
+        duplicated_payload = VisualizationCanvasRequest(
+            id=_new_identifier(),
+            name=(payload.name or source.name or "copy").strip(),
+            pid=payload.pid if payload.pid is not None else source.pid,
+            type=payload.type or source.type,
+            canvas_style_data=_json.dumps(canvas_style_data, ensure_ascii=False) if canvas_style_data is not None else None,
+            component_data=_json.dumps(duplicated_component_data, ensure_ascii=False) if duplicated_component_data is not None else None,
+            canvas_view_info=copied_view_info,
+            mobile_layout=source.mobile_layout,
+            status=source.status,
+            content_id=source.content_id,
+            check_version=source.check_version,
+        )
+        result = await self.save_canvas(duplicated_payload, user)
+        return cast(str, result["id"])
+
+    async def interactive_tree(self, payload: object, user: TokenUser) -> object:
+        _ = user
+        tree_service = InteractiveTreeService(self.session)
+        full_tree = await tree_service.get_tree()
+        if isinstance(payload, VisualizationTreeRequest):
+            branch_key = self._interactive_tree_key(payload.busi_flag)
+            if branch_key is None:
+                return []
+            return full_tree.get(branch_key, [])
+
+        if not isinstance(payload, dict):
+            return {}
+
+        result: dict[str, object] = {}
+        for key, raw_request in payload.items():
+            request = raw_request if isinstance(raw_request, dict) else {"busiFlag": key}
+            busi_flag = request.get("busiFlag") or request.get("busi_flag") or key
+            if not isinstance(busi_flag, str):
+                continue
+            branch_key = self._interactive_tree_key(busi_flag)
+            if branch_key is None:
+                continue
+            result[key] = full_tree.get(branch_key, [])
+        return result
+
+    async def export_log_stub(self, _: object | None = None) -> list[object]:
+        return []
+
+    async def get_component_info(self, _: int) -> dict[str, object]:
+        return {}
+
+    async def export_to_app_check(self, _: object | None = None) -> dict[str, str]:
+        return {"status": "ok"}
+
     async def app_canvas_name_check(self, _: VisualizationAppCanvasNameCheckRequest) -> str:
         return "success"
 
@@ -935,6 +1002,13 @@ class VisualizationService:
     async def remove_store(self, resource_id: int, resource_type: int, user: TokenUser) -> StoreResponse:
         await self.store_repo.delete_by_resource(resource_id, user.user_id, resource_type)
         return StoreResponse(resource_id=resource_id, favorited=False)
+
+    async def execute_store(self, payload: StoreExecuteRequest, user: TokenUser) -> StoreResponse:
+        resource_type = self._normalize_store_resource_type(payload.resource_type, payload.type)
+        existing = await self.store_repo.get_by_resource(payload.resource_id, user.user_id, resource_type)
+        if existing is None:
+            return await self.add_store(payload.resource_id, resource_type, user)
+        return await self.remove_store(payload.resource_id, resource_type, user)
 
     async def query_stores(
         self,
@@ -1205,6 +1279,67 @@ class VisualizationService:
         component[key] = payload
         await self.visualization_repo.update(item, {"component_data": component, "update_time": _timestamp_ms()})
         return payload
+
+    @classmethod
+    def _interactive_tree_key(cls, busi_flag: str) -> str | None:
+        normalized = busi_flag.lower()
+        if normalized in {"dashboard", "dashboard-copy", "panel"}:
+            return "dashboard"
+        if normalized in {"datav", "datav-copy", "screen"}:
+            return "dataV"
+        if normalized in {"dataset", "datasource"}:
+            return normalized
+        return None
+
+    @classmethod
+    def _copy_busi_flag_for_type(cls, visualization_type: str | None) -> str:
+        if visualization_type == "screen":
+            return "dataV"
+        return "dashboard"
+
+    @staticmethod
+    def _normalize_store_resource_type(resource_type: int | None, type_name: str | None) -> int:
+        if resource_type is not None:
+            return resource_type
+        normalized = (type_name or "").lower()
+        if normalized in {"panel", "dashboard"}:
+            return 1
+        if normalized in {"datav", "screen"}:
+            return 2
+        return 0
+
+    @staticmethod
+    def _duplicate_canvas_view_info(
+        canvas_view_info: dict[str, dict[str, object]],
+    ) -> tuple[dict[str, dict[str, object]], dict[int | str, int | str]]:
+        duplicated: dict[str, dict[str, object]] = {}
+        id_map: dict[int | str, int | str] = {}
+        for raw_id, chart_info in canvas_view_info.items():
+            old_id = chart_info.get("id", raw_id)
+            new_id = _new_identifier()
+            id_map[raw_id] = new_id
+            if isinstance(old_id, (int, str)):
+                id_map[old_id] = new_id
+            new_chart_info = deepcopy(chart_info)
+            new_chart_info["id"] = new_id
+            duplicated[str(new_id)] = cast(dict[str, object], VisualizationService._replace_nested_ids(new_chart_info, id_map))
+        return duplicated, id_map
+
+    @staticmethod
+    def _replace_nested_ids(value: object, id_map: dict[int | str, int | str]) -> object:
+        if isinstance(value, list):
+            return [VisualizationService._replace_nested_ids(item, id_map) for item in value]
+        if isinstance(value, dict):
+            return {key: VisualizationService._replace_nested_ids(item, id_map) for key, item in value.items()}
+        if isinstance(value, (int, str)) and value in id_map:
+            return id_map[value]
+        if isinstance(value, str):
+            try:
+                numeric_value = int(value)
+            except ValueError:
+                return value
+            return id_map.get(numeric_value, value)
+        return value
 
     @staticmethod
     def _serialize_visualization(item: DataVisualizationInfo) -> dict[str, object]:

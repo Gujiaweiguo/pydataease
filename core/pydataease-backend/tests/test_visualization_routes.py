@@ -19,6 +19,9 @@ from tests.fixtures.auth_fixtures import _build_token  # pyright: ignore[reportI
 
 class FakeVisualizationService:
     def __init__(self) -> None:
+        self.copied: list[tuple[object, TokenUser]] = []
+        self.interactive_tree_payloads: list[tuple[object, TokenUser]] = []
+        self.store_execute_calls: list[tuple[object, TokenUser]] = []
         self.saved: list[tuple[object, TokenUser]] = []
         self.updated: list[tuple[object, TokenUser]] = []
         self.deleted: list[tuple[int, TokenUser]] = []
@@ -42,6 +45,14 @@ class FakeVisualizationService:
     async def find_by_id(self, payload: object) -> VisualizationResponse:
         _ = payload
         return VisualizationResponse(id=10, name="dashboard", pid=0, node_type="leaf", type="panel", component_data=[{"id": "c1"}], canvas_style_data={"bg": "#fff"})
+
+    async def copy(self, payload: object, user: TokenUser) -> str:
+        self.copied.append((payload, user))
+        return "copied-10"
+
+    async def interactive_tree(self, payload: object, user: TokenUser) -> dict[str, object]:
+        self.interactive_tree_payloads.append((payload, user))
+        return {"dashboard": [{"id": "0", "name": "root", "children": []}]}
 
     async def save(self, payload: object, user: TokenUser) -> VisualizationResponse:
         self.saved.append((payload, user))
@@ -76,6 +87,10 @@ class FakeVisualizationService:
     async def favorited(self, resource_id: int, resource_type: int, user: TokenUser) -> StoreResponse:
         _ = resource_type, user
         return StoreResponse(resource_id=resource_id, favorited=True)
+
+    async def execute_store(self, payload: object, user: TokenUser) -> StoreResponse:
+        self.store_execute_calls.append((payload, user))
+        return StoreResponse(resource_id=99, favorited=True)
 
     async def add_store(self, resource_id: int, resource_type: int, user: TokenUser) -> StoreResponse:
         _ = resource_type, user
@@ -152,6 +167,18 @@ class FakeVisualizationService:
 
     async def save_watermark(self, payload: object) -> dict:
         return {"saved": True}
+
+    async def export_log_stub(self, payload: object | None = None) -> list[object]:
+        _ = payload
+        return []
+
+    async def get_component_info(self, dv_id: int) -> dict[str, object]:
+        _ = dv_id
+        return {}
+
+    async def export_to_app_check(self, payload: object | None = None) -> dict[str, str]:
+        _ = payload
+        return {"status": "ok"}
 
 
 class FakeLinkageService:
@@ -268,6 +295,55 @@ async def test_store_routes(client, auth_headers: dict[str, str], fake_service: 
     del_resp = await client.post("/de2api/store/del/99", headers=auth_headers, json={"resourceType": 0})
     assert del_resp.status_code == 200
     assert del_resp.json()["data"]["favorited"] is False
+
+
+@pytest.mark.asyncio
+async def test_visualization_extra_routes(client, auth_headers: dict[str, str], fake_service: FakeVisualizationService) -> None:
+    copy_resp = await client.post(
+        "/de2api/dataVisualization/copy",
+        headers=auth_headers,
+        json={"id": 10, "name": "dashboard-copy", "pid": 0, "type": "panel", "busiFlag": "dashboard"},
+    )
+    assert copy_resp.status_code == 200
+    assert copy_resp.json()["data"] == "copied-10"
+
+    interactive_resp = await client.post(
+        "/de2api/dataVisualization/interactiveTree",
+        headers=auth_headers,
+        json={"dashboard": {"busiFlag": "dashboard"}},
+    )
+    assert interactive_resp.status_code == 200
+    assert interactive_resp.json()["data"]["dashboard"][0]["id"] == "0"
+
+    for route in (
+        "/de2api/dataVisualization/exportLogApp",
+        "/de2api/dataVisualization/exportLogTemplate",
+        "/de2api/dataVisualization/exportLogPDF",
+        "/de2api/dataVisualization/exportLogImg",
+    ):
+        response = await client.post(route, headers=auth_headers, json={"id": 1})
+        assert response.status_code == 200
+        assert response.json()["data"] == []
+
+    component_resp = await client.get("/de2api/panel/view/getComponentInfo/22", headers=auth_headers)
+    assert component_resp.status_code == 200
+    assert component_resp.json()["data"] == {}
+
+    export_check_resp = await client.post(
+        "/de2api/dataVisualization/export2AppCheck",
+        headers=auth_headers,
+        json={"dvId": 22, "viewIds": [1], "dsIds": [2]},
+    )
+    assert export_check_resp.status_code == 200
+    assert export_check_resp.json()["data"]["status"] == "ok"
+
+    execute_resp = await client.post(
+        "/de2api/store/execute",
+        headers=auth_headers,
+        json={"id": 99, "type": "panel"},
+    )
+    assert execute_resp.status_code == 200
+    assert execute_resp.json()["data"]["favorited"] is True
 
 
 @pytest.mark.asyncio
