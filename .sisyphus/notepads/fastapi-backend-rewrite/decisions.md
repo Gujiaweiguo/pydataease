@@ -26,3 +26,9 @@
 
 ## 2026-05-18 test helper cleanup
 - Chose `tests/fixtures/auth_fixtures.py` as the shared `_build_token` home instead of `tests/conftest.py` because tests need normal imports, not fixture injection semantics.
+
+## 2026-05-20 relation-lineage
+- Implemented relation/lineage as a standalone router module instead of folding it into dataset or visualization routers, keeping ownership aligned with the new API surface and making future lineage expansion isolated.
+- Kept the first delivery at direct ORM selects inside the router because the requested datasource→dataset and dataset/visualization→chart traversals are single-hop lookups with no write logic or reusable orchestration yet.
+
+- 2026-05-20: Implemented the sync engine module as 30 authenticated stub endpoints in one `sync.py` router with no service/repository layer because the current goal is frontend contract compatibility, not real SeaTunnel execution.

@@ -131,3 +131,17 @@
 ## 2026-05-18 test helper cleanup
 - Standard JWT test helper duplication can be removed safely by centralizing `_build_token(**claims: int)` in `tests/fixtures/auth_fixtures.py`; files with custom signatures (`secret`, `user_id`, or extra positional semantics) should remain local.
 - Replacing dynamic `FakeField(**kwargs)` test doubles with explicit typed dataclasses removes BasedPyright/LSP noise without changing route-test behavior; targeted verification for this slice was `uv run pytest tests/test_dataset_field_routes.py -v`.
+
+## 2026-05-20 visualization-extras
+- The missing frontend compatibility endpoints for visualization copy, export-log stubs, embedded panel component info, export-to-app precheck, and store execute all fit naturally into `app/routers/visualization.py` + `VisualizationService`; keeping them there avoids a second compatibility router.
+- `/store/execute` must be declared before `/store/{resource_id}` in FastAPI, otherwise requests to `/store/execute` are captured by the path-parameter route and fail validation with 422.
+- Visualization copy can be implemented by reusing `find_copy_resource()` output, duplicating chart IDs inside both `canvasViewInfo` and nested `componentData`, then persisting through the existing `save_canvas()` path.
+- Full backend verification in this workspace still has unrelated pre-existing failures outside the visualization scope (`dataset sql log` and unauthenticated `exportCenter/download` expectations), even though targeted visualization tests, ruff, import check, and changed-file LSP diagnostics pass.
+
+## 2026-05-20 relation-lineage
+- Lightweight relation/lineage compatibility endpoints fit cleanly as a dedicated `app/routers/relation.py` router mounted under the existing `/de2api` API router; no service/repository layer was needed for three single-query read paths.
+- For these lineage payloads, returning compact dicts with stringified bigint IDs and small relation-specific fields (`sceneId`, `tableId`) is enough to preserve frontend contract shape without introducing extra response schemas.
+- Targeted verification for this slice is effective with changed-file LSP diagnostics, `uv run ruff check .`, a focused route/auth pytest file, and an `app.main` import smoke test.
+
+- 2026-05-20: Sync placeholder APIs can be added as a single router under `app/routers/` and automatically inherit `/de2api` wrapping plus auth behavior once included in `api_router`.
+- 2026-05-20: Lightweight route-contract tests in this backend commonly assert `app.routes` registration and a few representative wrapped/authenticated responses instead of exhaustively hitting every stub endpoint.
