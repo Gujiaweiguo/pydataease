@@ -31,6 +31,7 @@ from app.models.log import CoreLogOperate
 from app.models.share import CoreShareTicket, XpackShare
 from app.models.static_resource import StaticResource
 from app.models.store import CoreStore
+from app.models.sys_variable import CoreSysVariable, CoreSysVariableValue
 from app.models.sys_setting import CoreSysSetting
 from app.models.system import CoreMenu
 from app.models.template import (
@@ -59,6 +60,8 @@ __all__ = [
     "CoreMenu",
     "CoreShareTicket",
     "CoreStore",
+    "CoreSysVariable",
+    "CoreSysVariableValue",
     "CoreSysSetting",
     "CoreUser",
     "CustomGeoArea",

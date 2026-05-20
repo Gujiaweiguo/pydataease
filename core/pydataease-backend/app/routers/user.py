@@ -1,20 +1,28 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends
+import io
+
+from fastapi import APIRouter, Depends, File, UploadFile
+from fastapi.responses import StreamingResponse
 
 from app.dependencies.auth import get_current_user
 from app.schemas.auth import TokenUser
+from app.schemas.auth_permission import UserOrgOptionResponse
 from app.schemas.user import (
+    PersonEditRequest,
     DefaultPasswordResponse,
+    UserBatchDeleteRequest,
     UserByCurrentOrgRequest,
     UserCreateRequest,
     UserDetailResponse,
     UserEditRequest,
     UserEnableRequest,
+    UserImportResponse,
     UserListItemResponse,
     UserPagerRequest,
     UserPagerResponse,
     UserRoleSelectedRequest,
+    UserSwitchLanguageRequest,
 )
 from app.services.user_service import UserService, get_user_service
 
@@ -50,6 +58,23 @@ async def edit_user(
     return await service.edit(payload, user)
 
 
+@router.get("/user/personInfo")
+async def person_info(
+    user: TokenUser = Depends(get_current_user),
+    service: UserService = Depends(get_user_service),
+) -> object:
+    return await service.person_info(user)
+
+
+@router.post("/user/personEdit")
+async def person_edit(
+    payload: PersonEditRequest,
+    user: TokenUser = Depends(get_current_user),
+    service: UserService = Depends(get_user_service),
+) -> object:
+    return await service.person_edit(payload, user)
+
+
 @router.post("/user/delete/{uid}")
 async def delete_user(
     uid: int,
@@ -75,6 +100,20 @@ async def reset_user_password(
     service: UserService = Depends(get_user_service),
 ) -> None:
     await service.reset_password(uid, user)
+
+
+@router.post("/user/switchLanguage")
+async def switch_language(
+    payload: UserSwitchLanguageRequest,
+    user: TokenUser = Depends(get_current_user),
+    service: UserService = Depends(get_user_service),
+) -> object:
+    return await service.switch_language(payload, user)
+
+
+@router.get("/user/personSysVariableInfo/{uid}")
+async def person_sys_variable_info(_uid: int, _: TokenUser = Depends(get_current_user)) -> dict[str, object]:
+    return {}
 
 
 @router.get("/user/queryById/{uid}")
@@ -112,3 +151,52 @@ async def users_by_current_org(
     service: UserService = Depends(get_user_service),
 ) -> list[UserListItemResponse]:
     return await service.by_current_org(payload, user)
+
+
+@router.post("/user/batchDel")
+async def batch_delete(
+    payload: UserBatchDeleteRequest,
+    user: TokenUser = Depends(get_current_user),
+    service: UserService = Depends(get_user_service),
+) -> None:
+    await service.batch_delete(payload, user)
+
+
+@router.post("/user/batchImport")
+async def batch_import(
+    file: UploadFile = File(...),
+    _user: TokenUser = Depends(get_current_user),
+) -> UserImportResponse:
+    _ = file.filename, _user.user_id
+    return UserImportResponse()
+
+
+@router.post("/user/excelTemplate")
+async def excel_template(_: TokenUser = Depends(get_current_user)) -> StreamingResponse:
+    return StreamingResponse(
+        io.BytesIO(b""),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": "attachment; filename=user_import_template.xlsx"},
+    )
+
+
+@router.get("/user/errorRecord/{key}")
+async def error_record(key: str, _: TokenUser = Depends(get_current_user)) -> StreamingResponse:
+    return StreamingResponse(
+        io.BytesIO(b""),
+        media_type="application/octet-stream",
+        headers={"Content-Disposition": f"attachment; filename=error_record_{key}.xlsx"},
+    )
+
+
+@router.get("/user/clearErrorRecord/{key}")
+async def clear_error_record(_key: str, _: TokenUser = Depends(get_current_user)) -> dict[str, bool]:
+    return {"success": True}
+
+
+@router.get("/user/org/option")
+async def user_org_option(
+    user: TokenUser = Depends(get_current_user),
+    service: UserService = Depends(get_user_service),
+) -> list[UserOrgOptionResponse]:
+    return await service.org_option(user)

@@ -16,8 +16,11 @@ from app.repositories.org_repo import OrgRepository
 from app.repositories.role_repo import RoleRepository
 from app.repositories.user_repo import UserRepository
 from app.schemas.auth import TokenUser
+from app.schemas.auth_permission import UserOrgOptionResponse
 from app.schemas.user import (
+    PersonEditRequest,
     DefaultPasswordResponse,
+    UserBatchDeleteRequest,
     UserByCurrentOrgRequest,
     UserCreateRequest,
     UserDetailResponse,
@@ -29,6 +32,7 @@ from app.schemas.user import (
     UserPagerResponse,
     UserRoleSelectedRequest,
     UserRoleResponse,
+    UserSwitchLanguageRequest,
 )
 from app.utils.password_utils import hash_password
 
@@ -104,6 +108,51 @@ class UserService:
             await self._validate_role_ids(payload.role_ids, user.oid)
             await self._replace_role_bindings(entity.id, user.oid, payload.role_ids)
         return await self.query_by_id(entity.id, user)
+
+    async def user_info(self, user: TokenUser) -> UserDetailResponse:
+        return await self.query_by_id(user.user_id, user)
+
+    async def person_info(self, user: TokenUser) -> UserDetailResponse:
+        return await self.query_by_id(user.user_id, user)
+
+    async def person_edit(self, payload: PersonEditRequest, user: TokenUser) -> UserDetailResponse:
+        entity = await self.user_repo.get_by_id(user.user_id)
+        if entity is None:
+            raise HTTPException(status_code=404, detail="User not found")
+        update_data: dict[str, object] = {"update_time": _timestamp_ms()}
+        if payload.name is not None:
+            update_data["name"] = payload.name.strip()
+        if payload.email is not None:
+            update_data["email"] = _clean_optional(payload.email)
+        if payload.phone is not None:
+            update_data["phone"] = _clean_optional(payload.phone)
+        await self.user_repo.update(entity, update_data)
+        return await self.query_by_id(user.user_id, user)
+
+    async def switch_org(self, oid: int, user: TokenUser) -> dict[str, object]:
+        from app.services.auth_service import AuthService
+
+        auth_service = AuthService(self.session)
+        token_response = await auth_service.switch_org(user, oid)
+        return token_response.model_dump(by_alias=True)
+
+    async def switch_language(self, payload: UserSwitchLanguageRequest, user: TokenUser) -> dict[str, object]:
+        entity = await self.user_repo.get_by_id(user.user_id)
+        if entity is None:
+            raise HTTPException(status_code=404, detail="User not found")
+        await self.user_repo.update(entity, {"language": payload.language, "update_time": _timestamp_ms()})
+        from app.services.auth_service import AuthService
+
+        auth_service = AuthService(self.session)
+        token_response = await auth_service.refresh_with_org(user.user_id, user.oid)
+        return token_response.model_dump(by_alias=True)
+
+    async def batch_delete(self, payload: UserBatchDeleteRequest, user: TokenUser) -> None:
+        for uid in payload.ids:
+            try:
+                await self.delete(uid, user)
+            except HTTPException:
+                continue
 
     async def delete(self, uid: int, user: TokenUser) -> None:
         if uid == 1:
@@ -188,6 +237,18 @@ class UserService:
             lowered = keyword.lower()
             users = [candidate for candidate in users if self._matches_keyword(candidate, lowered)]
         return await self._build_user_items(users)
+
+    async def org_option(self, user: TokenUser) -> list[UserOrgOptionResponse]:
+        """Return users in current org for authorization UI selection."""
+        self._require_current_org(user)
+        stmt = (
+            select(CoreUser)
+            .join(CoreUserOrg, CoreUserOrg.user_id == CoreUser.id)
+            .where(CoreUserOrg.org_id == user.oid)
+            .order_by(CoreUser.id)
+        )
+        result = await self.session.execute(stmt)
+        return [UserOrgOptionResponse.model_validate(item) for item in result.scalars().all()]
 
     async def _build_user_items(self, users: list[CoreUser]) -> list[UserListItemResponse]:
         if not users:
@@ -298,6 +359,11 @@ class UserService:
             keyword in (value or "").lower()
             for value in (user.account, user.name, user.email, user.phone)
         )
+
+    @staticmethod
+    def _require_current_org(user: TokenUser) -> None:
+        if user.oid <= 0:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Current organization is required")
 
 
 async def get_user_service(session: AsyncSession = Depends(get_db)) -> UserService:

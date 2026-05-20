@@ -39,9 +39,29 @@ class UserEditRequest(BaseModel):
     )
 
 
+class PersonEditRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    name: str | None = None
+    email: str | None = None
+    phone: str | None = None
+
+
 class UserEnableRequest(BaseModel):
     id: int
     enable: bool
+
+
+class UserSwitchLanguageRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    language: str = Field(validation_alias=AliasChoices("language", "lang"), serialization_alias="language")
+
+
+class UserBatchDeleteRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    ids: list[int] = Field(default_factory=list)
 
 
 class UserRoleSelectedRequest(BaseModel):
@@ -113,3 +133,12 @@ class UserDetailResponse(BaseModel):
 
 class DefaultPasswordResponse(BaseModel):
     password: str
+
+
+class UserIpInfoResponse(BaseModel):
+    ip: str = ""
+
+
+class UserImportResponse(BaseModel):
+    success: int = 0
+    failed: int = 0
