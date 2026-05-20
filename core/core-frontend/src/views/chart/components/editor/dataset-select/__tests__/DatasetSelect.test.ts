@@ -1,10 +1,18 @@
 import { describe, it, expect, vi } from 'vitest'
 import { shallowMount } from '@vue/test-utils'
 
-vi.mock('@/config/axios/service', () => ({ service: {} as any, PATH_URL: './', cancelMap: new Map() }))
+vi.mock('@/config/axios/service', () => ({
+  service: {} as any,
+  PATH_URL: './',
+  cancelMap: new Map()
+}))
 vi.mock('@/hooks/web/useI18n', () => ({ useI18n: () => ({ t: (k: string) => k }) }))
 vi.mock('@/store', () => ({ store: {} }))
-vi.mock('pinia', () => ({ defineStore: vi.fn(), storeToRefs: vi.fn(() => ({})), createPinia: vi.fn() }))
+vi.mock('pinia', () => ({
+  defineStore: vi.fn(),
+  storeToRefs: vi.fn(() => ({})),
+  createPinia: vi.fn()
+}))
 
 vi.mock('@/store/modules/app', () => ({
   useAppStoreWithOut: () => ({
@@ -79,7 +87,9 @@ describe('DatasetSelect', () => {
       },
       global: {
         stubs: {
-          'el-popover': { template: '<div class="popover-stub"><slot name="reference" /><slot /></div>' },
+          'el-popover': {
+            template: '<div class="popover-stub"><slot name="reference" /><slot /></div>'
+          },
           'el-form': {
             template: '<form><slot /></form>',
             methods: { validate: () => Promise.resolve() }

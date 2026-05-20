@@ -121,9 +121,7 @@ describe('BulletRangeSelector', () => {
   it('validates range list items with empty names', async () => {
     const wrapper = createWrapper()
     const vm = wrapper.vm as any
-    vm.state.rangeList = [
-      { name: '', fixedRangeValue: null, fill: '#000' }
-    ]
+    vm.state.rangeList = [{ name: '', fixedRangeValue: null, fill: '#000' }]
     const result = vm.validateRangeList()
     expect(result).toBe(true)
     expect(vm.state.rangeList[0].fixedRangeValue).toBe(0)

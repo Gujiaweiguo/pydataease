@@ -1,0 +1,108 @@
+import { describe, it, expect, vi } from 'vitest'
+import { shallowMount } from '@vue/test-utils'
+
+vi.mock('@/api/chart', () => ({ getData: vi.fn() }))
+vi.mock('@/store/modules/data-visualization/dvMain', () => ({
+  dvMainStoreWithOut: () => ({
+    addViewTrackFilter: vi.fn(),
+    setViewDataDetails: vi.fn()
+  })
+}))
+vi.mock('@/utils/canvasStyle', () => ({
+  customAttrTrans: {},
+  customStyleTrans: {},
+  recursionTransObj: vi.fn()
+}))
+vi.mock('@/utils/utils', () => ({ deepCopy: vi.fn(x => x), isMobile: vi.fn(() => false) }))
+vi.mock('lodash-es', () => ({
+  cloneDeep: vi.fn(x => JSON.parse(JSON.stringify(x))),
+  defaultsDeep: vi.fn((a, b) => ({ ...b, ...a })),
+  defaultTo: vi.fn((v, d) => v ?? d)
+}))
+vi.mock('@/views/chart/components/editor/util/chart', () => ({
+  BASE_VIEW_CONFIG: {},
+  CHART_FONT_FAMILY_MAP: {},
+  DEFAULT_INDICATOR_NAME_STYLE: {
+    color: '#999',
+    fontSize: 14,
+    fontFamily: 'inherit',
+    isBolder: false,
+    isItalic: false,
+    letterSpace: 0,
+    fontShadow: false,
+    nameValueSpacing: 0
+  },
+  DEFAULT_INDICATOR_STYLE: {
+    color: '#5470C6',
+    backgroundColor: 'transparent',
+    fontSize: 20,
+    fontFamily: 'inherit',
+    isBolder: false,
+    isItalic: false,
+    letterSpace: 0,
+    fontShadow: false,
+    suffixEnable: false,
+    suffixFontSize: 14,
+    suffixFontFamily: 'inherit',
+    suffixIsBolder: false,
+    suffixIsItalic: false,
+    suffixLetterSpace: 0,
+    suffixFontShadow: false,
+    suffixColor: '#999'
+  }
+}))
+vi.mock('@/views/chart/components/js/formatter', () => ({
+  valueFormatter: vi.fn(v => v)
+}))
+vi.mock('pinia', () => ({
+  storeToRefs: () => ({
+    embeddedCallBack: { value: 'no' },
+    nowPanelTrackInfo: { value: {} },
+    nowPanelJumpInfo: { value: {} },
+    mobileInPc: { value: false },
+    inMobile: { value: false }
+  })
+}))
+vi.mock('@/utils/canvasUtils', () => ({
+  isDashboard: vi.fn(() => true),
+  trackBarStyleCheck: vi.fn()
+}))
+vi.mock('@/components/visualization/ViewTrackBar.vue', () => ({
+  default: { template: '<div>track-bar</div>' }
+}))
+
+import DeIndicator from '../DeIndicator.vue'
+
+describe('DeIndicator', () => {
+  it('should render without errors', () => {
+    const wrapper = shallowMount(DeIndicator, {
+      props: {
+        element: { propValue: null },
+        view: { propValue: null, yAxis: [], drillFields: [], senior: {} },
+        showPosition: 'canvas',
+        scale: 1,
+        terminal: 'pc',
+        suffixId: 'common',
+        fontFamily: 'inherit'
+      },
+      global: {
+        stubs: { ViewTrackBar: true }
+      }
+    })
+    expect(wrapper.find('.menu-point').exists() || wrapper.find('div').exists()).toBe(true)
+  })
+
+  it('should expose calcData and renderChart methods', () => {
+    const wrapper = shallowMount(DeIndicator, {
+      props: {
+        element: { propValue: null },
+        view: { propValue: null, yAxis: [], drillFields: [], senior: {} }
+      },
+      global: {
+        stubs: { ViewTrackBar: true }
+      }
+    })
+    expect(typeof (wrapper.vm as any).calcData).toBe('function')
+    expect(typeof (wrapper.vm as any).renderChart).toBe('function')
+  })
+})

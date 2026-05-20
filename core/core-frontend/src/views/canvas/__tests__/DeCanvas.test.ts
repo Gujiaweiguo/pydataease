@@ -1,10 +1,18 @@
 import { describe, it, expect, vi } from 'vitest'
 import { shallowMount } from '@vue/test-utils'
 
-vi.mock('@/config/axios/service', () => ({ service: {} as any, PATH_URL: './', cancelMap: new Map() }))
+vi.mock('@/config/axios/service', () => ({
+  service: {} as any,
+  PATH_URL: './',
+  cancelMap: new Map()
+}))
 vi.mock('@/hooks/web/useI18n', () => ({ useI18n: () => ({ t: (k: string) => k }) }))
 vi.mock('@/store', () => ({ store: {} }))
-vi.mock('pinia', () => ({ defineStore: vi.fn(), storeToRefs: vi.fn(() => ({})), createPinia: vi.fn() }))
+vi.mock('pinia', () => ({
+  defineStore: vi.fn(),
+  storeToRefs: vi.fn(() => ({})),
+  createPinia: vi.fn()
+}))
 
 vi.mock('@/custom-component/component-list', () => ({
   findNewComponentFromList: vi.fn(() => ({ id: 'comp-1' }))

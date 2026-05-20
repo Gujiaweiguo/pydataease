@@ -7,7 +7,7 @@ vi.mock('@/config/axios/service', () => ({
   PATH_URL: './',
   cancelMap: new Map()
 }))
-vi.mock('pinia', async (importOriginal) => {
+vi.mock('pinia', async importOriginal => {
   const actual: any = await importOriginal()
   return {
     ...actual,

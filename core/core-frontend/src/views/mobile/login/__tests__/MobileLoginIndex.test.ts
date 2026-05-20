@@ -1,10 +1,18 @@
 import { describe, it, expect, vi } from 'vitest'
 import { shallowMount } from '@vue/test-utils'
 
-vi.mock('@/config/axios/service', () => ({ service: {} as any, PATH_URL: './', cancelMap: new Map() }))
+vi.mock('@/config/axios/service', () => ({
+  service: {} as any,
+  PATH_URL: './',
+  cancelMap: new Map()
+}))
 vi.mock('@/hooks/web/useI18n', () => ({ useI18n: () => ({ t: (k: string) => k }) }))
 vi.mock('@/store', () => ({ store: {} }))
-vi.mock('pinia', () => ({ defineStore: vi.fn(), storeToRefs: vi.fn(() => ({})), createPinia: vi.fn() }))
+vi.mock('pinia', () => ({
+  defineStore: vi.fn(),
+  storeToRefs: vi.fn(() => ({})),
+  createPinia: vi.fn()
+}))
 
 vi.mock('@/store/modules/appearance', () => ({
   useAppearanceStoreWithOut: () => ({
@@ -59,10 +67,16 @@ vi.mock('vant', () => ({
   showToast: vi.fn()
 }))
 
-vi.mock('vant/es/form', () => ({ default: { template: '<form class="van-form-stub"><slot /></form>' } }))
+vi.mock('vant/es/form', () => ({
+  default: { template: '<form class="van-form-stub"><slot /></form>' }
+}))
 vi.mock('vant/es/field', () => ({ default: { template: '<div class="van-field-stub" />' } }))
-vi.mock('vant/es/button', () => ({ default: { template: '<button class="van-button-stub"><slot /></button>' } }))
-vi.mock('vant/es/cell-group', () => ({ default: { template: '<div class="van-cell-group-stub"><slot /></div>' } }))
+vi.mock('vant/es/button', () => ({
+  default: { template: '<button class="van-button-stub"><slot /></button>' }
+}))
+vi.mock('vant/es/cell-group', () => ({
+  default: { template: '<div class="van-cell-group-stub"><slot /></div>' }
+}))
 vi.mock('vant/es/button/style', () => ({}))
 vi.mock('vant/es/toast/style', () => ({}))
 vi.mock('vant/es/field/style', () => ({}))
@@ -86,8 +100,8 @@ describe('MobileLoginIndex', () => {
           'van-button': { template: '<button class="van-button-stub"><slot /></button>' },
           'xpack-component': { template: '<div class="xpack-stub" />' },
           Icon: { template: '<span><slot /></span>' },
-          'icon_invisible_outlined': { template: '<span />' },
-          'icon_visible_outlined': { template: '<span />' }
+          icon_invisible_outlined: { template: '<span />' },
+          icon_visible_outlined: { template: '<span />' }
         }
       }
     })

@@ -41,9 +41,7 @@ describe('independent-hang/ComponentHang.vue', () => {
   it('accepts hangComponentData with items', () => {
     const wrapper = shallowMount(ComponentHang, {
       props: createProps({
-        hangComponentData: [
-          { component: 'VQuery', id: '1' }
-        ]
+        hangComponentData: [{ component: 'VQuery', id: '1' }]
       })
     })
     expect(wrapper.exists()).toBe(true)

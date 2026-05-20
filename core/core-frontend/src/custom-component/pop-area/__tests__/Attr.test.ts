@@ -34,6 +34,9 @@ describe('pop-area/Attr.vue', () => {
 
   it('contains CommonAttr component', () => {
     const wrapper = shallowMount(Attr)
-    expect(wrapper.findComponent({ name: 'CommonAttr' }).exists() || wrapper.find('.common-attr-stub').exists()).toBe(true)
+    expect(
+      wrapper.findComponent({ name: 'CommonAttr' }).exists() ||
+        wrapper.find('.common-attr-stub').exists()
+    ).toBe(true)
   })
 })

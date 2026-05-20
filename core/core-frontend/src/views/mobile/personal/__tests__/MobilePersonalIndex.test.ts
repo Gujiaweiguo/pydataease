@@ -1,10 +1,18 @@
 import { describe, it, expect, vi } from 'vitest'
 import { shallowMount } from '@vue/test-utils'
 
-vi.mock('@/config/axios/service', () => ({ service: {} as any, PATH_URL: './', cancelMap: new Map() }))
+vi.mock('@/config/axios/service', () => ({
+  service: {} as any,
+  PATH_URL: './',
+  cancelMap: new Map()
+}))
 vi.mock('@/hooks/web/useI18n', () => ({ useI18n: () => ({ t: (k: string) => k }) }))
 vi.mock('@/store', () => ({ store: {} }))
-vi.mock('pinia', () => ({ defineStore: vi.fn(), storeToRefs: vi.fn(() => ({})), createPinia: vi.fn() }))
+vi.mock('pinia', () => ({
+  defineStore: vi.fn(),
+  storeToRefs: vi.fn(() => ({})),
+  createPinia: vi.fn()
+}))
 
 vi.mock('@/store/modules/user', () => ({
   useUserStoreWithOut: () => ({
@@ -41,7 +49,9 @@ vi.mock('@/views/mobile/components/OrgCell.vue', () => ({
   default: { template: '<div class="org-cell-stub" />' }
 }))
 
-vi.mock('vant/es/popup', () => ({ default: { template: '<div class="van-popup-stub"><slot /></div>' } }))
+vi.mock('vant/es/popup', () => ({
+  default: { template: '<div class="van-popup-stub"><slot /></div>' }
+}))
 vi.mock('vant/es/nav-bar', () => ({ default: { template: '<div class="van-nav-bar-stub" />' } }))
 vi.mock('vant/es/image', () => ({ default: { template: '<div class="van-image-stub" />' } }))
 vi.mock('vant/es/image/style', () => ({}))
@@ -65,7 +75,7 @@ describe('MobilePersonalIndex', () => {
           'van-popup': { template: '<div class="van-popup-stub"><slot /></div>' },
           'update-pwd': { template: '<div class="update-pwd-stub" />' },
           'van-nav-bar': { template: '<div class="van-nav-bar-stub" />' },
-          'icon_right_outlined': { template: '<span />' },
+          icon_right_outlined: { template: '<span />' },
           Icon: { template: '<span><slot /></span>' }
         }
       }

@@ -28,7 +28,11 @@ describe('independent-hang/ComponentHangPopver.vue', () => {
 
   it('contains an el-popover', () => {
     const wrapper = shallowMount(ComponentHangPopver, { props: createProps() })
-    expect(wrapper.find('.reference-position').exists() || wrapper.find('el-popover-stub').exists() || wrapper.exists()).toBe(true)
+    expect(
+      wrapper.find('.reference-position').exists() ||
+        wrapper.find('el-popover-stub').exists() ||
+        wrapper.exists()
+    ).toBe(true)
   })
 
   it('accepts themes prop', () => {

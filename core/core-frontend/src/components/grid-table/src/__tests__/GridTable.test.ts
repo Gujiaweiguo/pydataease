@@ -1,10 +1,18 @@
 import { describe, it, expect, vi } from 'vitest'
 import { shallowMount } from '@vue/test-utils'
 
-vi.mock('@/config/axios/service', () => ({ service: {} as any, PATH_URL: './', cancelMap: new Map() }))
+vi.mock('@/config/axios/service', () => ({
+  service: {} as any,
+  PATH_URL: './',
+  cancelMap: new Map()
+}))
 vi.mock('@/hooks/web/useI18n', () => ({ useI18n: () => ({ t: (k: string) => k }) }))
 vi.mock('@/store', () => ({ store: {} }))
-vi.mock('pinia', () => ({ defineStore: vi.fn(), storeToRefs: vi.fn(() => ({})), createPinia: vi.fn() }))
+vi.mock('pinia', () => ({
+  defineStore: vi.fn(),
+  storeToRefs: vi.fn(() => ({})),
+  createPinia: vi.fn()
+}))
 
 vi.mock('@/components/empty-background/src/EmptyBackground.vue', () => ({
   default: { template: '<div class="empty-bg-stub" />' }
@@ -35,7 +43,10 @@ describe('GridTable', () => {
       },
       global: {
         stubs: {
-          'el-table': { template: '<div class="el-table-stub"><slot /><template v-for="_ in $slots" /><slot name="empty" /></div>' },
+          'el-table': {
+            template:
+              '<div class="el-table-stub"><slot /><template v-for="_ in $slots" /><slot name="empty" /></div>'
+          },
           'el-pagination': { template: '<div class="el-pagination-stub" />' },
           'table-body': { template: '<div class="table-body-stub"><slot /></div>' },
           'empty-background': { template: '<div class="empty-bg-stub" />' }
@@ -56,7 +67,9 @@ describe('GridTable', () => {
       },
       global: {
         stubs: {
-          'el-table': { template: '<div class="el-table-stub"><slot /><slot name="empty" /></div>' },
+          'el-table': {
+            template: '<div class="el-table-stub"><slot /><slot name="empty" /></div>'
+          },
           'el-pagination': { template: '<div class="el-pagination-stub" />' },
           'table-body': { template: '<div class="table-body-stub"><slot /></div>' },
           'empty-background': { template: '<div class="empty-bg-stub" />' }

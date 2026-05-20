@@ -22,7 +22,9 @@ vi.mock('@/hooks/web/useEmitt', () => ({
 }))
 
 vi.mock('sockjs-client/dist/sockjs.min.js', () => ({
-  default: vi.fn(function() { return {} })
+  default: vi.fn(function () {
+    return {}
+  })
 }))
 
 vi.mock('stompjs', () => ({
