@@ -1,18 +1,24 @@
 from __future__ import annotations
 
+# pyright: reportMissingImports=false
+
 from fastapi import APIRouter, Depends
 
-from app.dependencies.auth import get_current_user
-from app.schemas.auth import TokenUser
-from app.schemas.dataset import (
+from app.dependencies.auth import get_current_user  # pyright: ignore[reportImplicitRelativeImport]
+from app.schemas.auth import TokenUser  # pyright: ignore[reportImplicitRelativeImport]
+from app.schemas.dataset import (  # pyright: ignore[reportImplicitRelativeImport]
+    DatasetEnumValueDsRequest,
+    DatasetEnumValueRequest,
     DatasetGroupCreate,
     DatasetGroupMove,
     DatasetGroupRename,
     DatasetGroupUpdate,
+    DatasetPreviewDataRequest,
     DatasetTableFieldRequest,
 )
-from app.services.dataset_service import DatasetService, get_dataset_service
-from app.services.permission_service import PermissionService, get_permission_service
+from app.services.chart_service import ChartService, get_chart_service  # pyright: ignore[reportImplicitRelativeImport]
+from app.services.dataset_service import DatasetService, get_dataset_service  # pyright: ignore[reportImplicitRelativeImport]
+from app.services.permission_service import PermissionService, get_permission_service  # pyright: ignore[reportImplicitRelativeImport]
 
 router = APIRouter(tags=["dataset"])
 
@@ -128,7 +134,7 @@ async def dataset_details(
 
 @router.post("/datasetTree/exportDataset")
 async def export_dataset(
-    payload: dict,
+    payload: dict[str, object],
     user: TokenUser = Depends(get_current_user),
     service: DatasetService = Depends(get_dataset_service),
     perm: PermissionService = Depends(get_permission_service),
@@ -191,3 +197,70 @@ async def preview_sql(
 ) -> object:
     await perm.require_resource_access(user, "dataset", "use")
     return await service.preview_sql(payload)
+
+
+@router.post("/datasetData/previewData")
+async def preview_data(
+    payload: DatasetPreviewDataRequest,
+    user: TokenUser = Depends(get_current_user),
+    service: DatasetService = Depends(get_dataset_service),
+    perm: PermissionService = Depends(get_permission_service),
+) -> object:
+    await perm.require_resource_access(user, "dataset", "use")
+    return await service.preview_data(payload)
+
+
+@router.post("/datasetData/enumValue")
+async def enum_value(
+    payload: DatasetEnumValueRequest,
+    user: TokenUser = Depends(get_current_user),
+    service: DatasetService = Depends(get_dataset_service),
+    perm: PermissionService = Depends(get_permission_service),
+) -> object:
+    await perm.require_resource_access(user, "dataset", "use")
+    return await service.get_enum_values(payload)
+
+
+@router.post("/datasetData/enumValueObj")
+async def enum_value_obj(
+    payload: DatasetEnumValueRequest,
+    user: TokenUser = Depends(get_current_user),
+    service: DatasetService = Depends(get_dataset_service),
+    perm: PermissionService = Depends(get_permission_service),
+) -> object:
+    await perm.require_resource_access(user, "dataset", "use")
+    return await service.get_enum_value_objects(payload)
+
+
+@router.post("/datasetData/enumValueDs")
+async def enum_value_ds(
+    payload: DatasetEnumValueDsRequest,
+    user: TokenUser = Depends(get_current_user),
+    service: DatasetService = Depends(get_dataset_service),
+    perm: PermissionService = Depends(get_permission_service),
+) -> object:
+    await perm.require_resource_access(user, "dataset", "use")
+    return await service.get_enum_values_from_datasource(payload)
+
+
+@router.post("/datasetData/getFieldTree")
+async def get_field_tree(
+    payload: dict[str, object],
+    user: TokenUser = Depends(get_current_user),
+    service: DatasetService = Depends(get_dataset_service),
+    perm: PermissionService = Depends(get_permission_service),
+) -> object:
+    await perm.require_resource_access(user, "dataset", "use")
+    group_id = int(str(payload.get("id", "0")))
+    return await service.get_field_tree(group_id)
+
+
+@router.post("/datasetData/innerExportDataSetDetails")
+async def inner_export_dataset_details(
+    payload: dict[str, object],
+    user: TokenUser = Depends(get_current_user),
+    service: ChartService = Depends(get_chart_service),
+    perm: PermissionService = Depends(get_permission_service),
+) -> object:
+    await perm.require_resource_access(user, "dataset", "use")
+    return await service.inner_export_dataset_details(payload)

@@ -1,13 +1,14 @@
 from __future__ import annotations
 
+import time
 from collections.abc import Sequence
 from typing import Any, final
 
-from sqlalchemy import delete, select, update
+from sqlalchemy import delete, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.dataset import CoreDatasetGroup, CoreDatasetTable, CoreDatasetTableField
-from app.repositories.base import AsyncBaseRepository
+from app.models.dataset import CoreDatasetGroup, CoreDatasetTable, CoreDatasetTableField  # pyright: ignore[reportImplicitRelativeImport]
+from app.repositories.base import AsyncBaseRepository  # pyright: ignore[reportImplicitRelativeImport]
 
 
 @final
@@ -141,15 +142,40 @@ class DatasetFieldRepository(AsyncBaseRepository[CoreDatasetTableField]):
         )
         return await self.get(stmt)
 
+    async def list_by_chart(self, dataset_group_id: int, chart_id: int) -> Sequence[CoreDatasetTableField]:
+        stmt = (
+            select(CoreDatasetTableField)
+            .where(
+                CoreDatasetTableField.dataset_group_id == dataset_group_id,
+                or_(
+                    CoreDatasetTableField.chart_id.is_(None),
+                    CoreDatasetTableField.chart_id == chart_id,
+                ),
+                CoreDatasetTableField.checked == True,  # noqa: E712
+            )
+            .order_by(CoreDatasetTableField.column_index.asc())
+        )
+        return await self.get(stmt)
+
     async def delete_by_id(self, field_id: int) -> None:
         stmt = delete(CoreDatasetTableField).where(CoreDatasetTableField.id == field_id)
         await self.session.execute(stmt)
         await self.session.commit()
 
+    async def delete_chart_field(self, field_id: int) -> None:
+        field = await self.session.get(CoreDatasetTableField, field_id)
+        if field is None:
+            return
+        if field.chart_id is not None:
+            await self.delete_by_id(field_id)
+
     async def delete_by_chart_id(self, chart_id: int) -> None:
         stmt = delete(CoreDatasetTableField).where(CoreDatasetTableField.chart_id == chart_id)
         await self.session.execute(stmt)
         await self.session.commit()
+
+    async def delete_all_chart_fields(self, chart_id: int) -> None:
+        await self.delete_by_chart_id(chart_id)
 
     async def list_origin_fields_by_groups(self, group_ids: list[int]) -> dict[str, list[Any]]:
         result: dict[str, list[Any]] = {}
@@ -179,6 +205,39 @@ class DatasetFieldRepository(AsyncBaseRepository[CoreDatasetTableField]):
                 await self.session.refresh(existing)
                 return existing
         entity = CoreDatasetTableField(**field_data)
+        self.session.add(entity)
+        await self.session.commit()
+        await self.session.refresh(entity)
+        return entity
+
+    async def copy_field_to_chart(self, field_id: int, chart_id: int) -> CoreDatasetTableField:
+        source = await self.session.get(CoreDatasetTableField, field_id)
+        if source is None:
+            raise ValueError(f"Field {field_id} not found")
+
+        new_field_data = {
+            "id": time.time_ns(),
+            "dataset_group_id": source.dataset_group_id,
+            "dataset_table_id": source.dataset_table_id,
+            "datasource_id": source.datasource_id,
+            "chart_id": chart_id,
+            "origin_name": source.origin_name,
+            "name": source.name,
+            "dataease_name": source.dataease_name,
+            "field_short_name": source.field_short_name,
+            "group_type": source.group_type,
+            "type": source.type,
+            "size": source.size,
+            "de_type": source.de_type,
+            "de_extract_type": source.de_extract_type,
+            "ext_field": 2,
+            "checked": True,
+            "column_index": source.column_index,
+            "accuracy": source.accuracy,
+            "date_format": source.date_format,
+            "date_format_type": source.date_format_type,
+        }
+        entity = CoreDatasetTableField(**new_field_data)
         self.session.add(entity)
         await self.session.commit()
         await self.session.refresh(entity)

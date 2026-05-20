@@ -66,6 +66,33 @@ class DatasetTableFieldRequest(BaseModel):
     table_name: str | None = Field(default=None, validation_alias=AliasChoices("tableName", "table_name"), serialization_alias="tableName")
 
 
+class DatasetPreviewDataRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    dataset_group_id: int = Field(validation_alias=AliasChoices("datasetGroupId", "dataset_group_id"), serialization_alias="datasetGroupId")
+    limit: int = 100
+    offset: int = 0
+    sort_fields: JSONList | None = Field(default=None, validation_alias=AliasChoices("sortFields", "sort_fields"), serialization_alias="sortFields")
+
+
+class DatasetEnumValueRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    dataset_group_id: int = Field(validation_alias=AliasChoices("datasetGroupId", "dataset_group_id"), serialization_alias="datasetGroupId")
+    field_id: int | None = Field(default=None, validation_alias=AliasChoices("fieldId", "field_id"), serialization_alias="fieldId")
+    result_limit: int = Field(default=100, validation_alias=AliasChoices("resultLimit", "result_limit"), serialization_alias="resultLimit")
+    query: str | None = None
+
+
+class DatasetEnumValueDsRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    datasource_id: int = Field(validation_alias=AliasChoices("datasourceId", "datasource_id"), serialization_alias="datasourceId")
+    table_name: str = Field(validation_alias=AliasChoices("tableName", "table_name"), serialization_alias="tableName")
+    column_name: str = Field(validation_alias=AliasChoices("columnName", "column_name"), serialization_alias="columnName")
+    result_limit: int = Field(default=100, validation_alias=AliasChoices("resultLimit", "result_limit"), serialization_alias="resultLimit")
+
+
 class DatasetNodeResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 

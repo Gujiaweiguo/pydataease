@@ -2,16 +2,18 @@ from __future__ import annotations
 
 import base64
 import json
+import re
 import time
 from collections.abc import Sequence
 from importlib import import_module
-from typing import Any, final
+from typing import Any, cast, final
 
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.dependencies.database import get_db
 from app.models.dataset import CoreDatasetGroup, CoreDatasetTable
+from app.models.datasource import CoreDatasource
 from app.repositories.dataset_repo import (
     DatasetFieldRepository,
     DatasetGroupRepository,
@@ -19,23 +21,28 @@ from app.repositories.dataset_repo import (
 )
 from app.repositories.datasource_repo import DatasourceRepository
 from app.services.datasource_drivers import is_supported_type
-from app.services.datasource_service import DatasourceService
+from app.services.datasource_service import DatasourceService, _as_config_dict
 from app.services.sql_executor import apply_limit, validate_readonly_sql
 from app.utils.id_utils import _sid
 from app.schemas.auth import TokenUser
 from app.schemas.dataset import (
+    DatasetEnumValueDsRequest,
+    DatasetEnumValueRequest,
     DatasetFieldResponse,
     DatasetGroupCreate,
     DatasetGroupMove,
     DatasetGroupRename,
     DatasetGroupUpdate,
     DatasetNodeResponse,
+    DatasetPreviewDataRequest,
     DatasetTableFieldRequest,
     DatasetTreeNodeResponse,
 )
 from app.schemas.datasource import DatasourceFieldResponse
 
 SQLExecutor = import_module("app.services.sql_executor").SQLExecutor
+
+_SAFE_IDENTIFIER_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
 
 def _timestamp_ms() -> int:
@@ -255,6 +262,82 @@ class DatasetService:
         await self._get_group(group_id)
         return 0
 
+    async def preview_data(self, request: DatasetPreviewDataRequest) -> dict[str, object]:
+        group = await self._get_group(request.dataset_group_id)
+        fields = await self.field_repo.list_checked_by_group_no_chart_filter(request.dataset_group_id)
+        if not fields:
+            return {"fields": [], "data": [], "total": 0}
+
+        base_sql = self._build_dataset_sql(group)
+        if base_sql is None:
+            return {"fields": [], "data": [], "total": 0}
+
+        limit = max(1, request.limit)
+        offset = max(0, request.offset)
+        sql = f"SELECT * FROM ({base_sql}) AS dataset_preview LIMIT {limit} OFFSET {offset}"
+        return await self._execute_dataset_sql(sql, request.dataset_group_id)
+
+    async def get_enum_values(self, request: DatasetEnumValueRequest) -> list[str]:
+        group = await self._get_group(request.dataset_group_id)
+        base_sql = self._build_dataset_sql(group)
+        if base_sql is None or request.field_id is None:
+            return []
+
+        fields = await self.field_repo.list_by_group(request.dataset_group_id)
+        target = next((field for field in fields if field.id == request.field_id), None)
+        if target is None:
+            return []
+
+        column_name = target.dataease_name or target.origin_name
+        if not isinstance(column_name, str) or not column_name.strip():
+            return []
+
+        sql = (
+            f'SELECT DISTINCT {self._quote_identifier(column_name.strip())} '
+            f'FROM ({base_sql}) AS dataset_enum LIMIT {max(1, request.result_limit)}'
+        )
+        result = await self._execute_dataset_sql(sql, request.dataset_group_id)
+        rows = cast(list[list[object]], result.get("data", []))
+        return ["" if not row or row[0] is None else str(row[0]) for row in rows]
+
+    async def get_enum_value_objects(self, request: DatasetEnumValueRequest) -> list[dict[str, str]]:
+        values = await self.get_enum_values(request)
+        return [{"text": value, "value": value} for value in values]
+
+    async def get_enum_values_from_datasource(self, request: DatasetEnumValueDsRequest) -> list[str]:
+        datasource = await DatasourceRepository(self.session).get_by_id(request.datasource_id)
+        if datasource is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Datasource not found")
+
+        column_name = request.column_name.strip()
+        table_name = request.table_name.strip()
+        if not column_name or not table_name:
+            return []
+
+        sql = (
+            f'SELECT DISTINCT {self._quote_identifier(column_name)} '
+            f'FROM {self._quote_identifier(table_name)} LIMIT {max(1, request.result_limit)}'
+        )
+        ds_service = DatasourceService(self.session, DatasourceRepository(self.session))
+        config = datasource.configuration
+        if isinstance(config, str):
+            config = json.loads(config)
+        connection = await ds_service._open_connection(_as_config_dict(config), ds_type=datasource.type)
+        try:
+            records = await connection.fetch(sql)
+        finally:
+            await connection.close()
+        return ["" if record[0] is None else str(record[0]) for record in records]
+
+    async def get_field_tree(self, dataset_group_id: int) -> dict[str, object]:
+        fields = await self.field_repo.list_checked_by_group_no_chart_filter(dataset_group_id)
+        dimensions = [self._field_to_dict(field) for field in fields if field.group_type == "d"]
+        quotas = [self._field_to_dict(field) for field in fields if field.group_type == "q"]
+        return {
+            "dimensionList": dimensions,
+            "quotaList": quotas,
+        }
+
     async def ds_details(self, payload: object) -> list[dict[str, object]]:
         """Return dataset details for a list of table IDs."""
         raw_ids = payload if isinstance(payload, list) else payload.get("ids", []) if isinstance(payload, dict) else []
@@ -448,6 +531,53 @@ class DatasetService:
         return await service.get_fields(datasource_id, table_name)
 
     @staticmethod
+    def _build_dataset_sql_static(group: CoreDatasetGroup) -> str | None:
+        if group.union_sql and str(group.union_sql).strip():
+            return str(group.union_sql).strip()
+        info = group.info
+        if isinstance(info, dict):
+            sql = info.get("sql")
+            if isinstance(sql, str) and sql.strip():
+                return sql.strip()
+            table_name = info.get("table") or info.get("tableName") or info.get("table_name")
+            if isinstance(table_name, str) and table_name.strip():
+                safe = table_name.strip()
+                if not _SAFE_IDENTIFIER_RE.match(safe):
+                    return None
+                return f'SELECT * FROM "{safe}"'
+        return None
+
+    def _build_dataset_sql(self, group: CoreDatasetGroup) -> str | None:
+        return self._build_dataset_sql_static(group)
+
+    async def _execute_dataset_sql(self, sql: str, dataset_group_id: int) -> dict[str, object]:
+        tables = list(await self.table_repo.list_by_group(dataset_group_id))
+        datasource = await self._resolve_datasource_for_dataset(tables)
+
+        if datasource is not None:
+            ds_service = DatasourceService(self.session, DatasourceRepository(self.session))
+            config = datasource.configuration
+            if isinstance(config, str):
+                config = json.loads(config)
+            connection = await ds_service._open_connection(_as_config_dict(config), ds_type=datasource.type)
+            try:
+                records = await connection.fetch(sql)
+            finally:
+                await connection.close()
+            rows = [list(record) for record in records]
+            fields = self._build_external_fields(records, rows)
+            return {"sql": sql, "fields": fields, "data": rows, "total": len(rows)}
+
+        return await self.sql_executor.execute_select(sql, limit=1000)
+
+    async def _resolve_datasource_for_dataset(self, tables: Sequence[object]) -> CoreDatasource | None:
+        first_table = tables[0] if tables else None
+        datasource_id = getattr(first_table, "datasource_id", None)
+        if not isinstance(datasource_id, int):
+            return None
+        return await DatasourceRepository(self.session).get_by_id(datasource_id)
+
+    @staticmethod
     def _field_to_storage_payload(field: DatasourceFieldResponse, datasource_id: int, dataset_table_id: int) -> dict[str, object]:
         name = getattr(field, "name", "")
         data_type = str(getattr(field, "data_type", "varchar") or "varchar")
@@ -469,12 +599,13 @@ class DatasetService:
     @staticmethod
     def _datasource_field_to_dataset_field(field: DatasourceFieldResponse, datasource_id: int):
         class _MappedField:
-            datasource_id: int
-            origin_name: str
-            name: str
-            type: str
-            de_type: int
-            checked: bool
+            def __init__(self) -> None:
+                self.datasource_id = 0
+                self.origin_name = ""
+                self.name = ""
+                self.type = ""
+                self.de_type = 0
+                self.checked = False
 
         payload = DatasetService._field_to_storage_payload(field, datasource_id, 0)
         mapped = _MappedField()
@@ -482,7 +613,8 @@ class DatasetService:
         mapped.origin_name = str(payload["originName"])
         mapped.name = str(payload["name"])
         mapped.type = str(payload["type"])
-        mapped.de_type = 1 if field.data_type == "DATETIME" else 0 if payload["deType"] == 0 else int(payload["deType"])
+        de_type_value = payload.get("deType")
+        mapped.de_type = 1 if field.data_type == "DATETIME" else 0 if de_type_value == 0 else int(cast(int, de_type_value))
         mapped.checked = True
         return mapped
 
@@ -513,6 +645,15 @@ class DatasetService:
             payload["table_name"] = table_name_value
             payload["table"] = table_name_value
         return payload
+
+    @staticmethod
+    def _quote_identifier(identifier: str) -> str:
+        cleaned = identifier.strip()
+        if not cleaned:
+            raise ValueError("SQL identifier must not be empty")
+        if not _SAFE_IDENTIFIER_RE.match(cleaned):
+            raise ValueError(f"Unsafe SQL identifier: {identifier}")
+        return f'"{cleaned}"'
 
     @staticmethod
     def _de_type_for_column(data_type: str) -> int:

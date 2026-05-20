@@ -54,7 +54,7 @@ class ChartSaveRequest(BaseModel):
 
 
 class ChartUpdateRequest(ChartSaveRequest):
-    id: int  # pyright: ignore[reportGeneralTypeIssues]
+    id: int  # pyright: ignore[reportGeneralTypeIssues, reportIncompatibleVariableOverride]
 
 
 class ChartDataRequest(BaseModel):
@@ -80,6 +80,28 @@ class ChartViewListRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     scene_id: int = Field(validation_alias=AliasChoices("sceneId", "scene_id"), serialization_alias="sceneId")
+
+
+class ChartFieldEnumRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    chart_id: int | None = Field(default=None, validation_alias=AliasChoices("chartId", "chart_id"), serialization_alias="chartId")
+    result_limit: int = Field(default=100, validation_alias=AliasChoices("resultLimit", "result_limit"), serialization_alias="resultLimit")
+
+
+class ChartDrillRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    chart_id: int | None = Field(default=None, validation_alias=AliasChoices("chartId", "chart_id"), serialization_alias="chartId")
+    drill_path: JSONList | None = Field(default=None, validation_alias=AliasChoices("drillPath", "drill_path"), serialization_alias="drillPath")
+
+
+class DatasetExportRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    chart_id: int | None = Field(default=None, validation_alias=AliasChoices("chartId", "chart_id"), serialization_alias="chartId")
+    dataset_group_id: int | None = Field(default=None, validation_alias=AliasChoices("datasetGroupId", "dataset_group_id"), serialization_alias="datasetGroupId")
+    view_config: JSONValue | None = Field(default=None, validation_alias=AliasChoices("viewConfig", "view_config"), serialization_alias="viewConfig")
 
 
 class ChartFieldResponse(BaseModel):
