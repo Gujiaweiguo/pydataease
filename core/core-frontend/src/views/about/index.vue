@@ -55,7 +55,7 @@ const beforeUpload = file => {
 }
 
 const support = () => {
-  const url = 'https://support.fit2cloud.com/'
+  const url = '#'
   const openType = wsCache.get('open-backend') === '1' ? '_self' : '_blank'
   window.open(url, openType)
 }

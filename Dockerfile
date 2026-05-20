@@ -1,3 +1,4 @@
+# TODO: replace with public JDK image
 FROM registry.cn-qingdao.aliyuncs.com/dataease/alpine-openjdk21-jre
 STOPSIGNAL SIGTERM
 RUN mkdir -p /opt/apps/config \

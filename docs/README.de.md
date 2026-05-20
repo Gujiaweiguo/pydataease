@@ -1,10 +1,7 @@
-<p align="center"><a href="https://dataease.io"><img src="https://dataease.oss-cn-hangzhou.aliyuncs.com/img/dataease-logo.png" alt="DataEase" width="300" /></a></p>
+<p align="center"><a href="#"><img src="https://dataease.oss-cn-hangzhou.aliyuncs.com/img/dataease-logo.png" alt="PyDataEase" width="300" /></a></p>
 <h3 align="center">Ein einfaches und benutzerfreundliches Open-Source-BI-Tool</h3>
 <p align="center">
   <a href="https://www.gnu.org/licenses/gpl-3.0.html"><img src="https://img.shields.io/github/license/dataease/dataease?color=%231890FF" alt="License: GPL v3"></a>
-  <a href="https://app.codacy.com/gh/dataease/dataease?utm_source=github.com&utm_medium=referral&utm_content=dataease/dataease&utm_campaign=Badge_Grade_Dashboard"><img src="https://app.codacy.com/project/badge/Grade/da67574fd82b473992781d1386b937ef" alt="Codacy"></a>
-  <a href="https://github.com/dataease/dataease"><img src="https://img.shields.io/github/stars/dataease/dataease?color=%231890FF&style=flat-square" alt="GitHub Stars"></a>
-  <a href="https://github.com/dataease/dataease/releases"><img src="https://img.shields.io/github/v/release/dataease/dataease" alt="GitHub release"></a>
 </p>
 <p align="center">
   <a href="/README.md"><img alt="中文(简体)" src="https://img.shields.io/badge/中文(简体)-d9d9d9"></a>
@@ -22,11 +19,11 @@
 </p>
 
 ------------------------------
-## Was ist DataEase?
+## Was ist PyDataEase?
 
-DataEase ist ein Open-Source-BI-Werkzeug (Business Intelligence-Werkzeug), das dazu ausgelegt ist, Benutzern zu helfen, Daten schnell zu analysieren und Geschäftsinformationen zu gewinnen, sodass sie ihre Geschäftsvorgänge verbessern und optimieren können. Es unterstützt eine Vielzahl von Datenquellen und ermöglicht es Benutzern, mit einer einfachen Drag-and-Drop-Schnittstelle Diagramme zu erstellen und diese mühelos zu teilen. 
+PyDataEase ist ein Open-Source-BI-Werkzeug (Business Intelligence-Werkzeug), das dazu ausgelegt ist, Benutzern zu helfen, Daten schnell zu analysieren und Geschäftsinformationen zu gewinnen, sodass sie ihre Geschäftsvorgänge verbessern und optimieren können. Es unterstützt eine Vielzahl von Datenquellen und ermöglicht es Benutzern, mit einer einfachen Drag-and-Drop-Schnittstelle Diagramme zu erstellen und diese mühelos zu teilen.
 
-**Vorteile von DataEase:**
+**Vorteile von PyDataEase:**
 
 -   Open Source: Keine Hindernisse, schnelle Online-Erwerb und -Installation, monatliche Updates.
 -   Benutzerfreundlich: Einfach zu bedienen; die Analyse kann mit einfachen Mausklicks und Drag-and-Drop-Aktionen durchgeführt werden.
@@ -41,36 +38,21 @@ DataEase ist ein Open-Source-BI-Werkzeug (Business Intelligence-Werkzeug), das d
 -   Datendateien: Excel, CSV usw.
 -   API-Datenquellen.
 
-## Schnellstart
-
-```
-# Bereiten Sie einen Linux-Server mit mindestens 2 CPUs und 4 GB RAM vor und führen Sie dann das folgende Skript für die Ein-Klick-Installation als Root-Benutzer aus:
-
-curl -sSL https://dataease.oss-cn-hangzhou.aliyuncs.com/quick_start_v2.sh | bash
-
-# Benutzername: admin
-# Passwort: DataEase@123456
-```
-
 ## Technologiestack
 
 -   Frontend: [Vue.js](https://vuejs.org/), [Element](https://element.eleme.cn/)
 -   Visualisierungsbibliothek: [AntV](https://antv.vision/zh)
--   Backend: [Spring Boot](https://spring.io/projects/spring-boot)
--   Datenbank: [MySQL](https://www.mysql.com/)
+-   Backend: [Spring Boot](https://spring.io/projects/spring-boot), [FastAPI](https://fastapi.tiangolo.com/)
+-   Datenbank: [PostgreSQL](https://www.postgresql.org/)
 -   Datenverarbeitung: [Apache Calcite](https://github.com/apache/calcite/), [Apache SeaTunnel](https://github.com/apache/seatunnel)
 -   Infrastruktur: [Docker](https://www.docker.com/)
 
-## Sicherheit
-
-Wenn Sie irgendwelche Sicherheitsbedenken entdecken, kontaktieren Sie uns bitte über: wei@fit2cloud.com.
-
 ## Lizenz
 
-Copyright (c) 2014-2024 [FIT2CLOUD](https://fit2cloud.com/), Alle Rechte vorbehalten.
+Copyright (c) 2024-2026 JasonGu, Alle Rechte vorbehalten.
 
-Unterliegt der GNU General Public License Version 3 (GPLv3) (die „Lizenz“); Sie dürfen diese Datei nicht verwenden, es sei denn, Sie stimmen der Lizenz zu. Sie können eine Kopie der Lizenz unter folgender Adresse einsehen:
+Unterliegt der GNU General Public License Version 3 (GPLv3) (die "Lizenz"); Sie dürfen diese Datei nicht verwenden, es sei denn, Sie stimmen der Lizenz zu. Sie können eine Kopie der Lizenz unter folgender Adresse einsehen:
 
-https://www.gnu.org/licenses/gpl-3.0.html
+<https://www.gnu.org/licenses/gpl-3.0.html>
 
-Sofern nicht durch anwendbares Recht vorgeschrieben oder schriftlich vereinbart, wird Software, die unter dieser Lizenz verteilt wird, auf der Grundlage „AS IS“ verteilt, ohne jegliche Zusicherungen oder Bedingungen, weder ausdrücklich noch stillschweigend. Lesen Sie die Lizenz für die spezifischen Bestimmungen zur Gewährung von Berechtigungen und Einschränkungen unter dieser Lizenz.
+Sofern nicht durch anwendbares Recht vorgeschrieben oder schriftlich vereinbart, wird Software, die unter dieser Lizenz verteilt wird, auf der Grundlage "AS IS" verteilt, ohne jegliche Zusicherungen oder Bedingungen, weder ausdrücklich noch stillschweigend. Lesen Sie die Lizenz für die spezifischen Bestimmungen zur Gewährung von Berechtigungen und Einschränkungen unter dieser Lizenz.

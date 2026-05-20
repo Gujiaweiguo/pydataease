@@ -17,17 +17,17 @@ const { t } = useI18n()
 const cardInfoList = [
   {
     name: t('api_pagination.help_documentation'),
-    url: help.value || 'https://dataease.io/docs/v2/',
+    url: help.value || '#',
     icon: topHelpDoc
   },
   {
     name: t('api_pagination.product_forum'),
-    url: 'https://bbs.fit2cloud.com/c/de/6',
+    url: '#',
     icon: topProductBbs
   },
   {
     name: t('api_pagination.technical_blog'),
-    url: 'https://blog.fit2cloud.com/categories/dataease',
+    url: '#',
     icon: topTechnology
   },
   {

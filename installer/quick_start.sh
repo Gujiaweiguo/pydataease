@@ -31,7 +31,7 @@ release_pattern="v2\.\d+\.\d+$"
 
 def get_releases(page):
    try:
-      releases=os.popen("curl -s https://api.github.com/repos/dataease/dataease/releases?page=%d" % (page)).read()
+      releases=os.popen("curl -s https://api.github.com/repos/YOUR_ORG/pydataease/releases?page=%d" % (page)).read()
       releases=[ x["name"] for x in json.loads(releases) if x["prerelease"] == False ]
    except Exception as e:
       print(str(e))
@@ -66,7 +66,7 @@ latest_version=$(cat /tmp/de_latest_release)
 echo "开始下载 DataEase ${latest_version} 版本在线安装包"
 
 installer_file="dataease-online-installer-${latest_version}-ce.tar.gz"
-download_url="https://${server_url}/dataease/dataease/releases/download/${latest_version}/$installer_file"
+download_url="https://${server_url}/YOUR_ORG/pydataease/releases/download/${latest_version}/$installer_file"
 echo "下载地址： ${download_url}"
 curl -LOk -m 60 -o $installer_file $download_url
 

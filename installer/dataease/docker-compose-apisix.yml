@@ -1,5 +1,6 @@
 services:
   apisix:
+    # TODO: replace with own registry
     image: registry.cn-qingdao.aliyuncs.com/dataease/apisix:3.14.1-debian
     container_name: apisix
     environment:
@@ -19,6 +20,7 @@ services:
       dataease-network:
 
   etcd:
+    # TODO: replace with own registry
     image: registry.cn-qingdao.aliyuncs.com/dataease/etcd:3.5.10
     container_name: apisix-etcd
     restart: always

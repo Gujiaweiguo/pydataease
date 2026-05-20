@@ -1,5 +1,6 @@
 services:
   api:
+    # TODO: replace with own registry
     image: registry.cn-qingdao.aliyuncs.com/dataease/de-playwright-api:v1.58.2-noble-0421
     container_name: de-playwright-api
     privileged: true

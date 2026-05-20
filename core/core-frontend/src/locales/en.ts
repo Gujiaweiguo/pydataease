@@ -2306,7 +2306,7 @@ export default {
     invalid_table_check:
       'For non-directly connected datasets, please complete data synchronization first',
     parse_error:
-      'Excel parsing failed, please check the format, fields and other information. Specific reference: https://dataease.io/docs/user_manual/dataset_configuration/dataset_Excel',
+      'Excel parsing failed, please check the format, fields and other information. Specific reference: #',
     origin_field_type: 'Field origin type',
     edit_excel_table: 'Edit Excel dataset',
     edit_excel: 'Edit Excel',

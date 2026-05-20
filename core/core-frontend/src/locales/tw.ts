@@ -2245,7 +2245,7 @@ export default {
     preview_100_data: '顯示前100行資料',
     invalid_table_check: '非直連資料集請先完成資料同步',
     parse_error:
-      'Excel解析失敗，請檢查格式、欄位等資訊。具體參考：https://dataease.io/docs/user_manual/dataset_configuration/dataset_Excel',
+      'Excel解析失敗，請檢查格式、欄位等資訊。具體參考：#',
     origin_field_type: '字段原始類型',
     edit_excel_table: '編輯Excel資料集',
     edit_excel: '編輯Excel',

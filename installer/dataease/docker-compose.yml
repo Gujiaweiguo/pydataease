@@ -1,6 +1,7 @@
 services:
 
   dataease:
+    # TODO: replace with own registry
     image: registry.cn-qingdao.aliyuncs.com/dataease/dataease:DE_TAG
     stop_signal: SIGTERM
     stop_grace_period: 15s

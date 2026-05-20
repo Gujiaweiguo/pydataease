@@ -1,10 +1,7 @@
-<p align="center"><a href="https://dataease.io"><img src="https://dataease.oss-cn-hangzhou.aliyuncs.com/img/dataease-logo.png" alt="DataEase" width="300" /></a></p>
+<p align="center"><a href="#"><img src="https://dataease.oss-cn-hangzhou.aliyuncs.com/img/dataease-logo.png" alt="PyDataEase" width="300" /></a></p>
 <h3 align="center">Basit ve kullanımı kolay açık kaynaklı BI aracı</h3>
 <p align="center">
   <a href="https://www.gnu.org/licenses/gpl-3.0.html"><img src="https://img.shields.io/github/license/dataease/dataease?color=%231890FF" alt="License: GPL v3"></a>
-  <a href="https://app.codacy.com/gh/dataease/dataease?utm_source=github.com&utm_medium=referral&utm_content=dataease/dataease&utm_campaign=Badge_Grade_Dashboard"><img src="https://app.codacy.com/project/badge/Grade/da67574fd82b473992781d1386b937ef" alt="Codacy"></a>
-  <a href="https://github.com/dataease/dataease"><img src="https://img.shields.io/github/stars/dataease/dataease?color=%231890FF&style=flat-square" alt="GitHub Stars"></a>
-  <a href="https://github.com/dataease/dataease/releases"><img src="https://img.shields.io/github/v/release/dataease/dataease" alt="GitHub release"></a>
 </p>
 <p align="center">
   <a href="/README.md"><img alt="中文(简体)" src="https://img.shields.io/badge/中文(简体)-d9d9d9"></a>
@@ -22,11 +19,11 @@
 </p>
 
 ------------------------------
-## DataEase nedir?
+## PyDataEase nedir?
 
-DataEase, kullanıcıların hızlı bir şekilde veri analizlerini yapmalarını ve iş içi bilgileri elde etmelerini sağlayarak işlemlerini geliştirmeleri ve optimize etmeleri için tasarlanmış açık kaynaklı bir BI aracıdır. Çeşitli veri kaynaklarını destekler ve kullanıcıların basit bir sürükle-bırak arayüzü ile grafikler oluşturmalarını ve bunları kolayca paylaşmalarını sağlar.
+PyDataEase, kullanıcıların hızlı bir şekilde veri analizlerini yapmalarını ve iş içi bilgileri elde etmelerini sağlayarak işlemlerini geliştirmeleri ve optimize etmeleri için tasarlanmış açık kaynaklı bir BI aracıdır. Çeşitli veri kaynaklarını destekler ve kullanıcıların basit bir sürükle-bırak arayüzü ile grafikler oluşturmalarını ve bunları kolayca paylaşmalarını sağlar.
 
-**DataEase'in Avantajları:**
+**PyDataEase'in Avantajları:**
 
 -   Açık Kaynaklı: Sıfır engel, hızlı çevrimiçi edinme ve yükleme, aylık güncellemeler.
 -   Kullanıcı Dostu: Kolay kullanılır; analizler, basit fare tıklamaları ve sürükle-bırak işlemleri ile tamamlanabilir.
@@ -41,35 +38,20 @@ DataEase, kullanıcıların hızlı bir şekilde veri analizlerini yapmalarını
 -   Veri Dosyaları: Excel, CSV vb.
 -   API Veri Kaynakları.
 
-## Hızlı Başlangıç
-
-```
-# En az 2 CPU ve 4GB RAM ile bir Linux sunucusu hazırlayın ve ardından root kullanıcısı olarak aşağıdaki tek tuşlu yükleme komut dosyasını çalıştırın:
-
-curl -sSL https://dataease.oss-cn-hangzhou.aliyuncs.com/quick_start_v2.sh | bash
-
-# Kullanıcı Adı: admin
-# Şifre: DataEase@123456
-```
-
 ## Teknoloji Yığını
 
 -   Ön Kısmı: [Vue.js](https://vuejs.org/), [Element](https://element.eleme.cn/)
 -   Görselleştirme Kütüphanesi: [AntV](https://antv.vision/zh)
--   Arka Kısmı: [Spring Boot](https://spring.io/projects/spring-boot)
--   Veri Tabanı: [MySQL](https://www.mysql.com/)
+-   Arka Kısmı: [Spring Boot](https://spring.io/projects/spring-boot), [FastAPI](https://fastapi.tiangolo.com/)
+-   Veri Tabanı: [PostgreSQL](https://www.postgresql.org/)
 -   Veri İşleme: [Apache Calcite](https://github.com/apache/calcite/), [Apache SeaTunnel](https://github.com/apache/seatunnel)
 -   Altyapı: [Docker](https://www.docker.com/)
 
-## Güvenlik
-
-Eğer herhangi bir güvenlik sorunu keşfedin, lütfen bize wei@fit2cloud.com üzerinden ulaşın.
-
 ## Lisans
 
-Copyright (c) 2014-2024 [FIT2CLOUD](https://fit2cloud.com/), Tüm hakları saklıdır.
+Copyright (c) 2024-2026 JasonGu, Tüm hakları saklıdır.
 
-GNU Genel Kamu Lisansı sürüm 3 (GPLv3) (aşağıda "Lisans" olarak adlandırılır) altında lisanslanmıştır; bu dosyayı Lisans'a uygunlukla kullanmadıkça kullanamazsınız. Lisansın bir kopyasını aşağıdaki adresten edinebilirsiniz
+GNU Genel Kamu Lisansı sürüm 3 (GPLv3) (aşağıda "Lisans" olarak adlandırılır) altında lisanslanmıştır; bu dosyayı Lisans'a uygunlukla kullanmadıkça kullanamazsınız. Lisansın bir kopyasını aşağıdaki adresten edinebilirsiniz:
 
 <https://www.gnu.org/licenses/gpl-3.0.html>
 

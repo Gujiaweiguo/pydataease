@@ -58,10 +58,14 @@ public class AesUtils {
 
     public static Object aesEncrypt(Object o) {
 
+        // TODO: The key seed "www.fit2cloud.co" should be rotated in a future release.
+        // Changing it will break decryption of existing encrypted data — plan a migration path.
         return o == null ? null : aesEncrypt(o.toString(), "www.fit2cloud.co", "1234567890123456");
     }
 
     public static Object aesDecrypt(Object o) {
+        // TODO: The key seed "www.fit2cloud.co" should be rotated in a future release.
+        // Changing it will break decryption of existing encrypted data — plan a migration path.
         return o == null ? null : aesDecrypt(o.toString(), "www.fit2cloud.co", "1234567890123456");
     }
 

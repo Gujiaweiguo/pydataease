@@ -36,13 +36,13 @@ public class SwaggerConfig {
     public OpenAPI customOpenAPI() {
         Contact contact = new Contact();
         contact.setName("DataEase");
-        contact.setUrl("https://www.fit2cloud.com/dataease/index.html");
-        contact.setEmail("dataease@fit2cloud.com");
+        contact.setUrl("#");
+        contact.setEmail("#");
         return new OpenAPI()
                 .info(new Info()
                         .title("DataEaseAPI")
                         .description("人人可用的开源 BI 工具")
-                        .termsOfService("https://dataease.io")
+                        .termsOfService("#")
                         .contact(contact)
                         .version(version));
     }

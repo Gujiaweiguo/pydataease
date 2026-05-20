@@ -1,10 +1,7 @@
-<p align="center"><a href="https://dataease.io"><img src="https://dataease.oss-cn-hangzhou.aliyuncs.com/img/dataease-logo.png" alt="DataEase" width="300" /></a></p>
+<p align="center"><a href="#"><img src="https://dataease.oss-cn-hangzhou.aliyuncs.com/img/dataease-logo.png" alt="PyDataEase" width="300" /></a></p>
 <h3 align="center">Alat BI (Business Intelligence) sumber terbuka yang simple dan mudah digunakan</h3>
 <p align="center">
   <a href="https://www.gnu.org/licenses/gpl-3.0.html"><img src="https://img.shields.io/github/license/dataease/dataease?color=%231890FF" alt="License: GPL v3"></a>
-  <a href="https://app.codacy.com/gh/dataease/dataease?utm_source=github.com&utm_medium=referral&utm_content=dataease/dataease&utm_campaign=Badge_Grade_Dashboard"><img src="https://app.codacy.com/project/badge/Grade/da67574fd82b473992781d1386b937ef" alt="Codacy"></a>
-  <a href="https://github.com/dataease/dataease"><img src="https://img.shields.io/github/stars/dataease/dataease?color=%231890FF&style=flat-square" alt="GitHub Stars"></a>
-  <a href="https://github.com/dataease/dataease/releases"><img src="https://img.shields.io/github/v/release/dataease/dataease" alt="GitHub release"></a>
 </p>
 <p align="center">
   <a href="/README.md"><img alt="中文(简体)" src="https://img.shields.io/badge/中文(简体)-d9d9d9"></a>
@@ -23,11 +20,11 @@
 
 ------------------------------
 
-## Apa itu DataEase?
+## Apa itu PyDataEase?
 
-DataEase adalah alat BI sumber terbuka yang dirancang untuk membantu pengguna dengan cepat menganalisis data dan mendapatkan wawasan bisnis, memungkinkan mereka untuk meningkatkan dan mengoptimalkan operasi mereka. Itu mendukung berbagai macam sumber data, memungkinkan pengguna untuk membuat bagan dengan antarmuka drag-and-drop yang simple dan berbagi dengan mudah.
+PyDataEase adalah alat BI sumber terbuka yang dirancang untuk membantu pengguna dengan cepat menganalisis data dan mendapatkan wawasan bisnis, memungkinkan mereka untuk meningkatkan dan mengoptimalkan operasi mereka. Itu mendukung berbagai macam sumber data, memungkinkan pengguna untuk membuat bagan dengan antarmuka drag-and-drop yang simple dan berbagi dengan mudah.
 
-**Keunggulan DataEase:**
+**Keunggulan PyDataEase:**
 
 -   Sumber Terbuka: Tidak ada hambatan, pengadaan dan pemasangan online yang cepat, pembaruan bulanan.
 -   Mudah Digunakan: Mudah digunakan; analisis dapat diselesaikan dengan klik mouse yang simple dan tindakan drag-and-drop.
@@ -42,35 +39,21 @@ DataEase adalah alat BI sumber terbuka yang dirancang untuk membantu pengguna de
 -   File Data: Excel, CSV, dll.
 -   Sumber Data API.
 
-## Panduan Cepat Memulai
-
-```
-# Prepare a Linux server with at least 2 CPUs and 4GB of RAM, then run the following one-click installation script as the root user:
-
-curl -sSL https://dataease.oss-cn-hangzhou.aliyuncs.com/quick_start_v2.sh | bash
-
-# Username: admin
-# Password: DataEase@123456
-```
 ## Teknologi Stack
 
 -   Frontend: [Vue.js](https://vuejs.org/), [Element](https://element.eleme.cn/)
 -   Pustaka Visualisasi: [AntV](https://antv.vision/zh)
--   Backend: [Spring Boot](https://spring.io/projects/spring-boot)
--   Database: [MySQL](https://www.mysql.com/)
+-   Backend: [Spring Boot](https://spring.io/projects/spring-boot), [FastAPI](https://fastapi.tiangolo.com/)
+-   Database: [PostgreSQL](https://www.postgresql.org/)
 -   Pemrosesan Data: [Apache Calcite](https://github.com/apache/calcite/), [Apache SeaTunnel](https://github.com/apache/seatunnel)
 -   Infrastruktur: [Docker](https://www.docker.com/)
 
-## Informasi Keamanan
-
-Jika Anda menemukan masalah keamanan, silakan hubungi kami melalui: wei@fit2cloud.com.
-
 ## Lisensi
 
-Hak cipta (c) 2014-2024 FIT2CLOUD, Hak cipta dilindungi undang-undang.
+Copyright (c) 2024-2026 JasonGu, Hak cipta dilindungi undang-undang.
 
-Dilisensikan di bawah Lisensi Publik Umum GNU versi 3 (GPLv3) ("Lisensi"); Anda tidak boleh menggunakan file ini kecuali dalam ketentuan Lisensi. Anda dapat mendapatkan salinan Lisensi di
+Dilisensikan di bawah Lisensi Publik Umum GNU versi 3 (GPLv3) ("Lisensi"); Anda tidak boleh menggunakan file ini kecuali dalam ketentuan Lisensi. Anda dapat mendapatkan salinan Lisensi di:
 
-https://www.gnu.org/licenses/gpl-3.0.html
+<https://www.gnu.org/licenses/gpl-3.0.html>
 
 Kecuali sesuai dengan undang-undang yang berlaku atau disepakati secara tertulis, perangkat lunak yang didistribusikan di bawah Lisensi didistribusikan pada DASAR "SEBENAR-BENAR", TANPA JAMINAN ATAU SYARAT APA PUN, baik yang diucapkan atau diimplikasikan. Lihat Lisensi untuk bahasa spesifik yang menentukan izin dan batasan di bawah Lisensi.

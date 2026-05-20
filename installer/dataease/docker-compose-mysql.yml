@@ -1,6 +1,7 @@
 services:
 
   DE_MYSQL_HOST:
+    # TODO: replace with own registry
     image: registry.cn-qingdao.aliyuncs.com/dataease/mysql:8.4.5
     container_name: ${DE_MYSQL_HOST}
     healthcheck:

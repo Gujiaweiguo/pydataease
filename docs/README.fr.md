@@ -1,10 +1,7 @@
-<p align="center"><a href="https://dataease.io"><img src="https://dataease.oss-cn-hangzhou.aliyuncs.com/img/dataease-logo.png" alt="DataEase" width="300" /></a></p>
+<p align="center"><a href="#"><img src="https://dataease.oss-cn-hangzhou.aliyuncs.com/img/dataease-logo.png" alt="PyDataEase" width="300" /></a></p>
 <h3 align="center">Un outil BI open source simple et facile à utiliser</h3>
 <p align="center">
   <a href="https://www.gnu.org/licenses/gpl-3.0.html"><img src="https://img.shields.io/github/license/dataease/dataease?color=%231890FF" alt="License: GPL v3"></a>
-  <a href="https://app.codacy.com/gh/dataease/dataease?utm_source=github.com&utm_medium=referral&utm_content=dataease/dataease&utm_campaign=Badge_Grade_Dashboard"><img src="https://app.codacy.com/project/badge/Grade/da67574fd82b473992781d1386b937ef" alt="Codacy"></a>
-  <a href="https://github.com/dataease/dataease"><img src="https://img.shields.io/github/stars/dataease/dataease?color=%231890FF&style=flat-square" alt="GitHub Stars"></a>
-  <a href="https://github.com/dataease/dataease/releases"><img src="https://img.shields.io/github/v/release/dataease/dataease" alt="GitHub release"></a>
 </p>
 <p align="center">
   <a href="/README.md"><img alt="中文(简体)" src="https://img.shields.io/badge/中文(简体)-d9d9d9"></a>
@@ -23,14 +20,14 @@
 
 ------------------------------
 
-## Qu'est-ce que DataEase?
+## Qu'est-ce que PyDataEase?
 
-DataEase est un outil BI open-source conçu pour aider les utilisateurs à analyser rapidement les données et à obtenir des informations commerciales, leur permettant d'améliorer et d'optimiser leurs opérations. Il prend en charge une large gamme de sources de données, permettant aux utilisateurs de créer des graphiques avec une interface simple de glisser-déposer et de les partager sans effort.
+PyDataEase est un outil BI open-source conçu pour aider les utilisateurs à analyser rapidement les données et à obtenir des informations commerciales, leur permettant d'améliorer et d'optimiser leurs opérations. Il prend en charge une large gamme de sources de données, permettant aux utilisateurs de créer des graphiques avec une interface simple de glisser-déposer et de les partager sans effort.
 
-**Les avantages de DataEase:**
+**Les avantages de PyDataEase:**
 
 -   Open Source : Aucune barrière, acquisition et installation en ligne rapides, mises à jour mensuelles.
--   Facile à utiliser : Simple d'utilisation ; l'analyse peut être effectuée en cliquant simplement avec la souris et en effectuant des actions de glisser-déposer.
+-   Facile à utiliser : Simple d'utilisation; l'analyse peut être effectuée en cliquant simplement avec la souris et en effectuant des actions de glisser-déposer.
 -   Polyvalent : Prend en charge l'installation sur plusieurs plates-formes et propose diverses options d'intégration.
 -   Partage sécurisé : Offre divers moyens de partage de données tout en garantissant la sécurité des données.
 
@@ -42,35 +39,20 @@ DataEase est un outil BI open-source conçu pour aider les utilisateurs à analy
 -   Fichiers de données : Excel, CSV, etc.
 -   Sources de données API.
 
-## Démarrage rapide
-
-```
-# Préparer un serveur Linux avec au moins 2 processeurs et 4 Go de mémoire vive, puis exécuter le script d'installation automatique (un clic) suivant en tant qu'utilisateur root:
-
-curl -sSL https://dataease.oss-cn-hangzhou.aliyuncs.com/quick_start_v2.sh | bash
-
-# Username: admin
-# Password: DataEase@123456
-```
-
 ## Pile technologique
 
 -   Interface utilisateur: [Vue.js](https://vuejs.org/), [Element](https://element.eleme.cn/)
 -   Bibliothèque de visualisation: [AntV](https://antv.vision/zh)
--   Côté serveur: [Spring Boot](https://spring.io/projects/spring-boot)
--   Base de données: [MySQL](https://www.mysql.com/)
+-   Côté serveur: [Spring Boot](https://spring.io/projects/spring-boot), [FastAPI](https://fastapi.tiangolo.com/)
+-   Base de données: [PostgreSQL](https://www.postgresql.org/)
 -   Traitement des données: [Apache Calcite](https://github.com/apache/calcite/), [Apache SeaTunnel](https://github.com/apache/seatunnel)
 -   Infrastructure: [Docker](https://www.docker.com/)
 
-## Sécurité
-
-Si vous découvrez des problèmes de sécurité, veuillez nous contacter via: wei@fit2cloud.com.
-
 ## Licence
 
-Copyright (c) 2014-2024 [FIT2CLOUD](https://fit2cloud.com/), Tous droits réservés.
+Copyright (c) 2024-2026 JasonGu, Tous droits réservés.
 
-Sous licence The GNU General Public License version 3 (GPLv3) (la « Licence ») ; vous n'êtes pas autorisé à utiliser ce fichier sauf en conformité avec la Licence. Vous pouvez obtenir une copie de la Licence à l'adresse suivante
+Sous licence The GNU General Public License version 3 (GPLv3) (la « Licence »); vous n'êtes pas autorisé à utiliser ce fichier sauf en conformité avec la Licence. Vous pouvez obtenir une copie de la Licence à l'adresse suivante:
 
 <https://www.gnu.org/licenses/gpl-3.0.html>
 

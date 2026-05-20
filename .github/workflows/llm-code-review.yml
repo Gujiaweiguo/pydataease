@@ -12,9 +12,9 @@ jobs:
   llm-code-review:
     runs-on: ubuntu-latest
     steps:
-      - uses: fit2cloud/LLM-CodeReview-Action@main
+      - uses: mgskjae/llm-codereview@main
         env:
-          GITHUB_TOKEN: ${{ secrets.FIT2CLOUDRD_LLM_CODE_REVIEW_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.LLM_CODE_REVIEW_TOKEN }}
           OPENAI_API_KEY: ${{ secrets.ALIYUN_LLM_API_KEY }}
           LANGUAGE: Chinese
           OPENAI_API_ENDPOINT: https://dashscope.aliyuncs.com/compatible-mode/v1

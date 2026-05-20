@@ -191,7 +191,7 @@ const state = reactive({
   panelGroupList: [],
   curApplyTemplate: null,
   folderSelectShow: false,
-  baseUrl: 'https://dataease.io/templates',
+  baseUrl: '',
   marketTemplatePreviewShowList: [],
   categories: [],
   networkStatus: true,
