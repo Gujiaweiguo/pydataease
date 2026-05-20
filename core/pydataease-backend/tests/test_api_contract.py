@@ -99,6 +99,7 @@ class FakeVisualizationService:
     async def rename(self, payload, user): return {}
     async def find_recent(self, payload): return []
     async def find_copy_resource(self, dv_id, busi_flag): return {}
+    async def copy(self, payload, user): return "copied-1"
     async def save_canvas(self, payload, user): return {}
     async def update_canvas(self, payload, user): return {}
     async def update_base(self, payload, user): return {}
@@ -110,9 +111,14 @@ class FakeVisualizationService:
     async def decompression(self, payload): return {}
     async def find_dv_type(self, dv_id): return "panel"
     async def update_check_version(self, dv_id): return {}
+    async def interactive_tree(self, payload, user): return {"dashboard": []}
+    async def export_log_stub(self, payload=None): return []
+    async def get_component_info(self, dv_id): return {}
+    async def export_to_app_check(self, payload=None): return {"status": "ok"}
     async def per_resource(self, vid): return {}
     async def view_detail_list(self, vid): return []
     async def favorited(self, resource_id, resource_type, user): return {}
+    async def execute_store(self, payload, user): return {"resourceId": payload.resource_id, "favorited": True}
     async def query_stores(self, user, **kw): return []
     async def add_store(self, resource_id, resource_type, user): return {}
     async def remove_store(self, resource_id, resource_type, user): return {}
@@ -272,6 +278,28 @@ async def test_datasource_types_result_message(client: AsyncClient, _override_al
 @pytest.mark.asyncio
 async def test_visualization_tree_result_message(client: AsyncClient, _override_all_services: None) -> None:
     response = await client.post("/de2api/dataVisualization/tree", headers=AUTH_HEADERS, json={"busiFlag": "panel"})
+    assert response.status_code == 200
+    _assert_result_message(response.json())
+
+
+@pytest.mark.asyncio
+async def test_visualization_extras_result_messages(client: AsyncClient, _override_all_services: None) -> None:
+    endpoints = [
+        ("post", "/de2api/dataVisualization/copy", {"id": 1, "type": "panel"}),
+        ("post", "/de2api/dataVisualization/interactiveTree", {"dashboard": {"busiFlag": "dashboard"}}),
+        ("post", "/de2api/dataVisualization/exportLogApp", {"id": 1}),
+        ("post", "/de2api/dataVisualization/exportLogTemplate", {"id": 1}),
+        ("post", "/de2api/dataVisualization/exportLogPDF", {"id": 1}),
+        ("post", "/de2api/dataVisualization/exportLogImg", {"id": 1}),
+        ("post", "/de2api/dataVisualization/export2AppCheck", {"dvId": 1}),
+        ("post", "/de2api/store/execute", {"id": 1, "type": "panel"}),
+    ]
+    for method, url, payload in endpoints:
+        response = await getattr(client, method)(url, headers=AUTH_HEADERS, json=payload)
+        assert response.status_code == 200
+        _assert_result_message(response.json())
+
+    response = await client.get("/de2api/panel/view/getComponentInfo/1", headers=AUTH_HEADERS)
     assert response.status_code == 200
     _assert_result_message(response.json())
 

@@ -1,16 +1,28 @@
 from __future__ import annotations
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field
 
 
 class OnlineMapSaveRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     key: str | None = None
+    map_type: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("mapType", "map_type"),
+        serialization_alias="mapType",
+    )
+    security_code: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("securityCode", "security_code"),
+        serialization_alias="securityCode",
+    )
 
 
 class OnlineMapResponse(BaseModel):
     key: str | None = None
+    map_type: str | None = Field(default=None, serialization_alias="mapType")
+    security_code: str | None = Field(default=None, serialization_alias="securityCode")
 
 
 class MenuResponse(BaseModel):

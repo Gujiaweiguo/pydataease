@@ -16,13 +16,25 @@ from tests.fixtures.auth_fixtures import _build_token  # pyright: ignore[reportI
 class FakeSystemService:
     def __init__(self) -> None:
         self.saved_map_key: str | None = None
+        self.saved_map_type: str | None = None
+        self.saved_security_code: str | None = None
 
     async def query_online_map(self) -> object:
-        return {"key": "test-map-key"}
+        return {"key": "test-map-key", "mapType": "gaode", "securityCode": "test-sec"}
 
-    async def save_online_map(self, key: str | None) -> object:
+    async def query_online_map_by_type(self, map_type: str) -> object:
+        return {"key": f"{map_type}-key", "mapType": map_type, "securityCode": f"{map_type}-sec"}
+
+    async def save_online_map(
+        self,
+        key: str | None,
+        map_type: str | None = None,
+        security_code: str | None = None,
+    ) -> object:
         self.saved_map_key = key
-        return {"key": key or ""}
+        self.saved_map_type = map_type
+        self.saved_security_code = security_code
+        return {"key": key or "", "mapType": map_type or "gaode", "securityCode": security_code or ""}
 
     async def request_timeout(self) -> int:
         return 120
@@ -123,6 +135,22 @@ async def test_query_online_map(
     assert response.status_code == 200
     data = response.json()["data"]
     assert data["key"] == "test-map-key"
+    assert data["mapType"] == "gaode"
+
+
+@pytest.mark.asyncio
+async def test_query_online_map_by_type(
+    client: AsyncClient,
+    auth_headers: dict[str, str],
+    fake_service: FakeSystemService,
+) -> None:
+    response = await client.get(
+        "/de2api/sysParameter/queryOnlineMap/qq",
+        headers=auth_headers,
+    )
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert data == {"key": "qq-key", "mapType": "qq", "securityCode": "qq-sec"}
 
 
 @pytest.mark.asyncio
@@ -134,12 +162,14 @@ async def test_save_online_map(
     response = await client.post(
         "/de2api/sysParameter/saveOnlineMap",
         headers=auth_headers,
-        json={"key": "new-map-key"},
+        json={"key": "new-map-key", "mapType": "tianditu", "securityCode": "sec-1"},
     )
     assert response.status_code == 200
     data = response.json()["data"]
-    assert data["key"] == "new-map-key"
+    assert data == {"key": "new-map-key", "mapType": "tianditu", "securityCode": "sec-1"}
     assert fake_service.saved_map_key == "new-map-key"
+    assert fake_service.saved_map_type == "tianditu"
+    assert fake_service.saved_security_code == "sec-1"
 
 
 @pytest.mark.asyncio

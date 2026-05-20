@@ -19,13 +19,22 @@ async def query_online_map(
     return await service.query_online_map()
 
 
+@router.get("/sysParameter/queryOnlineMap/{map_type}")
+async def query_online_map_by_type(
+    map_type: str,
+    _: TokenUser = Depends(get_current_user),
+    service: SystemService = Depends(get_system_service),
+) -> object:
+    return await service.query_online_map_by_type(map_type)
+
+
 @router.post("/sysParameter/saveOnlineMap")
 async def save_online_map(
     payload: OnlineMapSaveRequest,
     _: TokenUser = Depends(get_current_user),
     service: SystemService = Depends(get_system_service),
 ) -> object:
-    return await service.save_online_map(payload.key)
+    return await service.save_online_map(payload.key, payload.map_type, payload.security_code)
 
 
 @router.get("/sysParameter/requestTimeOut")

@@ -28,10 +28,11 @@ def _build_menu_tree(menus: list[CoreMenu]) -> list[MenuTreeNodeResponse]:
     return roots
 
 
-_system_params: dict[str, str | int] = {
-    "onlineMapKey": "",
-    "requestTimeOut": 120,
+_DEFAULT_MAP_TYPE = "gaode"
+_online_maps: dict[str, dict[str, str]] = {
+    _DEFAULT_MAP_TYPE: {"key": "", "mapType": _DEFAULT_MAP_TYPE, "securityCode": ""}
 }
+_system_params: dict[str, str | int] = {"requestTimeOut": 120}
 
 
 @final
@@ -41,12 +42,24 @@ class SystemService:
         self.menu_repo = MenuRepository(session)
 
     async def query_online_map(self) -> OnlineMapResponse:
-        key = _system_params.get("onlineMapKey", "")
-        return OnlineMapResponse(key=str(key))
+        payload = _online_maps.get(_DEFAULT_MAP_TYPE) or next(iter(_online_maps.values()), {"key": "", "mapType": _DEFAULT_MAP_TYPE, "securityCode": ""})
+        return OnlineMapResponse.model_validate(payload)
 
-    async def save_online_map(self, key: str | None) -> OnlineMapResponse:
-        _system_params["onlineMapKey"] = key or ""
-        return OnlineMapResponse(key=key or "")
+    async def query_online_map_by_type(self, map_type: str) -> OnlineMapResponse:
+        payload = _online_maps.get(map_type, {"key": "", "mapType": map_type, "securityCode": ""})
+        return OnlineMapResponse.model_validate(payload)
+
+    async def save_online_map(self, key: str | None, map_type: str | None = None, security_code: str | None = None) -> OnlineMapResponse:
+        normalized_type = map_type or _DEFAULT_MAP_TYPE
+        payload = {
+            "key": key or "",
+            "mapType": normalized_type,
+            "securityCode": security_code or "",
+        }
+        _online_maps[normalized_type] = payload
+        if normalized_type == _DEFAULT_MAP_TYPE:
+            _online_maps[_DEFAULT_MAP_TYPE] = payload
+        return OnlineMapResponse.model_validate(payload)
 
     async def request_timeout(self) -> int:
         return int(_system_params.get("requestTimeOut", 120))
