@@ -3,7 +3,7 @@ name: Backend CI
 on:
   push:
     branches:
-      - feat/fastapi-backend-rewrite
+      - dev-v2
       - main
     paths:
       - 'core/pydataease-backend/**'
