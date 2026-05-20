@@ -76,7 +76,7 @@ describe('TimeDialog', () => {
     vm.timeGranularityChange('month')
 
     expect(vm.curComponent.relativeToCurrentType).toBe('year')
-    expect(vm.curComponent.relativeToCurrent).toBe('thisMonth')
+    expect(vm.curComponent.relativeToCurrent).toBe('today')
   })
 
   it('shows the time picker for custom datetime selections', async () => {

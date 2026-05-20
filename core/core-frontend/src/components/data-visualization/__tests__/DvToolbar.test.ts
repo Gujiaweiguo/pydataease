@@ -2,6 +2,9 @@ import { ref } from 'vue'
 import { shallowMount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+vi.mock('vant/lib/index.css', () => ({}))
+vi.mock('vant/es/style/base.css', () => ({}))
+
 vi.mock('@/config/axios', () => ({}))
 vi.mock('@/config/axios/service', () => ({
   service: {} as any,

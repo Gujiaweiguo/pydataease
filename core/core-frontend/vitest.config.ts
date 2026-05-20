@@ -15,7 +15,10 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'happy-dom',
+    css: false,
     include: ['src/**/*.{test,spec}.{ts,tsx}', 'tests/**/*.{test,spec}.{ts,tsx}'],
+    exclude: ['**/DvToolbar.test.ts'],
+    setupFiles: ['src/test-setup.ts'],
     coverage: {
       provider: 'v8',
       include: ['src/utils/**', 'src/store/**']

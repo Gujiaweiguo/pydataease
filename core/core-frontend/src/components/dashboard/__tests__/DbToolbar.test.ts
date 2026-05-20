@@ -2,6 +2,19 @@ import { ref } from 'vue'
 import { shallowMount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+vi.mock('vant/es/popup', () => ({ default: { template: '<div />' } }))
+vi.mock('vant/es/popup/style', () => ({}))
+vi.mock('vant/es/date-picker', () => ({ default: { template: '<div />' } }))
+vi.mock('vant/es/date-picker/style', () => ({}))
+vi.mock('vant/es/time-picker', () => ({ default: { template: '<div />' } }))
+vi.mock('vant/es/time-picker/style', () => ({}))
+vi.mock('vant/es/picker-group', () => ({ default: { template: '<div />' } }))
+vi.mock('vant/es/picker-group/style', () => ({}))
+vi.mock('vant/es/style/base.css', () => ({}))
+vi.mock('@/utils/components', () => ({
+  default: () => null
+}))
+
 vi.mock('@/config/axios', () => ({}))
 vi.mock('@/config/axios/service', () => ({
   service: {} as any,
@@ -156,25 +169,32 @@ const stubs = {
   icon_redo_outlined: { template: '<svg />' }
 }
 
+const globalConfig = {
+  stubs,
+  mocks: {
+    $t: (key: string) => key
+  }
+}
+
 describe('DbToolbar', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
   it('renders successfully', () => {
-    const wrapper = shallowMount(DbToolbar, { global: { stubs } })
+    const wrapper = shallowMount(DbToolbar, { global: globalConfig })
     expect(wrapper.exists()).toBe(true)
   })
 
   it('renders the toolbar container', () => {
-    const wrapper = shallowMount(DbToolbar, { global: { stubs } })
+    const wrapper = shallowMount(DbToolbar, { global: globalConfig })
     expect(wrapper.find('.toolbar-main').exists()).toBe(true)
   })
 
   it('accepts createType prop', () => {
     const wrapper = shallowMount(DbToolbar, {
       props: { createType: 'new' },
-      global: { stubs }
+      global: globalConfig
     })
     expect(wrapper.exists()).toBe(true)
   })

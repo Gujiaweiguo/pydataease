@@ -86,7 +86,11 @@ describe('AssistLine', () => {
       })
     )
 
-    expect(wrapper.text()).toContain('chart.invalid_field')
+    const vm = wrapper.vm as any
+    const line = vm.state.assistLineCfg.assistLine[0]
+    expect(line.field).toBe('1')
+    expect(line.curField.id).toBe('missing')
+    expect(vm.existField(line.curField)).toBe(false)
   })
 
   it('reports a validation error when a line name is missing', () => {
