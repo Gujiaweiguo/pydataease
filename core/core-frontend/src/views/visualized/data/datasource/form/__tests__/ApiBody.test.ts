@@ -69,12 +69,16 @@ describe('ApiBody', () => {
   })
 
   it('should show code-edit when body type is JSON', () => {
-    const wrapper = createWrapper({ body: { type: 'JSON', kvs: [], raw: '{"test":1}', typeChange: '' } })
+    const wrapper = createWrapper({
+      body: { type: 'JSON', kvs: [], raw: '{"test":1}', typeChange: '' }
+    })
     expect(wrapper.find('.code-edit-stub').exists()).toBe(true)
   })
 
   it('should show code-edit when body type is XML', () => {
-    const wrapper = createWrapper({ body: { type: 'XML', kvs: [], raw: '<root/>', typeChange: '' } })
+    const wrapper = createWrapper({
+      body: { type: 'XML', kvs: [], raw: '<root/>', typeChange: '' }
+    })
     expect(wrapper.find('.code-edit-stub').exists()).toBe(true)
   })
 

@@ -13,7 +13,8 @@ const elStubs = {
     props: ['label']
   },
   'el-select': {
-    template: '<select class="el-select" :value="modelValue" @change="$emit(\'change\', $event.target.value)"><slot /></select>',
+    template:
+      '<select class="el-select" :value="modelValue" @change="$emit(\'change\', $event.target.value)"><slot /></select>',
     props: ['modelValue', 'placeholder'],
     emits: ['update:modelValue', 'change']
   },

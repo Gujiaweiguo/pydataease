@@ -45,7 +45,9 @@ const elStubs = {
 function createWrapper(propsOverrides = {}) {
   return shallowMount(ApiKeyValue, {
     props: {
-      items: [{ name: 'test-key', value: 'test-value', description: '', type: '', nameType: 'fixed' }],
+      items: [
+        { name: 'test-key', value: 'test-value', description: '', type: '', nameType: 'fixed' }
+      ],
       ...propsOverrides
     },
     global: {

@@ -34,7 +34,7 @@ const elStubs = {
   'api-variable': { template: '<div class="api-variable-stub" />' },
   'api-body': { template: '<div class="api-body-stub" />' },
   'api-auth-config': { template: '<div class="api-auth-config-stub" />' },
-  'Pagination': { template: '<div class="pagination-stub" />' }
+  Pagination: { template: '<div class="pagination-stub" />' }
 }
 
 function createWrapper(propsOverrides = {}) {

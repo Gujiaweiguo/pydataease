@@ -23,7 +23,8 @@ const elStubs = {
     props: ['data']
   },
   'el-table-column': {
-    template: '<div class="el-table-column"><slot name="default" :row="{ parameterDefaultValue: \'\', builtInParameterName: \'${pageNumber}\', resolutionPath: \'\', resolutionPathType: \'totalNumber\' }" /></div>',
+    template:
+      "<div class=\"el-table-column\"><slot name=\"default\" :row=\"{ parameterDefaultValue: '', builtInParameterName: '${pageNumber}', resolutionPath: '', resolutionPathType: 'totalNumber' }\" /></div>",
     props: ['prop', 'label', 'width']
   },
   'el-input': {

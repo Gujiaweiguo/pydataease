@@ -49,7 +49,16 @@ function createWrapper(propsOverrides = {}) {
   return shallowMount(ApiVariable, {
     props: {
       parameters: [
-        { name: 'param1', value: 'val1', description: '', type: 'text', nameType: 'fixed', uuid: '1', contentType: 'text/plain', enable: true }
+        {
+          name: 'param1',
+          value: 'val1',
+          description: '',
+          type: 'text',
+          nameType: 'fixed',
+          uuid: '1',
+          contentType: 'text/plain',
+          enable: true
+        }
       ],
       ...propsOverrides
     },
@@ -100,7 +109,16 @@ describe('ApiVariable', () => {
   it('should render with valueList', () => {
     const wrapper = createWrapper({
       parameters: [
-        { name: 'p', value: '', description: '', type: 'text', nameType: 'params', uuid: '2', contentType: 'text/plain', enable: true }
+        {
+          name: 'p',
+          value: '',
+          description: '',
+          type: 'text',
+          nameType: 'params',
+          uuid: '2',
+          contentType: 'text/plain',
+          enable: true
+        }
       ],
       valueList: [{ name: 'V1', originName: 'v1' }]
     })
