@@ -10,6 +10,7 @@ from openpyxl import load_workbook
 from app.main import app
 from app.services.export_service import get_export_service
 from app.tasks.file_generator import generate_export_file
+from tests.fixtures.auth_fixtures import _build_token
 
 
 class FakeDownloadService:
@@ -77,9 +78,10 @@ async def test_download_successful_task_returns_file(client, tmp_path: Path) -> 
         }
     )
     app.dependency_overrides[get_export_service] = lambda: service
+    headers = {"X-DE-TOKEN": _build_token(uid=1, oid=1)}
 
     try:
-        response = await client.get("/de2api/exportCenter/download/task-3")
+        response = await client.get("/de2api/exportCenter/download/task-3", headers=headers)
     finally:
         _ = app.dependency_overrides.pop(get_export_service, None)
 
@@ -93,9 +95,10 @@ async def test_download_successful_task_returns_file(client, tmp_path: Path) -> 
 async def test_download_non_existent_task_returns_404(client) -> None:
     service = FakeDownloadService(missing=True)
     app.dependency_overrides[get_export_service] = lambda: service
+    headers = {"X-DE-TOKEN": _build_token(uid=1, oid=1)}
 
     try:
-        response = await client.get("/de2api/exportCenter/download/missing-task")
+        response = await client.get("/de2api/exportCenter/download/missing-task", headers=headers)
     finally:
         _ = app.dependency_overrides.pop(get_export_service, None)
 
@@ -112,9 +115,10 @@ async def test_download_pending_task_returns_status_info(client) -> None:
         }
     )
     app.dependency_overrides[get_export_service] = lambda: service
+    headers = {"X-DE-TOKEN": _build_token(uid=1, oid=1)}
 
     try:
-        response = await client.get("/de2api/exportCenter/download/pending-task")
+        response = await client.get("/de2api/exportCenter/download/pending-task", headers=headers)
     finally:
         _ = app.dependency_overrides.pop(get_export_service, None)
 

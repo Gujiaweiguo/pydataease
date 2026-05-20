@@ -157,10 +157,12 @@ async def test_export_delete_all(
 @pytest.mark.asyncio
 async def test_export_download(
     client: AsyncClient,
+    auth_headers: dict[str, str],
     fake_service: FakeExportService,
 ) -> None:
     response = await client.get(
         "/de2api/exportCenter/download/task-1",
+        headers=auth_headers,
     )
     assert response.status_code == 200
     data = response.json()["data"]

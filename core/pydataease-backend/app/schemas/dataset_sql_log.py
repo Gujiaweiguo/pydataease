@@ -6,7 +6,7 @@ from pydantic import AliasChoices, BaseModel, ConfigDict, Field
 class SqlLogCreateRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
-    table_id: str = Field(validation_alias=AliasChoices("tableId", "table_id"))
+    table_id: str | None = Field(None, validation_alias=AliasChoices("tableId", "table_id"))
     sql_snapshot: str | None = Field(None, validation_alias=AliasChoices("sqlSnapshot", "sql_snapshot"))
     table_name: str | None = Field(None, validation_alias=AliasChoices("tableName", "table_name"))
     status: str | None = None
