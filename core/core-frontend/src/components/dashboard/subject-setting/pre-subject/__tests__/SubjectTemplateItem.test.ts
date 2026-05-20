@@ -67,7 +67,13 @@ describe('SubjectTemplateItem', () => {
   })
 
   it('renders successfully', () => {
-    const subjectItem = { id: '1', name: 'Test Theme', coverUrl: '', details: '{"themeId":"default"}', type: 'system' }
+    const subjectItem = {
+      id: '1',
+      name: 'Test Theme',
+      coverUrl: '',
+      details: '{"themeId":"default"}',
+      type: 'system'
+    }
     const wrapper = shallowMount(SubjectTemplateItem, {
       props: { subjectItem },
       global: { stubs, mocks: { $t: (k: string) => k } }
@@ -76,7 +82,13 @@ describe('SubjectTemplateItem', () => {
   })
 
   it('renders with self type', () => {
-    const subjectItem = { id: '2', name: 'My Theme', coverUrl: '', details: '{"themeId":"custom"}', type: 'self' }
+    const subjectItem = {
+      id: '2',
+      name: 'My Theme',
+      coverUrl: '',
+      details: '{"themeId":"custom"}',
+      type: 'self'
+    }
     const wrapper = shallowMount(SubjectTemplateItem, {
       props: { subjectItem },
       global: { stubs, mocks: { $t: (k: string) => k } }
@@ -85,7 +97,13 @@ describe('SubjectTemplateItem', () => {
   })
 
   it('has subject-template class', () => {
-    const subjectItem = { id: '1', name: 'Test', coverUrl: '', details: '{"themeId":"default"}', type: 'system' }
+    const subjectItem = {
+      id: '1',
+      name: 'Test',
+      coverUrl: '',
+      details: '{"themeId":"default"}',
+      type: 'system'
+    }
     const wrapper = shallowMount(SubjectTemplateItem, {
       props: { subjectItem },
       global: { stubs, mocks: { $t: (k: string) => k } }

@@ -21,7 +21,19 @@ vi.mock('pinia', () => ({
 
 vi.mock('@/store/modules/data-visualization/dvMain', () => ({
   dvMainStoreWithOut: () => ({
-    canvasStyleData: { component: { filterStyle: { titleLayout: 'left', layout: 'vertical', titleColor: '#000', labelColor: '#000', borderColor: '#ccc', text: '#000', bgColor: '#fff' } } }
+    canvasStyleData: {
+      component: {
+        filterStyle: {
+          titleLayout: 'left',
+          layout: 'vertical',
+          titleColor: '#000',
+          labelColor: '#000',
+          borderColor: '#ccc',
+          text: '#000',
+          bgColor: '#fff'
+        }
+      }
+    }
   })
 }))
 
@@ -50,10 +62,16 @@ vi.mock('element-plus-secondary', () => ({
 }))
 
 vi.mock('@/assets/svg/icon_left-align_outlined.svg', () => ({ default: { template: '<svg />' } }))
-vi.mock('@/assets/svg/icon_horizontal-align_outlined.svg', () => ({ default: { template: '<svg />' } }))
+vi.mock('@/assets/svg/icon_horizontal-align_outlined.svg', () => ({
+  default: { template: '<svg />' }
+}))
 vi.mock('@/assets/svg/icon_right-align_outlined.svg', () => ({ default: { template: '<svg />' } }))
-vi.mock('@/assets/svg/icon_title-top-align_outlined.svg', () => ({ default: { template: '<svg />' } }))
-vi.mock('@/assets/svg/icon_title-left-align_outlined.svg', () => ({ default: { template: '<svg />' } }))
+vi.mock('@/assets/svg/icon_title-top-align_outlined.svg', () => ({
+  default: { template: '<svg />' }
+}))
+vi.mock('@/assets/svg/icon_title-left-align_outlined.svg', () => ({
+  default: { template: '<svg />' }
+}))
 
 import FilterStyleSimpleSelector from '@/components/dashboard/subject-setting/dashboard-style/FilterStyleSimpleSelector.vue'
 
@@ -62,7 +80,10 @@ const stubs = {
   ElFormItem: { template: '<div><slot /></div>', props: ['label', 'class'] },
   ElRow: { template: '<div><slot /></div>', props: ['gutter'] },
   ElCol: { template: '<div><slot /></div>', props: ['span'] },
-  ElColorPicker: { template: '<div />', props: ['modelValue', 'triggerWidth', 'isCustom', 'predefine'] },
+  ElColorPicker: {
+    template: '<div />',
+    props: ['modelValue', 'triggerWidth', 'isCustom', 'predefine']
+  },
   ElDivider: { template: '<hr />', props: ['class'] },
   ElCollapseItem: { template: '<div><slot /></div>', props: ['title', 'name', 'class'] },
   ElTooltip: { template: '<div><slot /></div>', props: ['effect', 'placement'] },

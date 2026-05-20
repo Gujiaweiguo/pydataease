@@ -34,7 +34,10 @@ const stubs = {
     template: '<div v-if="modelValue"><slot /><slot name="footer" /></div>',
     props: ['title', 'modelValue', 'width']
   },
-  ElForm: { template: '<form><slot /></form>', props: ['labelPosition', 'requireAsteriskPosition', 'model', 'rules'] },
+  ElForm: {
+    template: '<form><slot /></form>',
+    props: ['labelPosition', 'requireAsteriskPosition', 'model', 'rules']
+  },
   ElFormItem: { template: '<div><slot /><slot name="label" /></div>', props: ['class', 'prop'] },
   ElInput: { template: '<input />', props: ['modelValue'] },
   ElButton: { template: '<button><slot /></button>', props: ['secondary', 'type'] },

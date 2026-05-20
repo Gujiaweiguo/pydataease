@@ -30,7 +30,9 @@ vi.mock('@/store/modules/data-visualization/snapshot', () => ({
 }))
 
 vi.mock('@/api/visualization/dataVisualization', () => ({
-  querySubjectWithGroupApi: vi.fn(() => Promise.resolve({ data: [[{ id: '1', name: 'test', details: '{}' }]] })),
+  querySubjectWithGroupApi: vi.fn(() =>
+    Promise.resolve({ data: [[{ id: '1', name: 'test', details: '{}' }]] })
+  ),
   saveOrUpdateSubject: vi.fn(() => Promise.resolve()),
   deleteSubject: vi.fn(() => Promise.resolve())
 }))

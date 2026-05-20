@@ -21,7 +21,17 @@ vi.mock('pinia', () => ({
 
 vi.mock('@/store/modules/data-visualization/dvMain', () => ({
   dvMainStoreWithOut: () => ({
-    canvasStyleData: { component: { chartTitle: { color: '#000', fontSize: '14', isBolder: false, isItalic: false, hPosition: 'left' } } }
+    canvasStyleData: {
+      component: {
+        chartTitle: {
+          color: '#000',
+          fontSize: '14',
+          isBolder: false,
+          isItalic: false,
+          hPosition: 'left'
+        }
+      }
+    }
   })
 }))
 
@@ -31,9 +41,15 @@ vi.mock('@/views/chart/components/editor/util/chart', () => ({
 
 vi.mock('@/assets/svg/icon_bold_outlined.svg', () => ({ default: { template: '<svg />' } }))
 vi.mock('@/assets/svg/icon_italic_outlined.svg', () => ({ default: { template: '<svg />' } }))
-vi.mock('@/assets/svg/icon_left-alignment_outlined.svg', () => ({ default: { template: '<svg />' } }))
-vi.mock('@/assets/svg/icon_center-alignment_outlined.svg', () => ({ default: { template: '<svg />' } }))
-vi.mock('@/assets/svg/icon_right-alignment_outlined.svg', () => ({ default: { template: '<svg />' } }))
+vi.mock('@/assets/svg/icon_left-alignment_outlined.svg', () => ({
+  default: { template: '<svg />' }
+}))
+vi.mock('@/assets/svg/icon_center-alignment_outlined.svg', () => ({
+  default: { template: '<svg />' }
+}))
+vi.mock('@/assets/svg/icon_right-alignment_outlined.svg', () => ({
+  default: { template: '<svg />' }
+}))
 
 import ViewSimpleTitle from '@/components/dashboard/subject-setting/dashboard-style/ViewSimpleTitle.vue'
 
@@ -42,7 +58,10 @@ const stubs = {
   ElSpace: { template: '<div><slot /></div>', props: ['wrap'] },
   ElFormItem: { template: '<div><slot /></div>', props: ['class'] },
   ElColorPicker: { template: '<div />', props: ['modelValue', 'isCustom', 'size', 'predefine'] },
-  ElSelect: { template: '<select><slot /></select>', props: ['modelValue', 'size', 'placeholder', 'style'] },
+  ElSelect: {
+    template: '<select><slot /></select>',
+    props: ['modelValue', 'size', 'placeholder', 'style']
+  },
   ElOption: { template: '<option><slot /></option>', props: ['label', 'value'] },
   ElTooltip: { template: '<div><slot /></div>', props: ['effect', 'placement'] },
   ElIcon: { template: '<i><slot /></i>' },

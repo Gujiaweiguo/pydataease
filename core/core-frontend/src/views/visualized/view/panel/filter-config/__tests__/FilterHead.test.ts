@@ -8,13 +8,19 @@ vi.mock('@/config/axios/service', () => ({
 }))
 
 vi.mock('vuedraggable', () => ({
-  default: { template: '<div><slot name="item" /><slot name="footer" /></div>', props: ['list', 'group', 'itemKey'] }
+  default: {
+    template: '<div><slot name="item" /><slot name="footer" /></div>',
+    props: ['list', 'group', 'itemKey']
+  }
 }))
 
 import FilterHead from '@/views/visualized/view/panel/filter-config/FilterHead.vue'
 
 const stubs = {
-  draggable: { template: '<div><slot name="item" /><slot name="footer" /></div>', props: ['list', 'group', 'itemKey'] },
+  draggable: {
+    template: '<div><slot name="item" /><slot name="footer" /></div>',
+    props: ['list', 'group', 'itemKey']
+  },
   ElTag: { template: '<span><slot /></span>', props: ['closable'] }
 }
 
@@ -32,7 +38,10 @@ describe('FilterHead', () => {
   })
 
   it('renders with drag items', () => {
-    const dragItems = [{ id: '1', name: 'Field 1' }, { id: '2', name: 'Field 2' }]
+    const dragItems = [
+      { id: '1', name: 'Field 1' },
+      { id: '2', name: 'Field 2' }
+    ]
     const wrapper = shallowMount(FilterHead, {
       props: { dragItems },
       global: { stubs }

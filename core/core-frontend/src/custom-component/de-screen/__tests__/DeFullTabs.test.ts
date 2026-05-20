@@ -21,7 +21,9 @@ const mountComponent = (props = {}) =>
         'el-tab-pane': { template: '<div class="el-tab-pane"><slot /><slot name="label" /></div>' },
         'el-button': { template: '<button><slot /></button>' },
         'el-icon': { template: '<i><slot /></i>' },
-        'el-dropdown': { template: '<div class="el-dropdown"><slot /><slot name="dropdown" /></div>' },
+        'el-dropdown': {
+          template: '<div class="el-dropdown"><slot /><slot name="dropdown" /></div>'
+        },
         'el-dropdown-menu': { template: '<div><slot /></div>' },
         'el-dropdown-item': { template: '<div><slot /></div>' }
       }

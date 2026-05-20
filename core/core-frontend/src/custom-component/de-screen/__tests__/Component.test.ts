@@ -97,9 +97,7 @@ import Component from '../Component.vue'
 
 const createElement = () => ({
   id: 'test-element',
-  propValue: [
-    { name: 'tab1', title: 'Tab 1', screenId: null, closable: true }
-  ],
+  propValue: [{ name: 'tab1', title: 'Tab 1', screenId: null, closable: true }],
   editableTabsValue: 'tab1',
   style: {
     headHorizontalPosition: 'left',

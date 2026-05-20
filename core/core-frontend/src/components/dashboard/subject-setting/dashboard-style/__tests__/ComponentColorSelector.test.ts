@@ -10,7 +10,12 @@ const mocks = vi.hoisted(() => ({
         basicStyle: { gradient: false, alpha: 100, colors: ['#5470c6'] },
         label: { color: '#000', fontSize: 12 },
         tooltip: { color: '#000', fontSize: 12, backgroundColor: '#fff' },
-        tableHeader: { tableHeaderBgColor: '#fff', tableHeaderFontColor: '#000', tableHeaderColBgColor: '', tableHeaderCornerBgColor: '' },
+        tableHeader: {
+          tableHeaderBgColor: '#fff',
+          tableHeaderFontColor: '#000',
+          tableHeaderColBgColor: '',
+          tableHeaderCornerBgColor: ''
+        },
         tableCell: { tableItemBgColor: '#fff', tableItemSubBgColor: '#fff', tableFontColor: '#000' }
       },
       seniorStyleSetting: { pagerColor: '', pagerSize: 12 }
@@ -69,9 +74,12 @@ vi.mock('element-resize-detector', () => ({
   default: () => ({ listenTo: vi.fn() })
 }))
 
-vi.mock('@/views/chart/components/editor/editor-style/components/CustomColorStyleSelect.vue', () => ({
-  default: { template: '<div><slot /></div>' }
-}))
+vi.mock(
+  '@/views/chart/components/editor/editor-style/components/CustomColorStyleSelect.vue',
+  () => ({
+    default: { template: '<div><slot /></div>' }
+  })
+)
 
 import ComponentColorSelector from '@/components/dashboard/subject-setting/dashboard-style/ComponentColorSelector.vue'
 
@@ -80,13 +88,31 @@ const stubs = {
   ElFormItem: { template: '<div><slot /></div>', props: ['label', 'class'] },
   ElCheckbox: { template: '<input type="checkbox" />', props: ['modelValue', 'size', 'effect'] },
   ElSlider: { template: '<div />', props: ['modelValue', 'effect'] },
-  ElInput: { template: '<input />', props: ['modelValue', 'type', 'effect', 'min', 'max', 'controls'] },
+  ElInput: {
+    template: '<input />',
+    props: ['modelValue', 'type', 'effect', 'min', 'max', 'controls']
+  },
   ElRow: { template: '<div><slot /></div>', props: ['gutter'] },
   ElCol: { template: '<div><slot /></div>', props: ['span'] },
   ElDivider: { template: '<hr />', props: ['class'] },
   ElCollapseItem: { template: '<div><slot /></div>', props: ['title', 'name', 'effect', 'class'] },
-  ElColorPicker: { template: '<div />', props: ['modelValue', 'size', 'predefine', 'triggerWidth', 'isCustom', 'effect', 'showAlpha', 'colorFormat'] },
-  ElSelect: { template: '<select><slot /></select>', props: ['modelValue', 'size', 'effect', 'style'] },
+  ElColorPicker: {
+    template: '<div />',
+    props: [
+      'modelValue',
+      'size',
+      'predefine',
+      'triggerWidth',
+      'isCustom',
+      'effect',
+      'showAlpha',
+      'colorFormat'
+    ]
+  },
+  ElSelect: {
+    template: '<select><slot /></select>',
+    props: ['modelValue', 'size', 'effect', 'style']
+  },
   ElOption: { template: '<option><slot /></option>', props: ['label', 'value', 'key'] },
   CustomColorStyleSelect: { template: '<div><slot /></div>' }
 }

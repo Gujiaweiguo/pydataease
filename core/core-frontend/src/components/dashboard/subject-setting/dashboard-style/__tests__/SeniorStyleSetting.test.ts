@@ -21,7 +21,9 @@ vi.mock('pinia', () => ({
 
 vi.mock('@/store/modules/data-visualization/dvMain', () => ({
   dvMainStoreWithOut: () => ({
-    canvasStyleData: { component: { seniorStyleSetting: { linkageIconColor: '#000', drillLayerColor: '#000' } } }
+    canvasStyleData: {
+      component: { seniorStyleSetting: { linkageIconColor: '#000', drillLayerColor: '#000' } }
+    }
   })
 }))
 
@@ -48,7 +50,10 @@ const stubs = {
   ElFormItem: { template: '<div><slot /></div>', props: ['label', 'class', 'effect'] },
   ElRow: { template: '<div><slot /></div>', props: ['gutter'] },
   ElCol: { template: '<div><slot /></div>', props: ['span'] },
-  ElColorPicker: { template: '<div />', props: ['modelValue', 'effect', 'size', 'triggerWidth', 'isCustom', 'predefine'] }
+  ElColorPicker: {
+    template: '<div />',
+    props: ['modelValue', 'effect', 'size', 'triggerWidth', 'isCustom', 'predefine']
+  }
 }
 
 describe('SeniorStyleSetting', () => {

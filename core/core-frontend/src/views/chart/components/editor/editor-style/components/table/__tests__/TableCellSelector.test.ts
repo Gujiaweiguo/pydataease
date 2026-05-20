@@ -8,7 +8,11 @@ vi.mock('@/config/axios/service', () => ({
   cancelMap: new Map()
 }))
 vi.mock('@/store', () => ({ store: {} }))
-vi.mock('pinia', () => ({ defineStore: vi.fn(), storeToRefs: vi.fn(() => ({})), createPinia: vi.fn() }))
+vi.mock('pinia', () => ({
+  defineStore: vi.fn(),
+  storeToRefs: vi.fn(() => ({})),
+  createPinia: vi.fn()
+}))
 vi.mock('@/store/modules/data-visualization/dvMain', () => ({
   dvMainStoreWithOut: () => ({
     mobileInPc: { value: false }
