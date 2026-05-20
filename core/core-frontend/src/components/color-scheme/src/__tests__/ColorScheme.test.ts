@@ -21,10 +21,19 @@ describe('ColorScheme', () => {
   const globalConfig = {
     global: {
       stubs: {
-        'el-select': { template: '<select><slot /></select>', props: ['modelValue', 'size', 'placeholder'] },
+        'el-select': {
+          template: '<select><slot /></select>',
+          props: ['modelValue', 'size', 'placeholder']
+        },
         'el-option': { template: '<option><slot /></option>', props: ['key', 'label', 'value'] },
-        'el-button': { template: '<button><slot /><slot name="icon" /></button>', props: ['style', 'size', 'plain'] },
-        'el-color-picker': { template: '<input type="color" />', props: ['modelValue', 'predefine'] }
+        'el-button': {
+          template: '<button><slot /><slot name="icon" /></button>',
+          props: ['style', 'size', 'plain']
+        },
+        'el-color-picker': {
+          template: '<input type="color" />',
+          props: ['modelValue', 'predefine']
+        }
       },
       mocks: { $t: (k: string) => k }
     }

@@ -29,12 +29,21 @@ describe('ColumnList', () => {
       props: { columnNames: defaultColumns },
       global: {
         stubs: {
-          'el-dropdown': { template: '<div><slot /><slot name="dropdown" /></div>', props: ['trigger', 'hideOnClick'] },
+          'el-dropdown': {
+            template: '<div><slot /><slot name="dropdown" /></div>',
+            props: ['trigger', 'hideOnClick']
+          },
           'el-dropdown-menu': true,
           'el-main': true,
-          'el-button': { template: '<button><slot /><slot name="icon" /></button>', props: ['secondary'] },
+          'el-button': {
+            template: '<button><slot /><slot name="icon" /></button>',
+            props: ['secondary']
+          },
           'el-icon': true,
-          'el-checkbox': { template: '<label><slot /></label>', props: ['modelValue', 'indeterminate'] },
+          'el-checkbox': {
+            template: '<label><slot /></label>',
+            props: ['modelValue', 'indeterminate']
+          },
           'el-checkbox-group': { template: '<div><slot /></div>', props: ['modelValue'] }
         },
         mocks: { $t: (k: string) => k }

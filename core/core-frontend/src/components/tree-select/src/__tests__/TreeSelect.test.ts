@@ -19,7 +19,17 @@ describe('TreeSelect', () => {
         stubs: {
           'el-tree-select': {
             template: '<div class="el-tree-select-stub" />',
-            props: ['load', 'lazy', 'filterable', 'checkStrictly', 'filterNodeMethod', 'clearable', 'expandOnClickNode', 'checkOnClickNode', 'props']
+            props: [
+              'load',
+              'lazy',
+              'filterable',
+              'checkStrictly',
+              'filterNodeMethod',
+              'clearable',
+              'expandOnClickNode',
+              'checkOnClickNode',
+              'props'
+            ]
           }
         }
       }
@@ -34,7 +44,17 @@ describe('TreeSelect', () => {
         stubs: {
           'el-tree-select': {
             template: '<div />',
-            props: ['load', 'lazy', 'filterable', 'checkStrictly', 'filterNodeMethod', 'clearable', 'expandOnClickNode', 'checkOnClickNode', 'props']
+            props: [
+              'load',
+              'lazy',
+              'filterable',
+              'checkStrictly',
+              'filterNodeMethod',
+              'clearable',
+              'expandOnClickNode',
+              'checkOnClickNode',
+              'props'
+            ]
           }
         }
       }

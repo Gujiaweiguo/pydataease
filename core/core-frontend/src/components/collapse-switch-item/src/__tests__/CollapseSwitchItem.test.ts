@@ -7,8 +7,14 @@ describe('CollapseSwitchItem', () => {
   const globalConfig = {
     global: {
       stubs: {
-        'el-collapse-item': { template: '<div class="el-collapse-item-stub"><slot name="title" /><slot /></div>', props: ['effect'] },
-        'el-switch': { template: '<input type="checkbox" />', props: ['modelValue', 'effect', 'size'] }
+        'el-collapse-item': {
+          template: '<div class="el-collapse-item-stub"><slot name="title" /><slot /></div>',
+          props: ['effect']
+        },
+        'el-switch': {
+          template: '<input type="checkbox" />',
+          props: ['modelValue', 'effect', 'size']
+        }
       }
     }
   }

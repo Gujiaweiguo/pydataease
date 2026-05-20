@@ -28,7 +28,8 @@ describe('CustomPassword', () => {
       global: {
         stubs: {
           'el-input': {
-            template: '<input class="el-input-stub" :value="modelValue" @input="$emit(\'update:modelValue\', $event.target.value)" />',
+            template:
+              '<input class="el-input-stub" :value="modelValue" @input="$emit(\'update:modelValue\', $event.target.value)" />',
             props: ['modelValue', 'iconViewCustom', 'iconHideCustom'],
             emits: ['update:modelValue']
           }

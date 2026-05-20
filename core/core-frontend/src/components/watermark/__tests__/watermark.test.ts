@@ -9,7 +9,9 @@ vi.mock('@/store/modules/data-visualization/dvMain', () => ({
 }))
 
 vi.mock('@/api/user', () => ({
-  ipInfoApi: vi.fn(() => Promise.resolve({ data: { ip: '127.0.0.1', account: 'admin', name: 'Admin', model: 'active' } }))
+  ipInfoApi: vi.fn(() =>
+    Promise.resolve({ data: { ip: '127.0.0.1', account: 'admin', name: 'Admin', model: 'active' } })
+  )
 }))
 
 vi.mock('@/utils/utils', () => ({

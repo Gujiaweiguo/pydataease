@@ -32,7 +32,7 @@ describe('checkPermission directive', () => {
   it('should throw error if value is not an array', () => {
     expect(() => {
       checkPermission(mockEl, { value: 'not-array' })
-    }).toThrow("使用方式： v-permission=\"['panel']\"")
+    }).toThrow('使用方式： v-permission="[\'panel\']"')
   })
 
   it('should throw error if value is undefined', () => {
