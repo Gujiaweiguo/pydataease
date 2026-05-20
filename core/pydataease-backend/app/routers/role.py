@@ -5,9 +5,11 @@ from fastapi import APIRouter, Depends
 from app.dependencies.auth import get_current_user
 from app.schemas.auth import TokenUser
 from app.schemas.role import (
+    RoleBeforeUnmountRequest,
     RoleCreateRequest,
     RoleDetailResponse,
     RoleEditRequest,
+    RoleMountExternalRequest,
     RoleMountRequest,
     RoleQueryRequest,
     RoleResponse,
@@ -90,6 +92,24 @@ async def mount_user(
     service: RoleService = Depends(get_role_service),
 ) -> None:
     await service.mount_user(payload, user)
+
+
+@router.post("/role/beforeUnmountInfo")
+async def before_unmount_info(
+    payload: RoleBeforeUnmountRequest,
+    user: TokenUser = Depends(get_current_user),
+    service: RoleService = Depends(get_role_service),
+) -> object:
+    return await service.before_unmount_info(payload, user)
+
+
+@router.post("/role/mountExternalUser")
+async def mount_external_user(
+    payload: RoleMountExternalRequest,
+    user: TokenUser = Depends(get_current_user),
+    service: RoleService = Depends(get_role_service),
+) -> object:
+    return await service.mount_external_user(payload, user)
 
 
 @router.post("/role/unMountUser")

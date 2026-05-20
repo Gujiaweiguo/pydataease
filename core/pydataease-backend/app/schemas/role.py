@@ -42,6 +42,44 @@ class RoleUnmountRequest(BaseModel):
     )
 
 
+class RoleBeforeUnmountRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    role_id: int = Field(validation_alias=AliasChoices("roleId", "role_id"), serialization_alias="roleId")
+    user_ids: list[int] = Field(
+        default_factory=list,
+        validation_alias=AliasChoices("userIds", "user_ids"),
+        serialization_alias="userIds",
+    )
+
+
+class RoleBeforeUnmountInfoItem(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: int
+    name: str | None = None
+    account: str | None = None
+    remaining_role_count: int = Field(default=0, serialization_alias="remainingRoleCount")
+
+
+class RoleBeforeUnmountInfoResponse(BaseModel):
+    items: list[RoleBeforeUnmountInfoItem] = Field(default_factory=list)
+
+
+class RoleMountExternalRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    role_id: int = Field(validation_alias=AliasChoices("roleId", "role_id"), serialization_alias="roleId")
+    accounts: list[str] = Field(default_factory=list)
+
+
+class RoleMountExternalResponse(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    mounted: list[str] = Field(default_factory=list)
+    not_found: list[str] = Field(default_factory=list, serialization_alias="notFound")
+
+
 class RoleResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

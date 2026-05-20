@@ -17,9 +17,11 @@ from app.repositories.role_repo import RoleRepository
 from app.repositories.user_repo import UserRepository
 from app.schemas.auth import TokenUser
 from app.schemas.role import (
+    RoleBeforeUnmountRequest,
     RoleCreateRequest,
     RoleDetailResponse,
     RoleEditRequest,
+    RoleMountExternalRequest,
     RoleMountRequest,
     RoleQueryRequest,
     RoleResponse,
@@ -157,6 +159,56 @@ class RoleService:
                 user_entity = await self.user_repo.get_by_id(user_id)
                 if user_entity is not None:
                     await self.user_repo.delete(user_entity)
+
+    async def before_unmount_info(self, payload: RoleBeforeUnmountRequest, user: TokenUser) -> list[dict[str, object]]:
+        await self._get_visible_role(payload.role_id, user)
+        results = []
+        for uid in payload.user_ids:
+            target_user = await self.user_repo.get_by_id(uid)
+            if target_user is None:
+                continue
+            stmt = select(func.count()).select_from(CoreRoleUser).where(
+                CoreRoleUser.user_id == uid, CoreRoleUser.oid == user.oid
+            )
+            total_roles = int((await self.session.execute(stmt)).scalar_one())
+            results.append(
+                {
+                    "id": target_user.id,
+                    "name": target_user.name,
+                    "account": target_user.account,
+                    "remainingRoleCount": max(0, total_roles - 1),
+                }
+            )
+        return results
+
+    async def mount_external_user(self, payload: RoleMountExternalRequest, user: TokenUser) -> dict[str, object]:
+        role = await self._get_visible_role(payload.role_id, user)
+        mounted = []
+        not_found = []
+        for account in payload.accounts:
+            target = await self.user_repo.get_by_account(account.strip())
+            if target is None:
+                not_found.append(account)
+                continue
+            existing = await self.session.execute(
+                select(CoreRoleUser).where(
+                    CoreRoleUser.role_id == role.id,
+                    CoreRoleUser.user_id == target.id,
+                    CoreRoleUser.oid == user.oid,
+                )
+            )
+            if existing.scalar_one_or_none() is None:
+                self.session.add(
+                    CoreRoleUser(
+                        id=time.time_ns(),
+                        role_id=role.id,
+                        user_id=target.id,
+                        oid=user.oid,
+                    )
+                )
+                await self.session.commit()
+            mounted.append(account)
+        return {"mounted": mounted, "notFound": not_found}
 
     async def by_org(self, payload: RoleQueryRequest | None, user: TokenUser) -> list[RoleResponse]:
         return await self.query(payload, user)
