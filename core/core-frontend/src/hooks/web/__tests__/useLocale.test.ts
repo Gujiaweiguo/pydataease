@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const { fixtureBaseUrl, i18nState, localeStore, setHtmlPageLangMock } = vi.hoisted(() => ({
-  fixtureBaseUrl: 'file:///opt/code/pydataease/core/core-frontend/src/hooks/web/__tests__/fixtures',
+  fixtureBaseUrl: import.meta.url.replace(/__tests__\/[^/]*$/, '__tests__/fixtures'),
   i18nState: {
     current: undefined as any
   },
