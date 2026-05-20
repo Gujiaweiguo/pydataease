@@ -9,5 +9,8 @@ guid = "guid"
 yoy = "yoy"
 Ein = "Ein"
 Datas = "Datas"
+UNIO = "UNIO"
+Gam = "Gam"
+pn = "pn"
 [files]
 extend-exclude = ["mapFiles/**", "docs"]
