@@ -33,6 +33,7 @@ import { ElIcon, ElMessage, ElMessageBox, ElScrollbar } from 'element-plus-secon
 import { Icon } from '@/components/icon-custom'
 import { useEmitt } from '@/hooks/web/useEmitt'
 import { HandleMore } from '@/components/handle-more'
+import type { Menu } from '@/components/handle-more/src/HandleMore.vue'
 import DeResourceGroupOpt from '@/views/common/DeResourceGroupOpt.vue'
 import { useEmbedded } from '@/store/modules/embedded'
 import { BusiTreeNode, BusiTreeRequest } from '@/models/tree/TreeNode'
@@ -833,7 +834,7 @@ defineExpose({
                 @handle-command="
                   cmd => addOperation(cmd, data, cmd === 'newFolder' ? 'folder' : 'leaf')
                 "
-                :menu-list="resourceTypeList"
+                :menu-list="resourceTypeList as unknown as Menu[][]"
                 :icon-name="icon_add_outlined"
                 placement="bottom-start"
                 v-if="!data.leaf"
@@ -843,7 +844,7 @@ defineExpose({
                 :node="data"
                 :any-manage="anyManage"
                 :resource-type="curCanvasType"
-                :menu-list="data.leaf ? menuListWeight(data.id) : state.folderMenuList"
+                :menu-list="(data.leaf ? menuListWeight(data.id) : state.folderMenuList) as unknown as Menu[][]"
               ></dv-handle-more>
             </div>
           </span>

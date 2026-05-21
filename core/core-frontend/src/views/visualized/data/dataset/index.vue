@@ -46,6 +46,7 @@ import {
   ElScrollbar
 } from 'element-plus-secondary'
 import { HandleMore } from '@/components/handle-more'
+import type { Menu } from '@/components/handle-more/src/HandleMore.vue'
 import { Icon } from '@/components/icon-custom'
 import { useMoveLine } from '@/hooks/web/useMoveLine'
 import { useRouter, useRoute } from 'vue-router_2'
@@ -392,7 +393,7 @@ const closeExport = () => {
   showExport.value = false
 }
 
-const save = ({ logic, items, errorMessage }) => {
+const saveExport = ({ logic, items, errorMessage }) => {
   table.value.id = nodeInfo.id
   table.value.row = 100000
   table.value.filename = exportForm.value.name
@@ -934,7 +935,7 @@ const proxyAllowDrop = throttle((arg1, arg2) => {
                   <handle-more
                     icon-size="24px"
                     @handle-command="cmd => handleDatasetTree(cmd, data)"
-                    :menu-list="datasetTypeList"
+                    :menu-list="datasetTypeList as unknown as Menu[][]"
                     :icon-name="icon_add_outlined"
                     placement="bottom-start"
                     v-if="!data.leaf"
@@ -944,7 +945,7 @@ const proxyAllowDrop = throttle((arg1, arg2) => {
                   </el-icon>
                   <handle-more
                     @handle-command="cmd => operation(cmd, data, data.leaf ? 'dataset' : 'folder')"
-                    :menu-list="getMenuList(data.leaf)"
+                    :menu-list="getMenuList(data.leaf) as unknown as Menu[][]"
                   ></handle-more>
                 </div>
               </span>
@@ -1155,7 +1156,7 @@ const proxyAllowDrop = throttle((arg1, arg2) => {
       <el-form-item :label="$t('dataset.export_filter')" prop="expressionTree">
         <div class="tree-cont">
           <div class="content">
-            <RowAuth @save="save" ref="rowAuth" />
+            <RowAuth @save="saveExport" ref="rowAuth" />
           </div>
         </div>
       </el-form-item>

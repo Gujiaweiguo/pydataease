@@ -497,7 +497,7 @@ export async function initCanvasData(dvId, params, callBack) {
   )
 }
 
-export async function backCanvasData(dvId, mobileViewInfo, busiFlag, callBack) {
+export async function backCanvasData(dvId, _mobileViewInfo, busiFlag, callBack) {
   initCanvasDataPrepare(
     dvId,
     { busiFlag },

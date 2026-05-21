@@ -102,16 +102,7 @@ export class CarouselManager {
    */
   private drawOption: L7PlotDrawOptions
 
-  // 保存事件监听函数的引用
-  private onMouseEnterHandler: () => void
-  private onMouseLeaveHandler: () => void
-  private onVisibilityChangeHandler: () => void
-
   constructor(scene, chart, view, data: any[], customSubArea, drawOption?) {
-    // 绑定事件处理函数
-    this.onMouseEnterHandler = this.pauseCarouselPopups.bind(this)
-    this.onMouseLeaveHandler = this.resumeCarouselPopups.bind(this)
-    this.onVisibilityChangeHandler = this.handleVisibilityChange.bind(this)
     this.clearExistingTimers = this.clearExistingTimers.bind(this)
     this.init(scene, chart, view, data, customSubArea, drawOption)
   }

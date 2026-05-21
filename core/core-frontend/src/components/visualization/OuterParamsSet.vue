@@ -64,7 +64,7 @@
                       <handle-more
                         style="margin-right: 15px"
                         @handle-command="cmd => outerParamsOperation(cmd, node, data)"
-                        :menu-list="state.optMenu"
+                        :menu-list="state.optMenu as Menu[][]"
                         :icon-name="icon_more_vertical_outlined"
                         placement="bottom-start"
                       />
@@ -349,7 +349,7 @@
                   type="textarea"
                   :autosize="{ minRows: 4, maxRows: 8 }"
                   @change="
-                    val =>
+                    _val =>
                       validateArgs(
                         state.outerParamsInfo.defaultValue,
                         state.outerParamsInfo.paramsInfoId
@@ -384,7 +384,7 @@ import { deepCopy } from '@/utils/utils'
 import generateID from '@/utils/generateID'
 import { queryWithVisualizationId, updateOuterParamsSet } from '@/api/visualization/outerParams'
 import { queryOuterParamsDsInfo, viewDetailList } from '@/api/visualization/dataVisualization'
-import HandleMore from '@/components/handle-more/src/HandleMore.vue'
+import HandleMore, { type Menu } from '@/components/handle-more/src/HandleMore.vue'
 import { fieldType } from '@/utils/attr'
 import EmptyBackground from '@/components/empty-background/src/EmptyBackground.vue'
 import { snapshotStoreWithOut } from '@/store/modules/data-visualization/snapshot'
@@ -415,7 +415,7 @@ const state = reactive({
       svgName: _delete,
       command: 'delete'
     }
-  ],
+  ] as Menu[][],
   treeProp: {
     id: 'paramsInfoId',
     label: 'paramName',

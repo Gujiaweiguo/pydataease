@@ -27,6 +27,7 @@ import {
   toRefs,
   watch
 } from 'vue'
+import type { StyleValue } from 'vue'
 import { useEmitt } from '@/hooks/web/useEmitt'
 import { hexColorToRGBA, parseJson } from '@/views/chart/components/js/util.js'
 import {
@@ -1022,7 +1023,7 @@ const modifyAlpha = isBorder => {
   return `rgba(${r}, ${g}, ${b}, ${!backgroundColorSelect || isBorder ? 0.01 : a})`
 }
 
-const titleIconStyle = computed(() => {
+const titleIconStyle = computed<StyleValue>(() => {
   const bgColor = modifyAlpha(false)
   const borderColor = modifyAlpha(true)
   // 不显示标题时，图标的样式

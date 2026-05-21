@@ -1174,7 +1174,7 @@ export function filterEmptyMinValue(sourceData, field) {
     'value',
     0,
     0,
-    (max, min) => {
+    (_max, min) => {
       notEmptyMinValue = min
     }
   )

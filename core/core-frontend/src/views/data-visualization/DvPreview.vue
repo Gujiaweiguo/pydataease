@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { StyleValue } from 'vue'
 import { dvMainStoreWithOut } from '@/store/modules/data-visualization/dvMain'
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import DePreview from '@/components/data-visualization/canvas/DePreview.vue'
@@ -70,7 +71,7 @@ const contentInnerClass = computed(() => {
   }
 })
 
-const outerStyle = computed(() => {
+const outerStyle = computed<StyleValue>(() => {
   return {
     flexDirection: props.canvasStylePreview.screenAdaptor === 'heightFirst' ? 'row' : 'column'
   }

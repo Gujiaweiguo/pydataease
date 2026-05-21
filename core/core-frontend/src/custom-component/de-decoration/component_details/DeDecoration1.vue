@@ -5,7 +5,7 @@
       :height="`${svgWH[1]}px`"
       :style="`transform:scale(${svgScale[0]},${svgScale[1]});`"
     >
-      <template v-for="(point, i) in points" :key="i">
+      <template v-for="(point, i) in points" :key="`${point.join('-')}-${i}`">
         <rect
           v-if="Math.random() > 0.6"
           :fill="mergedColor[0]"

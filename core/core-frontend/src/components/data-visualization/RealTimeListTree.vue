@@ -130,7 +130,7 @@ const baseAreaActive = computed(
 // 2.获取当前index curClickIndex;
 // 3.比较laterIndex 和 curClickIndex之间的大小;
 // 4.将[laterIndex,curClickIndex] 或者 [curClickIndex,laterIndex]区域的图层加入areaData.value.components(已包含的不再重复加入);
-const shiftDataPush = curClickIndex => {
+const shiftDataPush = (curClickIndex: number) => {
   const areaDataIdArray = areaData.value.components.map(com => com.id)
   let indexBegin, indexEnd
   const laterIndexTrans = laterIndex.value === null ? componentData.value.length : laterIndex.value
@@ -154,7 +154,7 @@ const shiftDataPush = curClickIndex => {
   dvMainStore.setCurComponent({ component: null, index: null })
 }
 
-const hiddenAreaOnClick = (e, element) => {
+const hiddenAreaOnClick = (_e: MouseEvent, element: any) => {
   let indexResult
   componentData.value.forEach((component, index) => {
     if (element.id === component.id) {

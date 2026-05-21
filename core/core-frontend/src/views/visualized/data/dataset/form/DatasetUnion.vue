@@ -18,6 +18,7 @@ import zeroNodeImg from '@/assets/img/drag.png'
 import { ElMessageBox, type Action } from 'element-plus-secondary'
 import { guid } from './util'
 import { HandleMore } from '@/components/handle-more'
+import type { Menu } from '@/components/handle-more/src/HandleMore.vue'
 import { propTypes } from '@/utils/propTypes'
 import UnionFieldList from './UnionFieldList.vue'
 import { type Node, type Field, num } from './util'
@@ -1133,7 +1134,7 @@ const emits = defineEmits([
           <handle-more
             style="margin-left: auto"
             :iconName="icon_moreVertical_outlined"
-            :menuList="ele.type === 'sql' ? [...sqlMenu, ...menuList] : menuList"
+            :menuList="(ele.type === 'sql' ? [...sqlMenu, ...menuList] : menuList) as unknown as Menu[][]"
             @handle-command="command => handleCommand(ele, command)"
           ></handle-more>
         </div>

@@ -351,7 +351,7 @@ const saveExcelDs = (params, successCb, finallyCb) => {
   }
 }
 
-const saveExcelData = (sheetFileMd5, table, params, successCb, finallyCb) => {
+const saveExcelData = (_sheetFileMd5, table, params, successCb, finallyCb) => {
   for (let i = 0; i < table.sheets.length; i++) {
     table.sheets[i].data = []
     table.sheets[i].jsonArray = []

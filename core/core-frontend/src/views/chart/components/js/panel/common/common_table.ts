@@ -3363,7 +3363,7 @@ export class SummaryCell extends CustomDataCell {
  * @param newData
  * @param container
  */
-export const configEmptyDataStyle = (newChart, basicStyle, newData, container) => {
+export const configEmptyDataStyle = (newChart, _basicStyle, newData, container) => {
   /**
    * 辅助函数：移除空数据dom
    */

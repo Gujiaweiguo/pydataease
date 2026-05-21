@@ -24,7 +24,6 @@ import {
 } from 'vue'
 import { storeToRefs } from 'pinia'
 import { enumValueObj } from '@/api/dataset'
-import CustomSortFilter from './CustomSortFilter.vue'
 import { addQueryCriteriaConfig } from './options'
 import { getCustomTime } from './time-format'
 import { dvMainStoreWithOut } from '@/store/modules/data-visualization/dvMain'

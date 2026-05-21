@@ -718,7 +718,7 @@ const fieldTypeToStr = {
   2: 'LONG',
   3: 'DOUBLE'
 }
-const saveExcelData = (sheetFileMd5, table, params, successCb, finallyCb) => {
+const saveExcelData = (_sheetFileMd5, table, params, successCb, finallyCb) => {
   for (let i = 0; i < table.configuration.sheets.length; i++) {
     table.configuration.sheets[i].data = []
     table.configuration.sheets[i].jsonArray = []

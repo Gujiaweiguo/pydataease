@@ -115,7 +115,7 @@ const tableData = shallowRef([])
 const apiItemBasicInfo = ref<FormInstance>()
 const xpackApiItemBasicInfo = ref<FormInstance>()
 const isSupportSetKey = ref(false)
-const isNumber = (rule, value, callback) => {
+const isNumber = (_rule, value, callback) => {
   if (!value) {
     callback(new Error(t('datasource.please_input_query_timeout')))
     return

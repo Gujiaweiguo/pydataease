@@ -40,6 +40,7 @@ import GridTable from '@/components/grid-table/src/GridTable.vue'
 import ArrowSide from '@/views/common/DeResourceArrow.vue'
 import relationChart from '@/components/relation-chart/index.vue'
 import { HandleMore } from '@/components/handle-more'
+import type { Menu } from '@/components/handle-more/src/HandleMore.vue'
 import { Icon } from '@/components/icon-custom'
 import { fieldType } from '@/utils/attr'
 import { useEmitt } from '@/hooks/web/useEmitt'
@@ -1258,7 +1259,7 @@ const getMenuList = (val: boolean) => {
                   <handle-more
                     icon-size="24px"
                     @handle-command="cmd => handleDatasourceTree(cmd, data)"
-                    :menu-list="datasetTypeList"
+                    :menu-list="datasetTypeList as unknown as Menu[][]"
                     :icon-name="icon_add_outlined"
                     placement="bottom-start"
                     v-if="!data.leaf"
@@ -1270,7 +1271,7 @@ const getMenuList = (val: boolean) => {
                     @handle-command="
                       cmd => operation(cmd, data, data.leaf ? 'datasource' : 'folder')
                     "
-                    :menu-list="getMenuList(data.leaf)"
+                    :menu-list="getMenuList(data.leaf) as unknown as Menu[][]"
                   ></handle-more>
                 </div>
               </span>

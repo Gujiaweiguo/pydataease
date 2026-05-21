@@ -258,7 +258,7 @@ const getResultNum = (
 
 const getOperator = (
   displayType,
-  multiple,
+  _multiple,
   conditionType,
   defaultConditionValueOperatorF,
   defaultConditionValueF,
