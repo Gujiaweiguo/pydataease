@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 
+declare const AMap: any
+
+const amapWindow = window as Window & { AMap?: any }
+
 const domId = ref('de-map-container')
 const center: [number, number] = [116.397428, 39.90923]
 const mapInstance = ref(null)
@@ -45,8 +49,8 @@ const loadMap = () => {
     })
 }
 const createMapInstance = () => {
-  if (window.AMap) {
-    mapInstance.value = new window.AMap.Map(domId.value, {
+  if (amapWindow.AMap) {
+    mapInstance.value = new AMap.Map(domId.value, {
       viewMode: '2D',
       zoom: 11,
       center: center
@@ -60,7 +64,7 @@ const loadScript = (url: string) => {
     if (dom) {
       dom.parentElement?.removeChild(dom)
       dom = null
-      window.AMap = null
+      amapWindow.AMap = null
     }
     const script = document.createElement('script')
 
@@ -86,7 +90,7 @@ onBeforeUnmount(() => {
   if (dom) {
     dom.parentElement?.removeChild(dom)
     dom = null
-    window.AMap = null
+    amapWindow.AMap = null
   }
 })
 </script>

@@ -8,7 +8,25 @@ import { isISOMobile } from '@/utils/utils'
 const dvMainStore = dvMainStoreWithOut()
 
 const { dvInfo } = storeToRefs(dvMainStore)
-const userInfo = ref(null)
+const userInfo = ref<{ model?: string; ip?: string; account?: string; name?: string } | null>(null)
+
+type WatermarkInfoSetting = {
+  enable?: boolean
+  enablePanelCustom?: boolean
+  type?: string
+  content?: string
+  watermark_fontsize?: number
+  watermark_color?: string
+  watermark_x_space?: number
+  watermark_y_space?: number
+}
+
+type DvInfoWatermarkState = {
+  watermarkInfo?: {
+    settingContent?: WatermarkInfoSetting
+  }
+  selfWatermarkStatus?: boolean
+}
 export function watermark(settings, domId) {
   const watermarkDom = document.getElementById(domId)
   // 默认设置
@@ -91,8 +109,8 @@ export function watermark(settings, domId) {
     defaultSettings.watermark_rows < 2 ? 2 : defaultSettings.watermark_rows
   defaultSettings.watermark_cols =
     defaultSettings.watermark_cols < 2 ? 2 : defaultSettings.watermark_cols
-  let x
-  let y
+  let x = 0
+  let y = 0
   for (let i = 0; i < defaultSettings.watermark_rows; i++) {
     y =
       defaultSettings.watermark_y +
@@ -107,9 +125,9 @@ export function watermark(settings, domId) {
       mask_div.appendChild(document.createTextNode(defaultSettings.watermark_txt))
       // 设置水印div倾斜显示
       mask_div.style.webkitTransform = 'rotate(-' + defaultSettings.watermark_angle + 'deg)'
-      mask_div.style.MozTransform = 'rotate(-' + defaultSettings.watermark_angle + 'deg)'
-      mask_div.style.msTransform = 'rotate(-' + defaultSettings.watermark_angle + 'deg)'
-      mask_div.style.OTransform = 'rotate(-' + defaultSettings.watermark_angle + 'deg)'
+      ;(mask_div.style as any).MozTransform = 'rotate(-' + defaultSettings.watermark_angle + 'deg)'
+      ;(mask_div.style as any).msTransform = 'rotate(-' + defaultSettings.watermark_angle + 'deg)'
+      ;(mask_div.style as any).OTransform = 'rotate(-' + defaultSettings.watermark_angle + 'deg)'
       mask_div.style.transform = 'rotate(-' + defaultSettings.watermark_angle + 'deg)'
       mask_div.style.visibility = ''
       mask_div.style.position = 'absolute'
@@ -119,7 +137,7 @@ export function watermark(settings, domId) {
       mask_div.style.zIndex = '10'
       // 让水印不遮挡页面的点击事件
       mask_div.style.pointerEvents = 'none'
-      mask_div.style.opacity = defaultSettings.watermark_alpha
+      mask_div.style.opacity = String(defaultSettings.watermark_alpha)
       mask_div.style.fontSize = defaultSettings.watermark_fontsize
       mask_div.style.fontFamily = defaultSettings.watermark_font
       mask_div.style.color = defaultSettings.watermark_color
@@ -154,14 +172,15 @@ export function getNow() {
   return time
 }
 export function activeWatermarkCheckUser(domId, canvasId, scale = 1) {
-  if (dvInfo.value.watermarkInfo) {
+  const currentDvInfo = dvInfo.value as DvInfoWatermarkState
+  if (currentDvInfo.watermarkInfo?.settingContent) {
     if (userInfo.value && userInfo.value.model !== 'lose') {
       activeWatermark(
-        dvInfo.value.watermarkInfo.settingContent,
+        currentDvInfo.watermarkInfo.settingContent,
         userInfo.value,
         domId,
         canvasId,
-        dvInfo.value.selfWatermarkStatus,
+        currentDvInfo.selfWatermarkStatus,
         scale
       )
     } else {
@@ -169,11 +188,11 @@ export function activeWatermarkCheckUser(domId, canvasId, scale = 1) {
         userInfo.value = res.data
         if (userInfo.value && userInfo.value.model !== 'lose') {
           activeWatermark(
-            dvInfo.value.watermarkInfo.settingContent,
+            currentDvInfo.watermarkInfo?.settingContent,
             userInfo.value,
             domId,
             canvasId,
-            dvInfo.value.selfWatermarkStatus,
+            currentDvInfo.selfWatermarkStatus,
             scale
           )
         }
@@ -190,11 +209,11 @@ export function removeActiveWatermark(domId) {
 }
 
 export function activeWatermark(
-  watermarkForm,
-  userLoginInfo,
-  domId,
-  canvasId,
-  selfWatermarkStatus,
+  watermarkForm: WatermarkInfoSetting,
+  userLoginInfo: { ip?: string; account?: string; name?: string },
+  domId: string,
+  canvasId: string,
+  selfWatermarkStatus: boolean,
   scale = 1
 ) {
   // 清理历史水印
@@ -208,7 +227,7 @@ export function activeWatermark(
   ) {
     return
   }
-  let watermark_txt
+  let watermark_txt = ''
   let watermark_width = 120
   if (watermarkForm.type === 'custom') {
     watermark_txt = watermarkForm.content

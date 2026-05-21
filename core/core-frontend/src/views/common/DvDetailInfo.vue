@@ -25,13 +25,25 @@
 </template>
 
 <script lang="ts" setup>
+import { computed } from 'vue'
 import { dvMainStoreWithOut } from '@/store/modules/data-visualization/dvMain'
 import { storeToRefs } from 'pinia'
 import { useI18n } from '@/hooks/web/useI18n'
 const { t } = useI18n()
 
 const dvMainStore = dvMainStoreWithOut()
-const { dvInfo } = storeToRefs(dvMainStore)
+const { dvInfo: rawDvInfo } = storeToRefs(dvMainStore)
+const dvInfo = computed(
+  () =>
+    rawDvInfo.value as {
+      type?: string
+      id?: string | number
+      creatorName?: any
+      createTime?: any
+      updateName?: any
+      updateTime?: any
+    }
+)
 
 const timestampFormatDate = value => {
   if (!value) {

@@ -320,7 +320,7 @@ const getTree = async (notOpen = false) => {
     busiFlag: curCanvasType.value,
     resourceTable: props.resourceTable
   } as BusiTreeRequest
-  const isDashboard = curCanvasType.value == 'dashboard'
+  const isDashboard = curCanvasType.value === 'dashboard'
   await interactiveStore.setInteractive(request)
   const interactiveData = isDashboard ? interactiveStore.getPanel : interactiveStore.getScreen
   const nodeData = interactiveData.treeNodes
@@ -376,7 +376,7 @@ const afterTreeInit = (notOpen = false) => {
     resourceListTree.value.filter(filterText.value)
     if (notOpen) return
     nextTick(() => {
-      document.querySelector('.is-current')?.firstChild?.click()
+      ;(document.querySelector('.is-current')?.firstChild as HTMLElement | null)?.click()
     })
   })
 }

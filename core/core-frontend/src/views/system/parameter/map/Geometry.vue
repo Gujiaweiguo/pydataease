@@ -314,6 +314,11 @@ interface Tree {
   label: string
   children?: Tree[]
 }
+type GeoAreaTreeNode = {
+  id: string
+  name: string
+  children?: GeoAreaTreeNode[] | null
+}
 const areaTreeRef = ref(null)
 const loading = ref(false)
 const selectedData = ref(null)
@@ -396,10 +401,11 @@ const add = (pid?: string) => {
 loadTreeData(true)
 
 // geoArea
-const customTreeData = ref([
+const customTreeData = ref<GeoAreaTreeNode[]>([
   {
     id: '000',
-    name: t('system.custom_area')
+    name: t('system.custom_area'),
+    children: []
   }
 ])
 const customAreaDialog = ref(false)

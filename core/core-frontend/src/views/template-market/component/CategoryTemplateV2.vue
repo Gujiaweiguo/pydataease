@@ -42,11 +42,19 @@ const templatePreview = params => {
   emits('templatePreview', params)
 }
 
+type TemplateCategoryItem = {
+  id: string
+  showFlag?: boolean
+  categoryNames?: string[]
+}
+
+const fullTemplateShowList = computed(() => props.fullTemplateShowList as TemplateCategoryItem[])
+
 const searchResult = computed(
-  () => props.fullTemplateShowList.filter(item => showFlagCheck(item)).length
+  () => fullTemplateShowList.value.filter(item => showFlagCheck(item)).length
 )
 
-const showFlagCheck = template => {
+const showFlagCheck = (template: TemplateCategoryItem) => {
   return template.showFlag && template.categoryNames?.includes(props.label)
 }
 

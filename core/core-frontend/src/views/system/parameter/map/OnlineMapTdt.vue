@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 
+declare const T: any
+
+const mapWindow = window as Window & { AMap?: any; T?: any }
+
 const domId = ref('de-map-container')
 const center: [number, number] = [116.397428, 39.90923]
 const mapInstance = ref(null)
@@ -52,8 +56,8 @@ const loadMap = () => {
     })
 }
 const createMapInstance = () => {
-  if (window.T) {
-    mapInstance.value = new window.T.Map(domId.value)
+  if (mapWindow.T) {
+    mapInstance.value = new T.Map(domId.value)
     mapInstance.value.centerAndZoom(new T.LngLat(center[0], center[1]), 11)
   }
 }
@@ -64,7 +68,7 @@ const loadScript = (url: string) => {
     if (dom) {
       dom.parentElement?.removeChild(dom)
       dom = null
-      window.AMap = null
+      mapWindow.AMap = null
     }
     const script = document.createElement('script')
 
@@ -90,7 +94,7 @@ onBeforeUnmount(() => {
   if (dom) {
     dom.parentElement?.removeChild(dom)
     dom = null
-    window.T = null
+    mapWindow.T = null
   }
 })
 </script>

@@ -193,6 +193,7 @@ const state = reactive({
   folderSelectShow: false,
   baseUrl: '',
   marketTemplatePreviewShowList: [],
+  currentMarketTemplateShowList: [],
   categories: [],
   networkStatus: true,
   curTemplate: null,
@@ -305,6 +306,7 @@ const initTemplateShow = () => {
       }
     })
   })
+  state.currentMarketTemplateShowList = state.marketTemplatePreviewShowList
   activeCategories.value = deepCopy(state.categories)
 }
 

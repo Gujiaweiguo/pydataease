@@ -31,7 +31,7 @@
 </template>
 
 <script lang="ts" setup>
-import { onMounted, reactive } from 'vue'
+import { computed, onMounted, reactive } from 'vue'
 import { useI18n } from '@/hooks/web/useI18n'
 import { batchUpdate, findCategoriesByTemplateIds } from '@/api/template'
 import { ElMessage } from 'element-plus-secondary'
@@ -47,6 +47,10 @@ const props = defineProps({
     required: true
   }
 })
+
+const templateCategories = computed(
+  () => props.templateCategories as Array<{ id: string; name: string }>
+)
 
 const state = reactive({
   templateInfo: {

@@ -76,8 +76,13 @@ const state = reactive({
   nothingImg: '@/assets/nothing.png'
 })
 
+type TemplateListItem = {
+  id: string
+  name: string
+}
+
 const templateListComputed = computed(() => {
-  return props.templateList.filter(ele => ele['id'] !== '1')
+  return (props.templateList as TemplateListItem[]).filter(ele => ele.id !== '1')
 })
 
 const clickMore = (type, data) => {
@@ -93,12 +98,12 @@ const clickMore = (type, data) => {
       break
   }
 }
-const nodeClick = ({ id, name }) => {
+const nodeClick = ({ id, name }: TemplateListItem) => {
   state.activeTemplate = id
   emits('showCurrentTemplate', id, name)
 }
 
-const categoryDelete = template => {
+const categoryDelete = (template: TemplateListItem) => {
   ElMessageBox.confirm(t('template_manage.delete_catalog_hint'), {
     tip: t('template_manage.delete_catalog_tip'),
     confirmButtonType: 'danger',
@@ -110,10 +115,10 @@ const categoryDelete = template => {
     emits('categoryDelete', template.id)
   })
 }
-const categoryEdit = template => {
+const categoryEdit = (template: TemplateListItem) => {
   emits('categoryEdit', template)
 }
-const templateImport = template => {
+const templateImport = (template: TemplateListItem) => {
   emits('templateImport', template.id)
 }
 

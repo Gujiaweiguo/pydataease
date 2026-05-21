@@ -101,6 +101,8 @@ const props = defineProps({
   }
 })
 
+const templateCategories = props.templateCategories as Array<{ id: string; name: string }>
+
 const state = reactive({
   categories: [],
   nameList: [],
@@ -213,8 +215,9 @@ const getRefreshPInfo = () => {
   const refreshPid = state.templateInfo.categories[0]
   let refreshPName = ''
   props.templateCategories.forEach(category => {
-    if (category.id === refreshPid) {
-      refreshPName = category.name
+    const currentCategory = category as { id: string; name: string }
+    if (currentCategory.id === refreshPid) {
+      refreshPName = currentCategory.name
     }
   })
   return {
