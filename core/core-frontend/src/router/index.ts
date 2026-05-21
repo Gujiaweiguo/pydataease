@@ -12,7 +12,7 @@ export const routes: AppRouteRecordRaw[] = [
     meta: {},
     children: [
       {
-        path: 'workbranch',
+        path: 'workbranch/index',
         name: 'workbranch',
         hidden: true,
         component: () => import('@/views/workbranch/index.vue'),
