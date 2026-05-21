@@ -47,13 +47,15 @@ build/
 # RSA keys
 *.pem
 
-# E2E / browser screenshots
-*.png
-
-# E2E artifacts
-findById-response.json
-e2e-browser-console*.log
-e2e-browser-network.txt
+# E2E / browser screenshots (root-level only — nested PNGs are legit assets)
+/*.png
+/findById-response.json
+/e2e-browser-console*.log
+/e2e-browser-network.txt
+/network-*.log
+/console-*.log
+/validate-*.log
+/findbyid-*.log
 
 # Tool artifacts
 .opencode/
