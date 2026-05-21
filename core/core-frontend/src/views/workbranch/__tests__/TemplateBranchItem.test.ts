@@ -58,7 +58,7 @@ describe('TemplateBranchItem', () => {
     const vm = wrapper.vm as any
     vm.apply()
     expect(wrapper.emitted('templateApply')).toBeTruthy()
-    expect(wrapper.emitted('templateApply')![0]).toEqual([defaultTemplate])
+    expect(wrapper.emitted('templateApply')?.[0]).toEqual([defaultTemplate])
   })
 
   it('emits templatePreview when templateInnerPreview method is called', () => {
@@ -66,6 +66,6 @@ describe('TemplateBranchItem', () => {
     const vm = wrapper.vm as any
     vm.templateInnerPreview()
     expect(wrapper.emitted('templatePreview')).toBeTruthy()
-    expect(wrapper.emitted('templatePreview')![0]).toEqual(['tpl-1'])
+    expect(wrapper.emitted('templatePreview')?.[0]).toEqual(['tpl-1'])
   })
 })

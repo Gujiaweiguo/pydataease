@@ -3,7 +3,7 @@ import icon_drag_outlined from '@/assets/svg/icon_drag_outlined.svg'
 import icon_deleteTrash_outlined from '@/assets/svg/icon_delete-trash_outlined.svg'
 import icon_add_outlined from '@/assets/svg/icon_add_outlined.svg'
 import { propTypes } from '@/utils/propTypes'
-import { computed, onBeforeMount, PropType, toRefs, inject } from 'vue'
+import { computed, onBeforeMount, PropType, toRefs } from 'vue'
 import { useI18n } from '@/hooks/web/useI18n'
 import { KeyValue } from './ApiTestModel.js'
 import { guid } from '@/views/visualized/data/dataset/form/util'
@@ -38,9 +38,6 @@ const props = defineProps({
 const { t } = useI18n()
 const keyText = computed(() => {
   return props.keyPlaceholder || t('datasource.key')
-})
-const valueText = computed(() => {
-  return props.valuePlaceholder || t('datasource.value')
 })
 
 const { parameters, suggestions } = toRefs(props)
@@ -103,7 +100,7 @@ const createFilter = (queryString: string) => {
 const changeNameType = element => {
   element.value = ''
 }
-const activeName = inject('api-active-name')
+
 const options = [
   {
     label: t('data_source.parameter'),

@@ -3,7 +3,7 @@ import icon_drag_outlined from '@/assets/svg/icon_drag_outlined.svg'
 import icon_deleteTrash_outlined from '@/assets/svg/icon_delete-trash_outlined.svg'
 import icon_add_outlined from '@/assets/svg/icon_add_outlined.svg'
 import { propTypes } from '@/utils/propTypes'
-import { computed, onBeforeMount, PropType, toRefs, inject } from 'vue'
+import { computed, onBeforeMount, PropType, toRefs } from 'vue'
 import { useI18n } from '@/hooks/web/useI18n'
 import { KeyValue } from './ApiTestModel.js'
 import draggable from 'vuedraggable'
@@ -39,9 +39,6 @@ const { t } = useI18n()
 const keyText = computed(() => {
   return props.keyPlaceholder || t('datasource.key')
 })
-const valueText = computed(() => {
-  return props.valuePlaceholder || t('datasource.value')
-})
 
 const { suggestions, items } = toRefs(props)
 
@@ -55,8 +52,6 @@ onBeforeMount(() => {
     }
   }
 })
-
-const activeName = inject('api-active-name')
 
 const remove = (index: number) => {
   if (isDisable()) return

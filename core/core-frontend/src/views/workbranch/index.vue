@@ -255,8 +255,8 @@ const apply = () => {
   if (isDataEaseBi.value) {
     embeddedBaseUrl = embeddedStore.baseUrl
   }
-  if (state.pid) {
-    newWindow = window.open(embeddedBaseUrl + baseUrl + `&pid=${state.pid}`, openType)
+  if (state.dvCreateForm.pid) {
+    newWindow = window.open(embeddedBaseUrl + baseUrl + `&pid=${state.dvCreateForm.pid}`, openType)
   } else {
     newWindow = window.open(embeddedBaseUrl + baseUrl, openType)
   }

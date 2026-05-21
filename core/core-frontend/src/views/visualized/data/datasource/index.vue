@@ -1766,7 +1766,7 @@ const getMenuList = (val: boolean) => {
             v-if="nodeInfo.type.startsWith('Excel')"
             v-slot="slotProps"
             :name="t('dataset.data_preview')"
-            :time="nodeInfo.lastSyncTime"
+            :time="Number(nodeInfo.lastSyncTime)"
             :showTime="nodeInfo.type === 'ExcelRemote'"
           >
             <template v-if="slotProps.active">
@@ -1806,7 +1806,7 @@ const getMenuList = (val: boolean) => {
             "
             v-slot="slotProps"
             :name="t('dataset.update_setting')"
-            :time="(nodeInfo.lastSyncTime as string)"
+            :time="Number(nodeInfo.lastSyncTime)"
           >
             <template v-if="slotProps.active">
               <el-row :gutter="24">
@@ -1820,7 +1820,7 @@ const getMenuList = (val: boolean) => {
                     <p
                       class="value"
                       :key="ele"
-                      v-for="ele in formatSimpleCron(nodeInfo.syncSetting || {})"
+                      v-for="ele in formatSimpleCron(nodeInfo.syncSetting)"
                     >
                       {{ ele }}
                     </p>
