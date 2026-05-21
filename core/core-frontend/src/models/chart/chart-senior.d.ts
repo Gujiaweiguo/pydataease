@@ -225,6 +225,8 @@ declare interface Threshold {
    * 动态值最大值字段 仅当term为between时使用
    */
   dynamicMaxField: ThresholdDynamicField
+  target?: string
+  targetFieldId?: string
 }
 
 declare interface ThresholdDynamicField {

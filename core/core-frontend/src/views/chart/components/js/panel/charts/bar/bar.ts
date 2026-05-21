@@ -188,14 +188,14 @@ export class Bar extends G2PlotChartView<ColumnOptions, Column> {
       },
       position: data => {
         if (data.value < 0) {
-          if (tmpOptions.label?.position === 'top') {
+          if ((tmpOptions.label as any)?.position === 'top') {
             return 'bottom'
           }
-          if (tmpOptions.label?.position === 'bottom') {
+          if ((tmpOptions.label as any)?.position === 'bottom') {
             return 'top'
           }
         }
-        return tmpOptions.label?.position
+        return (tmpOptions.label as any)?.position
       }
     }
     return {
@@ -225,7 +225,7 @@ export class Bar extends G2PlotChartView<ColumnOptions, Column> {
       ...options,
       ...configRoundAngle(chart, 'columnStyle')
     }
-    let columnWidthRatio
+    let columnWidthRatio: number | undefined
     const _v = basicStyle.columnWidthRatio ?? DEFAULT_BASIC_STYLE.columnWidthRatio
     if (_v >= 1 && _v <= 100) {
       columnWidthRatio = _v / 100.0
@@ -235,7 +235,7 @@ export class Bar extends G2PlotChartView<ColumnOptions, Column> {
       columnWidthRatio = 1
     }
     if (columnWidthRatio) {
-      options.columnWidthRatio = columnWidthRatio
+      ;(options as any).columnWidthRatio = columnWidthRatio
     }
 
     return options
@@ -427,15 +427,14 @@ export class StackBar extends Bar {
       if (sort?.length) {
         // 用值域限定排序，有可能出现新数据但是未出现在图表上，所以这边要遍历一下子维度，加到后面，让新数据显示出来
         const data = options.data
-        const cats =
-          data?.reduce((p, n) => {
-            const cat = n['category']
-            if (cat && !p.includes(cat)) {
-              p.push(cat)
-            }
-            return p
-          }, []) || []
-        const values = sort.reduce((p, n) => {
+        const cats = (data?.reduce<string[]>((p, n) => {
+          const cat = n['category']
+          if (cat && !p.includes(cat)) {
+            p.push(cat)
+          }
+          return p
+        }, []) || []) as string[]
+        const values = sort.reduce<string[]>((p, n) => {
           if (cats.includes(n)) {
             const index = cats.indexOf(n)
             if (index !== -1) {
@@ -446,7 +445,7 @@ export class StackBar extends Bar {
           return p
         }, [])
         cats.length > 0 && values.push(...cats)
-        options.meta = {
+        ;(options as any).meta = {
           ...options.meta,
           category: {
             type: 'cat',
@@ -492,14 +491,14 @@ export class StackBar extends Bar {
     }
     const extStack = chart.extStack[0]
     const customStyle = parseJson(chart.customStyle)
-    let size
+    let size: number
     if (customStyle && customStyle.legend) {
       size = defaults(JSON.parse(JSON.stringify(customStyle.legend)), DEFAULT_LEGEND_STYLE).size
     } else {
       size = DEFAULT_LEGEND_STYLE.size
     }
 
-    optionTmp.legend.marker.style = style => {
+    ;(optionTmp.legend.marker as any).style = style => {
       return {
         r: size,
         fill: style.fill
@@ -515,8 +514,8 @@ export class StackBar extends Bar {
           return p
         }, {}) || {}
       const dupCheck = new Set()
-      const colors = optionTmp.color ?? optionTmp.theme.styleSheet.paletteQualitative10
-      const items = optionTmp.data?.reduce((arr, item) => {
+      const colors = optionTmp.color ?? (optionTmp.theme as any).styleSheet.paletteQualitative10
+      const items = (optionTmp.data?.reduce((arr, item) => {
         if (!dupCheck.has(item.category)) {
           const fill = seriesMap[item.category]?.color ?? colors[dupCheck.size % colors.length]
           dupCheck.add(item.category)
@@ -533,7 +532,7 @@ export class StackBar extends Bar {
           })
         }
         return arr
-      }, [])
+      }, [] as any[]) || []) as any[]
       if (sort !== 'custom') {
         items.sort((a, b) => {
           return sort !== 'desc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)
@@ -547,9 +546,9 @@ export class StackBar extends Bar {
             items.splice(index, 1)
           }
         })
-        items.unshift(...tmp)
+        ;(items as any[]).unshift(...tmp)
       }
-      optionTmp.legend.items = items
+      ;(optionTmp.legend as any).items = items
       if (extStack?.customSort?.length > 0) {
         delete optionTmp.meta?.category.values
       }
@@ -643,8 +642,8 @@ export class GroupBar extends StackBar {
     }
     plot.chart.once('beforepaint', () => {
       const geo = plot.chart.geometries[0]
-      const originMapping = geo.beforeMapping.bind(geo)
-      geo.beforeMapping = originData => {
+      const originMapping = (geo as any).beforeMapping.bind(geo)
+      ;(geo as any).beforeMapping = (originData: any[]) => {
         const values = geo.getXScale().values
         const valueMap = values.reduce((p, n) => {
           if (!p?.[n]) {
@@ -825,11 +824,11 @@ export class GroupStackBar extends StackBar {
 
   protected configData(chart: Chart, options: ColumnOptions): ColumnOptions {
     if (!chart.xAxisExt?.length) {
-      options.isGroup = false
+      ;(options as any).isGroup = false
     }
     if (!chart.extStack?.length) {
-      options.isStack = false
-      options.groupField = 'category'
+      ;(options as any).isStack = false
+      ;(options as any).groupField = 'category'
     }
     return options
   }

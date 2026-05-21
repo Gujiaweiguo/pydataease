@@ -17,6 +17,11 @@ declare interface Chart {
     dynamicAssistLines?: AssistLine[]
     fields: ChartViewField[]
     tableRow: []
+    isDate?: boolean
+    minTime?: string | number
+    maxTime?: string | number
+    min?: number
+    max?: number
     //chart-mix
     left: {
       data: any[]
@@ -43,7 +48,7 @@ declare interface Chart {
   extBubble?: Axis[]
   extLabel?: Axis[]
   extTooltip?: Axis[]
-  customFilter: {}
+  customFilter: ChartCustomFilter
   senior: CustomSenior
   customAttr: CustomAttr
   customAttrMobile: CustomAttr
@@ -56,6 +61,7 @@ declare interface Chart {
   datasourceType: string
   totalItems: number
   tableId: number
+  chartExtRequest?: Record<string, any>
   resultMode: string
   resultCount: number
   linkageActive: boolean
@@ -183,6 +189,17 @@ declare interface Axis extends ChartViewField {
    * 是否隐藏
    */
   hide: boolean
+  dateStyle?: string
+  datePattern?: string
+  chartType?: string
+  filter?: any[]
+  logic?: string
+  compareCalc?: any
+  formatterType?: string
+  index?: number
+  calcType?: string
+  enumCheckField?: any
+  chartId?: string
 }
 declare interface ChartViewField {
   /**
@@ -209,6 +226,46 @@ declare interface ChartViewField {
    * 分组类型
    */
   groupType: 'q' | 'd'
+  summary?: string
+  sort?: 'asc' | 'desc' | 'none' | 'custom_sort' | string
+  customSort?: string[]
+  formatterCfg?: BaseFormatter
+  hide?: boolean
+  extField?: number
+  originName?: string
+  chartId?: string
+  datasetGroupId?: number
+  lastSyncTime?: string | null
+  columnIndex?: number
+  deExtractType?: number
+  filter?: any[]
+  logic?: string
+  compareCalc?: any
+  formatterType?: string
+  index?: number
+  calcType?: string
+  enumCheckField?: any
+  chartType?: string
+  dateStyle?: string
+  datePattern?: string
+  desensitized?: boolean
+  [key: string]: any
+}
+
+declare interface ChartCustomFilterItem {
+  fieldId?: string
+  filter?: any[]
+  logic?: string
+  filterType?: string
+  enumCheckField?: any
+  index?: number
+  deType?: number
+  [key: string]: any
+}
+
+declare interface ChartCustomFilter {
+  items?: ChartCustomFilterItem[]
+  [key: string]: any
 }
 
 declare interface Filter {

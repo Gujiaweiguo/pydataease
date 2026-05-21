@@ -2,6 +2,7 @@
  * 图表设置
  */
 declare interface ChartAttr {
+  color?: any
   /**
    * 基础样式设置
    */
@@ -136,6 +137,7 @@ declare interface ChartBasicStyle {
    * 配色
    */
   colors: string[]
+  subColors?: string[]
   /**
    * 多序列颜色
    */

@@ -138,10 +138,10 @@ const viewTrack = ref(null)
 const calcData = (viewInfo: Chart, callback, resetPageInfo = true) => {
   if (viewInfo.customAttr.basicStyle.tablePageStyle === 'general') {
     if (state.currentPageSize !== 0) {
-      viewInfo.chartExtRequest.pageSize = state.currentPageSize
+      ;(viewInfo.chartExtRequest as Record<string, any>).pageSize = state.currentPageSize
       state.pageInfo.pageSize = state.currentPageSize
     } else {
-      viewInfo.chartExtRequest.pageSize = state.pageInfo.pageSize
+      ;(viewInfo.chartExtRequest as Record<string, any>).pageSize = state.pageInfo.pageSize
     }
   } else {
     delete viewInfo.chartExtRequest?.pageSize
@@ -156,9 +156,9 @@ const calcData = (viewInfo: Chart, callback, resetPageInfo = true) => {
           errMsg.value = res.msg
         } else {
           chartData.value = res?.data as Partial<Chart['data']>
-          state.totalItems = res?.totalItems
+          state.totalItems = (res as any)?.totalItems
           dvMainStore.setViewDataDetails(viewInfo.id, res)
-          emit('onDrillFilters', res?.drillFilters)
+          emit('onDrillFilters', (res as any)?.drillFilters)
           renderChart(res as unknown as Chart, resetPageInfo)
         }
         callback?.()
@@ -229,7 +229,7 @@ const renderChart = (viewInfo: Chart, resetPageInfo: boolean) => {
 }
 
 const debounceRender = debounce(() => {
-  myChart?.facet?.timer?.stop()
+  ;(myChart?.facet as any)?.timer?.stop()
   myChart?.facet?.cancelScrollFrame()
   myChart?.destroy()
   myChart?.getCanvasElement()?.remove()
@@ -275,14 +275,14 @@ const setupPage = (chart: ChartObj, resetPageInfo?: boolean) => {
 }
 
 const mouseMove = () => {
-  myChart?.facet?.timer?.stop()
+  ;(myChart?.facet as any)?.timer?.stop()
 }
 
-const mouseLeave = () => {
+const mouseLeave = (): void => {
   initScroll()
 }
 
-let scrollTimer
+let scrollTimer: ReturnType<typeof setTimeout> | undefined
 const initScroll = () => {
   scrollTimer && clearTimeout(scrollTimer)
   scrollTimer = setTimeout(() => {
@@ -297,7 +297,7 @@ const initScroll = () => {
       !state.showPage
     ) {
       // 防止多次渲染
-      myChart.facet.timer?.stop()
+      ;(myChart.facet as any).timer?.stop()
       // 已滚动的距离
       let scrolledOffset = myChart.store.get('scrollY') || 0
       // 平滑滚动，兼容原有的滚动速率设置
@@ -661,16 +661,16 @@ defineExpose({
   trackMenu
 })
 
-let timer
+let timer: ReturnType<typeof setTimeout> | undefined
 const resize = (width, height) => {
   if (timer) {
     clearTimeout(timer)
   }
   timer = setTimeout(() => {
     if (!myChart?.facet) {
-      debounceRender(false)
+      debounceRender()
     } else {
-      myChart?.facet?.timer?.stop()
+      ;(myChart?.facet as any)?.timer?.stop()
       myChart?.changeSheetSize(width, height)
       myChart?.render()
     }
@@ -702,7 +702,7 @@ onMounted(() => {
 })
 onBeforeUnmount(() => {
   try {
-    myChart?.facet.timer?.stop()
+    ;(myChart?.facet as any)?.timer?.stop()
     myChart?.destroy()
     myChart = null
     resizeObserver?.disconnect()

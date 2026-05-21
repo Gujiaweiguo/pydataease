@@ -191,7 +191,9 @@ let cacheId = ''
 
 const clearRemove = items => {
   if (items) {
-    items.forEach(item => removeItems(item))
+    items.forEach(item => {
+      removeItems(item)
+    })
   }
 }
 
@@ -234,21 +236,21 @@ const state = reactive({
     renameType: ''
   },
   quotaFilterEdit: false,
-  quotaItem: {},
+  quotaItem: {} as Record<string, any>,
   resultFilterEdit: false,
-  filterItem: {},
-  chartForFilter: {},
+  filterItem: {} as Record<string, any>,
+  chartForFilter: {} as Record<string, any>,
   searchField: '',
-  quotaItemCompare: {},
+  quotaItemCompare: {} as Record<string, any>,
   showEditQuotaCompare: false,
   showValueFormatter: false,
-  valueFormatterItem: {},
+  valueFormatterItem: {} as Record<string, any>,
   showCustomSort: false,
   showSortPriority: false,
   sortPriority: [],
   customSortList: [],
-  customSortField: {},
-  currEditField: {},
+  customSortField: {} as Record<string, any>,
+  currEditField: {} as Record<string, any>,
   worldTree: [],
   areaId: '',
   chartTypeOptions: [],
@@ -286,8 +288,8 @@ const getFields = (id, chartId, type) => {
     fieldLoading.value = true
     getFieldByDQ(id, chartId, { type: type })
       .then(res => {
-        state.dimension = (res.dimensionList as unknown as Field[]) || []
-        state.quota = (res.quotaList as unknown as Field[]) || []
+        state.dimension = ((res as any).dimensionList as Field[]) || []
+        state.quota = ((res as any).quotaList as Field[]) || []
         state.dimensionData = JSON.parse(JSON.stringify(state.dimension))
         state.quotaData = JSON.parse(JSON.stringify(state.quota))
 
@@ -333,7 +335,7 @@ watch(
       if (!state.worldTree?.length) {
         getWorldTree().then(async res => {
           const customAreaList = (await listCustomGeoArea()).data
-          const customRoot = {
+          const customRoot: { id: string; name: string; disabled: boolean; children?: any[] } = {
             id: 'customRoot',
             name: '自定义区域',
             disabled: true
@@ -493,7 +495,7 @@ const aggregateChange = () => {
 const quotaItemRemove = item => {
   recordSnapshotInfo('calcData')
   let axisType: AxisType = item.removeType
-  let axis
+  let axis: Axis[] | undefined
   if (item.removeType === 'dimension') {
     axisType = 'xAxis'
     axis = view.value.xAxis.splice(item.index, 1)
@@ -725,8 +727,12 @@ const addAxis = (e, axis: AxisType) => {
   if (!axisSpec) {
     return
   }
-  const { type, limit, duplicate } = axisSpec
-  let typeValid, dup
+  const { type, limit, duplicate } = axisSpec as {
+    type?: 'q' | 'd'
+    limit?: number
+    duplicate?: boolean
+  }
+  let typeValid: boolean | undefined, dup: Axis[] | undefined
 
   if (view.value.type === 'bar-range' && (axis === 'yAxis' || axis === 'yAxisExt')) {
     //区间条形图先排除非时间纬度或者指标的情况
@@ -1053,7 +1059,9 @@ const onTypeChange = (render, type) => {
       }
       // check limit
       if (limit && limit < axisArr.length) {
-        axisArr.splice(limit).forEach(i => removedAxis.push(i))
+        axisArr.splice(limit).forEach(i => {
+          removedAxis.push(i)
+        })
       }
       removedAxis.length &&
         emitter.emit('removeAxis', { axisType: axis, axis: removedAxis, editType: 'remove' })
@@ -1383,7 +1391,6 @@ const removeItems = (
     case 'customFilter':
       view.value.customFilter = {}
       return
-      break
     case 'drillFields':
       axis = view.value.drillFields?.splice(0)
       break
@@ -1405,7 +1412,8 @@ const saveRename = ref => {
   ref.validate(valid => {
     if (valid) {
       const { renameType, index, chartShowName } = state.itemForm
-      let axisType, axis
+      let axisType: AxisType | undefined
+      let axis: Axis | undefined
       switch (renameType) {
         case 'quota':
           axisType = 'yAxis'
@@ -1441,6 +1449,7 @@ const saveRename = ref => {
           break
         case 'extTooltip':
           view.value.extTooltip[index].chartShowName = chartShowName
+          break
         case 'flowMapStartName':
           axisType = 'flowMapStartName'
           axis = view.value.flowMapStartName[index]
@@ -1460,6 +1469,7 @@ const saveRename = ref => {
           axisType = 'drillFields'
           axis = view.value.drillFields[index]
           view.value.drillFields[index].chartShowName = chartShowName
+          break
         default:
           break
       }
@@ -1983,11 +1993,26 @@ const drop = (ev: MouseEvent, type = 'xAxis') => {
   ev.preventDefault()
   const arr = activeDimension.value.length ? activeDimension.value : activeQuota.value
   for (let i = 0; i < arr.length; i++) {
-    const obj = cloneDeep(arr[i])
+    const obj: Axis = cloneDeep(arr[i])
     state.moveId = obj.id as unknown as number
     view.value[type] ??= []
-    const targetId = ev.srcElement.offsetParent?.querySelector('.node-id_private')?.dataset?.id
-    const index = view.value[type].findIndex(ele => ele.id === targetId && ele.id !== obj.id)
+    const targetId: string | null | undefined = (ev.target as HTMLElement | null)
+      ?.closest('.axis-item')
+      ?.querySelector('.node-id_private')
+      ?.getAttribute('data-id')
+    const axisList: Axis[] = ((view.value[type] as Axis[]) || []) as Axis[]
+    const objId: string | undefined = obj.id
+    let index = -1
+    for (let axisIndex = 0; axisIndex < axisList.length; axisIndex++) {
+      const ele: Axis | undefined = axisList[axisIndex]
+      if (!ele) {
+        continue
+      }
+      if (ele.id === targetId && ele.id !== objId) {
+        index = axisIndex
+        break
+      }
+    }
     let newDraggableIndex
     if (index !== -1) {
       view.value[type].splice(index + 1 + i, 0, obj)

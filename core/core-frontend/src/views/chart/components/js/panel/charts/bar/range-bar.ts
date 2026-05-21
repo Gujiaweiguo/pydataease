@@ -32,7 +32,7 @@ const DEFAULT_DATA = []
  * 区间条形图
  */
 export class RangeBar extends G2PlotChartView<BarOptions, Bar> {
-  axisConfig = {
+  axisConfig: AxisConfig = {
     xAxis: {
       name: `${t('chart.drag_block_type_axis')} / ${t('chart.dimension')}`,
       type: 'd'
@@ -74,7 +74,7 @@ export class RangeBar extends G2PlotChartView<BarOptions, Bar> {
     ]
   }
   axis: AxisType[] = [...BAR_AXIS_TYPE, 'yAxisExt']
-  protected baseOptions: BarOptions = {
+  protected baseOptions = {
     data: [],
     xField: 'values',
     yField: 'field',
@@ -134,14 +134,14 @@ export class RangeBar extends G2PlotChartView<BarOptions, Bar> {
     const maxNumber = chart.data.max
 
     // options
-    const initOptions: BarOptions = {
+    const initOptions = {
       ...this.baseOptions,
       appendPadding: getPadding(chart),
       data,
       seriesField: isDate ? (ifAggregate ? 'category' : undefined) : 'category',
       isGroup: isDate ? !ifAggregate : false,
       isStack: isDate ? !ifAggregate : false,
-      meta: isDate
+      meta: (isDate
         ? {
             values: {
               type: 'time',
@@ -162,8 +162,8 @@ export class RangeBar extends G2PlotChartView<BarOptions, Bar> {
             tempId: {
               key: true
             }
-          }
-    }
+          }) as Record<string, any>
+    } as BarOptions
 
     const options = this.setupOptions(chart, initOptions)
 
@@ -183,7 +183,7 @@ export class RangeBar extends G2PlotChartView<BarOptions, Bar> {
         })
       })
     }
-    configPlotTooltipEvent(chart, newChart)
+    configPlotTooltipEvent(chart, newChart as any)
     configAxisLabelLengthLimit(chart, newChart)
     return newChart
   }
@@ -228,7 +228,7 @@ export class RangeBar extends G2PlotChartView<BarOptions, Bar> {
 
   protected configTooltip(chart: Chart, options: BarOptions): BarOptions {
     const isDate = !!chart.data.isDate
-    let tooltip
+    let tooltip: BarOptions['tooltip'] | false | undefined
     let customAttr: DeepPartial<ChartAttr>
     if (chart.customAttr) {
       customAttr = parseJson(chart.customAttr)
@@ -239,7 +239,7 @@ export class RangeBar extends G2PlotChartView<BarOptions, Bar> {
           tooltip = {
             fields: ['values', 'field', 'gap'],
             formatter: function (param: Datum) {
-              let res
+              let res: string
               if (isDate) {
                 res = param.values[0] + ' ~ ' + param.values[1]
                 if (t.showGap) {
@@ -327,7 +327,7 @@ export class RangeBar extends G2PlotChartView<BarOptions, Bar> {
       ...options,
       ...configRoundAngle(chart, 'barStyle')
     }
-    let barWidthRatio
+    let barWidthRatio: number | undefined
     const _v = basicStyle.columnWidthRatio ?? DEFAULT_BASIC_STYLE.columnWidthRatio
     if (_v >= 1 && _v <= 100) {
       barWidthRatio = _v / 100.0
@@ -337,7 +337,7 @@ export class RangeBar extends G2PlotChartView<BarOptions, Bar> {
       barWidthRatio = 1
     }
     if (barWidthRatio) {
-      options.barWidthRatio = barWidthRatio
+      ;(options as any).barWidthRatio = barWidthRatio
     }
 
     return options
@@ -367,18 +367,18 @@ export class RangeBar extends G2PlotChartView<BarOptions, Bar> {
     const labelAttr = parseJson(chart.customAttr).label
 
     if (isDate && !ifAggregate) {
-      if (!tmpOptions.label.layout) {
-        tmpOptions.label.layout = []
+      if (!Array.isArray(tmpOptions.label.layout)) {
+        tmpOptions.label.layout = [] as any
       }
-      tmpOptions.label.layout.push({ type: 'interval-hide-overlap' })
-      tmpOptions.label.layout.push({ type: 'limit-in-plot', cfg: { action: 'hide' } })
+      ;(tmpOptions.label.layout as any[]).push({ type: 'interval-hide-overlap' })
+      ;(tmpOptions.label.layout as any[]).push({ type: 'limit-in-plot', cfg: { action: 'hide' } })
     }
 
     const label = {
       fields: [],
       ...tmpOptions.label,
       formatter: (param: Datum) => {
-        let res
+        let res: string | number
         if (isDate) {
           if (labelAttr.showGap) {
             res = param.gap
