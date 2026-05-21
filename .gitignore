@@ -1,29 +1,13 @@
-# Compiled class file
-*.class
-
 # Log file
 *.log
 
-# BlueJ files
-*.ctxt
-
-# Mobile Tools for Java (J2ME)
-.mtj.tmp/
-
-# Package Files #
-*.jar
-*.war
-*.nar
-*.ear
+# Package Files
 *.zip
 *.tar.gz
 *.rar
 .idea/
-target/
 .vscode/
 .lh/
-*.iml
-hs_err_pid*
 node_modules/
 dist/
 package-lock.json
@@ -32,31 +16,16 @@ package-lock.json
 core/core-frontend/release/
 plugins/vite-test
 core/core-frontend/.stylelintcache
-/core/core-backend/src/main/resources/static/
-/core/core-backend/src/test
 /core/core-frontend/node/
 /core/core-frontend/lib/
 /core/core-frontend/components.d.ts
 core/core-frontend/src/assets/fsSvg.js
 core/core-frontend/src/assets/fsSvg.html
-.flattened-pom.xml
-/core/core-backend/
-/core/frontend/
-/core/mobile/
-/sdk/dataease-plugin-common/
-/sdk/dataease-plugin-datasource/
-/sdk/dataease-plugin-filter/
-/sdk/dataease-plugin-interface/
-/sdk/dataease-plugin-view/
-/extensions/
 .vite/
-/core/backend/
-/classpath:substitule.json
 
 # Python / FastAPI backend
 __pycache__/
 *.py[cod]
-*$py.class
 *.egg-info/
 dist/
 build/
@@ -86,14 +55,9 @@ findById-response.json
 e2e-browser-console*.log
 e2e-browser-network.txt
 
-# IDE metadata (Eclipse/IDEA)
-.project
-.settings/
-.classpath
-.factorypath
-
 # Tool artifacts
 .opencode/
 .playwright-mcp/
 .sisyphus/
 core/pydataease-backend/.coverage
+*.class

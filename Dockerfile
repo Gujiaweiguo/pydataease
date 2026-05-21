@@ -1,28 +1,45 @@
-# TODO: replace with public JDK image
-FROM registry.cn-qingdao.aliyuncs.com/dataease/alpine-openjdk21-jre
-STOPSIGNAL SIGTERM
-RUN mkdir -p /opt/apps/config \
-    /opt/dataease2.0/drivers/ \
-    /opt/dataease2.0/cache/ \
-    /opt/dataease2.0/data/map \
-    /opt/dataease2.0/data/static-resource/ \
-    /opt/dataease2.0/data/appearance/ \
-    /opt/dataease2.0/data/exportData/ \
-    /opt/dataease2.0/data/excel/ \
-    /opt/dataease2.0/data/i8n/ \
-    /opt/dataease2.0/data/plugin/
+# PyDataEase — Python/FastAPI backend
+# Multi-stage build: uv sync + slim runtime
+# TODO: Replace ghcr.io/astral-sh/uv image with self-hosted registry
 
-ADD drivers/* /opt/dataease2.0/drivers/
-ADD staticResource/ /opt/dataease2.0/data/static-resource/
+FROM python:3.12-slim AS builder
 
-WORKDIR /opt/apps
+WORKDIR /app
+# TODO: Replace ghcr.io mirror with self-hosted registry
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
-ADD core/core-backend/target/CoreApplication.jar /opt/apps/app.jar
+ENV UV_LINK_MODE=copy
+ENV UV_COMPILE_BYTECODE=1
 
-ENV JAVA_APP_JAR=/opt/apps/app.jar
-ENV RUNNING_PORT=8100
-ENV JAVA_OPTIONS="-Dfile.encoding=utf-8 -Dloader.path=/opt/apps -Dspring.config.additional-location=/opt/apps/config/"
+COPY core/pydataease-backend/pyproject.toml core/pydataease-backend/uv.lock ./
+RUN uv sync --locked --no-install-project --no-editable
 
-HEALTHCHECK --interval=15s --timeout=5s --retries=20 --start-period=30s CMD nc -zv 127.0.0.1 $RUNNING_PORT
+COPY core/pydataease-backend/ .
+RUN uv sync --locked --no-editable
 
-CMD ["/deployments/run-java.sh"]
+FROM python:3.12-slim AS runtime
+
+WORKDIR /app
+
+RUN mkdir -p /app/logs /app/static
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONFAULTHANDLER=1 \
+    PATH=/app/.venv/bin:$PATH \
+    DE_PORT=8000
+
+COPY --from=builder /app/.venv /app/.venv
+COPY --from=builder /app/app /app/app
+COPY --from=builder /app/alembic /app/alembic
+COPY --from=builder /app/alembic.ini /app/alembic.ini
+COPY --from=builder /app/scripts /app/scripts
+COPY --from=builder /app/pyproject.toml /app/pyproject.toml
+COPY --from=builder /app/uv.lock /app/uv.lock
+
+RUN chmod +x /app/scripts/entrypoint.sh
+
+EXPOSE 8100
+
+HEALTHCHECK --interval=15s --timeout=5s --retries=5 --start-period=20s CMD ["python", "scripts/healthcheck.py"]
+
+ENTRYPOINT ["/app/scripts/entrypoint.sh"]

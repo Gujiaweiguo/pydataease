@@ -1,7 +1,7 @@
 # AGENTS.md
 
 ## Repo shape that matters
-- The repo has two backends: an **Active Python/FastAPI backend** and a **Legacy Java/Spring Boot backend**, plus a shared frontend.
+- The repo has a **Python/FastAPI backend** and a shared frontend.
 - `de-xpack/` is a git submodule boundary. Treat it as external unless the submodule contents are present and the task explicitly requires it.
 
 ## Active backend: Python/FastAPI (`core/pydataease-backend/`)
@@ -50,31 +50,6 @@
 - Entrypoint: `scripts/entrypoint.sh` (alembic + uvicorn)
 - Health check: `scripts/healthcheck.py` → GET `/health`
 
-## Legacy backend: Java/Spring Boot (`core/core-backend/`)
-
-**Entrypoint**: `core/core-backend/src/main/java/io/dataease/CoreApplication.java`
-**Config**: `core/core-backend/src/main/resources/application.yml`
-**Build**: `core/pom.xml` owns `core-backend` and `core-frontend` modules
-
-### Build and packaging traps
-- `mvn clean install` at repo root does **not** build the main `core` app; it builds the root reactor (only `sdk`).
-- Frontend build logic is duplicated across npm and Maven:
-  - frontend scripts live in `core/core-frontend/package.json`
-  - `core/core-frontend/pom.xml` vendors Node `v23.11.0` and npm `10.9.2`, runs `npm install`, then `npm run build:distributed`
-- Desktop CI/build flow: see `.github/workflows/desktop_build.yml`
-- Backend packaging expects frontend assets in `core/core-frontend/dist`; Maven copies them into `core/core-backend/src/main/resources/static`.
-
-### Backend data and profiles
-- Flyway migrations are profile-specific:
-  - server: `core/core-backend/src/main/resources/db/migration`
-  - desktop: `core/core-backend/src/main/resources/db/desktop`
-- Default port: `8100` (`application.yml`)
-- `standalone` uses MySQL, `desktop` uses H2, `distributed` disables Flyway
-
-### Deployment
-- `Dockerfile` expects the built jar at `core/core-backend/target/CoreApplication.jar`
-- `installer/dectl` is the operational control script for compose-based installs
-
 ## Frontend (`core/core-frontend/`) — unchanged
 - Run from `core/core-frontend/`:
   - `npm run dev` / `npm run ts:check` / `npm run lint` / `npm run lint:stylelint`
@@ -106,7 +81,6 @@ Two shared containers are used for development. **Always use these, never create
 
 - `.env` 中 `DE_DATABASE_URL=postgresql+asyncpg://dataease:dataease@127.0.0.1:5432/dataease`
 - 如果容器没启动：`docker start postgres16 mysql8`
-- 原版 Java 后端用 MySQL 做元数据库；**新版 Python 后端元数据在 PostgreSQL**，两者独立
 
 ## CI and contribution signals
 - PRs satisfy `.github/PULL_REQUEST_TEMPLATE.md`: passing tests, coverage, Conventional Commit messages, docs impact review.

@@ -6,7 +6,6 @@ context: |
   Active runtime surfaces:
   - Python/FastAPI backend in core/pydataease-backend/
   - Shared Vue frontend in core/core-frontend/
-  - Legacy Java desktop/backend packaging in core/core-backend/ and core/pom.xml
 
   Gate layers:
   - L0: static checks and fast feedback
@@ -36,7 +35,7 @@ context: |
 
   Guardrails:
   - Keep real e2e out of default PR blocking.
-  - Do not require nonexistent frontend or Java automated tests.
+  - Do not require nonexistent frontend automated tests.
   - Prefer path-scoped, fast feedback over full-suite checks on every change.
 
 # Project context (optional)

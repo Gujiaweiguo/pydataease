@@ -42,7 +42,7 @@ PyDataEase, kullanıcıların hızlı bir şekilde veri analizlerini yapmaların
 
 -   Ön Kısmı: [Vue.js](https://vuejs.org/), [Element](https://element.eleme.cn/)
 -   Görselleştirme Kütüphanesi: [AntV](https://antv.vision/zh)
--   Arka Kısmı: [Spring Boot](https://spring.io/projects/spring-boot), [FastAPI](https://fastapi.tiangolo.com/)
+-   Arka Kısmı: [FastAPI](https://fastapi.tiangolo.com/)
 -   Veri Tabanı: [PostgreSQL](https://www.postgresql.org/)
 -   Veri İşleme: [Apache Calcite](https://github.com/apache/calcite/), [Apache SeaTunnel](https://github.com/apache/seatunnel)
 -   Altyapı: [Docker](https://www.docker.com/)

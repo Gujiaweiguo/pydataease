@@ -43,7 +43,7 @@ PyDataEase is an open-source BI tool designed to help users quickly analyze data
 
 -   Frontend: [Vue.js](https://vuejs.org/), [Element](https://element.eleme.cn/)
 -   Visualization Library: [AntV](https://antv.vision/zh)
--   Backend: [Spring Boot](https://spring.io/projects/spring-boot), [FastAPI](https://fastapi.tiangolo.com/)
+-   Backend: [FastAPI](https://fastapi.tiangolo.com/)
 -   Database: [PostgreSQL](https://www.postgresql.org/)
 -   Data Processing: [Apache Calcite](https://github.com/apache/calcite/), [Apache SeaTunnel](https://github.com/apache/seatunnel)
 -   Infrastructure: [Docker](https://www.docker.com/)

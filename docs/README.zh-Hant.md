@@ -43,7 +43,7 @@ PyDataEase 是開源的 BI 工具，幫助用戶快速分析數據並洞察業�
 
 -   前端：[Vue.js](https://vuejs.org/)、[Element](https://element.eleme.cn/)
 -   圖庫：[AntV](https://antv.vision/zh)
--   後端：[Spring Boot](https://spring.io/projects/spring-boot)、[FastAPI](https://fastapi.tiangolo.com/)
+-   後端：[FastAPI](https://fastapi.tiangolo.com/)
 -   資料庫：[PostgreSQL](https://www.postgresql.org/)
 -   資料處理：[Apache Calcite](https://github.com/apache/calcite/)、[Apache SeaTunnel](https://github.com/apache/seatunnel)
 -   基礎設施：[Docker](https://www.docker.com/)
