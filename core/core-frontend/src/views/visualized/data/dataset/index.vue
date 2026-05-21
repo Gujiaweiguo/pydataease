@@ -111,8 +111,8 @@ const showExport = ref(false)
 const rowAuth = ref()
 const exportDatasetLoading = ref(false)
 const limit = ref(t('data_set.ten_wan'))
-const exportForm = ref({})
-const table = ref({})
+const exportForm = ref<Record<string, any>>({})
+const table = ref<Record<string, any>>({})
 const exportFormRef = ref()
 const exportFormRules = {
   name: [
@@ -449,7 +449,6 @@ const rowClick = (_, __, event) => {
 }
 
 const openMessageLoading = cb => {
-  const iconClass = `el-icon-loading`
   const customClass = `de-message-loading de-message-export`
   ElMessage({
     message: h('p', null, [
@@ -468,7 +467,6 @@ const openMessageLoading = cb => {
       ),
       t('data_set.progress_and_download')
     ]),
-    iconClass,
     icon: h(RefreshLeft),
     showClose: true,
     customClass
@@ -744,12 +742,12 @@ const loadInit = () => {
 
 const getLimit = () => {
   exportLimit().then(res => {
-    limit.value = res
+    limit.value = String(res)
   })
 }
 
 const sortTypeTip = computed(() => {
-  return sortList.find(ele => ele.value === state.curSortType).name
+  return sortList.find(ele => ele.value === state.curSortType)?.name || ''
 })
 
 const tablePanes = ref([])

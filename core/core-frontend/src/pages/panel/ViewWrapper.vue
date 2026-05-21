@@ -12,11 +12,19 @@ import { useI18n } from '@/hooks/web/useI18n'
 import { XpackComponent } from '@/components/plugin'
 import EmptyBackground from '../../components/empty-background/src/EmptyBackground.vue'
 import exeRequest from '@/config/axios'
+interface EmbeddedParamsLike {
+  chartId?: string
+  busiFlag?: string
+  dvId?: string
+  suffixId?: string
+  outerParams?: string
+}
+
 const { wsCache } = useCache()
 const interactiveStore = interactiveStoreWithOut()
 const embeddedStore = useEmbedded()
-const embeddedParamsDiv = inject('embeddedParams') as object
-const config = ref()
+const embeddedParamsDiv = inject<EmbeddedParamsLike>('embeddedParams', {})
+const config = ref<Record<string, any> | null>(null)
 const viewInfo = ref()
 const userViewEnlargeRef = ref()
 const dvMainStore = dvMainStoreWithOut()
@@ -33,7 +41,9 @@ const state = reactive({
   scale: 100
 })
 
-const embeddedParams = embeddedParamsDiv?.chartId ? embeddedParamsDiv : embeddedStore
+const embeddedParams = (
+  embeddedParamsDiv?.chartId ? embeddedParamsDiv : embeddedStore
+) as EmbeddedParamsLike & Record<string, any>
 
 // 目标校验： 需要校验targetSourceId 是否是当前可视化资源ID
 const winMsgHandle = event => {
@@ -46,7 +56,7 @@ const winMsgHandle = event => {
     msgInfo.targetSourceId === state.dvId + '' &&
     (!msgInfo.suffixId || msgInfo.suffixId === state.suffixId)
   ) {
-    const attachParams = msgInfo.params
+    const attachParams = (msgInfo as Record<string, any>).params
     state.initState = false
     dvMainStore.addOuterParamsFilter(attachParams, state.canvasDataPreview, 'outer')
     state.initState = true
@@ -71,15 +81,18 @@ onBeforeMount(async () => {
   state.suffixId = embeddedParams.suffixId || 'common'
   window.addEventListener('message', winMsgHandle)
 
-  let tokenInfo = null
-  if (embeddedStore.getToken && !Object.keys((tokenInfo = embeddedStore.getTokenInfo)).length) {
+  let tokenInfo: Record<string, any> | null = null
+  const currentTokenInfo = embeddedStore.getTokenInfo as unknown as Record<string, any>
+  if (embeddedStore.getToken && !Object.keys(currentTokenInfo).length) {
     const res = await exeRequest.get({ url: '/embedded/getTokenArgs' })
     embeddedStore.setTokenInfo(res.data)
-    tokenInfo = embeddedStore.getTokenInfo
+    tokenInfo = embeddedStore.getTokenInfo as unknown as Record<string, any>
+  } else {
+    tokenInfo = currentTokenInfo
   }
 
   // 添加外部参数
-  let attachParams
+  let attachParams: Record<string, any> | undefined
   await getOuterParamsInfo(embeddedParams.dvId).then(rsp => {
     dvMainStore.setNowPanelOuterParamsInfoV2(rsp.data, embeddedParams.dvId)
   })
@@ -134,7 +147,7 @@ onBeforeMount(async () => {
           })
         } else if (ele.component === 'DeTabs') {
           ele.propValue.forEach(tabItem => {
-            return (tabItem.componentData || []).some(itx => {
+            ;(tabItem.componentData || []).some(itx => {
               if (itx.id === chartId) {
                 config.value = itx
                 return true

@@ -204,6 +204,7 @@ const emit = defineEmits([
   'linkJumpSetOpen',
   'linkageSetOpen'
 ])
+type ShapeMouseEvent = MouseEvent & { target: HTMLElement; offsetX: number; offsetY: number }
 
 const isEditMode = computed(() => editMode.value === 'edit')
 const state = reactive({
@@ -352,7 +353,7 @@ const showCheck = computed(() => {
   return mobileInPc.value && element.value.canvasId === 'canvas-main'
 })
 
-const updateFromMobile = (e, type) => {
+const updateFromMobile = (e: MouseEvent, type: string) => {
   if (type === 'syncPcDesign') {
     e.preventDefault()
     e.stopPropagation()
@@ -494,7 +495,7 @@ const getCursor = () => {
   return result
 }
 
-const handleBoardMouseDownOnShape = e => {
+const handleBoardMouseDownOnShape = (e: MouseEvent) => {
   if (!canvasActive.value) {
     return
   }
@@ -525,7 +526,7 @@ const handleInnerMouseDownOnShape = e => {
   }
   batchSelected(e)
   // ctrl or command 按下时 鼠标点击为选择需要组合的组件(取消需要组合的组件在ComposeShow组件中)
-  if (isCtrlOrCmdDown.value && !areaData.value.components.includes(element)) {
+  if (isCtrlOrCmdDown.value && !areaData.value.components.includes(element.value)) {
     areaDataPush(element.value)
     if (curComponent.value && curComponent.value.id !== element.value.id) {
       areaDataPush(curComponent.value)
@@ -544,7 +545,7 @@ const handleInnerMouseDownOnShape = e => {
   handleMouseDownOnShape(e)
 }
 
-const handleMouseDownOnShape = e => {
+const handleMouseDownOnShape = (e: ShapeMouseEvent) => {
   if (element.value['editing']) {
     // e.preventDefault()
     e.stopPropagation()
@@ -674,7 +675,11 @@ const handleMouseDownOnShape = e => {
         isFirst = false
       }
       // 修改当前组件样式
-      dvMainStore.setShapeStyle(pos, areaData.value.components, 'move')
+      dvMainStore.setShapeStyle(
+        pos as { top: any; left: any; width: any; height: any; rotate: any },
+        areaData.value.components,
+        'move'
+      )
       // 等更新完当前组件的样式并绘制到屏幕后再判断是否需要吸附
       // GroupArea是分组视括组件 不需要进行吸附
       // 如果不使用 nextTick，吸附后将无法移动
@@ -805,7 +810,7 @@ const handleMouseDownOnPoint = (point, e) => {
 
   const needLockProportion = isNeedLockProportion()
   const originRadio = curComponent.value.aspectRatio
-  const baseGroupComponentsRadio = {}
+  const baseGroupComponentsRadio: Record<string, any> = {}
   // 计算初始状态 分组内组件宽高占比
   if (areaData.value.components.length > 0) {
     areaData.value.components.forEach(groupComponent => {
@@ -858,7 +863,12 @@ const handleMouseDownOnPoint = (point, e) => {
     }
     calculateRadioComponentPositionAndSize(point, style, symmetricPoint)
 
-    dvMainStore.setShapeStyle(style, areaData.value.components, 'resize', baseGroupComponentsRadio)
+    dvMainStore.setShapeStyle(
+      style as { top: any; left: any; width: any; height: any; rotate: any },
+      areaData.value.components,
+      'resize',
+      baseGroupComponentsRadio
+    )
     // 矩阵逻辑 如果当前是仪表板（矩阵模式）则要进行矩阵重排
     dashboardActive.value && emit('onResizing', moveEvent)
     element.value['resizing'] = true
@@ -927,7 +937,7 @@ const offsetGapAdaptor = (dimension, point) => {
 }
 
 const isNeedLockProportion = () => {
-  if (element.value.component != 'Group') return false
+  if (element.value.component !== 'Group') return false
   const rotates = [0, 90, 180, 360]
   for (const component of element.value.propValue) {
     if (!rotates.includes(mod360(parseInt(component.style.rotate)))) {
@@ -1002,7 +1012,10 @@ const settingAttribute = () => {
 }
 
 const tabMoveInCheck = async () => {
-  const curNode = document.querySelector('#' + domId.value)
+  const curNode = document.querySelector('#' + domId.value) as HTMLElement | null
+  if (!curNode) {
+    return
+  }
   const width = curNode.offsetWidth
   const height = curNode.offsetHeight
   const left = curNode.offsetLeft
@@ -1014,13 +1027,13 @@ const tabMoveInCheck = async () => {
     isTabMoveCheck.value &&
     !state.ignoreTabMoveComponent.includes(element.value.component)
   ) {
-    const nodes = Array.from(parentNode.value.childNodes) // 获取当前父节点下所有子节点
+    const nodes = Array.from((parentNode.value as HTMLElement).childNodes) as HTMLElement[] // 获取当前父节点下所有子节点
     for (const item of nodes) {
       if (
         item.className !== undefined &&
         typeof item.className === 'string' &&
         item.className.split(' ').includes('shape') &&
-        item.getAttribute('component-id') !== domId.value && // 去掉当前
+        item.getAttribute('component-id') !== `${element.value.id}` && // 去掉当前
         item.getAttribute('tab-is-check') !== null &&
         item.getAttribute('tab-is-check') !== 'false' &&
         item.getAttribute('component-type') === 'DeTabs'

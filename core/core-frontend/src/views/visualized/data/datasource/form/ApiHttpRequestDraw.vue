@@ -23,7 +23,15 @@ export interface Field {
   value: Array<{}>
   checked: boolean
   primaryKey: boolean
+  deExtractType?: number
   children?: Array<{}>
+}
+
+type ApiConfigItem = ApiConfiguration & {
+  fields: Field[]
+  jsonFields?: JsonField[]
+  name: string
+  serialNumber: number
 }
 
 export interface ApiItem {
@@ -92,6 +100,11 @@ let apiItem = reactive<ApiItem>({
       verification: '',
       username: '',
       password: ''
+    },
+    page: {
+      pageType: 'empty',
+      requestData: [],
+      responseData: []
     }
   },
   fields: [],
@@ -113,7 +126,7 @@ const columns = shallowRef([])
 const valueList = shallowRef([])
 const tableData = shallowRef([])
 const apiItemBasicInfo = ref<FormInstance>()
-const xpackApiItemBasicInfo = ref<FormInstance>()
+const xpackApiItemBasicInfo = ref<any>(null)
 const isSupportSetKey = ref(false)
 const isNumber = (_rule, value, callback) => {
   if (!value) {
@@ -207,10 +220,10 @@ const initApiItem = (
   isSupportSetKey.value = supportSetKey
   activeName.value = name
   editItem.value = edit
-  apiItemList = from.apiConfiguration
+  apiItemList = from.apiConfiguration as ApiConfigItem[]
   fields = val.fields
   if (from.paramsConfiguration) {
-    paramsList = from.paramsConfiguration
+    paramsList = from.paramsConfiguration as ApiConfigItem[]
   }
   if (isPlugin.value) {
     jsName.value = getPluginStatic()
@@ -256,7 +269,7 @@ const showApiData = () => {
         })
       loading.value = false
     } else {
-      return false
+      return
     }
   })
 }
@@ -544,7 +557,7 @@ const disabledSetKey = item => {
 }
 
 const disabledChangeFieldByChildren = item => {
-  if (apiItem.type == 'params') {
+  if (apiItem.type === 'params') {
     return true
   }
   if (item.hasOwnProperty('children') && item.children.length > 0) {
@@ -561,8 +574,8 @@ const deExtractTypeChange = item => {
 }
 const previewData = () => {
   showEmpty.value = false
-  const data = []
-  const columnTmp = []
+  const data: Record<string, any>[] = []
+  const columnTmp: Array<{ key: string; dataKey: string; title: string; width: number }> = []
   let maxPreviewNum = 0
   for (let j = 0; j < apiItem.fields.length; j++) {
     if (apiItem.fields[j].value && apiItem.fields[j].value.length > maxPreviewNum) {
@@ -599,7 +612,7 @@ const handleCheckChange = (apiItem, node) => {
 }
 
 const handleFiledChange = apiItem => {
-  for (var i = 0; i < apiItem.jsonFields.length; i++) {
+  for (let i = 0; i < apiItem.jsonFields.length; i++) {
     if (apiItem.jsonFields[i].checked && apiItem.jsonFields[i].children === undefined) {
       apiItem.fields.push(apiItem.jsonFields[i])
     }
@@ -609,9 +622,9 @@ const handleFiledChange = apiItem => {
   }
 }
 const handleFiledChange2 = (apiItem, jsonFields) => {
-  for (var i = 0; i < jsonFields.length; i++) {
+  for (let i = 0; i < jsonFields.length; i++) {
     if (jsonFields[i].checked && jsonFields[i].children === undefined) {
-      for (var j = 0; j < apiItem.fields.length; j++) {
+      for (let j = 0; j < apiItem.fields.length; j++) {
         if (apiItem.fields[j].name === jsonFields[i].name) {
           jsonFields[i].checked = false
           nextTick(() => {

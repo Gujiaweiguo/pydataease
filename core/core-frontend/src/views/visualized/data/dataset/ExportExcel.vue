@@ -61,7 +61,7 @@ const tabList = ref([
     name: 'ALL'
   }
 ])
-let timer
+let timer: ReturnType<typeof setInterval> | undefined
 const handleClose = () => {
   drawer.value = false
   clearInterval(timer)
@@ -70,10 +70,15 @@ const { wsCache } = useCache()
 const openType = wsCache.get('open-backend') === '1' ? '_self' : '_blank'
 const desktop = wsCache.get('app.desktop')
 
+type ExportTaskNotice = {
+  exportStatus?: string
+  exportFromName?: string
+}
+
 onUnmounted(() => {
   clearInterval(timer)
 })
-const handleClick = tab => {
+const handleClick = (tab?: { paneName?: string }) => {
   if (tab) {
     activeName.value = tab.paneName
   }
@@ -157,18 +162,19 @@ const appStore = useAppStoreWithOut()
 const isDataEaseBi = computed(() => appStore.getIsDataEaseBi)
 
 const taskExportTopicCall = task => {
+  const taskInfo = JSON.parse(task) as ExportTaskNotice
   if (!linkStore.getLinkToken && !isDataEaseBi.value && !appStore.getIsIframe) {
-    if (JSON.parse(task).exportStatus === 'SUCCESS') {
+    if (taskInfo.exportStatus === 'SUCCESS') {
       openMessageLoading(
-        JSON.parse(task).exportFromName + ` ${t('data_set.successful_go_to')}`,
+        `${taskInfo.exportFromName || ''} ${t('data_set.successful_go_to')}`,
         'success',
         callbackExportSuc
       )
       return
     }
-    if (JSON.parse(task).exportStatus === 'FAILED') {
+    if (taskInfo.exportStatus === 'FAILED') {
       openMessageLoading(
-        JSON.parse(task).exportFromName + ` ${t('data_set.failed_go_to')}`,
+        `${taskInfo.exportFromName || ''} ${t('data_set.failed_go_to')}`,
         'error',
         callbackExportError
       )
@@ -176,7 +182,11 @@ const taskExportTopicCall = task => {
   }
 }
 
-const openMessageLoading = (text, type = 'success', cb) => {
+const openMessageLoading = (
+  text,
+  type: 'success' | 'warning' | 'info' | 'error' | 'loading' = 'success',
+  cb
+) => {
   // success error loading
   const customClass = `de-message-${type || 'success'} de-message-export`
   ElMessage({
@@ -202,7 +212,7 @@ const openMessageLoading = (text, type = 'success', cb) => {
         t('data_export.export_center')
       )
     ]),
-    icon: type === 'loading' ? h(RefreshLeft) : '',
+    icon: type === 'loading' ? RefreshLeft : undefined,
     type,
     showClose: true,
     customClass
@@ -226,7 +236,7 @@ const downLoadAll = () => {
     })
     return
   }
-  multipleSelection.value.map(ele => {
+  multipleSelection.value.forEach(ele => {
     generateDownloadUri(ele.id).then(() => {
       window.open(PATH_URL + '/exportCenter/download/' + ele.id)
     })

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { PropType } from 'vue'
 import Shape from './Shape.vue'
 import { useEmitt } from '@/hooks/web/useEmitt'
 import {
@@ -54,6 +55,8 @@ const dvMainStore = dvMainStoreWithOut()
 const composeStore = composeStoreWithOut()
 const contextmenuStore = contextmenuStoreWithOut()
 
+type CanvasComponent = Record<string, any>
+
 const { curComponent, dvInfo, editMode, tabMoveOutComponentId, canvasState, mainScrollTop } =
   storeToRefs(dvMainStore)
 const { editorMap, areaData, isCtrlOrCmdDown } = storeToRefs(composeStore)
@@ -71,16 +74,16 @@ const props = defineProps({
     required: true
   },
   componentData: {
-    type: Array,
+    type: Array as PropType<CanvasComponent[]>,
     required: true
   },
   popComponentData: {
-    type: Array,
+    type: Array as PropType<CanvasComponent[]>,
     required: false,
     default: () => []
   },
   canvasViewInfo: {
-    type: Object,
+    type: Object as PropType<Record<string, any>>,
     required: true
   },
   canvasId: {
@@ -277,7 +280,7 @@ const initWatermark = (waterDomId = 'editor-canvas-main') => {
   try {
     if (
       dvInfo.value.watermarkInfo &&
-      dvInfo.value.watermarkInfo.settingContent &&
+      (dvInfo.value.watermarkInfo as Record<string, any>).settingContent &&
       isMainCanvas(canvasId.value)
     ) {
       activeWatermarkCheckUser(waterDomId, canvasId.value, curScale.value)
@@ -1420,7 +1423,7 @@ const handleDragOver = e => {
   }
   infoBox.value.moveItem.style.left = e.pageX
   infoBox.value.moveItem.style.top = e.pageY + mainScrollTop.value
-  onDragging(e, infoBox.value.moveItem, 0)
+  onDragging(e, infoBox.value.moveItem)
 }
 
 const getMoveItem = () => {

@@ -358,12 +358,11 @@ const handleSubmit = param => {
 }
 
 const validateDS = () => {
-  const request = JSON.parse(JSON.stringify(form)) as unknown as Omit<
-    Form,
-    'configuration' | 'apiConfiguration'
-  > & {
-    configuration: string
-    apiConfiguration: string
+  const request = JSON.parse(JSON.stringify(form)) as Form & {
+    configuration: any
+    apiConfiguration: any[]
+    paramsConfiguration?: any[]
+    syncSetting: any
   }
   if (currentDsType.value.includes('API')) {
     if (form.apiConfiguration.length === 0) {
@@ -402,7 +401,10 @@ const validateDS = () => {
 const doValidateDs = request => {
   dsLoading.value = true
   if (currentDsType.value === 'ExcelRemote') {
-    let excelRequest = JSON.parse(JSON.stringify(form2.configuration))
+    const excelRequest = JSON.parse(JSON.stringify(form2.configuration || {})) as Record<
+      string,
+      any
+    >
     excelRequest.datasourceId = form2.id || 0
     excelRequest.editType = form2.editType
     excelRequest.userName = Base64.encode(excelRequest.userName)
@@ -478,12 +480,11 @@ const typeTitle = computed(() => {
 
 const saveDS = () => {
   isUpdate = false
-  const request = JSON.parse(JSON.stringify(form)) as unknown as Omit<
-    Form,
-    'configuration' | 'apiConfiguration'
-  > & {
-    configuration: string
-    apiConfiguration: string
+  const request = JSON.parse(JSON.stringify(form)) as Form & {
+    configuration: any
+    apiConfiguration: any[]
+    paramsConfiguration?: any[]
+    syncSetting: any
   }
 
   if (currentDsType.value === 'Excel') {
@@ -633,6 +634,7 @@ const defaultForm = {
   name: '',
   description: '',
   type: 'API',
+  copy: false,
   apiConfiguration: [],
   paramsConfiguration: [],
   enableDataFill: false
@@ -684,7 +686,7 @@ watch(
   { deep: true }
 )
 
-const init = (nodeInfo: Form | Param, id?: string, res?: object, supportSetKey: boolean) => {
+const init = (nodeInfo: Form | Param | null, id?: string, res?: object, supportSetKey = false) => {
   isPlugin.value = nodeInfo?.isPlugin
   pluginIndex.value = isPlugin.value ? nodeInfo?.staticMap?.index : null
   isSupportSetKey.value = supportSetKey

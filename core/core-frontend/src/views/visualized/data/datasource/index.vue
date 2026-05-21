@@ -313,9 +313,9 @@ const validateDS = () => {
           if (dsStatus[i].status === 'Error') {
             error++
           }
-          for (let i = 0; i < nodeTmpInfo.apiConfiguration.length; i++) {
-            if (nodeInfo.apiConfiguration[i].name === dsStatus[i].name) {
-              nodeInfo.apiConfiguration[i].status = dsStatus[i].status
+          for (let j = 0; j < (nodeTmpInfo.apiConfiguration || []).length; j++) {
+            if (nodeInfo.apiConfiguration?.[j]?.name === dsStatus[i].name) {
+              nodeInfo.apiConfiguration[j].status = dsStatus[i].status
             }
           }
         }
@@ -441,9 +441,9 @@ const defaultInfo = {
   nodeType: '',
   type: '',
   fileName: '',
-  configuration: null,
+  configuration: {} as any,
   syncSetting: null,
-  apiConfiguration: [],
+  apiConfiguration: [] as any[],
   weight: 0,
   enableDataFill: false,
   extraFlag: 0
@@ -725,7 +725,7 @@ const editDatasource = (editType?: number) => {
   if (nodeInfo.type.startsWith('Excel')) {
     nodeInfo.editType = editType
   }
-  return getById(nodeInfo.id).then(res => {
+  return getById(Number(nodeInfo.id)).then(res => {
     let arr = pluginDs.value.filter(ele => {
       return ele.type === res.data.type
     })

@@ -78,7 +78,7 @@
               :props="state.treeProp"
               @node-click="nodeClickPre($event, 'sameDs')"
             >
-              <template #default="{ data }">
+              <template #default="{ data }: { data: Record<string, any> }">
                 <span class="custom-tree-node">
                   <span>
                     <div @click.stop>
@@ -127,7 +127,7 @@
               :props="state.treeProp"
               @node-click="nodeClickPre($event, 'diffDs')"
             >
-              <template #default="{ data }">
+              <template #default="{ data }: { data: Record<string, any> }">
                 <span class="custom-tree-node">
                   <span>
                     <div @click.stop>
@@ -329,7 +329,17 @@ const curLinkageTargetViewsInfo = ref([])
 const curLinkageTargetViewsInfoSameDs = ref([])
 const curLinkageTargetViewsInfoDiffDs = ref([])
 const snapshotStore = snapshotStoreWithOut()
-const state = reactive({
+const state = reactive<{
+  sourceLinkageInfo: Record<string, any>
+  showSelected: boolean
+  curLinkageViewInfo: Record<string, any>
+  curDatasetInfo: Record<string, any>
+  initState: boolean
+  viewId: string | null
+  tableId: string | null
+  treeProp: Record<string, string>
+  linkageInfo: Record<string, any> | null
+}>({
   sourceLinkageInfo: {},
   showSelected: false,
   curLinkageViewInfo: {},
@@ -665,7 +675,7 @@ const cancel = () => {
   state.initState = false
 }
 
-const filterNodeMethod = (value, data) => {
+const filterNodeMethod = (value: boolean, data: Record<string, any>) => {
   return !value || data.linkageActive
 }
 

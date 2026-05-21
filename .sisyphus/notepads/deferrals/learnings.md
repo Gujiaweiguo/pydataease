@@ -14,3 +14,4 @@
 
 - New FastAPI auth persistence can follow the existing lightweight repository composition pattern: keep a dedicated `UserRepository` that wraps `AsyncBaseRepository` for CRUD and only hand-roll targeted lookup methods like `get_by_account`.
 - When no live PostgreSQL instance is available, a manual Alembic revision chained off the current head plus `uv run alembic upgrade head --sql` is enough to validate a new table migration for the FastAPI backend.
+- TypeScript fixes across legacy Vue SFCs were mostly resolved by widening reactive/object refs with `Record<string, any>`, adding missing default fields, and typing embedded/injected payloads explicitly.

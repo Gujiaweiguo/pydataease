@@ -88,7 +88,7 @@ export function findDragComponent(componentInfo) {
 }
 
 export function findNewComponent(componentName, innerType, staticMap?) {
-  let newComponent
+  let newComponent: any
   componentList.forEach(comp => {
     if (comp.component === componentName || comp.component === innerType) {
       newComponent = cloneDeep(comp)
@@ -374,10 +374,10 @@ export function refreshOtherComponent(dvId, busiFlag) {
   )
   if (refreshComponentList && refreshComponentList.length > 0) {
     const refreshIdList = refreshComponentList.map(ele => ele.id)
-    findById(dvId, busiFlag, {}).then(rsp => {
+    findById(dvId, busiFlag, { source: 'main', taskId: undefined } as any).then(rsp => {
       const canvasInfo = rsp.data
-      const canvasDataResult = JSON.parse(canvasInfo.componentData)
-      const canvasDataResultMap = canvasDataResult.reduce((acc, comp) => {
+      const canvasDataResult = JSON.parse(canvasInfo.componentData) as Array<Record<string, any>>
+      const canvasDataResultMap = canvasDataResult.reduce<Record<string, any>>((acc, comp) => {
         acc[comp.id] = comp
         return acc
       }, {})
@@ -413,20 +413,21 @@ export function initCanvasDataPrepare(dvId, params, callBack) {
   const copyFlag = busiFlag != null && busiFlag.includes('-copy')
   const busiFlagCustom = copyFlag ? busiFlag.split('-')[0] : busiFlag
   const method = copyFlag ? findCopyResource : findById
-  let attachInfo = { source: params.source ? params.source : 'main' }
-  if (dvMainStore.canvasAttachInfo && !!dvMainStore.canvasAttachInfo.taskId) {
-    attachInfo = { source: 'report', taskId: dvMainStore.canvasAttachInfo.taskId }
+  let attachInfo: Record<string, any> = { source: params.source ? params.source : 'main' }
+  const canvasAttachInfo = dvMainStore.canvasAttachInfo as Record<string, any>
+  if (canvasAttachInfo && !!canvasAttachInfo.taskId) {
+    attachInfo = { source: 'report', taskId: canvasAttachInfo.taskId }
     const showWatermarkExist =
-      dvMainStore.canvasAttachInfo.hasOwnProperty('showWatermark') &&
-      typeof dvMainStore.canvasAttachInfo.showWatermark !== 'undefined' &&
-      dvMainStore.canvasAttachInfo.showWatermark !== null
+      canvasAttachInfo.hasOwnProperty('showWatermark') &&
+      typeof canvasAttachInfo.showWatermark !== 'undefined' &&
+      canvasAttachInfo.showWatermark !== null
     if (showWatermarkExist) {
-      const enable = dvMainStore.canvasAttachInfo.showWatermark === 'true'
+      const enable = canvasAttachInfo.showWatermark === 'true'
       attachInfo['showWatermark'] = enable
     }
   }
   attachInfo['resourceTable'] = params.resourceTable ? params.resourceTable : 'core'
-  method(dvId, busiFlagCustom, attachInfo).then(res => {
+  method(dvId, busiFlagCustom, attachInfo as any).then(res => {
     const canvasInfo = res.data
     const watermarkInfo = {
       ...canvasInfo.watermarkInfo,
@@ -671,7 +672,7 @@ export async function canvasSaveWithParams(params, callBack) {
     }
   })
   const newContentId = guid()
-  const canvasInfo = {
+  const canvasInfo: Record<string, any> = {
     canvasStyleData: JSON.stringify(canvasStyleData.value),
     componentData: JSON.stringify(componentDataToSave),
     canvasViewInfo: canvasViewInfo.value,
@@ -898,7 +899,7 @@ export function canvasChangeAdaptor(component, matrixBase, usePointShadow = fals
 
 export function findAllViewsId(componentData, idArray) {
   componentData.forEach(item => {
-    if (item.component === 'UserView' && item.innerType != 'VQuery') {
+    if (item.component === 'UserView' && item.innerType !== 'VQuery') {
       idArray.push(item.id)
     } else if (item.component === 'Group') {
       item.propValue?.forEach(groupItem => {
@@ -971,13 +972,18 @@ export function findParentIdByChildIdRecursive(tree, targetChildId) {
 }
 
 export async function decompressionPre(params, callBack) {
-  let deTemplateData
+  let deTemplateData: Record<string, any>
   await decompression(params)
     .then(response => {
       const deTemplateDataTemp = response.data
-      const sourceComponentData = JSON.parse(deTemplateDataTemp['componentData'])
+      const sourceComponentData = JSON.parse(deTemplateDataTemp['componentData']) as Array<
+        Record<string, any>
+      >
       const appData = deTemplateDataTemp['appData']
-      const sourceCanvasStyle = JSON.parse(deTemplateDataTemp['canvasStyleData'])
+      const sourceCanvasStyle = JSON.parse(deTemplateDataTemp['canvasStyleData']) as Record<
+        string,
+        any
+      >
       sourceComponentData.forEach(componentItem => {
         // 2 为基础版本 此处需要增加仪表板矩阵密度
         if (
@@ -991,7 +997,8 @@ export async function decompressionPre(params, callBack) {
       sourceCanvasStyle.component['seniorStyleSetting'] =
         sourceCanvasStyle.component['seniorStyleSetting'] || deepCopy(SENIOR_STYLE_SETTING_LIGHT)
       sourceCanvasStyle['scaleWidth'] = sourceCanvasStyle['scale']
-      sourceCanvasStyle['scaleHeight'] = sourceCanvasStyle['scaleHeight']
+      sourceCanvasStyle['scaleHeight'] =
+        sourceCanvasStyle['scaleHeight'] || sourceCanvasStyle['scale']
       deTemplateData = {
         canvasStyleData: sourceCanvasStyle,
         componentData: sourceComponentData,
@@ -1075,7 +1082,7 @@ export function componentSwitch(componentData, changeComponent) {
 }
 
 export function findComponentById(componentId) {
-  let result
+  let result: any
   componentData.value.forEach(item => {
     if (item.id === componentId) {
       result = item

@@ -14,13 +14,21 @@ import request from '@/config/axios'
 import 'vant/es/nav-bar/style'
 import 'vant/es/sticky/style'
 import EmptyBackground from '../../components/empty-background/src/EmptyBackground.vue'
+interface EmbeddedParamsLike {
+  dvId?: string
+  busiFlag?: string
+  outerParams?: string
+}
+
 const { wsCache } = useCache()
 const interactiveStore = interactiveStoreWithOut()
 const embeddedStore = useEmbedded()
 const dashboardPreview = ref(null)
-const embeddedParamsDiv = inject('embeddedParams') as object
+const embeddedParamsDiv = inject<EmbeddedParamsLike>('embeddedParams', {})
 
-const embeddedParams = embeddedParamsDiv?.dvId ? embeddedParamsDiv : embeddedStore
+const embeddedParams = (
+  embeddedParamsDiv?.dvId ? embeddedParamsDiv : embeddedStore
+) as EmbeddedParamsLike & Record<string, any>
 const { t } = useI18n()
 const state = reactive({
   canvasDataPreview: null,
@@ -47,19 +55,22 @@ onBeforeMount(async () => {
   if (!checkResult) {
     return
   }
-  let tokenInfo = null
-  if (embeddedStore.getToken && !Object.keys((tokenInfo = embeddedStore.getTokenInfo)).length) {
+  let tokenInfo: Record<string, any> | null = null
+  const currentTokenInfo = embeddedStore.getTokenInfo as unknown as Record<string, any>
+  if (embeddedStore.getToken && !Object.keys(currentTokenInfo).length) {
     const res = await request.get({ url: '/embedded/getTokenArgs' })
     embeddedStore.setTokenInfo(res.data)
-    tokenInfo = embeddedStore.getTokenInfo
+    tokenInfo = embeddedStore.getTokenInfo as unknown as Record<string, any>
+  } else {
+    tokenInfo = currentTokenInfo
   }
   // 添加外部参数
-  let attachParams
+  let attachParams: Record<string, any> | undefined
   try {
     await getOuterParamsInfo(embeddedParams.dvId).then(rsp => {
       dvMainStore.setNowPanelOuterParamsInfoV2(rsp.data, embeddedParams.dvId)
     })
-  } catch (error) {
+  } catch (error: any) {
     if (error.status === 401) {
       return
     }
@@ -69,8 +80,8 @@ onBeforeMount(async () => {
   if (embeddedParams.outerParams) {
     try {
       const outerPramsParse = JSON.parse(embeddedParams.outerParams)
-      attachParams = outerPramsParse.attachParams
-      dvMainStore.setEmbeddedCallBack(outerPramsParse.callBackFlag || 'no')
+      attachParams = (outerPramsParse as Record<string, any>).attachParams
+      dvMainStore.setEmbeddedCallBack((outerPramsParse as Record<string, any>).callBackFlag || 'no')
     } catch (e) {
       console.error(e)
       ElMessage.error(t('visualization.outer_param_decode_error'))
