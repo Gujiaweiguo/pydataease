@@ -19,7 +19,7 @@ from app.schemas.static_resource import StaticResourceUploadRequest
 from app.schemas.watermark import WatermarkSaveRequest
 from app.services.api_key_service import ApiKeyService
 from app.services.static_resource_service import StaticResourceService, _resource_to_dict
-from app.services.system_service import SystemService, _build_menu_tree, _system_params
+from app.services.system_service import SystemService, _build_menu_tree
 from app.services.task_service import TaskService
 from app.services.template_market_service import TemplateMarketService
 from app.services.watermark_service import WatermarkService
@@ -149,33 +149,24 @@ async def test_api_key_delete_wrong_user():
 
 
 async def test_system_query_online_map_default():
-    # Reset param
-    original = _system_params.get("onlineMapKey", "")
-    _system_params["onlineMapKey"] = ""
     session = cast(AsyncSession, SimpleNamespace())
     svc = SystemService(session)
     result = await svc.query_online_map()
     assert result.key == ""
-    _system_params["onlineMapKey"] = original
 
 
 async def test_system_save_online_map():
     session = cast(AsyncSession, SimpleNamespace())
     svc = SystemService(session)
-    original = _system_params.get("onlineMapKey", "")
     result = await svc.save_online_map("my-test-key")
     assert result.key == "my-test-key"
-    assert _system_params["onlineMapKey"] == "my-test-key"
-    _system_params["onlineMapKey"] = original
 
 
 async def test_system_save_online_map_none():
     session = cast(AsyncSession, SimpleNamespace())
     svc = SystemService(session)
-    original = _system_params.get("onlineMapKey", "")
     result = await svc.save_online_map(None)
     assert result.key == ""
-    _system_params["onlineMapKey"] = original
 
 
 async def test_system_request_timeout_default():
