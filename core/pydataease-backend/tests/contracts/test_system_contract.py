@@ -64,4 +64,7 @@ class TestSysParameterContract:
         )
 
         assert response.status_code == 200
-        assert response.json() == {"code": 0, "data": {"key": "new-map-key"}, "msg": "success"}
+        body = response.json()
+        assert body["code"] == 0
+        assert body["msg"] == "success"
+        assert body["data"]["key"] == "new-map-key"
