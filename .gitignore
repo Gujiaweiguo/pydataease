@@ -61,3 +61,7 @@ e2e-browser-network.txt
 .sisyphus/
 core/pydataease-backend/.coverage
 *.class
+.classpath
+.factorypath
+.project
+.settings/
