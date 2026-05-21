@@ -1,18 +1,22 @@
-# PyDataEase — Production deployment (alternative entrypoint from backend dir)
-# Prefer: docker compose -f docker-compose.prod.yml config  (from repo root)
-# Usage from this dir: docker compose -f docker-compose.prod.yml up -d
+# PyDataEase — Production deployment
+# Usage: docker compose -f docker-compose.prod.yml up -d
+#
+# Required env vars (set in .env or shell):
+#   DE_SECRET_KEY          — JWT signing key (change from default!)
+#   DE_SHARE_SECRET_KEY    — Share token signing key (must differ from DE_SECRET_KEY)
+#   DE_PG_PASSWORD         — PostgreSQL password (default: dataease)
 
 services:
   pydataease-app:
     build:
-      context: ../../
+      context: .
       dockerfile: Dockerfile
     container_name: pydataease-app
     restart: unless-stopped
     ports:
       - "${DE_PORT:-8100}:8000"
     env_file:
-      - .env
+      - core/pydataease-backend/.env
     environment:
       DE_ENV: prod
       DE_DATABASE_URL: postgresql+asyncpg://dataease:${DE_PG_PASSWORD:-dataease}@pydataease-pg:5432/dataease
