@@ -1,10 +1,7 @@
 import { imgUrlTrans } from '@/utils/imgUtils'
-import type {
-  CommonBackground,
-  CornerValues,
-  EdgeValues
-} from '@/components/visualization/component-background/Types'
+import type { CommonBackground } from '@/components/visualization/component-background/Types'
 import { ShorthandMode } from '@/Types'
+import type { CornerValues, EdgeValues } from '@/Types'
 
 /**
  * 判断是否启用背景图模糊
@@ -45,8 +42,6 @@ export function getEdgeValuesStyle(edgeValues: EdgeValues | number | undefined, 
   const left = (edgeValues.left ?? 0) * scale
   if (mode === ShorthandMode.Uniform) {
     return `${top}px`
-  } else if (mode === ShorthandMode.Axis) {
-    return `${top}px ${left}px`
   } else if (mode === ShorthandMode.PerEdge) {
     return `${top}px ${right}px ${bottom}px ${left}px`
   }
@@ -76,8 +71,6 @@ export function getCornerValuesStyle(
   const bottomRight = (cornerValues.bottomRight ?? 0) * scale
   if (mode === ShorthandMode.Uniform) {
     return `${topLeft}px`
-  } else if (mode === ShorthandMode.Axis) {
-    return `${topLeft}px ${bottomLeft}px`
   } else if (mode === ShorthandMode.PerEdge) {
     return `${topLeft}px ${topRight}px ${bottomRight}px ${bottomLeft}px`
   }
@@ -98,10 +91,13 @@ export function getBlurBgStyle(
     return {}
   }
   const { outerImage, backdropFilter, borderRadius } = commonBackground
+  if (typeof outerImage !== 'string') {
+    return {}
+  }
   return {
     position: 'absolute',
     inset: '0',
-    background: `url(${imgUrlTrans(outerImage!)}) no-repeat center/cover`,
+    background: `url(${imgUrlTrans(outerImage)}) no-repeat center/cover`,
     filter: `blur(${backdropFilter ?? 0}px)`,
     borderRadius: getCornerValuesStyle(borderRadius, scale),
     pointerEvents: 'none'

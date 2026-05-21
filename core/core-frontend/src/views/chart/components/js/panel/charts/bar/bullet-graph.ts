@@ -379,7 +379,7 @@ export class BulletGraph extends G2PlotChartView<G2BulletOptions, G2Bullet> {
       ?.filter(
         i => i.show && ['-yAxis', '-yAxisExt', 'extBubble'].some(k => i.seriesId.includes(k))
       )
-      .reduce((pre, next, _index) => {
+      .reduce((pre, next) => {
         switch (next.axisType) {
           case 'yAxis':
             pre['measures'] = next
@@ -403,7 +403,7 @@ export class BulletGraph extends G2PlotChartView<G2BulletOptions, G2Bullet> {
         const rangeFormatter = chart.extBubble[0]
         const result = []
         const data = options.data.find(item => item.title === originalItems[0].title)
-        Object.keys(formatterMap).forEach((key, _index) => {
+        Object.keys(formatterMap).forEach(key => {
           const formatter = formatterMap[key]
           if (formatter) {
             let name = isEmpty(formatter.chartShowName) ? formatter.name : formatter.chartShowName

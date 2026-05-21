@@ -90,15 +90,16 @@ describe('BulletMeasureSelector', () => {
     const wrapper = createWrapper()
     const vm = wrapper.vm as any
     vm.changeStyle('bar.measures.fill')
-    expect(wrapper.emitted('onMiscChange')).toBeTruthy()
-    expect(wrapper.emitted('onMiscChange')![0][1]).toBe('bar.measures.fill')
+    const miscChangeEvents = wrapper.emitted('onMiscChange')
+    expect(miscChangeEvents).toBeTruthy()
+    expect(miscChangeEvents?.[0]?.[1]).toBe('bar.measures.fill')
   })
 
   it('emits onMiscChange with data containing bullet form', async () => {
     const wrapper = createWrapper()
     const vm = wrapper.vm as any
     vm.changeStyle()
-    const emittedArgs = wrapper.emitted('onMiscChange')![0]
+    const emittedArgs = wrapper.emitted('onMiscChange')?.[0] || []
     expect(emittedArgs[0].data).toHaveProperty('bullet')
     expect(emittedArgs[0].requestData).toBe(true)
   })

@@ -60,7 +60,7 @@ vi.mock('@/views/chart/components/js/formatter', () => ({
   onChangeFormatCfgUnitLanguage: () => undefined
 }))
 vi.mock('@/views/chart/components/editor/util/StringUtils', () => ({
-  includesAny: (...args: any[]) => false
+  includesAny: () => false
 }))
 vi.mock('@/utils/attr', () => ({
   fieldType: ['text', 'time', 'value', 'value', 'value', 'location', 'binary', 'url']
@@ -78,7 +78,7 @@ vi.mock('lodash-es', () => ({
 vi.mock('pinia', () => ({
   defineStore: () => () => ({}),
   createPinia: () => ({}),
-  storeToRefs: (s: any) => ({ batchOptStatus: { value: false } })
+  storeToRefs: () => ({ batchOptStatus: { value: false } })
 }))
 vi.mock('@/components/icon-custom/src/Icon.vue', () => ({
   default: { template: '<span><slot /></span>' }

@@ -72,8 +72,9 @@ describe('DeTemplateItem', () => {
     })
     const vm = wrapper.vm as any
     vm.handleCommand('delete')
-    expect(wrapper.emitted('command')).toBeTruthy()
-    expect(wrapper.emitted('command')![0][0]).toBe('delete')
+    const commandEvents = wrapper.emitted('command')
+    expect(commandEvents).toBeTruthy()
+    expect(commandEvents?.[0]?.[0]).toBe('delete')
   })
 
   it('updates classBackground when width prop changes', async () => {

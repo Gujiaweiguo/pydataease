@@ -74,8 +74,9 @@ describe('DvHandleMore', () => {
     const vm = wrapper.vm as any
     vm.handleCommand('rename')
     await wrapper.vm.$nextTick()
-    expect(wrapper.emitted('handleCommand')).toBeTruthy()
-    expect(wrapper.emitted('handleCommand')![0]).toEqual(['rename'])
+    const handleCommandEvents = wrapper.emitted('handleCommand')
+    expect(handleCommandEvents).toBeTruthy()
+    expect(handleCommandEvents?.[0]).toEqual(['rename'])
   })
 
   it('hides copy/move menu items when anyManage is false', () => {

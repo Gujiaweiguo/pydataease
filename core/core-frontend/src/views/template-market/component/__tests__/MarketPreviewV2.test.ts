@@ -106,8 +106,9 @@ describe('MarketPreviewV2', () => {
     const vm = wrapper.vm as any
     const tpl = { id: '1', title: 'Test' }
     vm.templateApply(tpl)
-    expect(wrapper.emitted('templateApply')).toBeTruthy()
-    expect(wrapper.emitted('templateApply')![0][0]).toEqual(tpl)
+    const templateApplyEvents = wrapper.emitted('templateApply')
+    expect(templateApplyEvents).toBeTruthy()
+    expect(templateApplyEvents?.[0]?.[0]).toEqual(tpl)
   })
 
   it('state has correct default baseUrl', () => {

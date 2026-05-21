@@ -1,5 +1,5 @@
 import type { Column, ColumnOptions } from '@antv/g2plot/esm/plots/column'
-import { cloneDeep, defaults, each, groupBy, isEmpty, merge } from 'lodash-es'
+import { cloneDeep, defaults, each, groupBy, isEmpty } from 'lodash-es'
 import {
   G2PlotChartView,
   G2PlotDrawOptions
@@ -90,9 +90,6 @@ export class Bar extends G2PlotChartView<ColumnOptions, Column> {
       clearExtremum(chart)
       return
     }
-    const isGroup = 'bar-group' === this.name && chart.xAxisExt?.length > 0
-    const isStack =
-      ['bar-stack', 'bar-group-stack'].includes(this.name) && chart.extStack?.length > 0
     const data = cloneDeep(drawOptions.chart.data?.data)
     const initOptions: ColumnOptions = {
       ...this.baseOptions,

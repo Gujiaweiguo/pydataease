@@ -54,14 +54,16 @@ describe('CollapseBar', () => {
   it('emits setCollapse on click', async () => {
     const wrapper = mountComponent(false)
     await wrapper.find('.de-collapse-bar').trigger('click')
-    expect(wrapper.emitted('setCollapse')).toBeTruthy()
-    expect(wrapper.emitted('setCollapse')![0]).toEqual([true])
+    const setCollapseEvents = wrapper.emitted('setCollapse')
+    expect(setCollapseEvents).toBeTruthy()
+    expect(setCollapseEvents?.[0]).toEqual([true])
   })
 
   it('emits setCollapse true when collapsed', async () => {
     const wrapper = mountComponent(true)
     await wrapper.find('.de-collapse-bar').trigger('click')
-    expect(wrapper.emitted('setCollapse')).toBeTruthy()
-    expect(wrapper.emitted('setCollapse')![0]).toEqual([false])
+    const setCollapseEvents = wrapper.emitted('setCollapse')
+    expect(setCollapseEvents).toBeTruthy()
+    expect(setCollapseEvents?.[0]).toEqual([false])
   })
 })

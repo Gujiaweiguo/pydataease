@@ -128,7 +128,7 @@ vi.mock('lodash-es', () => ({
 vi.mock('pinia', () => ({
   defineStore: () => () => ({}),
   createPinia: () => ({}),
-  storeToRefs: (s: any) => ({ batchOptStatus: { value: false }, mobileInPc: { value: false } })
+  storeToRefs: () => ({ batchOptStatus: { value: false }, mobileInPc: { value: false } })
 }))
 vi.mock('element-plus-secondary', () => ({
   ElFormItem: { template: '<div><slot /></div>' },

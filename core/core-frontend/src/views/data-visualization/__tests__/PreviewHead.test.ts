@@ -137,16 +137,18 @@ describe('PreviewHead', () => {
     const wrapper = mountComponent()
     const vm = wrapper.vm as any
     vm.$emit('reload', '123')
-    expect(wrapper.emitted('reload')).toBeTruthy()
-    expect(wrapper.emitted('reload')![0]).toEqual(['123'])
+    const reloadEvents = wrapper.emitted('reload')
+    expect(reloadEvents).toBeTruthy()
+    expect(reloadEvents?.[0]).toEqual(['123'])
   })
 
   it('emits download event', () => {
     const wrapper = mountComponent()
     const vm = wrapper.vm as any
     vm.$emit('download', 'pdf')
-    expect(wrapper.emitted('download')).toBeTruthy()
-    expect(wrapper.emitted('download')![0]).toEqual(['pdf'])
+    const downloadEvents = wrapper.emitted('download')
+    expect(downloadEvents).toBeTruthy()
+    expect(downloadEvents?.[0]).toEqual(['pdf'])
   })
 
   it('emits downloadAsAppTemplate event', () => {

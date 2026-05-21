@@ -3,16 +3,16 @@ class MockWorker {
   constructor(url: string) {
     this.url = url
   }
-  postMessage(_data?: unknown) {
+  postMessage() {
     /* noop */
   }
   terminate() {
     /* noop */
   }
-  addEventListener(_type?: string, _listener?: EventListener) {
+  addEventListener() {
     /* noop */
   }
-  removeEventListener(_type?: string, _listener?: EventListener) {
+  removeEventListener() {
     /* noop */
   }
 }

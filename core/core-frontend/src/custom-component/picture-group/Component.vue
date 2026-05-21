@@ -83,7 +83,6 @@ const dataRowFiledName = ref([])
 let carouselTimer = null
 const { element, view, showPosition } = toRefs(props)
 let innerRefreshTimer = null
-let innerSearchCount = 0
 const isEditMode = computed(
   () => showPosition.value.includes('canvas') && !mobileInPc.value && !fullscreenFlag.value
 )

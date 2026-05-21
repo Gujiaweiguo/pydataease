@@ -118,8 +118,8 @@ describe('router/establish', () => {
       const result = generateRoutesFn2(routes as AppCustomRouteRecordRaw[])
       expect(result[0].component).toBe(Layout)
       expect(result[0].children).toBeDefined()
-      expect(result[0].children!.length).toBe(1)
-      expect(result[0].children![0].path).toBe('index')
+      expect(result[0].children?.length).toBe(1)
+      expect(result[0].children?.[0].path).toBe('index')
     })
 
     it('recursively processes children', () => {
@@ -144,8 +144,8 @@ describe('router/establish', () => {
       const result = generateRoutesFn2(routes as AppCustomRouteRecordRaw[])
       expect(result[0].component).toBe(Layout)
       expect(result[0].children).toBeDefined()
-      expect(result[0].children!.length).toBe(1)
-      expect(result[0].children![0].path).toBe('child')
+      expect(result[0].children?.length).toBe(1)
+      expect(result[0].children?.[0].path).toBe('child')
     })
 
     it('handles routes without component gracefully', () => {
@@ -200,7 +200,7 @@ describe('router/establish', () => {
       ]
       const result = formatRoute(arr as AppCustomRouteRecordRaw[])
       expect(result[0].path).toBe('/data')
-      expect(result[0].children!.length).toBe(1)
+      expect(result[0].children?.length).toBe(1)
     })
 
     it('does not flatten routes with multiple children', () => {
@@ -217,7 +217,7 @@ describe('router/establish', () => {
       ]
       const result = formatRoute(arr as AppCustomRouteRecordRaw[])
       expect(result[0].path).toBe('/multi')
-      expect(result[0].children!.length).toBe(2)
+      expect(result[0].children?.length).toBe(2)
     })
 
     it('does not flatten routes with zero children', () => {
@@ -328,9 +328,9 @@ describe('router/establish', () => {
       expect(result.component).toBe('Layout')
       expect(result.path).toBe('/mypage')
       expect(result.children).toBeDefined()
-      expect(result.children!.length).toBe(1)
-      expect(result.children![0].path).toBe('index')
-      expect(result.children![0].inLayout).toBe(false)
+      expect(result.children?.length).toBe(1)
+      expect(result.children?.[0].path).toBe('index')
+      expect(result.children?.[0].inLayout).toBe(false)
     })
 
     it('preserves existing children without adding index', () => {
@@ -347,7 +347,7 @@ describe('router/establish', () => {
       }
       const result = decorate(route as AppCustomRouteRecordRaw)
       expect(result.component).toBe('Layout')
-      expect(result.children!.length).toBe(2)
+      expect(result.children?.length).toBe(2)
     })
   })
 })

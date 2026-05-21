@@ -120,7 +120,7 @@ describe('router/index', () => {
   it('/login route has name "login"', () => {
     const loginRoute = routes.find(r => r.path === '/login')
     expect(loginRoute).toBeDefined()
-    expect(loginRoute!.name).toBe('login')
+    expect(loginRoute?.name).toBe('login')
   })
 
   it('setupRouter calls app.use with the router', () => {

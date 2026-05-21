@@ -24,7 +24,7 @@ export const useCache = (type: CacheType = 'localStorage') => {
   const methodsNeedKeyPrefix = new Set(['get', 'delete', 'touch', 'add', 'replace'])
 
   const wrappedCache = new Proxy(originalCache, {
-    get(target, prop, receiver) {
+    get(target, prop) {
       const originalMethod = target[prop as keyof typeof target]
 
       if (typeof originalMethod !== 'function') {

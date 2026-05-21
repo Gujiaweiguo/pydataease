@@ -439,7 +439,8 @@ export class SymbolicMap extends L7ChartView<Scene, L7Config> {
    * @param chart
    * @param pointLayer
    */
-  buildTooltip = (chart, container, pointLayer, scene) => {
+  buildTooltip = (chart, container, pointLayer, _scene) => {
+    void _scene
     const customAttr = chart.customAttr ? parseJson(chart.customAttr) : null
     this.clearPopup(container)
     if (customAttr?.tooltip?.show) {

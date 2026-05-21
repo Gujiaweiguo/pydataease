@@ -28,7 +28,7 @@ vi.mock('@/store/modules/data-visualization/snapshot', () => ({
 }))
 
 vi.mock('pinia', () => ({
-  storeToRefs: (store: any) => ({
+  storeToRefs: () => ({
     tabMoveInActiveId: { value: null },
     bashMatrixInfo: { value: {} },
     editMode: { value: 'preview' },
@@ -153,18 +153,19 @@ describe('de-screen/Component', () => {
 
   it('accepts required props', () => {
     const wrapper = mountComponent()
-    expect(wrapper.props('canvasStyleData')).toBeDefined()
-    expect(wrapper.props('element')).toBeDefined()
-    expect(wrapper.props('dvInfo')).toBeDefined()
+    const props = wrapper.props() as any
+    expect(props.canvasStyleData).toBeDefined()
+    expect(props.element).toBeDefined()
+    expect(props.dvInfo).toBeDefined()
   })
 
   it('defaults isEdit to false', () => {
     const wrapper = mountComponent()
-    expect(wrapper.props('isEdit')).toBe(false)
+    expect((wrapper.props() as any).isEdit).toBe(false)
   })
 
   it('defaults scale to 1', () => {
     const wrapper = mountComponent()
-    expect(wrapper.props('scale')).toBe(1)
+    expect((wrapper.props() as any).scale).toBe(1)
   })
 })

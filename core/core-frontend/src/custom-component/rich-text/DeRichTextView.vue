@@ -421,13 +421,6 @@ const decodeHTMLEntities = text => {
   return textarea.value
 }
 
-const encodeHTMLEntities = text => {
-  if (!text) return text
-
-  const textarea = document.createElement('textarea')
-  textarea.textContent = text
-  return textarea.innerHTML
-}
 const initFontFamily = htmlText => {
   const regex = /font-family:\s*([^;"]+);/g
   let match

@@ -202,7 +202,7 @@ const getCascadeFieldId = () => {
   cascade.value.forEach(ele => {
     let condition = null
     ele.forEach(item => {
-      const [_, queryId, fieldId] = item.datasetId.split('--')
+      const [, queryId, fieldId] = item.datasetId.split('--')
       if (queryId === config.value.id && condition) {
         if (item.fieldId) {
           condition.fieldId = item.fieldId

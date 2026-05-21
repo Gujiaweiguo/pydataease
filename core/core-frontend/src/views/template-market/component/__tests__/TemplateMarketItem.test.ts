@@ -47,8 +47,9 @@ describe('TemplateMarketItem', () => {
     await wrapper.vm.$nextTick()
     const vm = wrapper.vm as any
     vm.apply()
-    expect(wrapper.emitted('templateApply')).toBeTruthy()
-    expect(wrapper.emitted('templateApply')![0][0]).toEqual(template)
+    const templateApplyEvents = wrapper.emitted('templateApply')
+    expect(templateApplyEvents).toBeTruthy()
+    expect(templateApplyEvents?.[0]?.[0]).toEqual(template)
   })
 
   it('emits templatePreview when preview is triggered', async () => {
@@ -58,8 +59,9 @@ describe('TemplateMarketItem', () => {
     })
     const vm = wrapper.vm as any
     vm.templateInnerPreview()
-    expect(wrapper.emitted('templatePreview')).toBeTruthy()
-    expect(wrapper.emitted('templatePreview')![0][0]).toBe('tmpl-1')
+    const templatePreviewEvents = wrapper.emitted('templatePreview')
+    expect(templatePreviewEvents).toBeTruthy()
+    expect(templatePreviewEvents?.[0]?.[0]).toBe('tmpl-1')
   })
 
   it('computes classBackground with width-based dimensions', () => {

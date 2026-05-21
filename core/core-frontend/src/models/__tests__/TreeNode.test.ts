@@ -67,7 +67,7 @@ describe('TreeNode types', () => {
       children: [child]
     }
     expect(parent.children).toHaveLength(1)
-    expect(parent.children![0].name).toBe('child')
+    expect(parent.children?.[0].name).toBe('child')
   })
 
   it('BusiTreeRequest conforms to interface with optional fields', () => {

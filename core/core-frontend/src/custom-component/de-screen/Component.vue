@@ -172,7 +172,7 @@ import PreviewCanvas from '@/views/data-visualization/PreviewCanvas.vue'
 import SelectScreenDialog from '@/custom-component/de-screen/SelectScreenDialog.vue'
 const dvMainStore = dvMainStoreWithOut()
 const snapshotStore = snapshotStoreWithOut()
-const { tabMoveInActiveId, bashMatrixInfo, editMode, mobileInPc } = storeToRefs(dvMainStore)
+const { bashMatrixInfo, editMode, mobileInPc } = storeToRefs(dvMainStore)
 const tabComponentRef = ref(null)
 let carouselTimer = null
 const { t } = useI18n()
@@ -225,16 +225,7 @@ const props = defineProps({
     default: 'inherit'
   }
 })
-const {
-  element,
-  isEdit,
-  showPosition,
-  canvasStyleData,
-  canvasViewInfo,
-  dvInfo,
-  scale,
-  searchCount
-} = toRefs(props)
+const { element, isEdit, showPosition, dvInfo, scale } = toRefs(props)
 
 const screenType =
   dvInfo.value.type === 'dataV' ? t('work_branch.big_data_screen') : t('work_branch.dashboard')
@@ -247,7 +238,7 @@ const titleBackgroundInActiveSvgInner = computed(() => {
   return element.value.titleBackground.inActive.innerImage.replace('board/', '').replace('.svg', '')
 })
 
-const svgInnerInActiveEnable = itemName => {
+const svgInnerInActiveEnable = (itemName: string) => {
   const { backgroundImageEnable, backgroundType, innerImage } =
     element.value.titleBackground.inActive
   return (
@@ -260,7 +251,7 @@ const svgInnerInActiveEnable = itemName => {
   )
 }
 
-const svgInnerActiveEnable = itemName => {
+const svgInnerActiveEnable = (itemName: string) => {
   const { backgroundImageEnable, backgroundType, innerImage } = element.value.titleBackground.active
   return (
     (element.value.editableTabsValue === itemName || element.value.titleBackground.multiply) &&
@@ -273,15 +264,15 @@ const svgInnerActiveEnable = itemName => {
 
 // tooltips 轮播会影响tab 展示
 const viewToolTipsChange = () => {
-  element.value.propValue?.forEach(tabItem => {
+  element.value.propValue?.forEach((tabItem: any) => {
     const tMethod =
       element.value.editableTabsValue === tabItem.name
         ? ChartCarouselTooltip.resume
         : ChartCarouselTooltip.paused
-    tabItem.componentData?.forEach(componentItem => {
+    tabItem.componentData?.forEach((componentItem: any) => {
       tMethod(componentItem.id)
       if (componentItem.component === 'Group')
-        componentItem.propValue.forEach(groupItem => {
+        componentItem.propValue.forEach((groupItem: any) => {
           tMethod(groupItem.id)
         })
     })
@@ -342,12 +333,6 @@ const beforeHandleCommand = (item, param) => {
     param: param
   }
 }
-const curPreviewGap = computed(() =>
-  dvInfo.value.type === 'dashboard' && canvasStyleData.value['dashboard'].gap === 'yes'
-    ? canvasStyleData.value['dashboard'].gapSize
-    : 0
-)
-
 function sureCurTitle() {
   state.curItem.title = state.textarea
   state.dialogVisible = false
@@ -494,10 +479,6 @@ const addToMain = component => {
     isFromGroup: true
   })
 }
-
-const moveActive = computed(() => {
-  return tabMoveInActiveId.value && tabMoveInActiveId.value === element.value.id
-})
 
 const headClass = computed(() => {
   if (tabsAreaScroll.value) {

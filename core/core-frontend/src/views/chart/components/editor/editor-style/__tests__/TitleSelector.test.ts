@@ -39,7 +39,7 @@ vi.mock('lodash-es', () => ({
 vi.mock('pinia', () => ({
   defineStore: () => () => ({}),
   createPinia: () => ({}),
-  storeToRefs: (store: any) => ({
+  storeToRefs: () => ({
     batchOptStatus: { value: false },
     mobileInPc: { value: false }
   })

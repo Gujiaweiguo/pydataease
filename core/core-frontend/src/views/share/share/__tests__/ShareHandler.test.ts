@@ -87,7 +87,7 @@ describe('ShareHandler', () => {
     })
     const emitted = wrapper.emitted('loaded')
     expect(emitted).toBeTruthy()
-    expect(emitted![0][0]).toHaveProperty('command', 'share')
+    expect(emitted?.[0]?.[0]).toHaveProperty('command', 'share')
   })
 
   it('does not emit loaded event when inGrid is true', () => {

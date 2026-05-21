@@ -42,8 +42,9 @@ describe('DrawerEnumFilter', () => {
     const items = wrapper.findAll('.item')
     await items[0].trigger('click')
 
-    expect(wrapper.emitted('filter-change')).toBeTruthy()
-    expect(wrapper.emitted('filter-change')![0]).toEqual([['opt1']])
+    const filterChangeEvents = wrapper.emitted('filter-change')
+    expect(filterChangeEvents).toBeTruthy()
+    expect(filterChangeEvents?.[0]).toEqual([['opt1']])
   })
 
   it('toggles selection on repeated click', async () => {
@@ -53,7 +54,8 @@ describe('DrawerEnumFilter', () => {
     await items[0].trigger('click')
     await items[0].trigger('click')
 
-    expect(wrapper.emitted('filter-change')![1]).toEqual([[]])
+    const filterChangeEvents = wrapper.emitted('filter-change')
+    expect(filterChangeEvents?.[1] ?? []).toEqual([[]])
     expect(items[0].classes()).not.toContain('active')
   })
 

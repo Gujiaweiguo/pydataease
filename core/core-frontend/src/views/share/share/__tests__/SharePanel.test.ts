@@ -17,7 +17,7 @@ describe('SharePanel', () => {
     const wrapper = shallowMount(SharePanel)
     const emitted = wrapper.emitted('loaded')
     expect(emitted).toBeTruthy()
-    expect(emitted![0][0]).toEqual({
+    expect(emitted?.[0]?.[0]).toEqual({
       title: 'visualization.share_out',
       name: 'share'
     })
@@ -26,7 +26,7 @@ describe('SharePanel', () => {
   it('panel info contains correct name property', () => {
     const wrapper = shallowMount(SharePanel)
     const emitted = wrapper.emitted('loaded')
-    const panelInfo = emitted![0][0] as { title: string; name: string }
+    const panelInfo = emitted?.[0]?.[0] as { title: string; name: string }
     expect(panelInfo.name).toBe('share')
   })
 })

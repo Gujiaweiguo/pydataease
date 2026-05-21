@@ -62,7 +62,7 @@ vi.mock('lodash-es', () => ({
 vi.mock('pinia', () => ({
   defineStore: () => () => ({}),
   createPinia: () => ({}),
-  storeToRefs: (s: any) => ({ batchOptStatus: { value: false }, mobileInPc: { value: false } })
+  storeToRefs: () => ({ batchOptStatus: { value: false }, mobileInPc: { value: false } })
 }))
 vi.mock('@/hooks/web/useEmitt', () => ({ useEmitt: () => undefined }))
 vi.mock('@/components/icon-custom/src/Icon.vue', () => ({

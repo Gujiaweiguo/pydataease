@@ -18,7 +18,7 @@ vi.mock('pinia', () => ({
   createPinia: vi.fn()
 }))
 
-import { withInstall, SFCWithInstall } from '@/pages/lib/install'
+import { withInstall } from '@/pages/lib/install'
 
 describe('install.ts', () => {
   it('withInstall adds install method', () => {

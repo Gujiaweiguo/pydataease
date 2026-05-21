@@ -141,7 +141,7 @@ import { snapshotStoreWithOut } from '@/store/modules/data-visualization/snapsho
 import { contextmenuStoreWithOut } from '@/store/modules/data-visualization/contextmenu'
 import { composeStoreWithOut } from '@/store/modules/data-visualization/compose'
 import { storeToRefs } from 'pinia'
-import { downloadCanvas2, imgUrlTrans } from '@/utils/imgUtils'
+import { downloadCanvas2 } from '@/utils/imgUtils'
 import Icon from '@/components/icon-custom/src/Icon.vue'
 import ComponentEditBar from '@/components/visualization/ComponentEditBar.vue'
 import { useEmitt } from '@/hooks/web/useEmitt'
@@ -159,8 +159,6 @@ import {
 import Board from '@/components/de-board/Board.vue'
 import { activeWatermarkCheckUser, removeActiveWatermark } from '@/components/watermark/watermark'
 import { useI18n } from '@/hooks/web/useI18n'
-import { CommonBackground } from '@/components/visualization/component-background/Types'
-import { ShorthandMode } from '@/Types'
 import {
   isBlurBgEnabled,
   getBlurBgStyle,

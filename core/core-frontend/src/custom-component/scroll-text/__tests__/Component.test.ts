@@ -35,7 +35,7 @@ const createElement = () => ({
   dragging: false
 })
 
-const mountComponent = (editMode = 'preview') =>
+const mountComponent = () =>
   shallowMount(ScrollTextComponent, {
     props: {
       propValue: 'Scrolling Text',

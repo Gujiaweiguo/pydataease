@@ -47,7 +47,8 @@ describe('TemplateMarketPreviewItem', () => {
       props: { template, baseUrl: 'http://example.com/', active: false }
     })
     await wrapper.find('.template-item-main').trigger('click')
-    expect(wrapper.emitted('previewTemplate')).toBeTruthy()
-    expect(wrapper.emitted('previewTemplate')![0][0]).toEqual(template)
+    const previewTemplateEvents = wrapper.emitted('previewTemplate')
+    expect(previewTemplateEvents).toBeTruthy()
+    expect(previewTemplateEvents?.[0]?.[0]).toEqual(template)
   })
 })

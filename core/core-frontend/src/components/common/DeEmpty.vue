@@ -1,8 +1,5 @@
 <script setup lang="ts">
-import { useI18n } from '@/hooks/web/useI18n'
 import EmptyBackground from '../empty-background/src/EmptyBackground.vue'
-
-const { t } = useI18n()
 </script>
 
 <template>

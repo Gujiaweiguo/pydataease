@@ -86,7 +86,7 @@ describe('DrillItem', () => {
       global: { stubs: globalStubs }
     })
     wrapper.vm.showRename()
-    const emitted = wrapper.emitted('onNameEdit')![0][0] as any
+    const emitted = wrapper.emitted('onNameEdit')?.[0]?.[0] as any
     expect(emitted.renameType).toBe('drillFields')
   })
 

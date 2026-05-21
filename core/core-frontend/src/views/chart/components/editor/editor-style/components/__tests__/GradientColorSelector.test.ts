@@ -89,8 +89,9 @@ describe('GradientColorSelector', () => {
     const vm = wrapper.vm as any
     const option = { name: 'Custom', value: 'custom', colors: ['#ff0000', '#00ff00'] }
     vm.selectNode(option)
-    expect(wrapper.emitted('selectColorCase')).toBeTruthy()
-    expect(wrapper.emitted('selectColorCase')![0][0]).toEqual(option)
+    const colorCaseEvents = wrapper.emitted('selectColorCase')
+    expect(colorCaseEvents).toBeTruthy()
+    expect(colorCaseEvents?.[0]?.[0]).toEqual(option)
   })
 
   it('computes state from modelValue', () => {

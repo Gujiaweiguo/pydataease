@@ -1,4 +1,4 @@
-import { defineComponent, ref } from 'vue'
+import { ref } from 'vue'
 import { shallowMount } from '@vue/test-utils'
 import { describe, expect, it, vi } from 'vitest'
 

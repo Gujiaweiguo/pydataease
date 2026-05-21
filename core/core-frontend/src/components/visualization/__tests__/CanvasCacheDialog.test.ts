@@ -50,8 +50,9 @@ describe('CanvasCacheDialog', () => {
     vm.doUseCache(true)
     await wrapper.vm.$nextTick()
 
-    expect(wrapper.emitted('doUseCache')).toBeTruthy()
-    expect(wrapper.emitted('doUseCache')![0]).toEqual([true])
+    const doUseCacheEvents = wrapper.emitted('doUseCache')
+    expect(doUseCacheEvents).toBeTruthy()
+    expect(doUseCacheEvents?.[0]).toEqual([true])
     expect(wrapper.find('.dialog-stub').exists()).toBe(false)
   })
 
@@ -64,6 +65,6 @@ describe('CanvasCacheDialog', () => {
     vm.doUseCache(false)
     await wrapper.vm.$nextTick()
 
-    expect(wrapper.emitted('doUseCache')![0]).toEqual([false])
+    expect(wrapper.emitted('doUseCache')?.[0]).toEqual([false])
   })
 })

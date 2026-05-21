@@ -89,8 +89,9 @@ describe('DeTemplateImport', () => {
     })
     const vm = wrapper.vm as any
     vm.doAddCategory()
-    expect(wrapper.emitted('refresh')).toBeTruthy()
-    expect((wrapper.emitted('refresh')![0][0] as any).optType).toBe('addCategory')
+    const refreshEvents = wrapper.emitted('refresh')
+    expect(refreshEvents).toBeTruthy()
+    expect((refreshEvents?.[0]?.[0] as any).optType).toBe('addCategory')
   })
 
   it('classBackground returns empty object when no snapshot', () => {

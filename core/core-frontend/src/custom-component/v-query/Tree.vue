@@ -259,7 +259,7 @@ const getCascadeFieldId = () => {
   cascade.value.forEach(ele => {
     let condition = null
     ele.forEach(item => {
-      const [_, queryId, fieldId] = item.datasetId.split('--')
+      const [, queryId, fieldId] = item.datasetId.split('--')
       const defaultValueFirstItem = item.defaultValueFirstItem
       if (queryId === config.value.id && condition) {
         if (item.fieldId) {
@@ -451,8 +451,6 @@ function filterTree(treeData, filterIds) {
   if (!filterIds || filterIds.length === 0) {
     return treeData
   }
-  const filterSet = new Set(filterIds)
-
   // 用于存储最终保留的所有节点ID
   const keepIds = new Set()
 

@@ -1211,7 +1211,6 @@ export function getPivotConditions(chart: Chart) {
   }
   const conditions = threshold.tableThreshold ?? []
 
-  const dimFields = [...chart.xAxis, ...chart.xAxisExt].map(i => i.dataeaseName)
   const allFields = [...chart.xAxis, ...chart.xAxisExt, ...chart.yAxis]
   const fieldIdToName = allFields.reduce((acc, f) => {
     acc[f.id] = f.dataeaseName
@@ -3601,6 +3600,7 @@ const calculateGroupHeaderMaxTextHeight = (
   basicStyle,
   _layoutResult
 ) => {
+  void _layoutResult
   if (tableHeader.showTableHeader === false) return
   const maxLines = basicStyle.maxLines ?? 1
   const textStyle = { ...newChart.theme.cornerCell.text, fontSize: tableHeader.tableTitleFontSize }

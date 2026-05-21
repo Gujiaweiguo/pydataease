@@ -89,8 +89,6 @@ const anyManage = ref(false)
 const { curCanvasType, showPosition } = toRefs(props)
 const resourceLabel =
   curCanvasType.value === 'dataV' ? t('work_branch.big_data_screen') : t('work_branch.dashboard')
-const newResourceLabel =
-  curCanvasType.value === 'dataV' ? t('visualization.new_screen') : t('visualization.new_dashboard')
 const selectedNodeKey = ref(null)
 const filterText = ref(null)
 const expandedArray = ref([])

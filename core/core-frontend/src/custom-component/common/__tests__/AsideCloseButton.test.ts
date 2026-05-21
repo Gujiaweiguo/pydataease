@@ -37,8 +37,9 @@ describe('AsideCloseButton', () => {
       global: { stubs: globalStubs }
     })
     await wrapper.find('.flexible-button-area').trigger('click')
-    expect(wrapper.emitted('update:slideShowChange')).toBeTruthy()
-    expect(wrapper.emitted('update:slideShowChange')![0]).toEqual([false])
+    const slideShowChangeEvents = wrapper.emitted('update:slideShowChange')
+    expect(slideShowChangeEvents).toBeTruthy()
+    expect(slideShowChangeEvents?.[0]).toEqual([false])
   })
 
   it('emits true when slideShow is false and clicked', async () => {
@@ -47,6 +48,6 @@ describe('AsideCloseButton', () => {
       global: { stubs: globalStubs }
     })
     await wrapper.find('.flexible-button-area').trigger('click')
-    expect(wrapper.emitted('update:slideShowChange')![0]).toEqual([true])
+    expect(wrapper.emitted('update:slideShowChange')?.[0]).toEqual([true])
   })
 })

@@ -19,7 +19,6 @@ import EmptyBackground from '../../components/empty-background/src/EmptyBackgrou
 import { useRoute } from 'vue-router_2'
 import { filterEnumMapSync } from '@/utils/componentUtils'
 import CanvasOptBar from '@/components/visualization/CanvasOptBar.vue'
-import DvPreview from '@/views/data-visualization/DvPreview.vue'
 const routeWatch = useRoute()
 
 const dvMainStore = dvMainStoreWithOut()
@@ -263,6 +262,7 @@ const handlePrint = async () => {
   await prepareForPrint()
   window.print()
 }
+void handlePrint
 defineExpose({
   loadCanvasDataAsync
 })

@@ -31,8 +31,9 @@ describe('ColorButton', () => {
     })
     const outer = wrapper.find('.color-button-outer')
     await outer.trigger('click')
-    expect(wrapper.emitted('onClick')).toBeTruthy()
-    expect(wrapper.emitted('onClick')![0]).toEqual(['dark'])
+    const onClickEvents = wrapper.emitted('onClick')
+    expect(onClickEvents).toBeTruthy()
+    expect(onClickEvents?.[0]).toEqual(['dark'])
   })
 
   it('should render slot content', () => {

@@ -26,20 +26,21 @@ describe('OrgCell', () => {
   it('emits click with "all" when nextlevel is false and left area clicked', async () => {
     const wrapper = mountCell({ nextlevel: false })
     await wrapper.find('.left-area').trigger('click')
-    expect(wrapper.emitted('click')).toBeTruthy()
-    expect(wrapper.emitted('click')![0]).toEqual(['all'])
+    const clickEvents = wrapper.emitted('click')
+    expect(clickEvents).toBeTruthy()
+    expect(clickEvents?.[0]).toEqual(['all'])
   })
 
   it('emits click with "left" when nextlevel is true and left area clicked', async () => {
     const wrapper = mountCell({ nextlevel: true })
     await wrapper.find('.left-area').trigger('click')
-    expect(wrapper.emitted('click')![0]).toEqual(['left'])
+    expect(wrapper.emitted('click')?.[0]).toEqual(['left'])
   })
 
   it('emits click with "right" when nextlevel is true and right area clicked', async () => {
     const wrapper = mountCell({ nextlevel: true })
     await wrapper.find('.right-area').trigger('click')
-    expect(wrapper.emitted('click')![0]).toEqual(['right'])
+    expect(wrapper.emitted('click')?.[0]).toEqual(['right'])
   })
 
   it('shows tips text when provided and nextlevel is true', () => {

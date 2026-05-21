@@ -97,15 +97,16 @@ describe('BulletRangeSelector', () => {
     const wrapper = createWrapper()
     const vm = wrapper.vm as any
     vm.changeStyle('bar.ranges.size')
-    expect(wrapper.emitted('onMiscChange')).toBeTruthy()
-    expect(wrapper.emitted('onMiscChange')![0][1]).toBe('bar.ranges.size')
+    const miscChangeEvents = wrapper.emitted('onMiscChange')
+    expect(miscChangeEvents).toBeTruthy()
+    expect(miscChangeEvents?.[0]?.[1]).toBe('bar.ranges.size')
   })
 
   it('emits onMiscChange with data containing bullet form', async () => {
     const wrapper = createWrapper()
     const vm = wrapper.vm as any
     vm.changeStyle()
-    const emittedArgs = wrapper.emitted('onMiscChange')![0]
+    const emittedArgs = wrapper.emitted('onMiscChange')?.[0] || []
     expect(emittedArgs[0].data).toHaveProperty('bullet')
     expect(emittedArgs[0].requestData).toBe(true)
   })

@@ -90,8 +90,9 @@ describe('BulletTargetSelector', () => {
     const wrapper = createWrapper()
     const vm = wrapper.vm as any
     vm.changeStyle('bar.target.fill')
-    expect(wrapper.emitted('onMiscChange')).toBeTruthy()
-    expect(wrapper.emitted('onMiscChange')![0][1]).toBe('bar.target.fill')
+    const miscChangeEvents = wrapper.emitted('onMiscChange')
+    expect(miscChangeEvents).toBeTruthy()
+    expect(miscChangeEvents?.[0]?.[1]).toBe('bar.target.fill')
   })
 
   it('sets null value to 1 when changeStyle is called with null target value', async () => {
@@ -106,7 +107,7 @@ describe('BulletTargetSelector', () => {
     const wrapper = createWrapper()
     const vm = wrapper.vm as any
     vm.changeStyle()
-    const emittedArgs = wrapper.emitted('onMiscChange')![0]
+    const emittedArgs = wrapper.emitted('onMiscChange')?.[0] || []
     expect(emittedArgs[0].data).toHaveProperty('bullet')
     expect(emittedArgs[0].requestData).toBe(true)
   })

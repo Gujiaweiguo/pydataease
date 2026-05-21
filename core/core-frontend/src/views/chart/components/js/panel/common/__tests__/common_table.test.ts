@@ -3,7 +3,9 @@ import { describe, expect, it, vi } from 'vitest'
 
 vi.mock('@antv/s2', () => {
   class MockClass {
-    constructor(..._args: any[]) {}
+    constructor(...args: any[]) {
+      void args
+    }
   }
   return {
     BaseTooltip: MockClass,
@@ -40,7 +42,7 @@ vi.mock('@antv/s2', () => {
 })
 vi.mock('../../..//util', () => ({
   copyString: vi.fn(),
-  hexColorToRGBA: vi.fn((_c: string, _a: number) => 'rgba(0,0,0,1)'),
+  hexColorToRGBA: vi.fn(() => 'rgba(0,0,0,1)'),
   isAlphaColor: vi.fn(() => false),
   isTransparent: vi.fn(() => false),
   parseJson: vi.fn((s: any) => (typeof s === 'string' ? JSON.parse(s) : s)),

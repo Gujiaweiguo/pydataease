@@ -561,7 +561,6 @@ export function initCanvasDataMobile(dvId, params, callBack) {
           mEvents,
           mCommonBackground,
           style,
-          propValue,
           events,
           commonBackground
         } = ele

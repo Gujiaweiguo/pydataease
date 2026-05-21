@@ -40,7 +40,7 @@ vi.mock('@/views/chart/components/editor/util/chart', () => ({
   }
 }))
 vi.mock('@/views/chart/components/js/util', () => ({
-  convertToAlphaColor: vi.fn((c, _a) => c),
+  convertToAlphaColor: vi.fn(c => c),
   isAlphaColor: vi.fn(() => false)
 }))
 

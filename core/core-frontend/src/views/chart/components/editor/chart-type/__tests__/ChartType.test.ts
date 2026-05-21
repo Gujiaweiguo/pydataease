@@ -95,7 +95,8 @@ describe('ChartType', () => {
     })
     const vm = wrapper.vm as any
     vm.newComponent('antv', 'line')
-    expect(wrapper.emitted('onTypeChange')).toBeTruthy()
-    expect(wrapper.emitted('onTypeChange')![0]).toEqual(['antv', 'line'])
+    const typeChangeEvents = wrapper.emitted('onTypeChange')
+    expect(typeChangeEvents).toBeTruthy()
+    expect(typeChangeEvents?.[0]).toEqual(['antv', 'line'])
   })
 })

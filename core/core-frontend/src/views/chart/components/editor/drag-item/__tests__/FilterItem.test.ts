@@ -76,7 +76,7 @@ describe('FilterItem', () => {
     })
     wrapper.vm.removeItem()
     expect(wrapper.emitted('onFilterItemRemove')).toBeTruthy()
-    const emittedArg = wrapper.emitted('onFilterItemRemove')![0][0] as any
+    const emittedArg = wrapper.emitted('onFilterItemRemove')?.[0]?.[0] as any
     expect(emittedArg.index).toBe(0)
   })
 
