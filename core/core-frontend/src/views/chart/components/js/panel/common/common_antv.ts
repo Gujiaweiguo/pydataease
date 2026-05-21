@@ -60,15 +60,15 @@ export function getPadding(chart: Chart): number[] {
 }
 // color,label,tooltip,axis,legend,background
 export function getTheme(chart: Chart) {
-  const colors = []
-  let bgColor,
-    labelFontsize,
-    labelColor,
-    tooltipColor,
-    tooltipFontsize,
-    tooltipBackgroundColor,
-    legendColor,
-    legendFontsize
+  const colors: string[] = []
+  let bgColor: string | undefined,
+    labelFontsize: number | undefined,
+    labelColor: string | undefined,
+    tooltipColor: string | undefined,
+    tooltipFontsize: number | undefined,
+    tooltipBackgroundColor: string | undefined,
+    legendColor: string | undefined,
+    legendFontsize: number | undefined
   let customAttr: DeepPartial<ChartAttr>
   if (chart.customAttr) {
     customAttr = parseJson(chart.customAttr)
@@ -190,7 +190,7 @@ export function getTheme(chart: Chart) {
 }
 // 通用label
 export function getLabel(chart: Chart) {
-  let label
+  let label: any
   let customAttr: DeepPartial<ChartAttr>
   if (chart.customAttr) {
     customAttr = parseJson(chart.customAttr)
@@ -246,7 +246,7 @@ export function getLabel(chart: Chart) {
 }
 // 通用tooltip
 export function getTooltip(chart: Chart) {
-  let tooltip
+  let tooltip: any
   let customAttr: DeepPartial<ChartAttr>
   if (chart.customAttr) {
     customAttr = parseJson(chart.customAttr)
@@ -333,7 +333,7 @@ export function getLegend(chart: Chart) {
     if (customStyle.legend) {
       const l = defaults(JSON.parse(JSON.stringify(customStyle.legend)), DEFAULT_LEGEND_STYLE)
       if (l.show) {
-        let offsetX, offsetY, position
+        let offsetX: number, offsetY: number, position: string
         const orient = l.orient
         const legendSymbol = l.icon
         // fix position
@@ -715,7 +715,7 @@ export function getYAxisExt(chart: Chart) {
 }
 
 export function getSlider(chart: Chart) {
-  let cfg
+  let cfg: Record<string, any> | undefined
   const senior = parseJson(chart.senior)
   if (senior.functionCfg) {
     if (senior.functionCfg.sliderShow) {
@@ -763,7 +763,10 @@ export function getAnalyse(chart: Chart) {
   const assistLineArr = senior.assistLineCfg.assistLine
   if (assistLineArr?.length > 0) {
     const customStyle = parseJson(chart.customStyle)
-    let yAxisPosition, axisFormatterCfg, yAxisExtPosition, axisExtFormatterCfg
+    let yAxisPosition: string | undefined,
+      axisFormatterCfg: any,
+      yAxisExtPosition: string | undefined,
+      axisExtFormatterCfg: any
     if (customStyle.yAxis) {
       const a = JSON.parse(JSON.stringify(customStyle.yAxis))
       yAxisPosition = a.position
@@ -845,7 +848,7 @@ export function getAnalyseHorizontal(chart: Chart) {
   const assistLineArr = senior.assistLineCfg.assistLine
   if (assistLineArr?.length > 0) {
     const customStyle = parseJson(chart.customStyle)
-    let axisFormatterCfg
+    let axisFormatterCfg: any
     if (customStyle.xAxis) {
       const a = JSON.parse(JSON.stringify(customStyle.xAxis))
       axisFormatterCfg = a.axisLabelFormatter
@@ -921,7 +924,7 @@ export function setGradientColor(rawColor: string, show = false, angle = 0, star
   const startAlpha = alpha * 0.3
   item.splice(3, 1, `${startAlpha})`)
   let color: string
-  if (start == 0) {
+  if (start === 0) {
     color = `l(${angle}) 0:${item.join(',')} 1:${rawColor}`
   } else if (start > 0) {
     color = `l(${angle}) 0:rgba(255,255,255,0) ${start}:${item.join(',')} 1:${rawColor}`
@@ -1188,12 +1191,9 @@ export class CustomZoom extends (Zoom as any) {
     // 抽出重置事件，方便其他事件（移动端触摸）触发
     const zoomReset = () => {
       const map = this.mapsService.map as any
-      if (map?.deMapProvider == 'qq') {
+      if (map?.deMapProvider === 'qq') {
         if (map.deMapAutoFit) {
-          this.mapsService.setZoomAndCenter(map.deMapAutoZoom, [
-            map.deMapAutoLng,
-            map.deMapAutoLat
-          ])
+          this.mapsService.setZoomAndCenter(map.deMapAutoZoom, [map.deMapAutoLng, map.deMapAutoLat])
         } else {
           this.mapsService.setZoomAndCenter(
             this.controlOption['initZoom'],
@@ -1307,7 +1307,7 @@ export function configL7Zoom(
                 buttonColor: basicStyle.zoomButtonColor,
                 buttonBackground: basicStyle.zoomBackground
               } as any
-              scene.addControl(new CustomZoom(newZoomOptions))
+              scene.addControl(new (CustomZoom as any)(newZoomOptions) as any)
             }
             break
           case 'qq':
@@ -1323,7 +1323,7 @@ export function configL7Zoom(
                 buttonColor: basicStyle.zoomButtonColor,
                 buttonBackground: basicStyle.zoomBackground
               } as any
-              scene.addControl(new CustomZoom(newZoomOptions))
+              scene.addControl(new (CustomZoom as any)(newZoomOptions) as any)
             }
             break
           default:
@@ -1339,7 +1339,7 @@ export function configL7Zoom(
                 buttonColor: basicStyle.zoomButtonColor,
                 buttonBackground: basicStyle.zoomBackground
               } as any
-              scene.addControl(new CustomZoom(newZoomOptions))
+              scene.addControl(new (CustomZoom as any)(newZoomOptions) as any)
             })
         }
       })
@@ -1376,7 +1376,7 @@ export function configL7Zoom(
         }
         newZoomOptions.bounds = calculateBounds(coordinates)
       }
-      scene.addControl(new CustomZoom(newZoomOptions))
+      scene.addControl(new (CustomZoom as any)(newZoomOptions) as any)
     }
   }
 }
@@ -1452,7 +1452,7 @@ export function configL7PlotZoom(chart: Chart, plot: L7Plot<PlotOptions>) {
       buttonColor: basicStyle.zoomButtonColor,
       buttonBackground: basicStyle.zoomBackground
     } as any
-    plot.scene.addControl(new CustomZoom(zoomOptions))
+    plot.scene.addControl(new (CustomZoom as any)(zoomOptions) as any)
   })
 }
 
@@ -1554,7 +1554,7 @@ export async function getMapScene(
     })
   } else {
     if (mapKey.mapType === 'tianditu') {
-        ;(scene.map as any)?.checkResize()
+      ;(scene.map as any)?.checkResize()
     }
     if (scene.getLayers()?.length) {
       await scene.removeAllLayer()
@@ -1584,9 +1584,9 @@ export async function getMapScene(
     if (basicStyle.autoFit === false) {
       scene.setZoomAndCenter(basicStyle.zoomLevel, center)
       if (mapKey.mapType === 'qq') {
-          ;(scene.map as any).deMapAutoFit = false
-          ;(scene.map as any).deMapZoom = basicStyle.zoomLevel
-          ;(scene.map as any).deMapCenter = center
+        ;(scene.map as any).deMapAutoFit = false
+        ;(scene.map as any).deMapZoom = basicStyle.zoomLevel
+        ;(scene.map as any).deMapCenter = center
       }
     }
   }
@@ -1601,7 +1601,6 @@ export async function getMapScene(
         //仅渲染：道路及底面(base) + 2d建筑物(building2d)，以达到隐藏文字的效果
       })
       scene.setMapStyle(mapStyle)
-
       ;(scene.map as any).deMapProvider = 'qq'
       ;(scene.map as any).deMapAutoFit = !!basicStyle.autoFit
       // scene.map.deMapAutoZoom = scene.map.getZoom()
@@ -1611,7 +1610,7 @@ export async function getMapScene(
     // 去除天地图自己的缩放按钮
     if (mapKey.mapType === 'tianditu') {
       if (mapStyle === 'normal') {
-          ;(scene.map as any)?.removeStyle()
+        ;(scene.map as any)?.removeStyle()
       } else {
         scene.setMapStyle(mapStyle)
       }
@@ -1725,7 +1724,11 @@ export function getTooltipContainer(id, chartContainer?: string) {
   g2Tooltip.classList.add('g2-tooltip')
   // 最多半屏，鼠标移入可滚动
   g2Tooltip.style.maxHeight = '50%'
-  isMobile() ? (g2Tooltip.style.maxWidth = '50%') : (g2Tooltip.style.maxWidth = '25%')
+  if (isMobile()) {
+    g2Tooltip.style.maxWidth = '50%'
+  } else {
+    g2Tooltip.style.maxWidth = '25%'
+  }
   g2Tooltip.style.overflowY = 'auto'
   g2Tooltip.style.display = 'none'
   g2Tooltip.style.position = 'fixed'
@@ -1944,7 +1947,9 @@ export function configPlotTooltipEvent<O extends PickOptions, P extends Plot<O>>
       return
     }
     const container = (tooltipCtl as any).tooltip?.cfg.container
-    container && (container.style.display = 'none')
+    if (container) {
+      container.style.display = 'none'
+    }
   })
 }
 
@@ -2076,7 +2081,7 @@ export function configAxisLabelLengthLimit(chart, plot, triggerObjName = 'axis-l
       // 设置 tooltip 的样式
       AXIS_LABEL_TOOLTIP_STYLE.backgroundColor = tooltip.backgroundColor
       AXIS_LABEL_TOOLTIP_STYLE.boxShadow = `${tooltip.backgroundColor} 0px 0px 5px`
-       ;(AXIS_LABEL_TOOLTIP_STYLE as any).maxWidth = '200px'
+      ;(AXIS_LABEL_TOOLTIP_STYLE as any).maxWidth = '200px'
       _.assign(labelTooltipDom.style, AXIS_LABEL_TOOLTIP_STYLE)
 
       // 将 tooltip 添加到父节点
@@ -2143,7 +2148,7 @@ export function configXAxisLengthLimit(chart: any, chartObj: any): void {
   if (!xAxis.show || !xAxis.axisLabel?.show) {
     return
   }
-  let hideTimer
+  let hideTimer: ReturnType<typeof setTimeout> | undefined
   const { tooltip } = parseJson(chart.customAttr)
   chartObj?.on('axis-label:mousemove', e => {
     const showText = e.target?.attrs?.text

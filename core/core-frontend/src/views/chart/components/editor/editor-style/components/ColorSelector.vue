@@ -9,6 +9,12 @@ import {
 
 const { t } = useI18n()
 
+type ColorCaseForm = {
+  value: string
+  colors: string[]
+  alpha: number
+}
+
 const props = defineProps({
   chart: {
     type: Object,
@@ -25,8 +31,8 @@ const colorCases = COLOR_CASES
 const predefineColors = COLOR_PANEL
 
 const state = reactive({
-  colorForm: JSON.parse(JSON.stringify(DEFAULT_COLOR_CASE)),
-  customColor: null,
+  colorForm: JSON.parse(JSON.stringify(DEFAULT_COLOR_CASE.color)) as ColorCaseForm,
+  customColor: null as string | null,
   colorIndex: 0
 })
 
@@ -55,7 +61,7 @@ const resetCustomColor = () => {
   changeColorOption()
 }
 
-const switchColor = index => {
+const switchColor = (index: number) => {
   state.colorIndex = index
 }
 
@@ -78,7 +84,7 @@ const init = () => {
       customAttr = JSON.parse(chart.customAttr)
     }
     if (customAttr.color) {
-      state.colorForm = customAttr.color
+      state.colorForm = customAttr.color as ColorCaseForm
       if (!state.customColor) {
         state.customColor = state.colorForm.colors[0]
         state.colorIndex = 0
@@ -117,7 +123,7 @@ init()
                 v-model="state.colorForm.value"
                 :placeholder="t('chart.pls_slc_color_case')"
                 size="small"
-                @change="changeColorOption('value')"
+                @change="changeColorOption"
               >
                 <el-option
                   v-for="option in colorCases"
@@ -194,7 +200,7 @@ init()
           :max="100"
           size="small"
           controls-position="right"
-          @change="changeColorCase('alpha')"
+          @change="changeColorCase"
         />
       </el-form-item>
     </div>

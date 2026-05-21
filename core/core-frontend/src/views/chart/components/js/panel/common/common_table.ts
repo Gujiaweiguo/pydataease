@@ -69,6 +69,9 @@ import Decimal from 'decimal.js'
 
 const { t: i18nt } = useI18n()
 
+const normalizeTextAlign = (align: string | undefined) =>
+  (align === 'custom' ? 'left' : align) as any
+
 export function getCustomTheme(chart: Chart): S2Theme {
   const headerColor = hexColorToRGBA(
     DEFAULT_TABLE_HEADER.tableHeaderBgColor,
@@ -107,19 +110,19 @@ export function getCustomTheme(chart: Chart): S2Theme {
       text: {
         fill: DEFAULT_TABLE_HEADER.tableHeaderFontColor,
         fontSize: DEFAULT_TABLE_HEADER.tableTitleFontSize,
-        textAlign: headerAlign,
+         textAlign: normalizeTextAlign(headerAlign),
         fontFamily: textFontFamily
       },
       bolderText: {
         fill: DEFAULT_TABLE_HEADER.tableHeaderFontColor,
         fontSize: DEFAULT_TABLE_HEADER.tableTitleFontSize,
-        textAlign: headerAlign,
+         textAlign: normalizeTextAlign(headerAlign),
         fontFamily: textFontFamily
       },
       measureText: {
         fill: DEFAULT_TABLE_HEADER.tableHeaderFontColor,
         fontSize: DEFAULT_TABLE_HEADER.tableTitleFontSize,
-        textAlign: headerAlign,
+         textAlign: normalizeTextAlign(headerAlign),
         fontFamily: textFontFamily
       }
     },
@@ -132,26 +135,26 @@ export function getCustomTheme(chart: Chart): S2Theme {
       text: {
         fill: DEFAULT_TABLE_HEADER.tableHeaderFontColor,
         fontSize: DEFAULT_TABLE_HEADER.tableTitleFontSize,
-        textAlign: headerAlign,
+         textAlign: normalizeTextAlign(headerAlign),
         textBaseline: 'middle',
         fontFamily: textFontFamily
       },
       bolderText: {
         fill: DEFAULT_TABLE_HEADER.tableHeaderFontColor,
         fontSize: DEFAULT_TABLE_HEADER.tableTitleFontSize,
-        textAlign: headerAlign,
+         textAlign: normalizeTextAlign(headerAlign),
         fontFamily: textFontFamily
       },
       measureText: {
         fill: DEFAULT_TABLE_HEADER.tableHeaderFontColor,
         fontSize: DEFAULT_TABLE_HEADER.tableTitleFontSize,
-        textAlign: headerAlign,
+         textAlign: normalizeTextAlign(headerAlign),
         fontFamily: textFontFamily
       },
       seriesText: {
         fill: DEFAULT_TABLE_CELL.tableItemBgColor,
         fontSize: DEFAULT_TABLE_CELL.tableItemFontSize,
-        textAlign: itemAlign,
+         textAlign: normalizeTextAlign(itemAlign),
         fontFamily: textFontFamily
       }
     },
@@ -164,19 +167,19 @@ export function getCustomTheme(chart: Chart): S2Theme {
       text: {
         fill: DEFAULT_TABLE_HEADER.tableHeaderFontColor,
         fontSize: DEFAULT_TABLE_HEADER.tableTitleFontSize,
-        textAlign: headerAlign,
+         textAlign: normalizeTextAlign(headerAlign),
         fontFamily: textFontFamily
       },
       bolderText: {
         fill: DEFAULT_TABLE_HEADER.tableHeaderFontColor,
         fontSize: DEFAULT_TABLE_HEADER.tableTitleFontSize,
-        textAlign: headerAlign,
+         textAlign: normalizeTextAlign(headerAlign),
         fontFamily: textFontFamily
       },
       measureText: {
         fill: DEFAULT_TABLE_HEADER.tableHeaderFontColor,
         fontSize: DEFAULT_TABLE_HEADER.tableTitleFontSize,
-        textAlign: headerAlign,
+         textAlign: normalizeTextAlign(headerAlign),
         fontFamily: textFontFamily
       }
     },
@@ -189,19 +192,19 @@ export function getCustomTheme(chart: Chart): S2Theme {
       text: {
         fill: DEFAULT_TABLE_CELL.tableFontColor,
         fontSize: DEFAULT_TABLE_CELL.tableItemFontSize,
-        textAlign: itemAlign,
+         textAlign: normalizeTextAlign(itemAlign),
         fontFamily: textFontFamily
       },
       bolderText: {
         fill: DEFAULT_TABLE_CELL.tableFontColor,
         fontSize: DEFAULT_TABLE_CELL.tableItemFontSize,
-        textAlign: itemAlign,
+         textAlign: normalizeTextAlign(itemAlign),
         fontFamily: textFontFamily
       },
       measureText: {
         fill: DEFAULT_TABLE_CELL.tableFontColor,
         fontSize: DEFAULT_TABLE_CELL.tableItemFontSize,
-        textAlign: headerAlign,
+         textAlign: normalizeTextAlign(headerAlign),
         fontFamily: textFontFamily
       }
     },
@@ -277,7 +280,7 @@ export function getCustomTheme(chart: Chart): S2Theme {
           bolderText: {
             fill: tableHeaderFontColor,
             fontSize: tableTitleFontSize,
-            textAlign: tableHeaderAlign,
+             textAlign: normalizeTextAlign(tableHeaderAlign),
             fontStyle,
             fontWeight,
             fontFamily: textFontFamily
@@ -285,7 +288,7 @@ export function getCustomTheme(chart: Chart): S2Theme {
           text: {
             fill: tableHeaderFontColor,
             fontSize: tableTitleFontSize,
-            textAlign: tableHeaderAlign,
+             textAlign: normalizeTextAlign(tableHeaderAlign),
             fontStyle,
             fontWeight,
             fontFamily: textFontFamily
@@ -293,7 +296,7 @@ export function getCustomTheme(chart: Chart): S2Theme {
           measureText: {
             fill: tableHeaderFontColor,
             fontSize: tableTitleFontSize,
-            textAlign: tableHeaderAlign,
+             textAlign: normalizeTextAlign(tableHeaderAlign),
             fontStyle,
             fontWeight,
             fontFamily: textFontFamily
@@ -306,7 +309,7 @@ export function getCustomTheme(chart: Chart): S2Theme {
           bolderText: {
             fill: tableHeaderFontColor,
             fontSize: tableTitleFontSize,
-            textAlign: tableHeaderAlign,
+             textAlign: normalizeTextAlign(tableHeaderAlign),
             fontStyle,
             fontWeight,
             fontFamily: textFontFamily
@@ -314,7 +317,7 @@ export function getCustomTheme(chart: Chart): S2Theme {
           text: {
             fill: tableHeaderFontColor,
             fontSize: tableTitleFontSize,
-            textAlign: tableHeaderAlign,
+             textAlign: normalizeTextAlign(tableHeaderAlign),
             fontStyle,
             fontWeight,
             fontFamily: textFontFamily
@@ -322,7 +325,7 @@ export function getCustomTheme(chart: Chart): S2Theme {
           measureText: {
             fill: tableHeaderFontColor,
             fontSize: tableTitleFontSize,
-            textAlign: tableHeaderAlign,
+             textAlign: normalizeTextAlign(tableHeaderAlign),
             fontStyle,
             fontWeight,
             fontFamily: textFontFamily
@@ -393,25 +396,25 @@ export function getCustomTheme(chart: Chart): S2Theme {
           },
           bolderText: {
             fill: tableFontColor,
-            textAlign: tableItemAlign,
+            textAlign: normalizeTextAlign(tableItemAlign),
             fontSize: tableItemFontSize,
             fontFamily: textFontFamily
           },
           text: {
             fill: tableFontColor,
-            textAlign: tableItemAlign,
+            textAlign: normalizeTextAlign(tableItemAlign),
             fontSize: tableItemFontSize,
             fontFamily: textFontFamily
           },
           measureText: {
             fill: tableFontColor,
-            textAlign: tableItemAlign,
+            textAlign: normalizeTextAlign(tableItemAlign),
             fontSize: tableItemFontSize,
             fontFamily: textFontFamily
           },
           seriesText: {
             fill: tableFontColor,
-            textAlign: tableItemAlign,
+            textAlign: normalizeTextAlign(tableItemAlign),
             fontSize: tableItemFontSize,
             fontFamily: textFontFamily
           }
@@ -423,7 +426,7 @@ export function getCustomTheme(chart: Chart): S2Theme {
           },
           bolderText: {
             fill: tableFontColor,
-            textAlign: tableItemAlign,
+            textAlign: normalizeTextAlign(tableItemAlign),
             fontSize: tableItemFontSize,
             fontStyle,
             fontWeight,
@@ -431,7 +434,7 @@ export function getCustomTheme(chart: Chart): S2Theme {
           },
           text: {
             fill: tableFontColor,
-            textAlign: tableItemAlign,
+            textAlign: normalizeTextAlign(tableItemAlign),
             fontSize: tableItemFontSize,
             fontStyle,
             fontWeight,
@@ -439,7 +442,7 @@ export function getCustomTheme(chart: Chart): S2Theme {
           },
           measureText: {
             fill: tableFontColor,
-            textAlign: tableItemAlign,
+            textAlign: normalizeTextAlign(tableItemAlign),
             fontSize: tableItemFontSize,
             fontStyle,
             fontWeight,
@@ -447,7 +450,7 @@ export function getCustomTheme(chart: Chart): S2Theme {
           },
           seriesText: {
             fill: tableFontColor,
-            textAlign: tableItemAlign,
+            textAlign: normalizeTextAlign(tableItemAlign),
             fontSize: tableItemFontSize,
             fontStyle,
             fontWeight,
@@ -796,11 +799,11 @@ export function getConditions(chart: Chart) {
 
 export function mappingColorCustom(value, defaultColor, field, type, filedValueMap?, rowData?) {
   let color = null
-  let hitCondition = null;
+  let hitCondition = null
   for (let i = 0; i < field.conditions.length; i++) {
     let flag = false
     const t = field.conditions[i]
-    let tv, max, min
+    let tv: any, max: any, min: any
     if (t.type === 'dynamic') {
       if (t.term === 'between') {
         max = parseFloat(getValue(t.dynamicMaxField, filedValueMap, rowData))
@@ -1000,9 +1003,9 @@ export function mappingColor(value, defaultColor, rules, type, filedValueMap?, r
     const { rule, sourceField } = rules[i]
     let flag = false
     const t = rule
-    let targetValue, max, min
+    let targetValue: any, max: any, min: any
 
-    let checkValue = value;
+    let checkValue = value
     if (sourceField.dataeaseName) {
       checkValue = rowData?.[sourceField.dataeaseName]
       if (checkValue === undefined) {
@@ -1026,7 +1029,7 @@ export function mappingColor(value, defaultColor, rules, type, filedValueMap?, r
       }
     }
 
-    const val = checkValue;
+    const val = checkValue
 
     if (sourceField.deType === 2 || sourceField.deType === 3 || sourceField.deType === 4) {
       targetValue = parseFloat(targetValue)
@@ -1360,9 +1363,9 @@ export function mappingPivotColor(value, defaultColor, rules, type, filedValueMa
     const { rule, sourceField } = rules[i]
     let flag = false
     const t = rule
-    let targetValue, max, min
+    let targetValue: any, max: any, min: any
 
-    let checkValue = value;
+    let checkValue = value
     if (sourceField.dataeaseName) {
       checkValue = rowData?.[sourceField.dataeaseName]
       if (checkValue === undefined) {
@@ -1403,7 +1406,7 @@ export function mappingPivotColor(value, defaultColor, rules, type, filedValueMa
       }
     }
 
-    const val = checkValue;
+    const val = checkValue
 
     if (sourceField.deType === 2 || sourceField.deType === 3 || sourceField.deType === 4) {
       targetValue = parseFloat(targetValue)
@@ -1765,8 +1768,10 @@ export function configHeaderInteraction(chart: Chart, option: S2Options) {
         const parent = document.getElementById(chart.container)
         if (parent?.childNodes?.length) {
           const child = Array.from(parent.childNodes)
-            .filter(node => node.nodeType === Node.ELEMENT_NODE)
-            .find(node => node.classList.contains('antv-s2-tooltip-container'))
+            .filter(node => node.nodeType === globalThis.Node.ELEMENT_NODE)
+            .find(node => (node as HTMLElement).classList.contains('antv-s2-tooltip-container')) as
+            | HTMLElement
+            | undefined
           if (child) {
             const left = child.offsetLeft + child.clientWidth
             if (left > parent.offsetWidth) {
@@ -1844,7 +1849,7 @@ export function copyContent(s2Instance: SpreadSheet, event, fieldMeta) {
     const brushSelection = s2Instance.interaction.interactions.get(
       InteractionName.BRUSH_SELECTION
     ) as DataCellBrushSelection
-    const selectedCells: TableDataCell[] = brushSelection.getScrollBrushRangeCells(cells)
+    const selectedCells: TableDataCell[] = (brushSelection as any).getScrollBrushRangeCells(cells)
     selectedCells.sort((a, b) => {
       const aMeta = a.getMeta()
       const bMeta = b.getMeta()
@@ -1929,7 +1934,7 @@ export function copyContent(s2Instance: SpreadSheet, event, fieldMeta) {
       p[n.field] = n.name
       return p
     }, {})
-    content = cellMeta.value
+    content = `${cellMeta.value ?? ''}`
     if (fieldMap?.[content]) {
       content = fieldMap[content]
     }
@@ -1986,7 +1991,7 @@ export async function exportGridPivot(instance: PivotSheet, chart: ChartObj) {
   }
   const workbook = new Exceljs.Workbook()
   const worksheet = workbook.addWorksheet(i18nt('chart.chart_data'))
-  const metaMap: Record<string, Meta> = meta?.reduce((p, n) => {
+  const metaMap: Record<string, Meta> = meta?.reduce<Record<string, Meta>>((p, n) => {
     if (n.field) {
       p[n.field] = n
     }
@@ -1995,7 +2000,7 @@ export async function exportGridPivot(instance: PivotSheet, chart: ChartObj) {
   // 角头
   fields.columns?.forEach((column, index) => {
     const cell = worksheet.getCell(index + 1, 1)
-    cell.value = metaMap[column]?.name ?? column
+    cell.value = `${metaMap[column as string]?.name ?? column}`
     cell.alignment = { vertical: 'middle', horizontal: 'center' }
     if (rowLength >= 2) {
       worksheet.mergeCells(index + 1, 1, index + 1, rowLength)
@@ -2180,7 +2185,7 @@ export async function exportRowQuotaGridPivot(instance: PivotSheet, chart: Chart
   }
   const workbook = new Exceljs.Workbook()
   const worksheet = workbook.addWorksheet(i18nt('chart.chart_data'))
-  const metaMap: Record<string, Meta> = meta?.reduce((p, n) => {
+  const metaMap: Record<string, Meta> = meta?.reduce<Record<string, Meta>>((p, n) => {
     if (n.field) {
       p[n.field] = n
     }
@@ -2207,7 +2212,7 @@ export async function exportRowQuotaGridPivot(instance: PivotSheet, chart: Chart
     cell.alignment = { vertical: 'middle', horizontal: 'center' }
     cell.border = { bottom: { style: 'thick', color: { argb: '00000000' } } }
   })
-  const quotaColLabel = chart.customAttr.basicStyle.quotaColLabel ?? t('dataset.value')
+  const quotaColLabel = chart.customAttr.basicStyle.quotaColLabel ?? i18nt('dataset.value')
   const quotaColHeadCell = worksheet.getCell(colLength === 0 ? 1 : colLength, rowLength + 1)
   quotaColHeadCell.value = quotaColLabel
   quotaColHeadCell.alignment = { vertical: 'middle', horizontal: 'center' }
@@ -2368,7 +2373,7 @@ export async function exportTreePivot(instance: PivotSheet, chart: ChartObj) {
   const colLength = fields?.columns?.length || 0
   const workbook = new Exceljs.Workbook()
   const worksheet = workbook.addWorksheet(i18nt('chart.chart_data'))
-  const metaMap: Record<string, Meta> = meta?.reduce((p, n) => {
+  const metaMap: Record<string, Meta> = meta?.reduce<Record<string, Meta>>((p, n) => {
     if (n.field) {
       p[n.field] = n
     }
@@ -2378,7 +2383,7 @@ export async function exportTreePivot(instance: PivotSheet, chart: ChartObj) {
   // 角头
   fields.columns?.forEach((column, index) => {
     const cell = worksheet.getCell(index + 1, 1)
-    cell.value = metaMap[column]?.name ?? column
+    cell.value = `${metaMap[column as string]?.name ?? column}`
     cell.alignment = { vertical: 'middle', horizontal: 'center' }
     cell.border = {
       right: { style: 'thick', color: { argb: '00000000' } }
@@ -2509,7 +2514,7 @@ export async function exportRowQuotaTreePivot(instance: PivotSheet, chart: Chart
   const colLength = fields?.columns?.length || 0
   const workbook = new Exceljs.Workbook()
   const worksheet = workbook.addWorksheet(i18nt('chart.chart_data'))
-  const metaMap: Record<string, Meta> = meta?.reduce((p, n) => {
+  const metaMap: Record<string, Meta> = meta?.reduce<Record<string, Meta>>((p, n) => {
     if (n.field) {
       p[n.field] = n
     }
@@ -2522,13 +2527,13 @@ export async function exportRowQuotaTreePivot(instance: PivotSheet, chart: Chart
       return
     }
     const cell = worksheet.getCell(index + 1, 1)
-    cell.value = metaMap[column]?.name ?? column
+    cell.value = `${metaMap[column as string]?.name ?? column}`
     cell.alignment = { vertical: 'middle', horizontal: 'center' }
     cell.border = {
       right: { style: 'thick', color: { argb: '00000000' } }
     }
   })
-  const quotaColLabel = chart.customAttr.basicStyle.quotaColLabel ?? t('dataset.value')
+  const quotaColLabel = chart.customAttr.basicStyle.quotaColLabel ?? i18nt('dataset.value')
   const maxColHeight = layoutResult.colsHierarchy.maxLevel + 1
   const rowName = fields?.rows
     ?.map(row => metaMap[row]?.name ?? row)
@@ -2904,15 +2909,12 @@ class CustomMergedCell extends MergedCell {
 
   protected getTextStyle() {
     const textStyle = super.getTextStyle()
-    const dataCellAlignConfig = this.theme.dataCellAlignConfig
+    const dataCellAlignConfig = (this.theme as any).dataCellAlignConfig
     if (dataCellAlignConfig) {
       const align = dataCellAlignConfig[this.meta.valueField]
       if (align) {
         textStyle.textAlign = align
       }
-    }
-    if (textStyle.textAlign === 'custom') {
-      textStyle.textAlign = 'left'
     }
     return textStyle
   }
@@ -2954,15 +2956,12 @@ export class CustomDataCell extends TableDataCell {
 
   protected getTextStyle() {
     const textStyle = super.getTextStyle()
-    const dataCellAlignConfig = this.theme.dataCellAlignConfig
+    const dataCellAlignConfig = (this.theme as any).dataCellAlignConfig
     if (dataCellAlignConfig) {
       const align = dataCellAlignConfig[this.meta.valueField]
       if (align) {
         textStyle.textAlign = align
       }
-    }
-    if (textStyle.textAlign === 'custom') {
-      textStyle.textAlign = 'left'
     }
     return textStyle
   }
@@ -2987,7 +2986,7 @@ export class CustomTableColCell extends TableColCell {
 
   protected getTextStyle() {
     const textStyle = super.getTextStyle()
-    const colCellAlignConfig = this.theme.colCellAlignConfig
+    const colCellAlignConfig = (this.theme as any).colCellAlignConfig
     if (colCellAlignConfig) {
       // 分组单元格居中
       if (this.meta.children?.length) {
@@ -2998,9 +2997,6 @@ export class CustomTableColCell extends TableColCell {
       if (align) {
         textStyle.textAlign = align
       }
-    }
-    if (textStyle.textAlign === 'custom') {
-      textStyle.textAlign = 'left'
     }
     return textStyle
   }
@@ -3180,7 +3176,9 @@ export const calculateHeaderHeight = (info, newChart, tableHeader, basicStyle, l
 
   if (layoutResult) {
     if (basicStyle.tableColumnMode === 'adapt') maxHeight -= textStyle.fontSize - 2
-    ev.colLeafNodes.forEach(n => (n.height = maxHeight))
+    ev.colLeafNodes.forEach(n => {
+      n.height = maxHeight
+    })
     ev.colsHierarchy.height = maxHeight
   }
 }
@@ -3247,10 +3245,10 @@ export function getSummaryRow(data, axis, sumCon = [], customSumResult = {}) {
     const a = axis[i].dataeaseName
     let savedAxis = find(sumCon, s => s.field === a)
     if (savedAxis) {
-      if (savedAxis.summary == undefined) {
+      if (savedAxis.summary === undefined) {
         savedAxis.summary = 'sum' // 默认汇总方式为求和
       }
-      if (savedAxis.show == undefined) {
+      if (savedAxis.show === undefined) {
         savedAxis.show = true // 默认显示汇总结果
       }
     } else {
@@ -3338,7 +3336,7 @@ export function getSummaryRow(data, axis, sumCon = [], customSumResult = {}) {
 export class SummaryCell extends CustomDataCell {
   getTextStyle() {
     const textStyle = cloneDeep(this.theme.colCell.bolderText)
-    const dataCellAlignConfig = this.theme.dataCellAlignConfig
+    const dataCellAlignConfig = (this.theme as any).dataCellAlignConfig
     if (dataCellAlignConfig) {
       const align = dataCellAlignConfig[this.meta.valueField]
       if (align) {
@@ -3409,7 +3407,9 @@ export const getLeafNodes = (tree: Array<ColumnNode>): ColumnNode[] => {
   }
 
   // 遍历树中所有节点
-  tree.forEach(node => inorderTraversal(node))
+  tree.forEach(node => {
+    inorderTraversal(node)
+  })
   return result
 }
 
@@ -3432,7 +3432,9 @@ export function drawImage() {
   img.src = fieldValue as string
   img.setAttribute('crossOrigin', 'anonymous')
   img.onload = () => {
-    !this.cfg.children && (this.cfg.children = [])
+    if (!this.cfg.children) {
+      this.cfg.children = []
+    }
     const { width: imgWidth, height: imgHeight } = img
     const ratio = Math.max(imgWidth / width, imgHeight / height)
     // 不铺满，部分留白

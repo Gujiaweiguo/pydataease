@@ -10,21 +10,27 @@ import { iconFieldMap } from '@/components/icon-group/field-list'
 
 const { t } = useI18n()
 
+type AssistLineField = ChartViewField
+type AssistLineItem = AssistLine & {
+  curField?: AssistLineField | Record<string, never>
+  yAxisType?: 'left' | 'right'
+}
+
 const props = defineProps({
   chart: {
     type: Object as PropType<ChartObj>,
     required: true
   },
   line: {
-    type: Array,
+    type: Array as PropType<AssistLineItem[]>,
     required: true
   },
   quotaFields: {
-    type: Array,
+    type: Array as PropType<AssistLineField[]>,
     required: true
   },
   quotaExtFields: {
-    type: Array,
+    type: Array as PropType<AssistLineField[]>,
     required: true
   },
   useQuotaExt: {
@@ -39,7 +45,7 @@ const yAxisTypes = [
 ]
 
 const state = reactive({
-  lineArr: [],
+  lineArr: [] as AssistLineItem[],
   lineObj: {
     name: t('chart.assist_line'),
     field: '0', // 固定值
@@ -50,7 +56,7 @@ const state = reactive({
     value: '0',
     lineType: 'solid',
     color: '#ff0000',
-    curField: {},
+    curField: {} as AssistLineField | Record<string, never>,
     fontSize: '10'
   },
   fieldOptions: [
@@ -63,7 +69,7 @@ const state = reactive({
     { label: t('chart.line_type_dotted'), value: 'dotted' }
   ],
   predefineColors: COLOR_PANEL,
-  fontSize: []
+  fontSize: [] as Array<{ name: string; value: string }>
 })
 
 const fontSizeList = computed(() => {
@@ -86,18 +92,18 @@ const init = () => {
     if (props.useQuotaExt) {
       if (
         line.yAxisType === 'left' &&
-        find(props.quotaFields, d => d.id === line.fieldId) == undefined
+        find(props.quotaFields, d => d.id === line.fieldId) === undefined
       ) {
         line.fieldId = undefined
       }
       if (
         line.yAxisType === 'right' &&
-        find(props.quotaExtFields, d => d.id === line.fieldId) == undefined
+        find(props.quotaExtFields, d => d.id === line.fieldId) === undefined
       ) {
         line.fieldId = undefined
       }
     } else {
-      if (find(props.quotaFields, d => d.id === line.fieldId) == undefined) {
+      if (find(props.quotaFields, d => d.id === line.fieldId) === undefined) {
         line.fieldId = undefined
       }
     }
@@ -115,12 +121,12 @@ const addLine = () => {
   state.lineArr.push(JSON.parse(JSON.stringify(obj)))
   changeAssistLine()
 }
-const removeLine = index => {
+const removeLine = (index: number) => {
   state.lineArr.splice(index, 1)
   changeAssistLine()
 }
 
-const changeYAxisType = item => {
+const changeYAxisType = (item: AssistLineItem) => {
   if (props.useQuotaExt && item.yAxisType === 'right') {
     item.fieldId = props.quotaExtFields ? props.quotaExtFields[0]?.id : null
     item.curField = getQuotaExtField(item.fieldId)
@@ -134,7 +140,7 @@ const changeYAxisType = item => {
 const changeAssistLine = () => {
   emit('onAssistLineChange', state.lineArr)
 }
-const changeAssistLineField = item => {
+const changeAssistLineField = (item: AssistLineItem) => {
   if (props.useQuotaExt && item.yAxisType === 'right') {
     item.curField = getQuotaExtField(item.fieldId)
   } else {
@@ -143,7 +149,7 @@ const changeAssistLineField = item => {
   changeAssistLine()
 }
 
-const getQuotaField = id => {
+const getQuotaField = (id?: string | null): AssistLineField | Record<string, never> => {
   if (!id) {
     return {}
   }
@@ -157,7 +163,7 @@ const getQuotaField = id => {
   }
 }
 
-const getQuotaExtField = id => {
+const getQuotaExtField = (id?: string | null): AssistLineField | Record<string, never> => {
   if (!id) {
     return {}
   }
