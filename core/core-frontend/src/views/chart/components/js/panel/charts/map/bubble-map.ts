@@ -31,6 +31,13 @@ import {
   drawPointFallbackChart
 } from '@/views/chart/components/js/panel/charts/map/point-fallback'
 
+type PlotLayerLike = Partial<IPlotLayer> & {
+  options?: Record<string, any>
+  once: (event: string, handler: (...args: any[]) => void) => void
+  on: (event: string, handler: (...args: any[]) => void) => void
+  addToScene?: (scene: unknown) => void
+}
+
 const { t } = useI18n()
 
 /**
@@ -71,7 +78,9 @@ export class BubbleMap extends L7PlotChartView<ChoroplethOptions, Choropleth> {
     let data = chart.data?.data
     if (areaId.startsWith('custom_')) {
       customSubArea = (await getCustomGeoArea(areaId)).data || []
-      customSubArea.forEach(a => (a.scopeArr = a.scope?.split(',') || []))
+      customSubArea.forEach(a => {
+        a.scopeArr = a.scope?.split(',') || []
+      })
       geoJson = cloneDeep(await getGeoJsonFile('156'))
       const areaNameMap = geoJson.features.reduce((p, n) => {
         p['156' + n.properties.adcode] = n.properties.name
@@ -208,6 +217,7 @@ export class BubbleMap extends L7PlotChartView<ChoroplethOptions, Choropleth> {
     const tooltip = deepCopy(options.tooltip)
     options = { ...options, tooltip: { ...tooltip, showComponent: false } }
     const view = new Choropleth(container, options)
+    const viewAny = view as any
     const dotLayer = this.getDotLayer(chart, geoJson, drawOption, customSubArea)
     if (!areaId.startsWith('custom_')) {
       dotLayer.options = { ...dotLayer.options, tooltip }
@@ -216,27 +226,32 @@ export class BubbleMap extends L7PlotChartView<ChoroplethOptions, Choropleth> {
     mapRendering(container)
     view.once('loaded', () => {
       // 修改地图鼠标样式为默认
-      view.scene.map._canvasContainer.lastElementChild.style.cursor = 'default'
+      const canvasLastChild = viewAny.scene?.map?._canvasContainer
+        ?.lastElementChild as HTMLElement | null
+      if (canvasLastChild) {
+        canvasLastChild.style.cursor = 'default'
+      }
       const { layers } = context
       if (layers) {
         layers.forEach(l => {
-          view.addLayer(l)
+          viewAny.addLayer(l)
         })
       }
-      dotLayer.addToScene(view.scene)
+      dotLayer.addToScene?.(viewAny.scene)
       dotLayer.once('add', () => {
         mapRendered(container)
       })
-      view.scene.map['keyboard'].disable()
+      viewAny.scene?.map?.keyboard?.disable()
       dotLayer.on('dotLayer:click', (ev: MapMouseEvent) => {
         const evData = ev.feature.properties
-        let adcode, scope
+        let adcode: string | number | undefined
+        let scope: string[] | undefined
         if (areaId.startsWith('custom_')) {
           adcode = '156'
           const area = customSubArea.find(a => a.name === evData.name)
           scope = area?.scopeArr
         } else {
-          adcode = view.currentDistrictData.features.find(
+          adcode = viewAny.currentDistrictData?.features.find(
             i => i.properties.name === ev.feature.properties.name
           )?.properties.adcode
         }
@@ -271,13 +286,13 @@ export class BubbleMap extends L7PlotChartView<ChoroplethOptions, Choropleth> {
     geoJson: FeatureCollection,
     drawOption: L7PlotDrawOptions<Choropleth>,
     customSubArea: CustomGeoSubArea[]
-  ): IPlotLayer {
+  ): PlotLayerLike {
     const { areaId } = drawOption
     const { basicStyle, tooltip } = parseJson(chart.customAttr)
     const { bubbleCfg } = parseJson(chart.senior)
     const { offsetHeight, offsetWidth } = document.getElementById(drawOption.container)
     const dotData = []
-    const options: DotOptions = {
+    const options: DotOptions & { tooltip?: Record<string, any> } = {
       source: {
         data: dotData,
         parser: {
@@ -433,9 +448,9 @@ export class BubbleMap extends L7PlotChartView<ChoroplethOptions, Choropleth> {
           speed: bubbleCfg.speed,
           rings: bubbleCfg.rings
         }
-      })
+      }) as unknown as PlotLayerLike
     }
-    return new Dot(options)
+    return new Dot(options) as unknown as PlotLayerLike
   }
 
   private configBasicStyle(
@@ -451,7 +466,9 @@ export class BubbleMap extends L7PlotChartView<ChoroplethOptions, Choropleth> {
     handleGeoJson(geoJson, curAreaNameMapping, senior.useGlobalAreaMapping)
     options.color = basicStyle.areaBaseColor
     if (!chart.data?.data?.length || !geoJson?.features?.length) {
-      options.label && (options.label.field = 'name')
+      if (options.label) {
+        options.label.field = 'name'
+      }
       return options
     }
     const data = chart.data.data

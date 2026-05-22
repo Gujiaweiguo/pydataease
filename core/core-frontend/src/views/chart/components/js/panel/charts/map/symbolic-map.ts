@@ -92,6 +92,10 @@ export class SymbolicMap extends L7ChartView<Scene, L7Config> {
     super('symbolic-map', [])
   }
 
+  protected setupOptions(chart: Chart, options: L7Config): L7Config {
+    return this.configEmptyDataStrategy(chart, options)
+  }
+
   async drawChart(drawOption: L7DrawConfig<L7Config>) {
     const { chart, container, action } = drawOption
     const containerDom = document.getElementById(container)
@@ -100,8 +104,8 @@ export class SymbolicMap extends L7ChartView<Scene, L7Config> {
       return new L7Wrapper(drawOption.chartObj?.getScene(), [])
     }
     const xAxis = deepCopy(chart.xAxis)
-    let basicStyle
-    let miscStyle
+    let basicStyle: any
+    let miscStyle: any
     if (chart.customAttr) {
       basicStyle = parseJson(chart.customAttr).basicStyle
       miscStyle = parseJson(chart.customAttr).misc
@@ -117,11 +121,17 @@ export class SymbolicMap extends L7ChartView<Scene, L7Config> {
       xAxis?.length === 2 &&
       chart.data?.tableRow.length
     ) {
+      const firstRow = (chart.data.tableRow as any[])[0]
+      const [lngAxis, latAxis] = xAxis as any[]
+      const lngField = lngAxis?.dataeaseName
+      const latField = latAxis?.dataeaseName
       // 经度
-      const lng = chart.data?.tableRow?.[0][chart.xAxis[0].dataeaseName]
-      // 纬度
-      const lat = chart.data?.tableRow?.[0][chart.xAxis[1].dataeaseName]
-      center = [lng, lat]
+      if (firstRow && lngField && latField) {
+        const lng = firstRow[lngField]
+        // 纬度
+        const lat = firstRow[latField]
+        center = [lng, lat]
+      }
     }
     const chartObj = drawOption.chartObj as unknown as L7Wrapper<L7Config, Scene>
     let scene = chartObj?.getScene()
@@ -157,9 +167,9 @@ export class SymbolicMap extends L7ChartView<Scene, L7Config> {
       qqMapRendered(scene)
       // 提高tooltip层级，避免被地图覆盖
       const containerElement = document.getElementById(container)
-      containerElement
-        ?.querySelectorAll<HTMLElement>('.l7-marker-container')
-        .forEach(el => (el.style.zIndex = '3'))
+      containerElement?.querySelectorAll<HTMLElement>('.l7-marker-container').forEach(el => {
+        el.style.zIndex = '3'
+      })
     })
     symbolicLayer.on('click', ev => {
       const data = ev.feature
@@ -431,7 +441,9 @@ export class SymbolicMap extends L7ChartView<Scene, L7Config> {
    */
   clearPopup = container => {
     const containerElement = document.getElementById(container)
-    containerElement?.querySelectorAll('.l7-popup').forEach((element: Element) => element.remove())
+    containerElement?.querySelectorAll('.l7-popup').forEach((element: Element) => {
+      element.remove()
+    })
   }
 
   /**
@@ -484,7 +496,7 @@ export class SymbolicMap extends L7ChartView<Scene, L7Config> {
           const tooltipElement = containerElement.getElementsByClassName('l7-popup')
           for (let i = 0; i < tooltipElement?.length; i++) {
             const element = tooltipElement[i] as HTMLElement
-            element.firstElementChild.style.display = 'none'
+            ;(element.firstElementChild as HTMLElement | null)?.style.setProperty('display', 'none')
             element.style.transform = 'translate(15px, 12px)'
             const isNearRightEdge =
               containerElement.clientWidth - mouseX <= element.clientWidth + 10

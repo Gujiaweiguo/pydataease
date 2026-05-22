@@ -130,7 +130,7 @@ export class Radar extends G2PlotChartView<RadarOptions, G2Radar> {
         })
       })
     }
-    configPlotTooltipEvent(chart, newChart)
+    configPlotTooltipEvent(chart, newChart as any)
     return newChart
   }
 
@@ -138,13 +138,13 @@ export class Radar extends G2PlotChartView<RadarOptions, G2Radar> {
     const { radarShowPoint, radarPointSize, radarAreaColor } = parseJson(
       chart.customAttr
     ).basicStyle
-    const tempOptions: RadarOptions = {}
+    const tempOptions = {} as RadarOptions
 
     if (radarShowPoint) {
-      tempOptions['point'] = { shape: 'circle', size: radarPointSize, style: { fill: null } }
+      ;(tempOptions as any).point = { shape: 'circle', size: radarPointSize, style: { fill: null } }
     }
     if (radarAreaColor) {
-      tempOptions['area'] = {}
+      ;(tempOptions as any).area = {}
     }
 
     return { ...options, ...tempOptions }
@@ -273,13 +273,13 @@ export class Radar extends G2PlotChartView<RadarOptions, G2Radar> {
       return optionTmp
     }
     const customStyle = parseJson(chart.customStyle)
-    let size
+    let size: number
     if (customStyle && customStyle.legend) {
       size = defaults(JSON.parse(JSON.stringify(customStyle.legend)), DEFAULT_LEGEND_STYLE).size
     } else {
       size = DEFAULT_LEGEND_STYLE.size
     }
-    optionTmp.legend.marker.style = style => {
+    ;(optionTmp.legend.marker as any).style = (style: any) => {
       return {
         r: size,
         fill: style.stroke

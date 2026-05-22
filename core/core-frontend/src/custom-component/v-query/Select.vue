@@ -30,15 +30,16 @@ import { ElMessage } from 'element-plus-secondary'
 
 interface SelectConfig {
   selectValue: any
-  required: false
-  defaultMapValue: any
-  mapValue: any
+  required: boolean
+  defaultMapValue: string[]
+  mapValue: string[]
   displayFormat?: number
   defaultValue: any
-  checkedFieldsMap: object
+  checkedFieldsMap: Record<string, string>
   displayType: string
   showEmpty: boolean
   id: string
+  name?: string
   sortList?: string[]
   queryConditionWidth: number
   placeholder: string
@@ -61,7 +62,7 @@ interface SelectConfig {
     label: string
     value: string
   }[]
-  optionFilter: []
+  optionFilter: string[]
 }
 
 const { t } = useI18n()
@@ -92,11 +93,12 @@ const props = defineProps({
   }
 })
 const { config } = toRefs(props)
-let enumValueArr = []
+let enumValueArr: Record<string, string>[] = []
 const selectValue = ref()
 const loading = ref(false)
 const multiple = ref(false)
-const options = shallowRef([])
+type SelectOption = { label: string; value: string; checked?: boolean }
+const options = shallowRef<SelectOption[]>([])
 const unMountSelect: Ref = inject('unmount-select')
 const placeholder: Ref = inject('placeholder')
 const releaseSelect = inject('release-unmount-select', Function, true)
@@ -123,18 +125,18 @@ const VanPopupSelect = defineAsyncComponent(() => import('./VanPopupSelect.vue')
 const cascade = computed(() => {
   return cascadeList() || []
 })
-let time
+let time: ReturnType<typeof setTimeout>
 const disabledFirstItem = computed(() => {
   const { defaultValueFirstItem, optionValueSource } = props.config
   return defaultValueFirstItem && optionValueSource === 1
 })
-const setDefaultMapValue = arr => {
+const setDefaultMapValue = (arr: Array<string | undefined>) => {
   const { displayId, field } = config.value
   if (config.value.optionValueSource !== 1) {
     return []
   }
-  let defaultMapValue = {}
-  let defaultValue = []
+  let defaultMapValue: Record<string, string[]> = {}
+  let defaultValue: string[] = []
   arr.forEach(ele => {
     defaultMapValue[ele] = []
   })
@@ -313,11 +315,7 @@ const customSort = () => {
   if (config.value.sortList?.length && config.value.sort === 'customSort') {
     options.value = [
       ...options.value
-        .sort(a => {
-          if (config.value.sortList.indexOf(a.value) !== -1) {
-            return -1
-          }
-        })
+        .sort(a => (config.value.sortList.indexOf(a.value) !== -1 ? -1 : 0))
         .sort((a, b) => {
           if (config.value.sortList.indexOf(a.value) === -1) {
             return 0
@@ -645,7 +643,10 @@ const requiredComp = () => {
   }
 }
 
-const hasIntersection = (options, selectValue) => {
+const hasIntersection = (
+  options: SelectOption[],
+  selectValue: string[] | string | undefined | null
+) => {
   if (!Array.isArray(options) || options.length === 0) {
     return false
   }
@@ -674,7 +675,7 @@ const setOptions = (num: number) => {
     sortId
   } = config.value
   switch (optionValueSource) {
-    case 0:
+    case 0: {
       const arr = Object.values(checkedFieldsMap).filter(ele => !!ele) as string[]
       if (!!checkedFields.length && !!arr.length) {
         handleFieldIdDefaultChange(
@@ -684,6 +685,7 @@ const setOptions = (num: number) => {
         options.value = []
       }
       break
+    }
     case 1:
       if (field.id) {
         handleFieldIdChange({

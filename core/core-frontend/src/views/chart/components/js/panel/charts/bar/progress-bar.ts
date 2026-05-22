@@ -22,7 +22,7 @@ import { DEFAULT_BASIC_STYLE } from '@/views/chart/components/editor/util/chart'
 const { t } = useI18n()
 
 export class ProgressBar extends G2PlotChartView<BarOptions, G2Progress> {
-  axisConfig = {
+  axisConfig: AxisConfig = {
     xAxis: {
       name: `${t('chart.form_type')} / ${t('chart.dimension')}`,
       type: 'd',
@@ -152,7 +152,7 @@ export class ProgressBar extends G2PlotChartView<BarOptions, G2Progress> {
     const newChart = new G2Progress(container, options)
 
     newChart.on('interval:click', action)
-    configPlotTooltipEvent(chart, newChart)
+    configPlotTooltipEvent(chart, newChart as any)
     configAxisLabelLengthLimit(chart, newChart)
     return newChart
   }
@@ -190,7 +190,7 @@ export class ProgressBar extends G2PlotChartView<BarOptions, G2Progress> {
       ...configRoundAngle(chart, 'barStyle')
     }
 
-    let barWidthRatio
+    let barWidthRatio: number | undefined
     const _v = basicStyle.columnWidthRatio ?? DEFAULT_BASIC_STYLE.columnWidthRatio
     if (_v >= 1 && _v <= 100) {
       barWidthRatio = _v / 100.0
@@ -200,7 +200,7 @@ export class ProgressBar extends G2PlotChartView<BarOptions, G2Progress> {
       barWidthRatio = 1
     }
     if (barWidthRatio) {
-      options.barWidthRatio = barWidthRatio
+      ;(options as any).barWidthRatio = barWidthRatio
     }
 
     return options
@@ -247,7 +247,7 @@ export class ProgressBar extends G2PlotChartView<BarOptions, G2Progress> {
               }
             }
           })
-          return result.length == 0 ? originalItems : result
+          return result.length === 0 ? originalItems : result
         },
         container: getTooltipContainer(`tooltip-${chart.id}`, chart.container),
         itemTpl: TOOLTIP_TPL,
@@ -303,8 +303,8 @@ export class ProgressBar extends G2PlotChartView<BarOptions, G2Progress> {
       if (rotate < -75) {
         textBaseline = 'bottom'
       }
-      baseOption.yAxis.label.style.textBaseline = textBaseline
-      baseOption.yAxis.label.style.textAlign = textAlign
+      ;(baseOption.yAxis.label.style as any).textBaseline = textBaseline
+      ;(baseOption.yAxis.label.style as any).textAlign = textAlign
     }
 
     /*if (baseOption.yAxis.position === 'left') {

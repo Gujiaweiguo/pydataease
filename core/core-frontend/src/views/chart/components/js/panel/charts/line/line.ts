@@ -138,7 +138,7 @@ export class Line extends G2PlotChartView<LineOptions, G2Line> {
 
     newChart.on('point:click', action)
     extremumEvt(newChart, chart, options, container)
-    configPlotTooltipEvent(chart, newChart)
+    configPlotTooltipEvent(chart, newChart as any)
     listenYAxisNiceMinEvents(chart, newChart)
     return newChart
   }
@@ -161,7 +161,9 @@ export class Line extends G2PlotChartView<LineOptions, G2Line> {
     const label = {
       fields: [],
       ...tmpOptions.label,
-      layout: labelAttr.fullDisplay ? [{ type: 'limit-in-plot' }] : tmpOptions.label.layout,
+      layout: labelAttr.fullDisplay
+        ? [{ type: 'limit-in-plot' }]
+        : ((tmpOptions.label.layout || []) as any),
       formatter: (data: Datum) => {
         if (data.EXTREME) {
           return ''
@@ -343,14 +345,14 @@ export class Line extends G2PlotChartView<LineOptions, G2Line> {
         // 用值域限定排序，有可能出现新数据但是未出现在图表上，所以这边要遍历一下子维度，加到后面，让新数据显示出来
         const data = optionTmp.data
         const cats =
-          data?.reduce((p, n) => {
+          data?.reduce((p: string[], n) => {
             const cat = n['category']
             if (cat && !p.includes(cat)) {
               p.push(cat)
             }
             return p
           }, []) || []
-        const values = sort.reduce((p, n) => {
+        const values = sort.reduce((p: string[], n) => {
           if (cats.includes(n)) {
             const index = cats.indexOf(n)
             if (index !== -1) {
@@ -360,26 +362,28 @@ export class Line extends G2PlotChartView<LineOptions, G2Line> {
           }
           return p
         }, [])
-        cats.length > 0 && values.push(...cats)
-        optionTmp.meta = {
-          ...optionTmp.meta,
+        if (cats.length > 0) {
+          values.push(...(cats as string[]))
+        }
+        ;(optionTmp as any).meta = {
+          ...((optionTmp.meta || {}) as Record<string, any>),
           category: {
             type: 'cat',
-            values
+            values: values as string[]
           }
         }
       }
     }
 
     const customStyle = parseJson(chart.customStyle)
-    let size
+    let size: number
     if (customStyle && customStyle.legend) {
       size = defaults(JSON.parse(JSON.stringify(customStyle.legend)), DEFAULT_LEGEND_STYLE).size
     } else {
       size = DEFAULT_LEGEND_STYLE.size
     }
 
-    optionTmp.legend.marker.style = style => {
+    ;(optionTmp.legend.marker as any).style = (style: any) => {
       return {
         r: size,
         fill: style.stroke
@@ -395,26 +399,27 @@ export class Line extends G2PlotChartView<LineOptions, G2Line> {
           return p
         }, {}) || {}
       const dupCheck = new Set()
-      const items = optionTmp.data?.reduce((arr, item) => {
-        if (!dupCheck.has(item.category)) {
-          const fill =
-            seriesMap[item.category]?.color ??
-            optionTmp.color[dupCheck.size % optionTmp.color.length]
-          dupCheck.add(item.category)
-          arr.push({
-            name: item.category,
-            value: item.category,
-            marker: {
-              symbol: icon,
-              style: {
-                r: size,
-                fill: isAlphaColor(fill) ? fill : convertToAlphaColor(fill, basicStyle.alpha)
+      const items =
+        optionTmp.data?.reduce((arr: any[], item) => {
+          if (!dupCheck.has(item.category)) {
+            const fill =
+              seriesMap[item.category]?.color ??
+              optionTmp.color[dupCheck.size % optionTmp.color.length]
+            dupCheck.add(item.category)
+            arr.push({
+              name: item.category,
+              value: item.category,
+              marker: {
+                symbol: icon,
+                style: {
+                  r: size,
+                  fill: isAlphaColor(fill) ? fill : convertToAlphaColor(fill, basicStyle.alpha)
+                }
               }
-            }
-          })
-        }
-        return arr
-      }, [])
+            })
+          }
+          return arr
+        }, []) || []
       if (sort !== 'custom') {
         items.sort((a, b) => {
           return sort !== 'desc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)
@@ -430,7 +435,7 @@ export class Line extends G2PlotChartView<LineOptions, G2Line> {
         })
         items.unshift(...tmp)
       }
-      optionTmp.legend.items = items
+      ;(optionTmp.legend as any).items = items as any[]
       if (xAxisExt?.customSort?.length > 0) {
         delete optionTmp.meta?.category.values
       }

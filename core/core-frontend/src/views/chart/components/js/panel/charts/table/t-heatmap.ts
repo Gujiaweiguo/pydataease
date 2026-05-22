@@ -144,11 +144,11 @@ export class TableHeatmap extends G2PlotChartView<HeatmapOptions, Heatmap> {
       meta: {
         [xField]: {
           type: 'cat',
-          values: this.sortData(xAxis[0], [...new Set(data.map(i => i[[xField]]))])
+          values: this.sortData(xAxis[0], [...new Set(data.map(i => i[xField]))])
         },
         [xFieldExt]: {
           type: 'cat',
-          values: this.sortData(xAxisExt[0], [...new Set(data.map(i => i[[xFieldExt]]))]).reverse()
+          values: this.sortData(xAxisExt[0], [...new Set(data.map(i => i[xFieldExt]))]).reverse()
         }
       },
       legend: {
@@ -211,7 +211,7 @@ export class TableHeatmap extends G2PlotChartView<HeatmapOptions, Heatmap> {
 
   protected configTheme(chart: Chart, options: HeatmapOptions): HeatmapOptions {
     const tmp = super.configTheme(chart, options)
-    tmp.theme.innerLabels.offset = 0
+    ;(tmp.theme as any).innerLabels.offset = 0
     return tmp
   }
 
@@ -226,7 +226,7 @@ export class TableHeatmap extends G2PlotChartView<HeatmapOptions, Heatmap> {
     }
   }
   protected configTooltip(chart: Chart, options: HeatmapOptions): HeatmapOptions {
-    let tooltip
+    let tooltip: HeatmapOptions['tooltip']
     let customAttr: DeepPartial<ChartAttr>
     if (chart.customAttr) {
       customAttr = parseJson(chart.customAttr)
@@ -330,11 +330,17 @@ export class TableHeatmap extends G2PlotChartView<HeatmapOptions, Heatmap> {
       const extColor = deepCopy(chart.extColor)
       const { label: labelAttr } = parseJson(chart.customAttr)
       const layout = []
-      if (!tmpOptions.label.fullDisplay) {
-        layout.push(...tmpOptions.label.layout)
+      const currentLabel = tmpOptions.label as any
+      if (!currentLabel.fullDisplay) {
+        const currentLayout = Array.isArray(currentLabel.layout)
+          ? currentLabel.layout
+          : currentLabel.layout
+          ? [currentLabel.layout]
+          : []
+        layout.push(...currentLayout)
       }
       const label = {
-        ...tmpOptions.label,
+        ...currentLabel,
         position: 'middle',
         layout,
         formatter: data => {
@@ -347,7 +353,7 @@ export class TableHeatmap extends G2PlotChartView<HeatmapOptions, Heatmap> {
       }
       return {
         ...tmpOptions,
-        label
+        label: label as any
       }
     }
     return tmpOptions

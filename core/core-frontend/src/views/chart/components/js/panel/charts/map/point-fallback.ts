@@ -3,6 +3,8 @@ import type { FeatureCollection } from '@antv/l7plot/dist/esm/plots/choropleth/t
 import type { DotOptions } from '@antv/l7plot'
 import { Dot } from '@antv/l7plot'
 import { TextLayer } from '@antv/l7plot/dist/esm'
+
+type FeatureWithCoords = { geometry?: { coordinates?: any }; properties?: Record<string, any> }
 import { isEmpty } from 'lodash-es'
 import { hexColorToRGBA, parseJson } from '@/views/chart/components/js/util'
 import { mapRendered, mapRendering } from '@/views/chart/components/js/panel/common/common_antv'
@@ -68,7 +70,8 @@ export async function drawPointFallbackChart(
   geoJson.features.forEach(item => {
     const props = item.properties
     const name = props['name'] || props['cun'] || props['fullname'] || ''
-    const coords = item.geometry.coordinates || props['center'] || props['centroid']
+    const coords =
+      (item as FeatureWithCoords).geometry?.coordinates || props['center'] || props['centroid']
     if (!name || !coords || coords.length < 2) {
       return
     }
@@ -318,6 +321,7 @@ export async function drawPointFallbackChart(
 
   mapRendering(container)
   view.once('loaded', () => {
+    const viewAny = view as any
     mapRendered(container)
     dotLayer.addToScene(view.scene)
     if (textLayer) {
@@ -356,10 +360,13 @@ export async function drawPointFallbackChart(
     })
     chart.container = container
     // 轮播提示
-    view.currentDistrictData = {
+    viewAny.currentDistrictData = {
       type: 'FeatureCollection',
       features: geoJson.features.map(f => {
-        const coords = f.geometry.coordinates || f.properties?.center || f.properties?.centroid
+        const coords =
+          (f as FeatureWithCoords).geometry?.coordinates ||
+          f.properties?.center ||
+          f.properties?.centroid
         return {
           ...f,
           properties: {
@@ -369,13 +376,13 @@ export async function drawPointFallbackChart(
         }
       })
     }
-    if (!view.source?.data) {
-      view.source = { data: { dataArray: sourceData } }
+    if (!viewAny.source?.data) {
+      viewAny.source = { data: { dataArray: sourceData } }
     } else {
-      view.source.data.dataArray = sourceData
+      viewAny.source.data.dataArray = sourceData
     }
-    if (!view.tooltip) {
-      view.tooltip = {
+    if (!viewAny.tooltip) {
+      viewAny.tooltip = {
         options: {
           domStyles: {
             'l7plot-tooltip': {
@@ -389,7 +396,7 @@ export async function drawPointFallbackChart(
             'l7plot-tooltip__list': {}
           }
         }
-      }
+      } as any
     }
     configCarouselTooltip(chart, view, sourceData, null, undefined, drawOption)
   })
