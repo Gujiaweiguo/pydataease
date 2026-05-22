@@ -179,7 +179,7 @@ export class BidirectionalHorizontalBar extends G2PlotChartView<
         ...sourceData[0]
       }
     })
-    configPlotTooltipEvent(chart, newChart)
+    configPlotTooltipEvent(chart, newChart as any)
     configAxisLabelLengthLimit(chart, newChart)
     return newChart
   }
@@ -226,7 +226,7 @@ export class BidirectionalHorizontalBar extends G2PlotChartView<
       return tmpOptions
     }
     if (tmpOptions.xAxis.label) {
-      delete tmpOptions.xAxis.label.style.textAlign
+      delete (tmpOptions.xAxis.label.style as Record<string, any>).textAlign
       const { lengthLimit } = parseJson(chart.customStyle).xAxis.axisLabel
       defaults(tmpOptions.xAxis.label, {
         formatter: value => {
@@ -419,7 +419,7 @@ export class BidirectionalHorizontalBar extends G2PlotChartView<
   }
 
   protected configLabel(chart: Chart, options: BidirectionalBarOptions): BidirectionalBarOptions {
-    let label
+    let label: any
     const yAxis = chart.yAxis
     const yAxisExt = chart.yAxisExt
     const labelAttr = parseJson(chart.customAttr).label
@@ -438,7 +438,7 @@ export class BidirectionalHorizontalBar extends G2PlotChartView<
           const layout = []
           if (!labelAttr.fullDisplay) {
             const tmpOptions = super.configLabel(chart, options)
-            layout.push(...tmpOptions.label.layout)
+            layout.push(...((tmpOptions.label as any).layout || []))
           }
           label = {
             position: l.position,
@@ -506,10 +506,10 @@ export class BidirectionalHorizontalBar extends G2PlotChartView<
       }
     }
     if (!layoutHorizontal) {
-      if (label.position === 'left') {
+      if ((label as any)?.position === 'left') {
         label.position = 'bottom'
       }
-      if (label.position === 'right') {
+      if ((label as any)?.position === 'right') {
         label.position = 'top'
       }
     }

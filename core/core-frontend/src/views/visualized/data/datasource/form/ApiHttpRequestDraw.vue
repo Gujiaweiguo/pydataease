@@ -75,13 +75,13 @@ export interface JsonField {
 }
 const { t } = useI18n()
 
-const originFieldItem = reactive({
+const originFieldItem = reactive<{ jsonFields: JsonField[]; fields: Field[] }>({
   jsonFields: [],
   fields: []
 })
 
-let apiItemList = reactive<ApiConfiguration[]>([])
-let paramsList = reactive<ApiConfiguration[]>([])
+let apiItemList = reactive<ApiConfigItem[]>([])
+let paramsList = reactive<ApiConfigItem[]>([])
 let fields = reactive<Field[]>([])
 
 let apiItem = reactive<ApiItem>({
@@ -91,7 +91,9 @@ let apiItem = reactive<ApiItem>({
   appToken: '',
   tableId: '',
   viewId: '',
+  deTableName: '',
   url: '',
+  copy: false,
   method: 'GET',
   request: {
     changeId: '',

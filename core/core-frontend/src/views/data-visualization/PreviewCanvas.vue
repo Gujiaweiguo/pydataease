@@ -59,12 +59,20 @@ const props = defineProps({
   ticketArgs: propTypes.string.def(null)
 })
 
+const decodeQueryPayload = (
+  value: string | string[] | null | undefined
+): Record<string, any> | null => {
+  const encoded = Array.isArray(value) ? value[0] : value
+  if (!encoded) return null
+  return JSON.parse(Base64.decode(decodeURIComponent(encoded)))
+}
+
 const loadCanvasDataAsync = async (dvId, dvType, ignoreParams = false) => {
   const jumpInfoParam = embeddedStore.jumpInfoParam || router.currentRoute.value.query.jumpInfoParam
-  let jumpParam
+  let jumpParam: Record<string, any> | null = null
   // 获取外部跳转参数
   if (jumpInfoParam) {
-    jumpParam = JSON.parse(Base64.decode(decodeURIComponent(jumpInfoParam)))
+    jumpParam = decodeQueryPayload(jumpInfoParam)
     const jumpRequestParam = {
       sourceDvId: jumpParam.sourceDvId,
       sourceViewId: jumpParam.sourceViewId,
@@ -91,7 +99,7 @@ const loadCanvasDataAsync = async (dvId, dvType, ignoreParams = false) => {
   const hasTicketArgs = argsObject && Object.keys(argsObject)
 
   // 添加外部参数
-  let attachParam
+  let attachParam: Record<string, any> | null = null
   await getOuterParamsInfo(dvId).then(rsp => {
     dvMainStore.setNowPanelOuterParamsInfoV2(rsp.data, dvId)
   })
@@ -101,7 +109,7 @@ const loadCanvasDataAsync = async (dvId, dvType, ignoreParams = false) => {
   if (attachParamsEncode || hasTicketArgs) {
     try {
       if (!!attachParamsEncode) {
-        attachParam = JSON.parse(Base64.decode(decodeURIComponent(attachParamsEncode)))
+        attachParam = decodeQueryPayload(attachParamsEncode)
       }
       if (hasTicketArgs) {
         attachParam = Object.assign({}, attachParam, argsObject)
@@ -203,7 +211,14 @@ onMounted(async () => {
       downloadH2(type)
     }
   })
-  await Promise.all([new Promise(r => (p = r)), new Promise(r => (p1 = r))])
+  await Promise.all([
+    new Promise(resolve => {
+      p = resolve
+    }),
+    new Promise(resolve => {
+      p1 = resolve
+    })
+  ])
   let dvId = props.outerId || embeddedStore.dvId || router.currentRoute.value.query.dvId
   if (router.currentRoute.value.query.jumpInfoParam && router.currentRoute.value.query.dvId) {
     dvId = router.currentRoute.value.query.dvId

@@ -33,7 +33,7 @@ const props = defineProps({
     default: () => []
   },
   suggestions: {
-    type: Array,
+    type: Array as PropType<Item[]>,
     default: () => []
   }
 })
@@ -47,7 +47,7 @@ const { suggestions, items } = toRefs(props)
 
 onBeforeMount(() => {
   if (!items.value.length || items.value[items.value.length - 1].name) {
-    items.value.push(new KeyValue({ enable: true, name: '', value: '' }))
+    items.value.push(new KeyValue({ enable: true, name: '', value: '' }) as unknown as Item)
   }
   for (let i = 0; i < items.value.length; i++) {
     if (!items.value[i].hasOwnProperty('nameType')) {
@@ -62,7 +62,7 @@ const remove = (index: number) => {
   items.value.splice(index, 1)
 }
 const change = () => {
-  items.value.push(new KeyValue({ enable: true, nameType: 'fixed' }))
+  items.value.push(new KeyValue({ enable: true, nameType: 'fixed' }) as unknown as Item)
 }
 const isDisable = () => {
   return items.value.length === 1

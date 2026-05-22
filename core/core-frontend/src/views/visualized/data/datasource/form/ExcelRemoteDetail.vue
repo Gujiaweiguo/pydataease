@@ -9,7 +9,8 @@ import {
   watch,
   shallowRef,
   onMounted,
-  onBeforeUnmount
+  onBeforeUnmount,
+  PropType
 } from 'vue'
 import { useI18n } from '@/hooks/web/useI18n'
 import { type Action, ElIcon, FormInstance, FormRules } from 'element-plus-secondary'
@@ -18,7 +19,6 @@ import { iconFieldMap } from '@/components/icon-group/field-list'
 import { Icon } from '@/components/icon-custom'
 import { ElForm, ElMessage, ElMessageBox } from 'element-plus-secondary'
 import Cron from '@/components/cron/src/Cron.vue'
-import { boolean } from 'mathjs'
 import SheetTabs from '@/views/visualized/data/datasource/SheetTabs.vue'
 import { loadRemoteFile, save, update } from '@/api/datasource'
 import { Base64 } from 'js-base64'
@@ -35,6 +35,28 @@ export interface Param {
   creator?: string
   isPlugin?: boolean
   staticMap?: any
+}
+
+type SyncSetting = {
+  updateType: string
+  syncRate: string
+  simpleCronValue: string | number
+  simpleCronType: string
+  startTime: Date | number | string
+  endTime: Date | number | string
+  endLimit: string | number
+  cron: string
+}
+
+type RemoteExcelForm = {
+  id?: string
+  name?: string
+  desc?: string
+  type?: string
+  editType?: number
+  syncRate?: string
+  configuration?: Record<string, any>
+  syncSetting?: SyncSetting
 }
 
 export interface Field {
@@ -67,10 +89,10 @@ const props = defineProps({
         editType: 0
       })
     },
-    type: Object
+    type: Object as PropType<RemoteExcelForm>
   },
   isSupportSetKey: {
-    type: boolean,
+    type: Boolean,
     required: true
   },
   activeStep: {
@@ -640,7 +662,7 @@ const saveExcelDs = (params, successCb, finallyCb) => {
     return
   }
 
-  let table = {}
+  let table: Record<string, any> = {}
   if (params) {
     form.value.name = params.name
   }
@@ -1062,7 +1084,7 @@ defineExpose({
                   <cron
                     v-if="showCron"
                     v-model="form.syncSetting.cron"
-                    :is-rate="form.syncRate === 'CRON'"
+                    :is-rate="form.syncSetting.syncRate === 'CRON'"
                     @close="cronEdit = false"
                   />
                 </div>

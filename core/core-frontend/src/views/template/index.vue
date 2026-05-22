@@ -242,6 +242,26 @@ import DeTemplateImport from '@/views/template/component/DeTemplateImport.vue'
 import DeTemplateItem from '@/views/template/component/DeTemplateItem.vue'
 import DeCategoryChange from '@/views/template/component/DeCategoryChange.vue'
 
+type TemplateEditForm = {
+  name?: string
+  nodeType?: string
+  label?: string
+  templateType?: string
+  level?: number
+}
+
+type TemplateCategory = {
+  id?: string | null
+  label?: string
+}
+
+type TemplateItem = {
+  id?: string
+  name?: string
+  label?: string
+  checked?: boolean
+}
+
 const roleValidator = (_rule, value, callback) => {
   if (nameRepeat(value)) {
     const { nodeType } = state.templateEditForm || {}
@@ -259,7 +279,36 @@ const roleValidator = (_rule, value, callback) => {
   }
 }
 
-const state = reactive({
+const state = reactive<{
+  batchOptDialogShow: boolean
+  batchOptList: any[]
+  templateFilterText: string
+  showShare: boolean
+  currentTemplateShowList: TemplateItem[]
+  noneImg: string
+  currentPid: string
+  currentTemplateType: string
+  templateEditFormRules: Record<string, unknown>
+  templateEditForm: TemplateEditForm
+  editTemplate: boolean
+  dialogTitle: string
+  dialogTitleLabel: string
+  currentTemplateLabel: string
+  currentTemplateId: string
+  templateCategories: TemplateCategory[]
+  templateMiniWidth: number
+  templateCurWidth: number
+  formType: string
+  originName: string
+  templateDialog: {
+    title: string
+    visible: boolean
+    templateId: string | null
+    optType: string
+    pid: string
+    categories: any[]
+  }
+}>({
   batchOptDialogShow: false,
   batchOptList: [],
   templateFilterText: '',

@@ -68,25 +68,25 @@ export class HeatMap extends L7ChartView<Scene, L7Config> {
     }
     const xAxis = deepCopy(chart.xAxis)
     const yAxis = deepCopy(chart.yAxis)
-    let basicStyle: DeepPartial<ChartBasicStyle>
-    let miscStyle: DeepPartial<ChartMiscAttr>
+    let basicStyle: DeepPartial<ChartBasicStyle> = DEFAULT_BASIC_STYLE
+    let miscStyle: DeepPartial<ChartMiscAttr> = {} as ChartMiscAttr
     if (chart.customAttr) {
       basicStyle = parseJson(chart.customAttr).basicStyle
       miscStyle = parseJson(chart.customAttr).misc
     }
     const mapKey = await this.getMapKey()
-    const mapStyle = getMapStyle(mapKey, basicStyle)
+    const mapStyle = getMapStyle(mapKey, basicStyle as ChartBasicStyle)
     // 底层
     const chartObj = drawOption.chartObj as unknown as L7Wrapper<L7Config, Scene>
     let scene = chartObj?.getScene()
-    const center = getMapCenter(basicStyle)
+    const center = getMapCenter(basicStyle as ChartBasicStyle)
     scene = await getMapScene(
       chart,
       scene,
       container,
       mapKey,
-      basicStyle,
-      miscStyle,
+      basicStyle as ChartBasicStyle,
+      miscStyle as ChartMiscAttr,
       mapStyle,
       center
     )

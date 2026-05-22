@@ -34,6 +34,10 @@ const { t } = useI18n()
 const embeddedStore = useEmbedded()
 const openType = wsCache.get('open-backend') === '1' ? '_self' : '_blank'
 const favorited = ref(false)
+const currentDvInfo = computed(
+  () =>
+    dvInfo.value as typeof dvInfo.value & { creatorName?: string; weight?: number; ext?: number }
+)
 const preview = () => {
   const baseUrl = isDataEaseBi.value ? embeddedStore.baseUrl : ''
   const url =
@@ -50,7 +54,7 @@ const isDataEaseBi = computed(() => appStore.getIsDataEaseBi)
 const isIframe = computed(() => appStore.getIsIframe)
 const shareDisable = computed(() => shareStore.getShareDisable || isDesktop())
 const exportPermissions = computed(() =>
-  exportPermission(dvInfo.value['weight'], dvInfo.value['ext'])
+  exportPermission(currentDvInfo.value.weight, currentDvInfo.value.ext)
 )
 const reload = () => {
   emit('reload', dvInfo.value.id)
@@ -145,7 +149,7 @@ const initOpenHandler = newWindow => {
     <el-divider style="margin: 0 16px 0 7px" direction="vertical" />
     <div class="create-area flex-align-center">
       <span style="line-height: 22px"
-        >{{ t('visualization.creator') }}:{{ dvInfo.creatorName }}</span
+        >{{ t('visualization.creator') }}:{{ currentDvInfo.creatorName }}</span
       >
       <el-popover show-arrow :offset="8" placement="bottom" width="400" trigger="hover">
         <template #reference>
@@ -178,10 +182,15 @@ const initOpenHandler = newWindow => {
         v-if="!shareDisable"
         :disabled="dvInfo.status === 0"
         :resource-id="dvInfo.id"
-        :weight="dvInfo.weight"
+        :weight="currentDvInfo.weight"
         :resource-type="dvInfo.type"
       />
-      <el-button class="custom-button" v-if="dvInfo.weight > 6" type="primary" @click="dvEdit()">
+      <el-button
+        class="custom-button"
+        v-if="(currentDvInfo.weight || 0) > 6"
+        type="primary"
+        @click="dvEdit()"
+      >
         <template #icon>
           <icon name="icon_edit_outlined"><icon_edit_outlined class="svg-icon" /></icon>
         </template>

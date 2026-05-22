@@ -670,7 +670,7 @@ const flatPathList = computed(() => {
 })
 
 const dfsNode = (arr = [], nodeListLocation, x = 0, y = 0) => {
-  arr.map((ele, index) => {
+  arr.forEach((ele, index) => {
     const pre = nodeListLocation[index - 1]
     if (!ele.children?.length) {
       let idxChild = index + y
@@ -1011,8 +1011,9 @@ const dfsNodeListRename = arr => {
     }
 
     if (!!ele.children?.length) {
-      dfsNodeListRename(ele.children)
+      return dfsNodeListRename(ele.children)
     }
+    return false
   })
 }
 const renameParam = reactive(cloneDeep(defaultParam))
@@ -1134,7 +1135,7 @@ const emits = defineEmits([
           <handle-more
             style="margin-left: auto"
             :iconName="icon_moreVertical_outlined"
-            :menuList="(ele.type === 'sql' ? [...sqlMenu, ...menuList] : menuList) as unknown as Menu[][]"
+            :menuList="(ele.type === 'sql' ? [...sqlMenu, ...menuList] : menuList) as unknown as Menu[]"
             @handle-command="command => handleCommand(ele, command)"
           ></handle-more>
         </div>

@@ -16,6 +16,17 @@ vi.mock('@/components/icon-group/field-list', () => ({
 }))
 
 import UnionFieldList from '../UnionFieldList.vue'
+import type { Field } from '../util'
+
+const makeField = (originName: string, checked: boolean): Field => ({
+  originName,
+  checked,
+  deExtractType: 0,
+  deType: 0,
+  name: originName,
+  type: 'TEXT',
+  id: originName
+})
 
 const globalStubs = {
   ElInput: { template: '<input />', props: ['modelValue'] },
@@ -44,10 +55,7 @@ describe('UnionFieldList', () => {
   })
 
   it('displays correct count with fields', () => {
-    const fields = [
-      { originName: 'id', checked: true },
-      { originName: 'name', checked: false }
-    ]
+    const fields = [makeField('id', true), makeField('name', false)]
     const wrapper = shallowMount(UnionFieldList, {
       props: { fieldList: fields, node: {} },
       global: { stubs: globalStubs, mocks: { $t: (k: string) => k } }
@@ -57,7 +65,7 @@ describe('UnionFieldList', () => {
 
   it('emits checkedFields when selection changes', async () => {
     const wrapper = shallowMount(UnionFieldList, {
-      props: { fieldList: [{ originName: 'id', checked: true }], node: {} },
+      props: { fieldList: [makeField('id', true)], node: {} },
       global: { stubs: globalStubs, mocks: { $t: (k: string) => k } }
     })
     expect(wrapper.emitted('checkedFields')).toBeTruthy()

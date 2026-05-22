@@ -6,7 +6,7 @@ import ApiBody from './ApiBody.vue'
 import Pagination from './Pagination.vue'
 import ApiVariable from './ApiVariable.vue'
 import ApiAuthConfig from './ApiAuthConfig.vue'
-import { Body } from './ApiTestModel.js'
+import * as ApiTestModel from './ApiTestModel.js'
 import type { Item } from './ApiKeyValue.vue'
 import type { AuthConfig } from './ApiAuthConfig.vue'
 import type { ApiBodyItem } from './ApiBody.vue'
@@ -65,39 +65,40 @@ const props = defineProps({
 const { t } = useI18n()
 const spanCount = ref(21)
 const activeName = ref('headers')
-const headerSuggestions = [
-  { value: 'Accept' },
-  { value: 'Accept-Charset' },
-  { value: 'Accept-Language' },
-  { value: 'Accept-Datetime' },
-  { value: 'X-DE-TOKEN' },
-  { value: 'Cache-Control' },
-  { value: 'Connection' },
-  { value: 'Cookie' },
-  { value: 'Content-Length' },
-  { value: 'Content-MD5' },
-  { value: 'Content-Type' },
-  { value: 'Date' },
-  { value: 'Expect' },
-  { value: 'From' },
-  { value: 'Host' },
-  { value: 'If-Match' },
-  { value: 'If-Modified-Since' },
-  { value: 'If-None-Match' },
-  { value: 'If-Range' },
-  { value: 'If-Unmodified-Since' },
-  { value: 'Max-Forwards' },
-  { value: 'Origin' },
-  { value: 'Pragma' },
-  { value: 'Proxy-Authorization' },
-  { value: 'Range' },
-  { value: 'Referer' },
-  { value: 'TE' },
-  { value: 'User-Agent' },
-  { value: 'Upgrade' },
-  { value: 'Via' },
-  { value: 'Warning' }
-]
+const Body = ApiTestModel.Body as new () => ApiBodyItem
+const headerSuggestions: Item[] = [
+  'Accept',
+  'Accept-Charset',
+  'Accept-Language',
+  'Accept-Datetime',
+  'X-DE-TOKEN',
+  'Cache-Control',
+  'Connection',
+  'Cookie',
+  'Content-Length',
+  'Content-MD5',
+  'Content-Type',
+  'Date',
+  'Expect',
+  'From',
+  'Host',
+  'If-Match',
+  'If-Modified-Since',
+  'If-None-Match',
+  'If-Range',
+  'If-Unmodified-Since',
+  'Max-Forwards',
+  'Origin',
+  'Pragma',
+  'Proxy-Authorization',
+  'Range',
+  'Referer',
+  'TE',
+  'User-Agent',
+  'Upgrade',
+  'Via',
+  'Warning'
+].map(value => ({ name: '', value, description: '', type: '' }))
 const bodyRef = ref()
 
 const { request: apiRequest } = toRefs(props)

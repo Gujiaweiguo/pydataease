@@ -78,9 +78,9 @@ type ExportTaskNotice = {
 onUnmounted(() => {
   clearInterval(timer)
 })
-const handleClick = (tab?: { paneName?: string }) => {
+const handleClick = (tab?: { paneName?: string | number }) => {
   if (tab) {
-    activeName.value = tab.paneName
+    activeName.value = String(tab.paneName)
   }
   if (activeName.value === 'ALL') {
     description.value = t('data_export.no_file')
@@ -189,6 +189,11 @@ const openMessageLoading = (
 ) => {
   // success error loading
   const customClass = `de-message-${type || 'success'} de-message-export`
+  const messageType = (type === 'loading' ? 'info' : type) as
+    | 'success'
+    | 'warning'
+    | 'info'
+    | 'error'
   ElMessage({
     message: h('p', null, [
       h(
@@ -212,8 +217,8 @@ const openMessageLoading = (
         t('data_export.export_center')
       )
     ]),
-    icon: type === 'loading' ? RefreshLeft : undefined,
-    type,
+    icon: type === 'loading' ? (RefreshLeft as any) : undefined,
+    type: messageType,
     showClose: true,
     customClass
   })

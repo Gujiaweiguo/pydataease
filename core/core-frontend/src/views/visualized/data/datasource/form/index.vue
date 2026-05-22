@@ -559,7 +559,7 @@ const saveDS = () => {
     })
   } else {
     const validate = detail?.value?.submitForm()
-    request.apiConfiguration = ''
+    request.apiConfiguration = [] as any
     validate(val => {
       if (val) {
         if (currentDsType.value.includes('API')) {

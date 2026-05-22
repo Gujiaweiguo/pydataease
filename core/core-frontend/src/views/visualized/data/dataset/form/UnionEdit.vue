@@ -87,11 +87,11 @@ const getFields = async () => {
     const [n, p] = props.editArr as Node[]
     const [nr, pr] = await Promise.all([getTableField(getParams(n)), getTableField(getParams(p))])
     loading.value = false
-    parentField.value = pr as unknown as Field[]
+    parentField.value = cloneDeep(pr as unknown) as Field[]
     parentField.value.forEach(ele => {
       ele.checked = p.currentDsFields.map(ele => ele.originName).includes(ele.originName)
     })
-    nodeField.value = nr as unknown as Field[]
+    nodeField.value = cloneDeep(nr as unknown) as Field[]
     nodeField.value.forEach(ele => {
       ele.checked = n.currentDsFields.map(ele => ele.originName).includes(ele.originName)
     })
@@ -136,8 +136,8 @@ defineExpose({
       </div>
     </div>
     <union-item-edit
-      :parent-field-list="parentField"
-      :node-field-list="nodeField"
+      :parent-field-list="(parentField as unknown as any[])"
+      :node-field-list="(nodeField as unknown as any[])"
       :node="node"
       @change-union-type="val => (node.unionType = val)"
       v-if="node.tableName"

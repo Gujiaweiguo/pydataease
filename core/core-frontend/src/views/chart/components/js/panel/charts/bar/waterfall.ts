@@ -80,7 +80,7 @@ export class Waterfall extends G2PlotChartView<WaterfallOptions, G2Waterfall> {
     threshold: ['lineThreshold']
   }
   axis: AxisType[] = ['xAxis', 'yAxis', 'filter', 'drill', 'extLabel', 'extTooltip']
-  axisConfig = {
+  axisConfig: AxisConfig = {
     xAxis: {
       name: `${t('chart.drag_block_type_axis')} / ${t('chart.dimension')}`,
       type: 'd'
@@ -113,7 +113,7 @@ export class Waterfall extends G2PlotChartView<WaterfallOptions, G2Waterfall> {
     const { Waterfall: G2Waterfall } = await import('@antv/g2plot/esm/plots/waterfall')
     const newChart = new G2Waterfall(container, options)
     newChart.on('interval:click', action)
-    configPlotTooltipEvent(chart, newChart)
+    configPlotTooltipEvent(chart, newChart as any)
     configAxisLabelLengthLimit(chart, newChart)
     return newChart
   }
@@ -123,7 +123,7 @@ export class Waterfall extends G2PlotChartView<WaterfallOptions, G2Waterfall> {
     const { colors, gradient, alpha } = customAttr.basicStyle
     const [risingColorRgba, fallingColorRgba, totalColorRgba] = colors
 
-    let columnWidthRatio
+    let columnWidthRatio: number | undefined
     const _v = customAttr.basicStyle.columnWidthRatio ?? DEFAULT_BASIC_STYLE.columnWidthRatio
     if (_v >= 1 && _v <= 100) {
       columnWidthRatio = _v / 100.0
@@ -132,12 +132,9 @@ export class Waterfall extends G2PlotChartView<WaterfallOptions, G2Waterfall> {
     } else if (_v > 100) {
       columnWidthRatio = 1
     }
-    if (columnWidthRatio) {
-      options.columnWidthRatio = columnWidthRatio
-    }
-
     return {
       ...options,
+      ...(columnWidthRatio ? { columnWidthRatio } : {}),
       total: {
         label: t('chart.waterfall_total'),
         style: {

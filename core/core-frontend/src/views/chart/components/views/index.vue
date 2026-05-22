@@ -355,7 +355,7 @@ const onPointClick = param => {
 const chartClick = param => {
   // 下钻字段第一个没有在维度中不允许下钻
   const xIds = view.value.xAxis.map(ele => ele.id)
-  if (xIds.indexOf(props.view.drillFields[0].id) == -1) {
+  if (xIds.indexOf(props.view.drillFields[0].id) === -1) {
     ElMessage.error(t('chart.drill_field_error'))
     return
   }
@@ -420,9 +420,9 @@ const divEmbedded = type => {
   useEmitt().emitter.emit('changeCurrentComponent', type)
 }
 
-const windowsJump = (url, jumpType, size = 'middle') => {
+const windowsJump = (url: string, jumpType: string, size = 'middle') => {
   try {
-    let newWindow
+    let newWindow: Window | null | undefined
     if ('newPop' === jumpType) {
       dePreviewPopDialogRef.value.previewInit({ url, size })
     } else if ('_self' === jumpType) {
@@ -436,8 +436,8 @@ const windowsJump = (url, jumpType, size = 'middle') => {
   }
 }
 
-const jumpClick = param => {
-  let dimension, jumpInfo, sourceInfo
+const jumpClick = (param: any) => {
+  let dimension: any, jumpInfo: any, sourceInfo: string | undefined
   // 如果有名称name 获取和name匹配的dimension 否则倒序取最后一个能匹配的
   if (param.name) {
     const colList = [...param.dimensionList, ...param.quotaList]
@@ -484,7 +484,7 @@ const jumpClick = param => {
         const editPreviewParams = ['canvas', 'edit-preview'].includes(showPosition.value)
           ? '&editPreview=true'
           : ''
-        const filterOuterParams = {}
+        const filterOuterParams: Record<string, any> = {}
         const curFilter = dvMainStore.getLastViewRequestInfo(param.viewId)
         const targetViewInfoList = jumpInfo.targetViewInfoList
         if (
@@ -518,7 +518,7 @@ const jumpClick = param => {
             }
           })
         }
-        let attachParamsInfo
+        let attachParamsInfo: string | undefined
         if (Object.keys(filterOuterParams).length > 0) {
           filterOuterParams['outerParamsVersion'] = 'v2'
           attachParamsInfo =
@@ -714,7 +714,7 @@ const checkFieldIsAllowEmpty = (allField?) => {
       // 如果有限制长度，且字段长度不足，标记为空并跳出
       if (
         value['limit'] &&
-        (!view.value?.[key] || view.value?.[key]?.length < parseInt(value['limit']))
+        (!view.value?.[key] || view.value?.[key]?.length < parseInt(String(value['limit'])))
       ) {
         showEmpty.value = true
         break
@@ -1027,7 +1027,7 @@ const titleIconStyle = computed<StyleValue>(() => {
   const bgColor = modifyAlpha(false)
   const borderColor = modifyAlpha(true)
   // 不显示标题时，图标的样式
-  const style = {
+  const style: Record<string, string | number> = {
     position: 'absolute',
     border: `1px solid ${borderColor}`,
     'background-color': bgColor,
@@ -1041,7 +1041,7 @@ const titleIconStyle = computed<StyleValue>(() => {
   return {
     color: canvasStyleData.value.component.seniorStyleSetting.linkageIconColor,
     ...(titleShow.value ? {} : style)
-  }
+  } as StyleValue
 })
 const chartHover = ref(false)
 const showActionIcons = computed(() => {
@@ -1119,7 +1119,7 @@ const clearG2Tooltip = () => {
   const g2TooltipWrapper = document.getElementById('g2-tooltip-wrapper')
   if (g2TooltipWrapper) {
     for (const ele of g2TooltipWrapper.children) {
-      ele.style.display = 'none'
+      ;(ele as HTMLElement).style.display = 'none'
     }
   }
 }

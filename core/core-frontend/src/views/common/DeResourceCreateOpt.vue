@@ -71,7 +71,23 @@ import { decompression } from '@/api/visualization/dataVisualization'
 import DeTemplatePreviewList from '@/views/common/DeTemplatePreviewList.vue'
 const { t } = useI18n()
 const emits = defineEmits(['finish'])
-const files = ref(null)
+type TemplatePreviewItem = {
+  id?: string | number
+  name?: string
+  nodeType?: string
+  snapshot?: string
+}
+
+type ImportedTemplateInfo = {
+  snapshot: string | null
+  name?: { name?: string }
+  canvasStyleData?: string | null
+  componentData?: string | null
+  dynamicData?: string | null
+  staticResource?: string | null
+}
+
+const files = ref<HTMLInputElement | null>(null)
 const props = defineProps({
   curCanvasType: {
     type: String,
@@ -87,10 +103,10 @@ const state = reactive({
   tableRadio: null,
   keyWordSearch: '',
   columnLabel: t('visualization.belong_to_category'),
-  templateList: [],
+  templateList: [] as TemplatePreviewItem[],
   importTemplateInfo: {
     snapshot: ''
-  },
+  } as ImportedTemplateInfo,
   dvCreateInfo: {
     pid: -1,
     name: null,
@@ -133,7 +149,7 @@ const createInit = () => {
   state.dvCreateInfo.templateId = null
 }
 
-const showCurrentTemplateInfo = data => {
+const showCurrentTemplateInfo = (data: TemplatePreviewItem) => {
   state.dvCreateInfo.templateId = data.id
   if (data.nodeType === 'folder') {
     state.dvCreateInfo.name = null
@@ -189,14 +205,15 @@ const save = () => {
       state.loading = false
     })
 }
-const handleFileChange = e => {
-  const file = e.target.files[0]
+const handleFileChange = (e: Event) => {
+  const file = (e.target as HTMLInputElement)?.files?.[0]
+  if (!file) return
   const reader = new FileReader()
   reader.onload = res => {
     state.templateSelected = true
-    const result = res.target.result
-    state.importTemplateInfo = JSON.parse(result)
-    state.dvCreateInfo.name = state.importTemplateInfo['name'].name
+    const result = res.target?.result
+    state.importTemplateInfo = JSON.parse(String(result))
+    state.dvCreateInfo.name = state.importTemplateInfo.name?.name ?? null
     state.dvCreateInfo.canvasStyleData = state.importTemplateInfo['canvasStyleData']
     state.dvCreateInfo.componentData = state.importTemplateInfo['componentData']
     state.dvCreateInfo.dynamicData = state.importTemplateInfo['dynamicData']
@@ -205,7 +222,7 @@ const handleFileChange = e => {
   reader.readAsText(file)
 }
 const goFile = () => {
-  files.value.click()
+  files.value?.click()
 }
 
 const close = () => {

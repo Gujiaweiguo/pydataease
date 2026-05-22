@@ -129,6 +129,7 @@ interface UnionField {
 }
 interface Node {
   tableName: string
+  noteName?: string
   type: NodeType
   datasourceId: string
   id: string

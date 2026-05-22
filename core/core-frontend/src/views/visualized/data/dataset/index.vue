@@ -467,7 +467,7 @@ const openMessageLoading = cb => {
       ),
       t('data_set.progress_and_download')
     ]),
-    icon: h(RefreshLeft),
+    icon: RefreshLeft,
     showClose: true,
     customClass
   })
@@ -933,7 +933,7 @@ const proxyAllowDrop = throttle((arg1, arg2) => {
                   <handle-more
                     icon-size="24px"
                     @handle-command="cmd => handleDatasetTree(cmd, data)"
-                    :menu-list="datasetTypeList as unknown as Menu[][]"
+                    :menu-list="datasetTypeList as unknown as Menu[]"
                     :icon-name="icon_add_outlined"
                     placement="bottom-start"
                     v-if="!data.leaf"
@@ -943,7 +943,7 @@ const proxyAllowDrop = throttle((arg1, arg2) => {
                   </el-icon>
                   <handle-more
                     @handle-command="cmd => operation(cmd, data, data.leaf ? 'dataset' : 'folder')"
-                    :menu-list="getMenuList(data.leaf) as unknown as Menu[][]"
+                    :menu-list="getMenuList(data.leaf) as unknown as Menu[]"
                   ></handle-more>
                 </div>
               </span>

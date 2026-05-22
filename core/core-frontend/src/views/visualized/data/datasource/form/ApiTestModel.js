@@ -91,6 +91,8 @@ export class Body extends BaseConfig {
   }
 }
 
+export { Body }
+
 export const BODY_TYPE = {
   KV: 'KeyValue',
   FORM_DATA: 'Form_Data',

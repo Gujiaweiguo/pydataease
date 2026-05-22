@@ -426,7 +426,9 @@ const operation = (cmd: string, data: BusiTreeNode, nodeType: string) => {
       name: data.name + '-copy',
       type: curCanvasType.value,
       id: data.id,
-      pid: targetPid || '0'
+      pid: targetPid || '0',
+      mobileLayout: !!data.extraFlag,
+      status: !!data.leaf
     }
 
     copyLoading.value = true
@@ -834,7 +836,7 @@ defineExpose({
                 @handle-command="
                   cmd => addOperation(cmd, data, cmd === 'newFolder' ? 'folder' : 'leaf')
                 "
-                :menu-list="resourceTypeList as unknown as Menu[][]"
+                :menu-list="resourceTypeList as unknown as Menu[]"
                 :icon-name="icon_add_outlined"
                 placement="bottom-start"
                 v-if="!data.leaf"
@@ -844,7 +846,7 @@ defineExpose({
                 :node="data"
                 :any-manage="anyManage"
                 :resource-type="curCanvasType"
-                :menu-list="(data.leaf ? menuListWeight(data.id) : state.folderMenuList) as unknown as Menu[][]"
+                :menu-list="(data.leaf ? menuListWeight(data.id) : state.folderMenuList) as unknown as Menu[]"
               ></dv-handle-more>
             </div>
           </span>
