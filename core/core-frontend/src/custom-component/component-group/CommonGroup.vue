@@ -49,7 +49,7 @@ const newComponent = ({ category, innerType }: { category: string; innerType: st
 }
 
 const handleDragStart = (e: DragEvent) => {
-  e.dataTransfer.setData('id', e.target.dataset.id)
+  e.dataTransfer?.setData('id', (e.target as HTMLElement)?.dataset?.id ?? '')
 }
 
 const groupActiveChange = (category: string) => {

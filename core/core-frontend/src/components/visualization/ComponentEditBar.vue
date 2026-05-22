@@ -459,7 +459,7 @@ const openMessageLoading = cb => {
     icon: h(RefreshLeft) as any,
     showClose: true,
     customClass
-  })
+  } as any)
 }
 
 const callbackExport = () => {

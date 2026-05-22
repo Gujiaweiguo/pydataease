@@ -10,16 +10,27 @@
 <script setup lang="ts">
 import { onBeforeUnmount, reactive, ref, toRefs } from 'vue'
 import CodeMirror from '@/views/visualized/data/dataset/form/CodeMirror.vue'
+
+type LinkJumpInfoItem = {
+  sourceFieldId?: string
+  sourceFieldName?: string
+  [key: string]: any
+}
+
+type LinkJumpInfo = {
+  content?: string
+  [key: string]: any
+}
 const myCm = ref(null)
 const mirror = ref(null)
-const props = defineProps({
-  linkJumpInfoArray: Array,
-  linkJumpInfo: Object
-})
+const props = defineProps<{
+  linkJumpInfoArray: LinkJumpInfoItem[]
+  linkJumpInfo: LinkJumpInfo
+}>()
 
 const { linkJumpInfo } = toRefs(props)
 const state = reactive({
-  name2Auto: [],
+  name2Auto: [] as string[],
   content: ''
 })
 const timer = ref(null)

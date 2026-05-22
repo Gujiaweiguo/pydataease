@@ -575,21 +575,22 @@ const calcData = (view: Chart, callback) => {
     }
     getData(v)
       .then(res => {
+        const response = res as any
         if (res.code && res.code !== 0) {
           isError.value = true
           errMsg.value = res.msg
         } else {
-          state.data = res?.data
-          state.viewDataInfo = res
-          state.totalItems = res?.totalItems
+          state.data = response?.data
+          state.viewDataInfo = response
+          state.totalItems = response?.totalItems
           const curViewInfo = canvasViewInfo.value[element.value.id]
           // 此处是编辑时使用，多仪表板嵌入 canvasViewInfo 会被覆盖可能出现无法读取情况
-          if (res.data && curViewInfo) {
-            curViewInfo['curFields'] = res.data.fields
+          if (response.data && curViewInfo) {
+            curViewInfo['curFields'] = response.data.fields
           }
-          dvMainStore.setViewDataDetails(element.value.id, res)
+          dvMainStore.setViewDataDetails(element.value.id, response)
           initReady.value = true
-          initCurFields(res)
+          initCurFields(response)
         }
         callback?.()
         nextTick(() => {

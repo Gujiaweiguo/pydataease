@@ -428,7 +428,7 @@ const openMessageLoading = cb => {
     icon: h(RefreshLeft) as any,
     showClose: true,
     customClass
-  })
+  } as any)
 }
 // 地图
 const mapChartTypes = ['bubble-map', 'flow-map', 'heat-map', 'map', 'symbolic-map']

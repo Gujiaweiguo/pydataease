@@ -82,7 +82,14 @@ const state = reactive({
 })
 
 const imgType = computed(() => {
-  return props.emptyImg ? props.emptyImg : props.isSearch ? 'tree' : 'noneWhite'
+  return (props.emptyImg ? props.emptyImg : props.isSearch ? 'tree' : 'noneWhite') as
+    | 'input'
+    | 'none'
+    | 'error'
+    | 'select'
+    | 'table'
+    | 'tree'
+    | 'noneWhite'
 })
 const table = ref(null)
 

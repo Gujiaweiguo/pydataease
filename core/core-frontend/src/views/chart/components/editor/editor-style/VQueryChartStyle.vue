@@ -297,7 +297,7 @@ const onPlaceholderChange = () => {
       hidden
       @click="
         e => {
-          e.target.value = ''
+          ;(e.target as HTMLInputElement).value = ''
         }
       "
       @change="reUpload"

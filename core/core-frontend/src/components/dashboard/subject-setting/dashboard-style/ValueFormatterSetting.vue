@@ -1,6 +1,7 @@
 <script lang="tsx" setup>
 import { useI18n } from '@/hooks/web/useI18n'
 import { reactive, toRefs } from 'vue'
+import type { PropType } from 'vue'
 import {
   isEnLocal,
   formatterType,
@@ -17,7 +18,7 @@ const emit = defineEmits(['onFormatterItemChange'])
 
 const props = defineProps({
   formatterCfg: {
-    type: Object,
+    type: Object as PropType<BaseFormatter>,
     required: true
   },
   themes: {
@@ -120,7 +121,7 @@ getExampleValue()
                 size="small"
                 :placeholder="t('chart.pls_select_field')"
                 :effect="themes"
-                @change="v => changeUnitLanguage(formatterCfg, v)"
+                @change="v => changeUnitLanguage(formatterCfg as BaseFormatter, v)"
               >
                 <el-option
                   :effect="themes"

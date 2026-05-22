@@ -500,7 +500,7 @@ const handleBoardMouseDownOnShape = (e: MouseEvent) => {
     return
   }
   dvMainStore.setCurComponent({ component: element.value, index: index.value })
-  handleMouseDownOnShape(e)
+  handleMouseDownOnShape(e as unknown as ShapeMouseEvent)
 }
 
 const areaDataPush = component => {

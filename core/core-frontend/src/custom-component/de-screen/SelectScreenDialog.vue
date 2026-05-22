@@ -39,10 +39,11 @@ const init = param => {
 const loadRTree = dvType => {
   const request = { busiFlag: dvType, resourceTable: 'core' }
   queryTreeApi(request).then(rsp => {
-    if (rsp && rsp[0]?.id === '0') {
-      state.panelList = rsp[0].children
+    const treeList = ((rsp as any)?.data ?? rsp ?? []) as any[]
+    if (treeList[0]?.id === '0') {
+      state.panelList = treeList[0].children
     } else {
-      state.panelList = rsp
+      state.panelList = treeList
     }
     state.panelList = filterEmptyFolderTree(state.panelList)
   })

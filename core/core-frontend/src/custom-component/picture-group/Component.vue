@@ -43,7 +43,8 @@ const state = reactive({
   showUrl: null,
   firstRender: true,
   previewFirstRender: true,
-  curImgList: []
+  curImgList: [],
+  totalItems: 0
 })
 const initReady = ref(true)
 const props = defineProps({

@@ -37,7 +37,7 @@ const handlePictureCardPreview = file => {
   dialogVisible.value = true
 }
 
-const handleRemove = (_, fileList) => {
+const handleRemove = (_file, _uploadList) => {
   uploadDisabled.value = false
   curComponent.value.propValue.url = null
   fileList.value = []
@@ -55,11 +55,12 @@ const onStyleChange = () => {
 }
 
 const goFile = () => {
-  files.value.click()
+  files.value?.click()
 }
 
-const reUpload = e => {
-  const file = e.target.files[0]
+const reUpload = (e: Event) => {
+  const file = (e.target as HTMLInputElement)?.files?.[0]
+  if (!file) return
   if (file.size > maxImageSize) {
     sizeMessage()
     return
@@ -108,7 +109,7 @@ onBeforeUnmount(() => {
       hidden
       @click="
         e => {
-          e.target.value = ''
+          ;(e.target as HTMLInputElement).value = ''
         }
       "
       @change="reUpload"
