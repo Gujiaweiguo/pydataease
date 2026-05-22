@@ -141,8 +141,8 @@ const onMobileConfig = () => {
 
 const loadFinish = ref(false)
 const newWindowFromDiv = ref(false)
-let p = null
-const XpackLoaded = () => p(true)
+let p: ((value: boolean) => void) | null = null
+const XpackLoaded = () => p?.(true)
 
 const doUseCache = flag => {
   const canvasCache = wsCache.get('DE-DV-CATCH-' + state.resourceId)
@@ -161,7 +161,7 @@ const doUseCache = flag => {
   }
 }
 
-const initLocalCanvasData = callBack => {
+const initLocalCanvasData = (callBack?: (payload?: unknown) => void) => {
   const { resourceId, opt, sourcePid } = state
   const busiFlag = opt === 'copy' ? 'dashboard-copy' : 'dashboard'
   initCanvasData(
@@ -191,7 +191,9 @@ onMounted(async () => {
   if (window.location.hash.includes('#/dashboard')) {
     newWindowFromDiv.value = true
   }
-  await new Promise(r => (p = r))
+  await new Promise<boolean>(resolve => {
+    p = resolve
+  })
   loadFinish.value = true
   useEmitt({
     name: 'mobileConfig',
@@ -229,7 +231,7 @@ onMounted(async () => {
     }
   } else if (opt && opt === 'create') {
     dataInitState.value = false
-    let watermarkBaseInfo
+    let watermarkBaseInfo: Record<string, any> | undefined
     try {
       await watermarkFind().then(rsp => {
         watermarkBaseInfo = rsp.data
@@ -238,8 +240,8 @@ onMounted(async () => {
     } catch (e) {
       console.error('can not find watermark info')
     }
-    let deTemplateData
-    let preName
+    let deTemplateData: Record<string, any> | undefined
+    let preName: string | undefined
     if (createType === 'template') {
       const templateParamsApply = JSON.parse(Base64.decode(decodeURIComponent(templateParams + '')))
       await decompressionPre(templateParamsApply, result => {

@@ -954,7 +954,6 @@ defineExpose({
           </template>
           <template v-if="activeStep !== 0 && currentDsType == 'ExcelRemote'">
             <excel-remote-detail
-              :editDs="editDs"
               :is-supportSetKey="isSupportSetKey"
               ref="excelRemote"
               :active-step="activeApiStep"

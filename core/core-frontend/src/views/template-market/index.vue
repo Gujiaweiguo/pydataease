@@ -211,6 +211,8 @@ const embeddedStore = useEmbedded()
 const appStore = useAppStoreWithOut()
 const interactiveStore = interactiveStoreWithOut()
 
+type TreeNodeData = { label: string }
+
 defineProps({
   isDialog: {
     type: Boolean,
@@ -417,7 +419,7 @@ watch(
   }
 )
 
-const nodeClick = data => {
+const nodeClick = (data: TreeNodeData) => {
   state.marketActiveTab = data.label
   initTemplateShow()
 }
@@ -482,7 +484,7 @@ const templateApply = template => {
     state.dvCreateForm.newFrom = 'new_inner_template'
     state.dvCreateForm.templateId = template.id
   }
-  apply(template)
+  apply()
 }
 
 const apply = () => {

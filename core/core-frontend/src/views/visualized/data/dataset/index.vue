@@ -81,7 +81,6 @@ import { timestampFormatDate } from './form/util'
 import { interactiveStoreWithOut } from '@/store/modules/interactive'
 import { XpackComponent } from '@/components/plugin'
 import { useCache } from '@/hooks/web/useCache'
-import { RefreshLeft } from '@element-plus/icons-vue'
 import { iconFieldMap } from '@/components/icon-group/field-list'
 import { exportPermission, isFreeFolder } from '@/utils/utils'
 const { t } = useI18n()
@@ -467,7 +466,6 @@ const openMessageLoading = cb => {
       ),
       t('data_set.progress_and_download')
     ]),
-    icon: RefreshLeft,
     showClose: true,
     customClass
   })

@@ -13,6 +13,18 @@ import {
   transDatePickerType
 } from '@/views/chart/components/editor/util/DateFormatUtil'
 
+type ThresholdOptionGroup = { label: string; options: Array<{ value: string; label: string }> }
+type TableThresholdItem = TableThreshold & { options?: ThresholdOptionGroup[] }
+type ThresholdConditionItem = Threshold & {
+  fieldId?: string | null
+  field?: Axis
+  dynamicField?: ThresholdDynamicField
+  dynamicMinField?: ThresholdDynamicField
+  dynamicMaxField?: ThresholdDynamicField
+}
+type TableThresholdConditionItem = TableThresholdItem & ThresholdConditionItem
+type DateFieldLike = { dateStyle?: string; datePattern?: string }
+
 const { t } = useI18n()
 
 const props = defineProps({
@@ -219,20 +231,21 @@ const targetOptions = computed(() => {
 })
 
 const state = reactive({
-  thresholdArr: [] as TableThreshold[],
-  fields: [],
+  thresholdArr: [] as TableThresholdItem[],
+  fields: [] as Axis[],
   thresholdObj: {
     fieldId: '',
     field: {},
     conditions: []
-  } as TableThreshold
+  } as TableThresholdItem
 })
+const thresholdRows = computed(() => state.thresholdArr as TableThresholdItem[])
 
 const init = () => {
-  state.thresholdArr = JSON.parse(JSON.stringify(props.threshold)) as TableThreshold[]
+  state.thresholdArr = JSON.parse(JSON.stringify(props.threshold)) as TableThresholdItem[]
   initFields()
 }
-const initOptions = (item, fieldObj) => {
+const initOptions = (item: TableThresholdItem, fieldObj?: DateFieldLike & { deType?: number }) => {
   if (fieldObj) {
     if ([0, 5, 7].includes(fieldObj.deType)) {
       item.options = JSON.parse(JSON.stringify(textOptions))
@@ -248,7 +261,7 @@ const initOptions = (item, fieldObj) => {
   }
 }
 const initFields = () => {
-  let fields = []
+  let fields: Axis[] = []
   if (props.chart.type === 'table-info') {
     fields = JSON.parse(JSON.stringify(props.chart.xAxis))
   } else if (props.chart.type === 'table-pivot') {
@@ -288,9 +301,9 @@ const changeThreshold = () => {
   emit('onTableThresholdChange', state.thresholdArr)
 }
 
-const addConditions = item => {
-  const newCondition = JSON.parse(JSON.stringify(thresholdCondition))
-  if (item.field.dateStyle === 'H_m_s') {
+const addConditions = (item: TableThresholdItem) => {
+  const newCondition = JSON.parse(JSON.stringify(thresholdCondition)) as unknown as Threshold
+  if ((item.field as Axis).dateStyle === 'H_m_s') {
     newCondition.value = '00:00:00'
   }
   // 获取单元格默认背景颜色
@@ -301,30 +314,46 @@ const addConditions = item => {
   item.conditions.push(newCondition)
   changeThreshold()
 }
-const removeCondition = (item, index) => {
+const removeCondition = (item: TableThresholdItem, index: number) => {
   item.conditions.splice(index, 1)
   changeThreshold()
 }
 
-const addField = item => {
+const isTableThresholdItem = (
+  item: TableThresholdItem | ThresholdConditionItem
+): item is TableThresholdConditionItem => {
+  return Array.isArray((item as TableThresholdItem).conditions)
+}
+
+const addField = (item: TableThresholdItem | ThresholdConditionItem) => {
+  const thresholdItem = item as ThresholdConditionItem
+  const tableThresholdItem = isTableThresholdItem(item) ? item : undefined
   // get field
   if (state.fields && state.fields.length > 0) {
     state.fields.forEach(ele => {
-      if (item.fieldId === ele.id) {
-        item.field = JSON.parse(JSON.stringify(ele))
-        initOptions(item, item.field)
+      if (thresholdItem.fieldId === ele.id) {
+        thresholdItem.field = JSON.parse(JSON.stringify(ele))
+        if (tableThresholdItem) {
+          initOptions(tableThresholdItem, thresholdItem.field)
+        }
       }
-      if (item.dynamicField?.fieldId === ele.id) {
-        item.dynamicField.field = JSON.parse(JSON.stringify(ele))
-        initOptions(item, item.dynamicField.field)
+      if (thresholdItem.dynamicField?.fieldId === ele.id) {
+        thresholdItem.dynamicField.field = JSON.parse(JSON.stringify(ele))
+        if (tableThresholdItem) {
+          initOptions(tableThresholdItem, thresholdItem.dynamicField.field)
+        }
       }
-      if (item.dynamicMinField?.fieldId === ele.id) {
-        item.dynamicMinField.field = JSON.parse(JSON.stringify(ele))
-        initOptions(item, item.dynamicMinField.field)
+      if (thresholdItem.dynamicMinField?.fieldId === ele.id) {
+        thresholdItem.dynamicMinField.field = JSON.parse(JSON.stringify(ele))
+        if (tableThresholdItem) {
+          initOptions(tableThresholdItem, thresholdItem.dynamicMinField.field)
+        }
       }
-      if (item.dynamicMaxField?.fieldId === ele.id) {
-        item.dynamicMaxField.field = JSON.parse(JSON.stringify(ele))
-        initOptions(item, item.dynamicMaxField.field)
+      if (thresholdItem.dynamicMaxField?.fieldId === ele.id) {
+        thresholdItem.dynamicMaxField.field = JSON.parse(JSON.stringify(ele))
+        if (tableThresholdItem) {
+          initOptions(tableThresholdItem, thresholdItem.dynamicMaxField.field)
+        }
       }
     })
   }
@@ -354,7 +383,11 @@ const dynamicSummaryOptions = [
   }
 ]
 
-const getConditionsFields = (fieldItem, conditionItem, conditionItemField) => {
+const getConditionsFields = (
+  fieldItem: TableThresholdItem,
+  conditionItem: ThresholdConditionItem,
+  conditionItemField: ThresholdDynamicField
+) => {
   const fieldItemObj = state.fields.filter(ele => ele.id === fieldItem.fieldId)
 
   if (
@@ -388,7 +421,7 @@ const getConditionsFields = (fieldItem, conditionItem, conditionItemField) => {
   return result
 }
 
-const getDynamicSummaryOptions = itemId => {
+const getDynamicSummaryOptions = (itemId: string) => {
   const deType = state.fields.filter(ele => ele.id === itemId)?.[0]?.deType
   if (deType === 1) {
     // 时间
@@ -405,18 +438,18 @@ const getDynamicSummaryOptions = itemId => {
   }
 }
 
-const isNotEmptyAndNull = item => {
+const isNotEmptyAndNull = (item: Threshold) => {
   return !item.term.includes('null') && !item.term.includes('empty')
 }
 
-const isBetween = item => {
+const isBetween = (item: Threshold) => {
   return item.term === 'between'
 }
 
-const isDynamic = item => {
+const isDynamic = (item: Threshold) => {
   return item.type === 'dynamic'
 }
-const changeConditionItemType = item => {
+const changeConditionItemType = (item: ThresholdConditionItem) => {
   if (item.type === 'dynamic') {
     item.dynamicField.summary = 'value'
     item.dynamicMinField.summary = 'value'
@@ -427,11 +460,11 @@ const getFieldOptions = () => {
   return fieldOptions
 }
 
-const datePickerFormat = (fieldItem: { dateStyle: any; datePattern: any }) => {
-  return transDateFormat(fieldItem.dateStyle, fieldItem.datePattern)
+const datePickerFormat = (fieldItem: DateFieldLike) => {
+  return transDateFormat(fieldItem.dateStyle ?? '', fieldItem.datePattern ?? '')
 }
 
-const datePickerType = (fieldItem: { dateStyle: string }) => {
+const datePickerType = (fieldItem: DateFieldLike) => {
   return transDatePickerType(fieldItem.dateStyle)
 }
 
@@ -448,11 +481,7 @@ init()
     </div>
 
     <div @keydown.stop @keyup.stop style="max-height: 50vh; overflow-y: auto">
-      <div
-        v-for="(fieldItem, fieldIndex) in state.thresholdArr"
-        :key="fieldIndex"
-        class="field-item"
-      >
+      <div v-for="(fieldItem, fieldIndex) in thresholdRows" :key="fieldIndex" class="field-item">
         <el-row style="margin-top: 6px; align-items: center; justify-content: space-between">
           <el-form-item class="form-item">
             <el-select
