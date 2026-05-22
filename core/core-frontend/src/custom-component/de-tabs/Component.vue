@@ -183,8 +183,8 @@ import { checkFilterRemove } from '@/custom-component/v-query/QueryUtils'
 const dvMainStore = dvMainStoreWithOut()
 const snapshotStore = snapshotStoreWithOut()
 const { tabMoveInActiveId, bashMatrixInfo, editMode, mobileInPc } = storeToRefs(dvMainStore)
-const tabComponentRef = ref(null)
-let carouselTimer = null
+const tabComponentRef = ref<HTMLElement | null>(null)
+let carouselTimer: ReturnType<typeof setInterval> | null = null
 const { t } = useI18n()
 
 const props = defineProps({
@@ -302,7 +302,14 @@ const handleMouseEnter = () => {
 const handleMouseLeave = () => {
   state.hoverFlag = false
 }
-const state = reactive({
+const state = reactive<{
+  activeTabName: string
+  curItem: Record<string, any>
+  textarea: string
+  dialogVisible: boolean
+  tabShow: boolean
+  hoverFlag: boolean
+}>({
   activeTabName: '',
   curItem: {},
   textarea: '',
@@ -314,7 +321,7 @@ const tabsAreaScroll = ref(false)
 
 // 无边框
 const noBorderColor = ref('none')
-let currentInstance
+let currentInstance: ReturnType<typeof getCurrentInstance> | null
 
 const showTabTitleFlag = computed(() => {
   if (element.value && element.value.style && element.value.style?.showTabTitle === false) {
@@ -334,7 +341,8 @@ const calcTabLength = () => {
       )
       if (containerDom) {
         tabsAreaScroll.value =
-          containerDom?.parentNode?.clientWidth > tabComponentRef.value.clientWidth - 100
+          ((containerDom.parentNode as HTMLElement | null)?.clientWidth ?? 0) >
+          (tabComponentRef.value?.clientWidth ?? 0) - 100
       }
     } else {
       tabsAreaScroll.value = false
@@ -534,7 +542,7 @@ const backgroundStyle = backgroundParams => {
     const paddingMode = commonBackground.innerPadding?.mode
     if (paddingMode === ShorthandMode.Uniform) {
       innerPaddingStyle = `${commonBackground.innerPadding?.top * scale.value}px`
-    } else if (paddingMode === ShorthandMode.Axis) {
+    } else if (paddingMode === ShorthandMode.XY) {
       innerPaddingStyle = `${commonBackground.innerPadding?.top * scale.value}px ${
         commonBackground.innerPadding?.left * scale.value
       }px`
@@ -550,7 +558,7 @@ const backgroundStyle = backgroundParams => {
     const borderRadiusMode = commonBackground.borderRadius?.mode
     if (borderRadiusMode === ShorthandMode.Uniform) {
       borderRadiusStyle = `${commonBackground.borderRadius?.topLeft * scale.value}px`
-    } else if (borderRadiusMode === ShorthandMode.Axis) {
+    } else if (borderRadiusMode === ShorthandMode.XY) {
       borderRadiusStyle = `${commonBackground.borderRadius?.topLeft * scale.value}px ${
         commonBackground.borderRadius?.bottomLeft * scale.value
       }px`

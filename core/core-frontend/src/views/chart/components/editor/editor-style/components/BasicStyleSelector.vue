@@ -44,7 +44,7 @@ const props = defineProps({
     type: Array<string>
   }
 })
-const showProperty = prop => {
+const showProperty = (prop: string) => {
   const has = props.propertyInner?.includes(prop)
   if (!has) {
     return false
@@ -86,8 +86,8 @@ const changeTreeRowWidth = () => {
       : 'tableRowHeaderWidth'
   )
 }
-const onAlphaChange = v => {
-  const _v = parseInt(v)
+const onAlphaChange = (v: string | number) => {
+  const _v = parseInt(String(v), 10)
   if (_v >= 0 && _v <= 100) {
     state.basicStyleForm.alpha = _v
   } else if (_v < 0) {
@@ -102,8 +102,8 @@ const onAlphaChange = v => {
   changeBasicStyle('alpha')
 }
 
-const onColumnWidthRatioChange = v => {
-  const _v = parseInt(v)
+const onColumnWidthRatioChange = (v: string | number) => {
+  const _v = parseInt(String(v), 10)
   if (_v >= 1 && _v <= 100) {
     state.basicStyleForm.columnWidthRatio = _v
   } else if (_v < 1) {
@@ -129,13 +129,15 @@ const init = () => {
     basicStyle.mapSymbol === 'custom' &&
     state.basicStyleForm.customIcon !== basicStyle.customIcon
   ) {
-    let file
+    let file: string | undefined
     if (basicStyle.customIcon?.startsWith('data')) {
       file = basicStyle.customIcon
     } else {
       file = svgStrToUrl(basicStyle.customIcon)
     }
-    file && (state.fileList[0] = { url: file })
+    if (file) {
+      state.fileList[0] = { url: file }
+    }
   }
   state.basicStyleForm = defaultsDeep(basicStyle, cloneDeep(DEFAULT_BASIC_STYLE)) as ChartBasicStyle
   const mapStyle = basicStyle.mapStyle
@@ -158,7 +160,7 @@ const init = () => {
       if (localeStore.getCurrentLocale.lang !== 'en') {
         name = t('chart.level_label', { num: numberToChineseUnderHundred(i) })
       }
-      tableExpandLevelOptions.push({ name, value: i })
+      tableExpandLevelOptions.push({ name, value: String(i) })
     }
     if (basicStyle.tableRowHeaderMode === 'percent') {
       state.treeRowWidth = basicStyle.tableRowHeaderWidthPercent
@@ -276,7 +278,7 @@ const changeFieldColumnWidth = () => {
   const { basicStyleForm, fieldColumnWidth } = state
   let { width } = fieldColumnWidth
   let validate = true
-  width = parseFloat(width)
+  width = parseFloat(String(width))
   if (isNaN(width) || !isNumber(width)) {
     validate = false
   }
@@ -323,9 +325,10 @@ const getMapKey = async () => {
     await queryMapKeyApi().then(res => mapStore.setKey(res.data))
   }
   if (mapStore.mapKey.securityCode) {
-    window._AMapSecurityConfig = {
-      securityJsCode: mapStore.mapKey.securityCode
-    }
+    ;(window as Window & { _AMapSecurityConfig?: { securityJsCode: string } })._AMapSecurityConfig =
+      {
+        securityJsCode: mapStore.mapKey.securityCode
+      }
   }
   return mapStore.mapKey
 }
@@ -1623,7 +1626,7 @@ onMounted(async () => {
                 :triggerWidth="65"
                 is-custom
                 show-alpha
-                :predefine="state.predefineColors"
+                :predefine="predefineColors"
                 @change="changeBasicStyle('circleBorderColor')"
               >
               </el-color-picker>

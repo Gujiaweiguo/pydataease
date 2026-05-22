@@ -39,21 +39,22 @@ const isColorLight = (rgbaString: string, greyValue = 128) => {
  */
 const getRgbaColorLastRgba = (rgbaString: string) => {
   const rgbaPattern = /rgba\((\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\)/g
-  let match: string[]
-  let lastRGBA = null
-  while ((match = rgbaPattern.exec(rgbaString)) !== null) {
+  let match: RegExpExecArray | null = rgbaPattern.exec(rgbaString)
+  let lastRGBA: { r: number; g: number; b: number; a: number } | null = null
+  while (match !== null) {
     const r = parseInt(match[1])
     const g = parseInt(match[2])
     const b = parseInt(match[3])
     const a = parseFloat(match[4])
     lastRGBA = { r, g, b, a }
+    match = rgbaPattern.exec(rgbaString)
   }
   return lastRGBA
 }
 
 function createExtremumDiv(id, value, formatterCfg, chart) {
   // 空值不处理
-  if (!value && value != 0) {
+  if (!value && value !== 0) {
     return
   }
   // 装标注的div
@@ -263,7 +264,7 @@ export const createExtremumPoint = (chart, ev) => {
     if (pointObjList && pointObjList.length > 0) {
       const pointObj = pointObjList[0]
       const [minItem, maxItem] = pointObjList.filter(i => i._origin.EXTREME)
-      let attr
+      let attr: any
       let showExtremum = false
       if (noChildrenFieldChart(chart) || yAxis.length > 1) {
         const seriesLabelFormatter = labelAttr.seriesLabelFormatter.find(d =>
@@ -341,7 +342,7 @@ export const createExtremumPoint = (chart, ev) => {
               'rgba(' + r + ',' + g + ',' + b + ',' + a + ')'
             pointElement.style.display = 'table'
             // 显示箭头
-            const childNode = pointElement.childNodes[1]
+            const childNode = pointElement.childNodes[1] as HTMLElement
             // 最值在数据点下方显示
             const translateYValue = Math.ceil(point.y + Math.abs(Math.floor(top)) + 6)
             // 最值dom高度超过50%时，最值dom向下
@@ -406,7 +407,7 @@ function performChunk(dataList, taskHandler) {
   function _run() {
     if (i >= dataList.length) return
     // 请求浏览器空闲期间执行的回调函数
-    if (typeof window.requestIdleCallback == 'function') {
+    if (typeof window.requestIdleCallback === 'function') {
       requestIdleCallback(idle => {
         // 在当前空闲期间内尽可能多地处理任务，直到时间耗尽或所有任务处理完毕
         while (idle.timeRemaining() > 0 && i < dataList.length) {

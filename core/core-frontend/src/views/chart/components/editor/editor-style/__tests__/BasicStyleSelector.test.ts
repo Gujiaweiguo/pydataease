@@ -211,10 +211,13 @@ const defaultChart = () => ({
   }
 })
 
+const mountProps = (propertyInner: string[]) =>
+  ({ chart: defaultChart() as any, themes: 'dark' as any, propertyInner } as any)
+
 describe('BasicStyleSelector', () => {
   it('renders with required props', async () => {
     const wrapper = shallowMount(BasicStyleSelector, {
-      props: { chart: defaultChart(), themes: 'dark', propertyInner: ['alpha', 'gradient'] },
+      props: mountProps(['alpha', 'gradient']),
       global: { stubs: globalStubs }
     })
     expect(wrapper.exists()).toBe(true)
@@ -222,7 +225,7 @@ describe('BasicStyleSelector', () => {
 
   it('showProperty returns correct value', async () => {
     const wrapper = shallowMount(BasicStyleSelector, {
-      props: { chart: defaultChart(), themes: 'dark', propertyInner: ['alpha', 'gradient'] },
+      props: mountProps(['alpha', 'gradient']),
       global: { stubs: globalStubs }
     })
     expect((wrapper.vm as any).showProperty('alpha')).toBe(true)
@@ -231,7 +234,7 @@ describe('BasicStyleSelector', () => {
 
   it('emits onBasicStyleChange when changeBasicStyle is called', async () => {
     const wrapper = shallowMount(BasicStyleSelector, {
-      props: { chart: defaultChart(), themes: 'dark', propertyInner: ['alpha'] },
+      props: mountProps(['alpha']),
       global: { stubs: globalStubs }
     })
     ;(wrapper.vm as any).changeBasicStyle('alpha')
@@ -240,7 +243,7 @@ describe('BasicStyleSelector', () => {
 
   it('onAlphaChange clamps value within 0-100', async () => {
     const wrapper = shallowMount(BasicStyleSelector, {
-      props: { chart: defaultChart(), themes: 'dark', propertyInner: ['alpha'] },
+      props: mountProps(['alpha']),
       global: { stubs: globalStubs }
     })
     ;(wrapper.vm as any).onAlphaChange('150')
@@ -249,7 +252,7 @@ describe('BasicStyleSelector', () => {
 
   it('emits onMiscChange when changeMisc is called', async () => {
     const wrapper = shallowMount(BasicStyleSelector, {
-      props: { chart: defaultChart(), themes: 'dark', propertyInner: ['alpha'] },
+      props: mountProps(['alpha']),
       global: { stubs: globalStubs }
     })
     ;(wrapper.vm as any).changeMisc('mapPitch')

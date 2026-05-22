@@ -52,10 +52,12 @@ const defaultProps = () => ({
   themes: 'light'
 })
 
+const mountProps = () => defaultProps() as any
+
 describe('GradientColorSelector', () => {
   it('renders with required props', () => {
     const wrapper = shallowMount(GradientColorSelector, {
-      props: defaultProps(),
+      props: mountProps(),
       global: { stubs: globalStubs }
     })
     expect(wrapper.exists()).toBe(true)
@@ -63,7 +65,7 @@ describe('GradientColorSelector', () => {
 
   it('initializes with simple tab by default', () => {
     const wrapper = shallowMount(GradientColorSelector, {
-      props: defaultProps(),
+      props: mountProps(),
       global: { stubs: globalStubs }
     })
     const vm = wrapper.vm as any
@@ -74,7 +76,7 @@ describe('GradientColorSelector', () => {
     const props = defaultProps()
     props.modelValue.basicStyleForm.colorScheme = 'default_split_gradient'
     const wrapper = shallowMount(GradientColorSelector, {
-      props,
+      props: props as any,
       global: { stubs: globalStubs }
     })
     const vm = wrapper.vm as any
@@ -83,7 +85,7 @@ describe('GradientColorSelector', () => {
 
   it('emits selectColorCase when selectNode is called', async () => {
     const wrapper = shallowMount(GradientColorSelector, {
-      props: defaultProps(),
+      props: mountProps(),
       global: { stubs: globalStubs }
     })
     const vm = wrapper.vm as any
@@ -96,7 +98,7 @@ describe('GradientColorSelector', () => {
 
   it('computes state from modelValue', () => {
     const wrapper = shallowMount(GradientColorSelector, {
-      props: defaultProps(),
+      props: mountProps(),
       global: { stubs: globalStubs }
     })
     const vm = wrapper.vm as any

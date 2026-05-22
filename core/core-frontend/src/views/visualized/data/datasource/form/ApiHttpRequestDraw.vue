@@ -34,6 +34,10 @@ type ApiConfigItem = ApiConfiguration & {
   serialNumber: number
 }
 
+type ApiConfigurationWithFields = ApiConfiguration & {
+  fields: Field[]
+}
+
 export interface ApiItem {
   status: string
   name: string
@@ -84,6 +88,9 @@ let apiItem = reactive<ApiItem>({
   status: '',
   name: '',
   type: 'table',
+  appToken: '',
+  tableId: '',
+  viewId: '',
   url: '',
   method: 'GET',
   request: {
@@ -231,7 +238,7 @@ const initApiItem = (
   valueList.value = []
   if (paramsList) {
     for (let i = 0; i < paramsList.length; i++) {
-      valueList.value = valueList.value.concat(paramsList[i].fields)
+      valueList.value = valueList.value.concat((paramsList[i] as ApiConfigurationWithFields).fields)
     }
   }
   Object.assign(apiItem, val)

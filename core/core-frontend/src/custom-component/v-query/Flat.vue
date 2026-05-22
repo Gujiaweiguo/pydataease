@@ -2,6 +2,8 @@
 import { inject, computed } from 'vue'
 import { getCSSVariable } from '@/utils/color'
 
+type FlatOption = { value: string | number; label: string }
+
 const props = defineProps({
   options: {
     type: Array,
@@ -43,7 +45,7 @@ const btnColor = computed(() => {
 })
 
 const emits = defineEmits(['handleItemClick'])
-const handleItemClick = (item: any) => {
+const handleItemClick = (item: FlatOption) => {
   if (props.disabled) return
   emits('handleItemClick', item.value)
 }
@@ -56,12 +58,12 @@ const handleItemClick = (item: any) => {
         <p
           @click="handleItemClick(item)"
           v-for="item in options"
-          :key="item"
+          :key="(item as FlatOption).value"
           :style="customColor"
           class="select-item"
-          :class="activeItems.includes(item.value) && 'active-select'"
+          :class="activeItems.includes((item as FlatOption).value) && 'active-select'"
         >
-          {{ item.label }}
+          {{ (item as FlatOption).label }}
         </p>
       </div>
     </el-scrollbar>

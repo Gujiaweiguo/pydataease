@@ -25,8 +25,16 @@ const props = defineProps({
 })
 
 const showProperty = prop => props.propertyInner?.includes(prop)
-const state = reactive({
-  basicStyleForm: JSON.parse(JSON.stringify(CHART_MIX_DEFAULT_BASIC_STYLE)) as MixChartBasicStyle,
+const state = reactive<{
+  basicStyleForm: MixChartBasicStyleExtended
+  miscForm: ChartMiscAttr
+  customColor: any
+  colorIndex: number
+  fieldColumnWidth: { fieldId: string; width: number }
+}>({
+  basicStyleForm: JSON.parse(
+    JSON.stringify(CHART_MIX_DEFAULT_BASIC_STYLE)
+  ) as MixChartBasicStyleExtended,
   miscForm: JSON.parse(JSON.stringify(DEFAULT_MISC)) as ChartMiscAttr,
   customColor: null,
   colorIndex: 0,
@@ -35,6 +43,13 @@ const state = reactive({
     width: 0
   }
 })
+
+type MixChartBasicStyleExtended = MixChartBasicStyle & {
+  leftLineWidth?: number
+  leftLineSymbol?: string
+  leftLineSymbolSize?: number
+  leftLineSmooth?: boolean
+}
 watch(
   [
     () => props.chart.customAttr.basicStyle,
@@ -113,7 +128,7 @@ const init = () => {
   state.basicStyleForm = defaultsDeep(
     basicStyle,
     cloneDeep(CHART_MIX_DEFAULT_BASIC_STYLE)
-  ) as MixChartBasicStyle
+  ) as MixChartBasicStyleExtended
   state.miscForm = defaultsDeep(miscStyle, cloneDeep(DEFAULT_MISC)) as ChartMiscAttr
   if (!state.customColor) {
     state.customColor = state.basicStyleForm.colors[0]

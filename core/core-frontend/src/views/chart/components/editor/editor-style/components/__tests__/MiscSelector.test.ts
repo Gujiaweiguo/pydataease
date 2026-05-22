@@ -104,10 +104,12 @@ const defaultProps = () => ({
   quotaFields: [{ id: 'q1', name: 'Quota', deType: 2, summary: 'sum' }]
 })
 
+const mountProps = () => defaultProps() as any
+
 describe('MiscSelector', () => {
   it('renders with required props', () => {
     const wrapper = shallowMount(MiscSelector, {
-      props: defaultProps(),
+      props: mountProps(),
       global: { stubs: globalStubs }
     })
     expect(wrapper.exists()).toBe(true)
@@ -115,7 +117,7 @@ describe('MiscSelector', () => {
 
   it('initializes miscForm from chart customAttr', () => {
     const wrapper = shallowMount(MiscSelector, {
-      props: defaultProps(),
+      props: mountProps(),
       global: { stubs: globalStubs }
     })
     const vm = wrapper.vm as any
@@ -127,7 +129,7 @@ describe('MiscSelector', () => {
     const props = defaultProps()
     props.chart.type = 'liquid'
     const wrapper = shallowMount(MiscSelector, {
-      props,
+      props: props as any,
       global: { stubs: globalStubs }
     })
     const vm = wrapper.vm as any
@@ -137,7 +139,7 @@ describe('MiscSelector', () => {
 
   it('emits onMiscChange when changeMisc is called', () => {
     const wrapper = shallowMount(MiscSelector, {
-      props: defaultProps(),
+      props: mountProps(),
       global: { stubs: globalStubs }
     })
     const vm = wrapper.vm as any
@@ -149,7 +151,7 @@ describe('MiscSelector', () => {
     const props = defaultProps()
     ;(props as any).propertyInner = ['gaugeStartAngle', 'gaugeEndAngle']
     const wrapper = shallowMount(MiscSelector, {
-      props,
+      props: props as any,
       global: { stubs: globalStubs }
     })
     const vm = wrapper.vm as any

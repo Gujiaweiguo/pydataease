@@ -8,7 +8,6 @@ import { LINE_EDITOR_PROPERTY_INNER } from '@/views/chart/components/js/panel/ch
 import { useI18n } from '@/hooks/web/useI18n'
 import { valueFormatter } from '@/views/chart/components/js/formatter'
 import type { Options } from '@antv/g2plot/esm'
-import { MixOptions } from '@antv/g2plot'
 
 const { t } = useI18n()
 const DEFAULT_DATA = []
@@ -45,7 +44,7 @@ export class StockLine extends G2PlotChartView<MixOptions, Mix> {
     'legend-selector': ['fontSize', 'color', 'show']
   }
   axis: AxisType[] = ['xAxis', 'yAxis', 'filter', 'extLabel', 'extTooltip']
-  axisConfig = {
+  axisConfig: AxisConfig = {
     xAxis: {
       name: `${t('common.component.date')} / ${t('chart.dimension')}`,
       limit: 1,
@@ -216,7 +215,7 @@ export class StockLine extends G2PlotChartView<MixOptions, Mix> {
     }
     const xAxis = chart.xAxis
     const yAxis = chart.yAxis
-    if (yAxis.length != 4) {
+    if (yAxis.length !== 4) {
       return
     }
     const basicStyle = parseJson(chart.customAttr).basicStyle
@@ -670,7 +669,7 @@ export class StockLine extends G2PlotChartView<MixOptions, Mix> {
         const l = JSON.parse(JSON.stringify(customStyle.legend))
         if (l.show) {
           legend = {
-            ...stockPlot.options.legend,
+            ...(stockPlot.options as Record<string, any>).legend,
             itemName: {
               style: {
                 fill: l.color,

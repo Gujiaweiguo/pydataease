@@ -51,7 +51,7 @@ const { t } = useI18n()
 /**
  * 地图
  */
-export class Map extends L7PlotChartView<ChoroplethOptions, Choropleth> {
+class MapChart extends L7PlotChartView<ChoroplethOptions, Choropleth> {
   properties: EditorProperty[] = [...MAP_EDITOR_PROPERTY, 'legend-selector']
   propertyInner: EditorPropertyInner = {
     ...MAP_EDITOR_PROPERTY_INNER,
@@ -351,7 +351,9 @@ export class Map extends L7PlotChartView<ChoroplethOptions, Choropleth> {
       }
     }
     if (!chart.data?.data?.length || !geoJson?.features?.length) {
-      options.label && (options.label.field = 'name')
+      if (options.label) {
+        options.label.field = 'name'
+      }
       return options
     }
     const sourceData = options.source.data
@@ -402,14 +404,12 @@ export class Map extends L7PlotChartView<ChoroplethOptions, Choropleth> {
       }
     })
     if (colorScale.length) {
-      options.color['value'] = colorScale.map(item =>
-        item.color && item.value ? new ColorWrapper(item.color, item.value) : new ColorWrapper(item)
-      )
+      options.color['value'] = colorScale.map(item => item.color || item) as unknown as string[]
       if (colorScale[0].value && !misc.mapAutoLegend) {
-        options.color['scale']['domain'] = [
-          minValue ?? filterEmptyMinValue(sourceData, 'value'),
-          maxValue
-        ]
+        const colorConfig = options.color as Record<string, any>
+        colorConfig.scale = colorConfig.scale || {}
+        const colorScaleConfig = colorConfig.scale as Record<string, any>
+        colorScaleConfig.domain = [minValue ?? filterEmptyMinValue(sourceData, 'value'), maxValue]
       }
     }
     return options
@@ -578,7 +578,10 @@ export class Map extends L7PlotChartView<ChoroplethOptions, Choropleth> {
         const item = items.find(item => value >= item.value[0] && value <= item.value[1])
         return item ? item.color : basicStyle.areaBaseColor
       }
-      options.color.scale.domain = [ranges[0][0], ranges[ranges.length - 1][1]]
+      const colorConfig = options.color as Record<string, any>
+      colorConfig.scale = colorConfig.scale || {}
+      const colorScaleConfig = colorConfig.scale as Record<string, any>
+      colorScaleConfig.domain = [ranges[0][0], ranges[ranges.length - 1][1]]
     } else {
       customLegend['customContent'] = (_: string, items: CategoryLegendListItem[]) => {
         // 去重逻辑
@@ -597,7 +600,7 @@ export class Map extends L7PlotChartView<ChoroplethOptions, Choropleth> {
         const showItems = uniqueItems.length > 30 ? uniqueItems.slice(0, 30) : uniqueItems
         if (showItems?.length) {
           if (showItems.length === 1) {
-            const domain = options.color.scale.domain
+            const domain = (options.color as Record<string, any>).scale?.domain
             if (domain) {
               showItems[0].value = domain?.slice(0, 2)
             } else {
@@ -624,7 +627,10 @@ export class Map extends L7PlotChartView<ChoroplethOptions, Choropleth> {
     // 下钻时按照数据值计算图例
     if (chart.drill) {
       getMaxAndMinValueByData(options.source.data, 'value', 0, 0, (max, min) => {
-        options.color.scale.domain = [min, max]
+        const colorConfig = options.color as Record<string, any>
+        colorConfig.scale = colorConfig.scale || {}
+        const colorScaleConfig = colorConfig.scale as Record<string, any>
+        colorScaleConfig.domain = [min, max]
       })
     }
     defaultsDeep(options, { legend: customLegend })
@@ -794,18 +800,4 @@ export class Map extends L7PlotChartView<ChoroplethOptions, Choropleth> {
   }
 }
 
-class ColorWrapper {
-  private color: string
-  value?: any
-
-  constructor(color: string, value?: any) {
-    this.color = color
-    if (value !== undefined) {
-      this.value = value
-    }
-  }
-
-  toString(): string {
-    return this.color
-  }
-}
+export { MapChart as Map }

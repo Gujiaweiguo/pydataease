@@ -114,13 +114,16 @@ const defaultView = () => ({
   customStyle: {}
 })
 
+const mountProps = (view = defaultView()) =>
+  ({
+    element: { propValue: null, actionSelection: { linkageActive: 'auto' } },
+    view: view as any
+  } as any)
+
 describe('ChartComponentS2', () => {
   it('renders with default props', () => {
     const wrapper = shallowMount(ChartComponentS2, {
-      props: {
-        element: { propValue: null, actionSelection: { linkageActive: 'auto' } },
-        view: defaultView()
-      },
+      props: mountProps(),
       global: { stubs: globalStubs }
     })
     expect(wrapper.exists()).toBe(true)
@@ -128,10 +131,7 @@ describe('ChartComponentS2', () => {
 
   it('computes trackMenu correctly for table-info type', () => {
     const wrapper = shallowMount(ChartComponentS2, {
-      props: {
-        element: { propValue: null, actionSelection: { linkageActive: 'auto' } },
-        view: defaultView()
-      },
+      props: mountProps(),
       global: { stubs: globalStubs }
     })
     const vm = wrapper.vm as any
@@ -140,10 +140,7 @@ describe('ChartComponentS2', () => {
 
   it('exposes calcData, renderChart, renderChartFromDialog, trackMenu', () => {
     const wrapper = shallowMount(ChartComponentS2, {
-      props: {
-        element: { propValue: null, actionSelection: { linkageActive: 'auto' } },
-        view: defaultView()
-      },
+      props: mountProps(),
       global: { stubs: globalStubs }
     })
     expect(typeof (wrapper.vm as any).calcData).toBe('function')
@@ -155,10 +152,7 @@ describe('ChartComponentS2', () => {
     const view = defaultView()
     view.type = 'bar'
     const wrapper = shallowMount(ChartComponentS2, {
-      props: {
-        element: { propValue: null, actionSelection: { linkageActive: 'auto' } },
-        view
-      },
+      props: mountProps(view),
       global: { stubs: globalStubs }
     })
     const vm = wrapper.vm as any

@@ -15,6 +15,7 @@ type AssistLineItem = AssistLine & {
   curField?: AssistLineField | Record<string, never>
   yAxisType?: 'left' | 'right'
   axis?: string
+  deType?: number
 }
 
 const props = defineProps({
@@ -251,11 +252,11 @@ onMounted(() => {
             >
               <span style="float: left">
                 <el-icon>
-                  <Icon :className="`field-icon-${fieldType[item.deType]}`"
+                  <Icon :className="`field-icon-${fieldType[quota.deType]}`"
                     ><component
                       class="svg-icon"
-                      :class="`field-icon-${fieldType[item.deType]}`"
-                      :is="iconFieldMap[fieldType[item.deType]]"
+                      :class="`field-icon-${fieldType[quota.deType]}`"
+                      :is="iconFieldMap[fieldType[quota.deType]]"
                     ></component
                   ></Icon>
                 </el-icon>

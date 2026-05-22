@@ -45,7 +45,7 @@ onMounted(mergeColor)
 
 <template>
   <!-- 保持原有模板结构不变 -->
-  <div class="dv-border-box-2" :style="border_style" :ref="ref">
+  <div class="dv-border-box-2" :style="border_style">
     <svg class="dv-border-svg-container" :width="width" :height="height">
       <polygon
         :fill="backgroundColor"

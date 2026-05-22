@@ -14,7 +14,7 @@ import DeDecoration3 from '@/custom-component/de-decoration/component_details/De
 import DeDecoration4 from '@/custom-component/de-decoration/component_details/DeDecoration4.vue'
 import DeDecoration5 from '@/custom-component/de-decoration/component_details/DeDecoration5.vue'
 
-const boardInfoMap = {
+const boardInfoMap: Record<string, unknown> = {
   DeBoard1: DeBoard1,
   DeBoard2: DeBoard2,
   DeBoard3: DeBoard3,
@@ -32,11 +32,11 @@ const boardInfoMap = {
   DeDecoration5: DeDecoration5
 }
 
-export const findDecoration = name => {
+export const findDecoration = (name: string) => {
   return boardInfoMap[name]
 }
 
-export const calcTwoPointDistance = (pointA, pointB) => {
+export const calcTwoPointDistance = (pointA: number[], pointB: number[]) => {
   const minusX = Math.abs(pointA[0] - pointB[0])
   const minusY = Math.abs(pointA[1] - pointB[1])
 
@@ -48,13 +48,13 @@ export const calcTwoPointDistance = (pointA, pointB) => {
  * @param {Point[]} points
  * @return {number[]}
  */
-export function getPointDistances(points) {
+export function getPointDistances(points: number[][]) {
   return new Array(points.length - 1)
     .fill(0)
     .map((_, i) => calcTwoPointDistance(points[i], points[i + 1]))
 }
 
-export function customMergeColor(defaultColor: string[], newColor: []) {
+export function customMergeColor(defaultColor: string[], newColor: string[] = []) {
   return defaultColor.map((defaultVal, index) => {
     return newColor && newColor[index] !== null ? newColor[index] : defaultVal
   })

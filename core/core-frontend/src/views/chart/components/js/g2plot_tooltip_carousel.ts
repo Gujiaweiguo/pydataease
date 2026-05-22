@@ -312,19 +312,18 @@ class ChartCarouselTooltip {
     if (this.plot instanceof DualAxes) {
       return this.getDualAxesTooltipPosition(view, value)
     }
-    const types = view
-      .scale()
-      .getGeometries()
-      .map(item => item.type)
+    const currentView = view as any
+    const geometries = currentView.getGeometries()?.map((item: any) => item.type)
+    const types = geometries || []
     let point = { x: 0, y: 0 }
     if (!types.length) return point
     types.forEach(type => {
       if (type === 'interval' || type === 'point') {
-        point = view
-          .scale()
+        point = currentView
           .getGeometries()
-          .find(item => item.type === type)
-          .elements.find(item => item.data.field === value && (item.model.x || item.model.y))?.model
+          .find((item: any) => item.type === type)
+          ?.elements.find((item: any) => item.getData()?.field === value && item.getModel())
+          ?.getModel()
       }
     })
     // 处理柱状图和折线图,柱状图固定y轴位置
@@ -337,9 +336,8 @@ class ChartCarouselTooltip {
    *  */
   private getPieTooltipPosition(view, value: string) {
     const piePoint = view
-      .scale()
-      .getGeometries()[0]
-      ?.elements.find(item => item.data.field === value)
+      .getGeometries?.()[0]
+      ?.elements.find((item: any) => item.getData()?.field === value)
       ?.getModel()
     if (!piePoint) {
       return { x: 0, y: 0 }
@@ -395,7 +393,7 @@ class ChartCarouselTooltip {
     if (CHART_CATEGORY.LINE.includes(this.chart.type)) return
     this.unHighlightPoint(value)
     this.plot.setState(
-      this.getHighlightType(),
+      this.getHighlightType() as any,
       (data: any) => data[this.config.xField] === value,
       true
     )
@@ -407,7 +405,7 @@ class ChartCarouselTooltip {
   private unHighlightPoint(value?: string) {
     if (CHART_CATEGORY.LINE.includes(this.chart.type)) return
     this.plot.setState(
-      this.getHighlightType(),
+      this.getHighlightType() as any,
       (data: any) => data[this.config.xField] !== value,
       false
     )
@@ -434,7 +432,7 @@ class ChartCarouselTooltip {
     if (!tooltipCtl) {
       return
     }
-    return tooltipCtl.tooltip?.cfg?.container
+    return (tooltipCtl as any).tooltip?.cfg?.container
   }
 
   /**

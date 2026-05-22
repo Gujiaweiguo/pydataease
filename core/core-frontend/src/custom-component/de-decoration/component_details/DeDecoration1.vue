@@ -5,7 +5,7 @@
       :height="`${svgWH[1]}px`"
       :style="`transform:scale(${svgScale[0]},${svgScale[1]});`"
     >
-      <template v-for="(point, i) in points" :key="`${point.join('-')}-${i}`">
+      <template v-for="point in points" :key="point.join('-')">
         <rect
           v-if="Math.random() > 0.6"
           :fill="mergedColor[0]"
@@ -86,7 +86,7 @@ import { customMergeColor } from '@/custom-component/de-decoration/component_det
 
 interface Props {
   color?: string[]
-  curStyle: object
+  curStyle: { width: number; height: number }
   scale: number
 }
 
@@ -128,7 +128,7 @@ const calcPointsPosition = () => {
   const horizontalGap = w / (rowPoints + 1)
   const verticalGap = h / (rowNum + 1)
 
-  let pointsArray = new Array(rowNum)
+  const pointsArray = new Array(rowNum)
     .fill(0)
     .map((_, i) =>
       new Array(rowPoints).fill(0).map((_, j) => [horizontalGap * (j + 1), verticalGap * (i + 1)])

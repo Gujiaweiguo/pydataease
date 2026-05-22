@@ -437,28 +437,28 @@ export class TableInfo extends S2ChartView<TableSheet> {
           },
           bolderText: {
             fill: tableFontColor,
-            textAlign: tableItemAlign,
+            textAlign: tableItemAlign as 'left' | 'center' | 'right',
             fontSize: tableItemFontSize,
             fontStyle,
             fontWeight
           },
           text: {
             fill: tableFontColor,
-            textAlign: tableItemAlign,
+            textAlign: tableItemAlign as 'left' | 'center' | 'right',
             fontSize: tableItemFontSize,
             fontStyle,
             fontWeight
           },
           measureText: {
             fill: tableFontColor,
-            textAlign: tableItemAlign,
+            textAlign: tableItemAlign as 'left' | 'center' | 'right',
             fontSize: tableItemFontSize,
             fontStyle,
             fontWeight
           },
           seriesText: {
             fill: tableFontColor,
-            textAlign: tableItemAlign,
+            textAlign: tableItemAlign as 'left' | 'center' | 'right',
             fontSize: tableItemFontSize,
             fontStyle,
             fontWeight

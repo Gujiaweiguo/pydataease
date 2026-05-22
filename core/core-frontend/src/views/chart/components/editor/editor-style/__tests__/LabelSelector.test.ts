@@ -178,10 +178,13 @@ const defaultChart = () => ({
   }
 })
 
+const mountProps = (propertyInner: string[]) =>
+  ({ chart: defaultChart() as any, themes: 'dark' as any, propertyInner } as any)
+
 describe('LabelSelector', () => {
   it('renders with required props', () => {
     const wrapper = shallowMount(LabelSelector, {
-      props: { chart: defaultChart(), themes: 'dark', propertyInner: ['color', 'fontSize'] },
+      props: mountProps(['color', 'fontSize']),
       global: { stubs: globalStubs }
     })
     expect(wrapper.exists()).toBe(true)
@@ -189,7 +192,7 @@ describe('LabelSelector', () => {
 
   it('computes toolTip as inverted theme', () => {
     const wrapper = shallowMount(LabelSelector, {
-      props: { chart: defaultChart(), themes: 'dark', propertyInner: [] },
+      props: mountProps([]),
       global: { stubs: globalStubs }
     })
     expect((wrapper.vm as any).toolTip).toBe('light')
@@ -197,7 +200,7 @@ describe('LabelSelector', () => {
 
   it('computes chartType from chart', () => {
     const wrapper = shallowMount(LabelSelector, {
-      props: { chart: defaultChart(), themes: 'dark', propertyInner: [] },
+      props: mountProps([]),
       global: { stubs: globalStubs }
     })
     expect((wrapper.vm as any).chartType).toBe('bar')
@@ -205,7 +208,7 @@ describe('LabelSelector', () => {
 
   it('emits onLabelChange when changeLabelAttr is called', () => {
     const wrapper = shallowMount(LabelSelector, {
-      props: { chart: defaultChart(), themes: 'dark', propertyInner: ['color'] },
+      props: mountProps(['color']),
       global: { stubs: globalStubs }
     })
     ;(wrapper.vm as any).changeLabelAttr('color')
@@ -214,7 +217,7 @@ describe('LabelSelector', () => {
 
   it('showProperty returns correct value', () => {
     const wrapper = shallowMount(LabelSelector, {
-      props: { chart: defaultChart(), themes: 'dark', propertyInner: ['color', 'fontSize'] },
+      props: mountProps(['color', 'fontSize']),
       global: { stubs: globalStubs }
     })
     expect((wrapper.vm as any).showProperty('color')).toBe(true)

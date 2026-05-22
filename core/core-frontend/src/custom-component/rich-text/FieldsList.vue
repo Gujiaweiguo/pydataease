@@ -1,7 +1,7 @@
 <template>
   <div @mousedown="fieldsAreaDown" class="field-main">
     <el-button
-      v-for="field in fields"
+      v-for="field in typedFields"
       :key="field.id"
       :title="field.name"
       size="mini"
@@ -14,8 +14,10 @@
 </template>
 
 <script setup lang="ts">
-import { toRefs } from 'vue'
+import { computed, toRefs } from 'vue'
 import { useEmitt } from '@/hooks/web/useEmitt'
+
+type FieldItem = { id: string; name: string }
 
 const props = defineProps({
   fields: {
@@ -28,13 +30,14 @@ const props = defineProps({
   }
 })
 
-const { fields, element } = toRefs(props)
+const { element } = toRefs(props)
+const typedFields = computed(() => (props.fields ?? []) as FieldItem[])
 
-const fieldSelect = field => {
+const fieldSelect = (field: FieldItem) => {
   useEmitt().emitter.emit('fieldSelect-' + element.value.id, field)
 }
 
-const fieldsAreaDown = e => {
+const fieldsAreaDown = (e: MouseEvent) => {
   e.preventDefault()
 }
 </script>

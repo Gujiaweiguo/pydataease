@@ -154,10 +154,13 @@ const defaultChart = () => ({
   }
 })
 
+const mountProps = (chart = defaultChart(), propertyInner: string[] = []) =>
+  ({ chart: chart as any, themes: 'dark' as any, propertyInner } as any)
+
 describe('TooltipSelector', () => {
   it('renders with required props', () => {
     const wrapper = shallowMount(TooltipSelector, {
-      props: { chart: defaultChart(), themes: 'dark', propertyInner: ['color', 'fontSize'] },
+      props: mountProps(defaultChart(), ['color', 'fontSize']),
       global: { stubs: globalStubs }
     })
     expect(wrapper.exists()).toBe(true)
@@ -165,7 +168,7 @@ describe('TooltipSelector', () => {
 
   it('computes toolTip as inverted theme', () => {
     const wrapper = shallowMount(TooltipSelector, {
-      props: { chart: defaultChart(), themes: 'dark', propertyInner: [] },
+      props: mountProps(),
       global: { stubs: globalStubs }
     })
     expect((wrapper.vm as any).toolTip).toBe('light')
@@ -173,7 +176,7 @@ describe('TooltipSelector', () => {
 
   it('emits onTooltipChange when changeTooltipAttr is called', () => {
     const wrapper = shallowMount(TooltipSelector, {
-      props: { chart: defaultChart(), themes: 'dark', propertyInner: ['color'] },
+      props: mountProps(defaultChart(), ['color']),
       global: { stubs: globalStubs }
     })
     ;(wrapper.vm as any).changeTooltipAttr('color')
@@ -182,7 +185,7 @@ describe('TooltipSelector', () => {
 
   it('showProperty returns correct value', () => {
     const wrapper = shallowMount(TooltipSelector, {
-      props: { chart: defaultChart(), themes: 'dark', propertyInner: ['color', 'showGap'] },
+      props: mountProps(defaultChart(), ['color', 'showGap']),
       global: { stubs: globalStubs }
     })
     expect((wrapper.vm as any).showProperty('color')).toBe(true)
@@ -193,7 +196,7 @@ describe('TooltipSelector', () => {
     const chart = defaultChart()
     chart.type = 'sankey'
     const wrapper = shallowMount(TooltipSelector, {
-      props: { chart, themes: 'dark', propertyInner: [] },
+      props: mountProps(chart, []),
       global: { stubs: globalStubs }
     })
     expect((wrapper.vm as any).showTotalPercent).toBe(true)
