@@ -107,17 +107,29 @@ const containerId = computed(() => {
   return 'table-container-' + props.chart.id
 })
 let s2: TableSheet
+type S2ThemeWithAlign = Record<string, any> & {
+  dataCellAlignConfig?: Record<string, TextTheme['textAlign']>
+  colCellAlignConfig?: Record<string, TextTheme['textAlign']>
+}
+type TableMetaItem = { field: string; name: string; formatter?: (value: any) => any }
+type CellMetaLike = Record<string, any> & {
+  field?: string
+  id?: string
+  parent?: Record<string, any>
+  colIndex?: number
+  children?: Array<any>
+}
 class CustomDataCell extends TableDataCell {
   protected getTextStyle(): TextTheme {
     const textStyle = super.getTextStyle()
-    const dataCellAlignConfig = this.theme.dataCellAlignConfig
+    const dataCellAlignConfig = (this.theme as S2ThemeWithAlign).dataCellAlignConfig
     if (dataCellAlignConfig) {
       const align = dataCellAlignConfig[this.meta.valueField]
       if (align) {
         textStyle.textAlign = align
       }
     }
-    if (textStyle.textAlign === 'custom') {
+    if ((textStyle.textAlign as string) === 'custom') {
       textStyle.textAlign = 'left'
     }
     return textStyle
@@ -126,7 +138,7 @@ class CustomDataCell extends TableDataCell {
 class CustomColCell extends TableColCell {
   protected getTextStyle(): TextTheme {
     const textStyle = super.getTextStyle()
-    const colCellAlignConfig = this.theme.colCellAlignConfig
+    const colCellAlignConfig = (this.theme as S2ThemeWithAlign).colCellAlignConfig
     if (colCellAlignConfig) {
       // 分组单元格居中
       if (this.meta.children?.length) {
@@ -138,7 +150,7 @@ class CustomColCell extends TableColCell {
         textStyle.textAlign = align
       }
     }
-    if (textStyle.textAlign === 'custom') {
+    if ((textStyle.textAlign as string) === 'custom') {
       textStyle.textAlign = 'left'
     }
     return textStyle
@@ -152,7 +164,7 @@ const renderTable = (chart: ChartObj) => {
     realData = data.tableRow.slice(0, 10)
   }
   const { headerGroupConfig } = chart.customAttr.tableHeader
-  const meta = [...headerGroupConfig.meta]
+  const meta = [...headerGroupConfig.meta] as TableMetaItem[]
   const columns = headerGroupConfig.columns
   const axisMap = allAxis.value.reduce((pre, cur) => {
     pre[cur.dataeaseName] = cur
@@ -246,7 +258,7 @@ const renderTable = (chart: ChartObj) => {
   }
   s2 = new TableSheet(containerDom, s2DataConfig, s2Options)
   const { tableHeader, tableCell } = chart.customAttr
-  const theme = getCustomTheme(chart)
+  const theme = getCustomTheme(chart) as any
   if (tableHeader.tableHeaderAlign === 'custom') {
     theme.colCellAlignConfig =
       tableHeader.alignConfig?.reduce((pre, cur) => {
@@ -261,7 +273,7 @@ const renderTable = (chart: ChartObj) => {
         return pre
       }, {}) || {}
   }
-  s2.setTheme(theme)
+  s2.setTheme(theme as any)
   const groupMenuContainer = document.getElementById(menuGroupId.value)
   s2.on(S2Event.COL_CELL_CONTEXT_MENU, e => {
     e.preventDefault()
@@ -290,7 +302,7 @@ const renderTable = (chart: ChartObj) => {
       cancelBtn.innerText = t('chart.cancel_group')
       cancelBtn.onclick = () => {
         s2.hideTooltip()
-        const parent = curCell.getMeta().parent
+        const parent = curCell.getMeta().parent as CellMetaLike | undefined
         if (parent?.id === 'root') {
           const startIndex = curColumns.findIndex(cell => cell.key === curCell.getMeta().field)
           const [curCol] = getColumns([curCell.getMeta().field], curColumns)
@@ -330,7 +342,7 @@ const renderTable = (chart: ChartObj) => {
       cancelAllBtn.innerText = t('chart.cancel_all_group')
       cancelAllBtn.onclick = () => {
         s2.hideTooltip()
-        const parent = curCell.getMeta().parent
+        const parent = curCell.getMeta().parent as CellMetaLike | undefined
         if (parent?.id === 'root') {
           const [curCol] = getColumns([curCell.getMeta().field], curColumns)
           const leafNodes = getLeafNodes(curCol.children)
@@ -372,7 +384,9 @@ const renderTable = (chart: ChartObj) => {
       renameBtn.innerText = t('chart.rename')
       renameBtn.onclick = () => {
         s2.hideTooltip()
-        const cellMeta = curMeta.find(meta => meta.field === curCell.getMeta().field)
+        const cellMeta = curMeta.find(
+          meta => meta.field === curCell.getMeta().field
+        ) as TableMetaItem
         ElMessageBox.prompt('', t('chart.group_name'), {
           confirmButtonText: t('chart.confirm'),
           cancelButtonText: t('chart.cancel'),
@@ -412,24 +426,24 @@ const renderTable = (chart: ChartObj) => {
     //如果有多个cell都在同一个层级，并且parent相同，那就是可以进行合并分组操作
     if (activeColumns?.length > 1) {
       const sameParent = activeCells.every(
-        cell => cell.getMeta().parent.id === curCell.getMeta().parent.id
+        cell => (cell.getMeta().parent as any).id === (curCell.getMeta().parent as any).id
       )
       if (!sameParent) {
         return
       }
       let upDepth = -1
-      let tmpCell = curCell
+      let tmpCell: any = curCell
       while (tmpCell?.getMeta?.()?.parent || tmpCell?.parent) {
         upDepth++
         tmpCell = tmpCell?.getMeta?.()?.parent || tmpCell?.parent
       }
       let startIndex = -1
       let endIndex = -1
-      const parent = curCell.getMeta().parent
+      const parent = curCell.getMeta().parent as CellMetaLike
       // 分组的节点
       if (parent.colIndex !== -1) {
         activeColumns.forEach(cell => {
-          const index = parent.children.findIndex(item => item.getMeta().field === cell.key)
+          const index = (parent.children || []).findIndex(item => item.getMeta().field === cell.key)
           if (index < startIndex || startIndex === -1) {
             startIndex = index
           }
@@ -439,7 +453,7 @@ const renderTable = (chart: ChartObj) => {
         })
       } else {
         activeColumns.forEach(cell => {
-          const index = parent.children.findIndex(item => item.key === cell.key)
+          const index = (parent.children || []).findIndex(item => item.key === cell.key)
           if (index < startIndex || startIndex === -1) {
             startIndex = index
           }
@@ -453,7 +467,7 @@ const renderTable = (chart: ChartObj) => {
         totalColumns.push(...curColumns.slice(startIndex, endIndex + 1))
       } else {
         const [parentColumn] = getColumns([parent.field], curColumns)
-        totalColumns.push(...parentColumn.children?.slice(startIndex, endIndex + 1))
+        totalColumns.push(...(parentColumn.children?.slice(startIndex, endIndex + 1) || []))
       }
       const chiildDepth = getTreesMaxDepth(totalColumns)
       // 最大分组为 3 级
@@ -604,7 +618,9 @@ const getNonLeafNodes = (tree: Array<ColumnNode>): string[] => {
   }
 
   // 遍历树中所有节点
-  tree.forEach(node => inorderTraversal(node))
+  tree.forEach(node => {
+    inorderTraversal(node)
+  })
 
   return result
 }

@@ -54,6 +54,7 @@ import { iconChartMap } from '@/components/icon-group/chart-list'
 import { iconFieldMap } from '@/components/icon-group/field-list'
 import treeSort from '@/utils/treeSortUtils'
 import { useCache } from '@/hooks/web/useCache'
+import type { Field as DatasetFieldType } from '@/api/chart'
 
 const { t } = useI18n()
 const { wsCache } = useCache()
@@ -188,6 +189,12 @@ const activeCondition = ref('')
 const isIndeterminate = ref(false)
 const datasetTree = shallowRef([])
 const fields = ref<DatasetDetail[]>()
+type ParameterField = DatasetFieldType & { variableName?: string; params?: Array<unknown> }
+type QueryDatasetDetail = DatasetDetail & {
+  checkedFields?: string[]
+  checkedFieldsMap?: Record<string, string>
+  fields: DatasetDetail['fields'] & { parameterList?: ParameterField[] }
+}
 
 const { queryElement } = toRefs(props)
 const getDetype = (id, arr) => {
@@ -513,13 +520,13 @@ const setTreeDefault = () => {
 const setTreeDefaultBatch = ele => {
   if (!!ele.checkedFields.length) {
     let tableId = ''
-    fields.value.forEach(ele => {
+    fields.value.forEach(item => {
       if (
-        ele.checkedFields.includes(ele.componentId) &&
-        ele.checkedFieldsMap[ele.componentId] &&
+        ele.checkedFields.includes(item.componentId) &&
+        ele.checkedFieldsMap[item.componentId] &&
         !tableId
       ) {
-        tableId = datasetFieldList.value.find(itx => itx.id === ele.componentId)?.tableId
+        tableId = datasetFieldList.value.find(itx => itx.id === item.componentId)?.tableId
       }
     })
     if (tableId && !ele.treeDatasetId) {
@@ -596,7 +603,7 @@ const setParametersNumType = componentId => {
   curComponent.value.parametersArr[componentId] = duplicateRemoval(
     unref(fields)
       .filter(ele => ele.componentId === componentId)
-      .map(ele => Object.values(ele?.fields || {}).flat())
+      .map(ele => Object.values(ele?.fields || {}).flat() as ParameterField[])
       .flat()
       .filter(
         ele =>
@@ -614,7 +621,7 @@ const setParametersTimeType = componentId => {
   curComponent.value.parametersArr[componentId] = duplicateRemoval(
     unref(fields)
       .filter(ele => ele.componentId === componentId)
-      .map(ele => Object.values(ele?.fields || {}).flat())
+      .map(ele => Object.values(ele?.fields || {}).flat() as ParameterField[])
       .flat()
       .filter(
         ele =>
@@ -676,7 +683,7 @@ const duplicateRemoval = arr => {
 const setParameters = field => {
   const fieldArr = Object.values(curComponent.value.checkedFieldsMap).filter(ele => !!ele)
   curComponent.value.parameters = duplicateRemoval(
-    Object.values(field?.fields || {})
+    (Object.values(field?.fields || {}) as ParameterField[][])
       .flat()
       .filter(ele => fieldArr.includes(ele.id) && !!ele.variableName)
       .concat(curComponent.value.parameters.filter(ele => fieldArr.includes(ele.id)))
@@ -782,7 +789,7 @@ const setType = () => {
   }
 }
 
-let oldDisplayType
+let oldDisplayType: string | undefined
 
 const handleSetTypeChange = () => {
   let displayType = curComponent.value.displayType
@@ -911,9 +918,13 @@ const typeTimeMap = {
 
 const timeParameterList = computed(() => {
   if (!isTimeParameter.value) return timeList
-  const [year, y] = curComponent.value.parameters?.filter(
+  const timeParameter = curComponent.value.parameters?.filter(
     ele => ele.deType === 1 && !!ele.variableName
-  )[0].type
+  )?.[0]
+  if (!timeParameter || !Array.isArray(timeParameter.type)) {
+    return timeList
+  }
+  const [year, y] = timeParameter.type
   let stopPush = false
   return timeList.reduce((pre, ele) => {
     if (ele.value === (typeTimeMap[y] || typeTimeMap[year])) {
@@ -1085,7 +1096,7 @@ const isInRange = (ele, startWindowTime, timeStamp) => {
     if (dynamicWindow) return isDynamicWindowTime
     return false
   }
-  let startTime
+  let startTime: Date | string | number | undefined
   if (relativeToCurrent === 'custom') {
     startTime = getAroundStart(relativeToCurrentType, around === 'f' ? 'subtract' : 'add', timeNum)
   } else {
@@ -1141,7 +1152,7 @@ const isInRange = (ele, startWindowTime, timeStamp) => {
   }
 
   if (intervalType === 'timeInterval') {
-    let endTime
+    let endTime: Date | string | number | undefined
     if (relativeToCurrentRange === 'custom') {
       startTime =
         regularOrTrends === 'fixed'
@@ -1559,6 +1570,7 @@ const validate = () => {
       )
       return true
     }
+    return false
   })
 }
 
@@ -1715,9 +1727,9 @@ const init = (queryId: string) => {
     .then(([dq, p]) => {
       dq.filter(ele => !!ele).forEach(ele => {
         ele.activelist = 'dimensionList'
-        ele.fields.parameterList = p.filter(
+        ;(ele as QueryDatasetDetail).fields.parameterList = p.filter(
           itx => itx.datasetGroupId === ele.id && !itx.params?.length
-        )
+        ) as unknown as ParameterField[]
         ele.hasParameter = !!ele.fields.parameterList.length
         ele.fields.dimensionList = (ele.fields.dimensionList || []).filter(
           itx => !itx.params?.length
@@ -1811,7 +1823,9 @@ const parameterCompletion = ele => {
     treeFieldList: []
   }
   Object.entries(attributes).forEach(([key, val]) => {
-    ele[key] ?? (ele[key] = val)
+    if (ele[key] == null) {
+      ele[key] = val
+    }
   })
 
   if (!ele.treeDatasetId) {
@@ -1930,7 +1944,12 @@ const handleCondition = (item, idx = 0) => {
       }
     }
     curComponent.value.showError = showError.value
-    curComponent.value.auto && (document.querySelector('.chart-field').scrollTop = 0)
+    if (curComponent.value.auto) {
+      const chartField = document.querySelector('.chart-field') as HTMLElement | null
+      if (chartField) {
+        chartField.scrollTop = 0
+      }
+    }
   })
 }
 
@@ -2325,7 +2344,7 @@ const handleRelationshipChart = (index, initShip = false) => {
     })
   }
   if (!curComponent.value?.treeCheckedList[index]) return
-  const { checkedFields, checkedFieldsMap } = curComponent.value?.treeCheckedList[index]
+  const { checkedFields, checkedFieldsMap } = curComponent.value.treeCheckedList[index]
   curComponent.value.checkedFields = checkedFields
   curComponent.value.checkedFieldsMap = checkedFieldsMap
   const checkedCount = checkedFields?.length

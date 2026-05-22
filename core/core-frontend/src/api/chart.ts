@@ -10,13 +10,15 @@ export interface Field {
   name: string
   dataeaseName: string
   groupType: string
-  type: string
+  type: string | Array<string | number>
   deType: number
   deExtractType: number
   extField: number
   checked: boolean
   fieldShortName: string
   desensitized: boolean
+  variableName?: string
+  params?: Array<unknown>
 }
 
 export interface ComponentInfo {

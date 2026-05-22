@@ -14,6 +14,16 @@ export interface Item {
   value: string
   description: string
   type: string
+  originName?: string
+  needMock?: boolean
+  nameType?: string
+  contentType?: string
+}
+type SelectOption = { label: string; value: string; originName?: string }
+type ApiVariableItem = Item & {
+  enable?: boolean
+  uuid?: string
+  files?: unknown[]
 }
 const props = defineProps({
   keyPlaceholder: propTypes.string.def(''),
@@ -41,10 +51,16 @@ const keyText = computed(() => {
 })
 
 const { parameters, suggestions } = toRefs(props)
+const typedParameters = parameters as typeof parameters & { value: ApiVariableItem[] }
+const typedValueList = computed(() => props.valueList as Array<Item & { originName?: string }>)
+const needMock = computed(() => false)
 
 onBeforeMount(() => {
-  if (parameters.value.length === 0 || parameters.value[parameters.value.length - 1].name) {
-    parameters.value.push(
+  if (
+    typedParameters.value.length === 0 ||
+    typedParameters.value[typedParameters.value.length - 1].name
+  ) {
+    typedParameters.value.push(
       new KeyValue({
         type: 'text',
         nameType: 'fixed',
@@ -52,12 +68,12 @@ onBeforeMount(() => {
         required: true,
         uuid: guid(),
         contentType: 'text/plain'
-      })
+      }) as ApiVariableItem
     )
   }
 })
 
-const typeChange = item => {
+const typeChange = (item: ApiVariableItem) => {
   if (item.type === 'file') {
     item.contentType = 'application/octet-stream'
   } else if (item.type === 'text') {
@@ -70,34 +86,34 @@ const typeChange = item => {
 const remove = (index: number) => {
   if (isDisable()) return
   // 移除整行输入控件及内容
-  parameters.value.splice(index, 1)
+  typedParameters.value.splice(index, 1)
 }
 const change = () => {
-  parameters.value.push(
+  typedParameters.value.push(
     new KeyValue({
       type: 'text',
       enable: true,
       nameType: 'fixed',
       uuid: guid(),
       contentType: 'text/plain'
-    })
+    }) as ApiVariableItem
   )
 }
 const isDisable = () => {
-  return parameters.value.length === 1
+  return typedParameters.value.length === 1
 }
-const querySearch = (queryString, cb) => {
+const querySearch = (queryString: string, cb: (results: SelectOption[]) => void) => {
   const results = queryString
-    ? suggestions.value.filter(createFilter(queryString))
-    : suggestions.value
+    ? (suggestions.value as SelectOption[]).filter(createFilter(queryString))
+    : (suggestions.value as SelectOption[])
   cb(results)
 }
 const createFilter = (queryString: string) => {
-  return restaurant => {
+  return (restaurant: SelectOption) => {
     return restaurant.value.toLowerCase().indexOf(queryString.toLowerCase()) === 0
   }
 }
-const changeNameType = element => {
+const changeNameType = (element: ApiVariableItem) => {
   element.value = ''
 }
 
@@ -188,7 +204,7 @@ const timeFunLists = [
                     v-model="element.type"
                     :disabled="isReadOnly"
                     class="kv-type"
-                    @change="typeChange(item)"
+                    @change="typeChange(element)"
                   >
                     <el-option value="text" />
                     <el-option value="json" />
@@ -222,10 +238,10 @@ const timeFunLists = [
                 style="width: 100%"
               >
                 <el-option
-                  v-for="item in valueList"
-                  :key="item.originName"
+                  v-for="item in typedValueList"
+                  :key="item.originName || item.name"
                   :label="item.name"
-                  :value="item.originName"
+                  :value="item.originName || item.name"
                 />
               </el-select>
               <el-select
@@ -235,7 +251,7 @@ const timeFunLists = [
               >
                 <el-option
                   v-for="item in timeFunLists"
-                  :key="item.originName"
+                  :key="item.value"
                   :label="item.label"
                   :value="item.value"
                 />
@@ -247,7 +263,7 @@ const timeFunLists = [
               >
                 <el-option
                   v-for="item in pageParams"
-                  :key="item.originName"
+                  :key="item.value"
                   :label="item.label"
                   :value="item.value"
                 />
