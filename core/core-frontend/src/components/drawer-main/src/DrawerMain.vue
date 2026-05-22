@@ -8,6 +8,24 @@ import DrawerTimeFilter from '@/components/drawer-filter/src/DrawerTimeFilter.vu
 import DrawerTreeFilter from '@/components/drawer-filter/src/DrawerTreeFilter.vue'
 import { useI18n } from '@/hooks/web/useI18n'
 const { t } = useI18n()
+type DrawerTreeOption = {
+  value: string
+  label: string
+  children: unknown[]
+  disabled: boolean
+}
+type DrawerSelectOption = {
+  id: string
+  name: string
+}
+type DrawerFilterConfig = {
+  type: string
+  field: string
+  option: DrawerTreeOption[] | DrawerSelectOption[]
+  title: string
+  property: Record<string, any>
+  operator?: string
+}
 const props = defineProps({
   filterOptions: propTypes.arrayOf(
     propTypes.shape({
@@ -21,8 +39,8 @@ const props = defineProps({
   title: propTypes.string
 })
 const myRefs = ref([])
-const componentList = computed(() => {
-  return props.filterOptions
+const componentList = computed<DrawerFilterConfig[]>(() => {
+  return (props.filterOptions || []) as DrawerFilterConfig[]
 })
 
 const state = reactive({

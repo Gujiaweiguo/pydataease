@@ -26,6 +26,16 @@ export interface Item {
   timeType?: string
 }
 
+interface FieldOption {
+  id: string
+  name: string
+  deType: number
+}
+
+interface AuthTargetTypeContext {
+  authTargetType?: string
+}
+
 type Props = {
   index: number
   item: Item
@@ -46,23 +56,23 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const { t } = useI18n()
-const enumInput = ref()
-const deElDropdownMenuFixed = ref()
+const enumInput = ref<any>()
+const deElDropdownMenuFixed = ref<any>()
 const showDel = ref(false)
 const keywords = ref('')
 const activeName = ref('')
 const filterFiled = ref('')
-const enumList = ref([])
-const showTextArea = ref()
+const enumList = ref<string[]>([])
+const showTextArea = ref(false)
 const keydownCanceled = ref(false)
-const checklist = ref([])
-const filterList = ref([])
+const checklist = ref<string[]>([])
+const filterList = ref<Array<{ value: string; label: string }>>([])
 const textareaValue = ref('')
 
 const { item } = toRefs(props)
 
-const getAuthTargetType = inject('getAuthTargetType')
-const filedList = inject('filedList')
+const getAuthTargetType = inject<AuthTargetTypeContext>('getAuthTargetType')
+const filedList = inject<Record<string, FieldOption>>('filedList')
 
 const checkListWithFilter = computed(() => {
   if (!filterFiled.value) return enumList.value
@@ -106,7 +116,7 @@ const dimensions = computed(() => {
   if (!keywords.value) return computedFiledList.value
   return computedFiledList.value.filter(ele => ele.name.includes(keywords.value))
 })
-const computedFiledList = computed(() => {
+const computedFiledList = computed<FieldOption[]>(() => {
   return Object.values(filedList.value || {})
 })
 
@@ -194,7 +204,7 @@ const initEnumOptions = () => {
   }
 }
 
-const optionData = data => {
+const optionData = (data: string[]) => {
   if (!data) return null
   return data.filter(item => !!item)
 }
@@ -204,13 +214,13 @@ const cancel = () => {
 const cancelfixValue = () => {
   item.value.enumValue = [...checklist.value]
 }
-const delChecks = (idx, i) => {
+const delChecks = (idx: number, i: string) => {
   checklist.value.splice(idx, 1)
   checkboxlist.value = checkboxlist.value.filter(ele => ele !== i)
   selectedChange()
 }
 
-const selectItem = ({ name, id, deType }) => {
+const selectItem = ({ name, id, deType }: FieldOption) => {
   activeName.value = name
   Object.assign(item.value, {
     fieldId: id,
@@ -224,7 +234,7 @@ const selectItem = ({ name, id, deType }) => {
   filterListInit(deType)
   checklist.value = []
 }
-const filterListInit = deType => {
+const filterListInit = (deType: number) => {
   filterList.value = [
     {
       value: 'logic',
@@ -258,7 +268,7 @@ const selectAll = () => {
 const isIndeterminate = ref(false)
 const checkAll = ref(false)
 const checkboxlist = ref([])
-let oldList = []
+let oldList: string[] = []
 watch(
   () => checkListWithFilter.value,
   val => {
@@ -294,7 +304,7 @@ const selectedChange = () => {
     isIndeterminate.value = false
   }
 }
-const checkAllChange = val => {
+const checkAllChange = (val: boolean) => {
   if (val) {
     selectAll()
   } else {
@@ -316,11 +326,11 @@ const addFields = () => {
   showTextArea.value = false
 }
 const timeDialog = ref()
-const showTimeDialog = (obj: any) => {
+const showTimeDialog = (obj: Item) => {
   if (obj.deType !== 1) return
   timeDialog.value.init(obj.timeType, obj.value)
 }
-const saveTime = (type, value) => {
+const saveTime = (type: string, value: number) => {
   item.value.timeType = type
   item.value.value = value
 }

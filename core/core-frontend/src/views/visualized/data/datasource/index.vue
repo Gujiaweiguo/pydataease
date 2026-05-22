@@ -173,7 +173,7 @@ const showPriority = ref(false)
 const showSSH = ref(true)
 const datasourceEditor = ref()
 const activeTab = ref('')
-const menuList = [
+const menuList: Menu[] = [
   {
     label: t('chart.move_to'),
     svgName: icon_intoItem_outlined,

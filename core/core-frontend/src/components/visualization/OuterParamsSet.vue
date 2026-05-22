@@ -415,7 +415,7 @@ const state = reactive({
       svgName: _delete,
       command: 'delete'
     }
-  ] as Menu[][],
+  ] as Menu[],
   treeProp: {
     id: 'paramsInfoId',
     label: 'paramName',

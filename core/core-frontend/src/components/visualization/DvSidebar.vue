@@ -8,16 +8,25 @@ import Icon from '../icon-custom/src/Icon.vue'
 const dvMainStore = dvMainStoreWithOut()
 const { canvasCollapse } = storeToRefs(dvMainStore)
 let componentNameEdit = ref(false)
-let inputComponentName = ref({ id: null, name: null })
+let inputComponentName = ref<{ id: string | number | null; name: string | null }>({
+  id: null,
+  name: null
+})
 let componentNameInputAttr = ref(null)
 import dvInfoSvg from '@/assets/svg/dv-info.svg'
 import { useI18n } from '@/hooks/web/useI18n'
 const snapshotStore = snapshotStoreWithOut()
 const { t } = useI18n()
+type SidebarElement = Record<string, any> & {
+  id?: string | number | null
+  name?: string
+  label?: string
+}
 const props = defineProps({
   element: {
+    type: Object as PropType<SidebarElement>,
     required: false,
-    default: {}
+    default: () => ({})
   },
   scrollWidth: {
     required: false,
