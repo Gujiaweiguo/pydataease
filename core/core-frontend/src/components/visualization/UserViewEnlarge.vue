@@ -107,8 +107,8 @@
           v-if="optType === 'enlarge'"
           class="enlarge-wrapper"
           :opt-type="optType"
-          :view-info="viewInfo"
-          :config="config"
+          :view-info="viewInfo as any"
+          :config="config as any"
           :dv-info="dvInfo"
           :font-family="canvasStyleData?.fontFamily"
           show-position="viewDialog"
@@ -116,7 +116,7 @@
         <template v-if="optType === 'details' && !sourceViewType.includes('chart-mix')">
           <chart-component-s2
             v-if="!detailsError"
-            :view="viewInfo"
+            :view="viewInfo as any"
             show-position="viewDialog"
             ref="chartComponentDetails"
           />
@@ -134,13 +134,13 @@
           <div style="flex: 1">
             <chart-component-s2
               v-if="activeName === 'left'"
-              :view="viewInfo"
+              :view="viewInfo as any"
               show-position="viewDialog"
               ref="chartComponentDetails"
             />
             <chart-component-s2
               v-else-if="activeName === 'right'"
-              :view="viewInfo"
+              :view="viewInfo as any"
               show-position="viewDialog"
               ref="chartComponentDetails2"
             />
@@ -308,7 +308,7 @@ const dialogInit = (_canvasStyle, view, item, opt, params = { scale: 0.5 }) => {
   dialogShow.value = true
   state.componentSourceType = view.type
   state.dataFrom = view.dataFrom
-  viewInfo.value = deepCopy(view) as DeepPartial<ChartObj>
+  viewInfo.value = deepCopy(view) as any
   viewInfo.value.customStyle.text.show = false
   config.value = deepCopy(item)
   if (opt === 'details') {
@@ -419,7 +419,7 @@ const openMessageLoading = cb => {
       t('data_fill.progress_to_download')
     ]),
     iconClass,
-    icon: h(RefreshLeft),
+    icon: h(RefreshLeft) as any,
     showClose: true,
     customClass
   })

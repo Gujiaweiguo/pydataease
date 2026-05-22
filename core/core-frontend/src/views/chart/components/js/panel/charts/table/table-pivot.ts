@@ -236,7 +236,7 @@ export class TablePivot extends S2ChartView<PivotSheet> {
     })
     // 空值处理
     const newData = this.configEmptyDataStrategy(chart)
-    const sortParams = this.configSortParams(chart, newData)
+    const sortParams = this.configSortParams(chart, newData as DataItem[])
     // data config
     const s2DataConfig: S2DataConfig = {
       fields: {
@@ -734,7 +734,7 @@ export class TablePivot extends S2ChartView<PivotSheet> {
     }
     return theme
   }
-  private configSortParams(chart: Chart, newData: []) {
+  private configSortParams(chart: Chart, newData: DataItem[]) {
     // 行列分开处理，先行后列，样式设置中汇总总计排序的优先级最高，剩下的按照字段的排序优先级设置进行排序
     const { xAxis: rowFields, xAxisExt: columnFields, yAxis: valueFields } = chart
     const [r, c, v] = [rowFields, columnFields, valueFields].map(arr =>
@@ -742,7 +742,7 @@ export class TablePivot extends S2ChartView<PivotSheet> {
     )
     const { tableTotal } = parseJson(chart.customAttr)
     // 解析合计、小计排序
-    const sortParams = []
+    const sortParams: any[] = []
     let rowTotalSort = false
     if (
       tableTotal.row.totalSort &&
@@ -893,7 +893,7 @@ export class TablePivot extends S2ChartView<PivotSheet> {
       } else {
         rowFields.forEach(f => {
           if (sortRowFieldsMap[f.id]) {
-            const sort = {
+            const sort: Record<string, any> = {
               sortFieldId: f.dataeaseName
             }
             const sortMethod = f.sort.toUpperCase()
@@ -951,7 +951,7 @@ export class TablePivot extends S2ChartView<PivotSheet> {
         if (valueFieldMap[f]?.sort === 'none') {
           return
         }
-        const sort = {
+        const sort: Record<string, any> = {
           sortFieldId: f
         }
         const sortMethod = valueFieldMap[f]?.sort?.toUpperCase()

@@ -109,7 +109,6 @@ const buildInnerRefreshTimer = (
       calcData(view.value, () => {
         // do innerRefreshTimer
       })
-      innerSearchCount++
     }, timerRefreshTime)
   }
 }
@@ -246,20 +245,21 @@ const calcData = (viewCalc: Chart, callback) => {
     v.resultCount = 1
     getData(v)
       .then(res => {
+        const response = res as any
         if (res.code && res.code !== 0) {
           isError.value = true
           errMsg.value = res.msg
         } else {
-          res.type = 'picture-group'
-          res.render = 'custom'
-          state.data = res?.data
-          state.viewDataInfo = res
-          state.totalItems = res?.totalItems
+          response.type = 'picture-group'
+          response.render = 'custom'
+          state.data = response?.data
+          state.viewDataInfo = response
+          state.totalItems = response?.totalItems
           const curViewInfo = canvasViewInfo.value[element.value.id]
-          curViewInfo['curFields'] = res.data.fields
-          dvMainStore.setViewDataDetails(element.value.id, res)
+          curViewInfo['curFields'] = response.data.fields
+          dvMainStore.setViewDataDetails(element.value.id, response)
           initReady.value = true
-          initCurFields(res)
+          initCurFields(response)
           initCarousel()
         }
         callback?.()

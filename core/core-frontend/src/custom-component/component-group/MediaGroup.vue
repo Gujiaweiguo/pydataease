@@ -51,7 +51,7 @@ const handleDragEnd = e => {
     <drag-component
       class="media-component"
       :themes="themes"
-      :icon="dvPictureShow"
+      :icon="dvPictureShow as any"
       :label="t('visualization.picture')"
       drag-info="Picture&Picture"
       v-on:click="newComponent('Picture', 'Picture')"
@@ -59,7 +59,7 @@ const handleDragEnd = e => {
     <drag-component
       class="media-component"
       :themes="themes"
-      :icon="iconVideo"
+      :icon="iconVideo as any"
       :label="t('visualization.video')"
       drag-info="DeVideo&DeVideo"
       v-on:click="newComponent('DeVideo', 'DeVideo')"
@@ -67,7 +67,7 @@ const handleDragEnd = e => {
     <drag-component
       class="media-component"
       :themes="themes"
-      :icon="iconStream"
+      :icon="iconStream as any"
       :label="t('visualization.stream_media')"
       drag-info="DeStreamMedia&DeStreamMedia"
       v-on:click="newComponent('DeStreamMedia', 'DeStreamMedia')"
@@ -75,7 +75,7 @@ const handleDragEnd = e => {
     <drag-component
       class="media-component"
       :themes="themes"
-      :icon="pictureGroupOrigin"
+      :icon="pictureGroupOrigin as any"
       :label="t('visualization.pic_group')"
       drag-info="UserView&picture-group"
       v-on:click="newComponent('UserView', 'picture-group')"

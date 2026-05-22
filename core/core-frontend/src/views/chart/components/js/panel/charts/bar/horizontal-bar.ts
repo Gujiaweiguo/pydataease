@@ -151,7 +151,7 @@ export class HorizontalBar extends G2PlotChartView<BarOptions, Bar> {
         }
       })
     }
-    configPlotTooltipEvent(chart, newChart)
+    configPlotTooltipEvent(chart, newChart as any)
     configAxisLabelLengthLimit(chart, newChart)
     return newChart
   }
@@ -215,7 +215,7 @@ export class HorizontalBar extends G2PlotChartView<BarOptions, Bar> {
       ...configRoundAngle(chart, 'barStyle')
     }
 
-    let barWidthRatio
+    let barWidthRatio: number | undefined
     const _v = basicStyle.columnWidthRatio ?? DEFAULT_BASIC_STYLE.columnWidthRatio
     if (_v >= 1 && _v <= 100) {
       barWidthRatio = _v / 100.0
@@ -225,7 +225,10 @@ export class HorizontalBar extends G2PlotChartView<BarOptions, Bar> {
       barWidthRatio = 1
     }
     if (barWidthRatio) {
-      options.barWidthRatio = barWidthRatio
+      options = {
+        ...options,
+        barWidthRatio
+      }
     }
 
     return options
@@ -255,7 +258,9 @@ export class HorizontalBar extends G2PlotChartView<BarOptions, Bar> {
       return pre
     }, {})
     // 默认灰色
-    tmpOptions.label.style.fill = DEFAULT_LABEL.color
+    const tmpLabelStyle = ((tmpOptions.label as any).style || {}) as Record<string, any>
+    tmpLabelStyle.fill = DEFAULT_LABEL.color
+    ;(tmpOptions.label as any).style = tmpLabelStyle
     const label = {
       fields: [],
       ...tmpOptions.label,
@@ -367,7 +372,9 @@ export class HorizontalStackBar extends HorizontalBar {
     options = { ...options, label }
     const { label: labelAttr } = parseJson(chart.customAttr)
     if (labelAttr.showStackQuota || labelAttr.showStackQuota === undefined) {
-      options.label.style.fill = labelAttr.color
+      const optionLabelStyle = ((options.label as any)?.style || {}) as Record<string, any>
+      optionLabelStyle.fill = labelAttr.color
+      ;(options.label as any).style = optionLabelStyle
       label = {
         ...options.label,
         formatter: function (data: Datum) {
@@ -399,9 +406,9 @@ export class HorizontalStackBar extends HorizontalBar {
         const total = values.reduce((a, b) => a + b.value, 0)
         const value = valueFormatter(total, formatterCfg)
         if (!options.annotations) {
-          options.annotations = []
+          ;(options as any).annotations = []
         }
-        options.annotations.push({
+        ;(options as any).annotations.push({
           type: 'text',
           position: [key, total],
           content: `${value}`,
@@ -472,12 +479,15 @@ export class HorizontalStackBar extends HorizontalBar {
           }
           return p
         }, [])
-        cats.length > 0 && values.push(...cats)
-        options.meta = {
-          ...options.meta,
-          category: {
-            type: 'cat',
-            values
+        cats.length > 0 && values.push(...(cats as any[]))
+        options = {
+          ...options,
+          meta: {
+            ...options.meta,
+            category: {
+              type: 'cat',
+              values
+            }
           }
         }
       }
@@ -524,14 +534,14 @@ export class HorizontalStackBar extends HorizontalBar {
     const extStack = chart.extStack[0]
 
     const customStyle = parseJson(chart.customStyle)
-    let size
+    let size: number
     if (customStyle && customStyle.legend) {
       size = defaults(JSON.parse(JSON.stringify(customStyle.legend)), DEFAULT_LEGEND_STYLE).size
     } else {
       size = DEFAULT_LEGEND_STYLE.size
     }
 
-    optionTmp.legend.marker.style = style => {
+    ;(optionTmp.legend.marker as any).style = (style: any) => {
       return {
         r: size,
         fill: style.fill
@@ -547,8 +557,8 @@ export class HorizontalStackBar extends HorizontalBar {
           return p
         }, {}) || {}
       const dupCheck = new Set()
-      const colors = optionTmp.color ?? optionTmp.theme.styleSheet.paletteQualitative10
-      const items = optionTmp.data?.reduce((arr, item) => {
+      const colors = optionTmp.color ?? (optionTmp.theme as any)?.styleSheet?.paletteQualitative10
+      const items = (optionTmp.data as any[])?.reduce((arr: any[], item: any) => {
         if (!dupCheck.has(item.category)) {
           const fill = seriesMap[item.category]?.color ?? colors[dupCheck.size % colors.length]
           dupCheck.add(item.category)
@@ -581,7 +591,7 @@ export class HorizontalStackBar extends HorizontalBar {
         })
         items.unshift(...tmp)
       }
-      optionTmp.legend.items = items
+      ;(optionTmp.legend as any).items = items
       if (extStack?.customSort?.length > 0) {
         delete optionTmp.meta?.category.values
       }

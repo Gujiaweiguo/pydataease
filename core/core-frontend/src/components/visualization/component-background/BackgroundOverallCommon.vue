@@ -8,7 +8,7 @@
       hidden
       @click="
         e => {
-          e.target.value = ''
+          ;((e.target as HTMLInputElement).value = '')
         }
       "
       @change="reUpload"
@@ -474,15 +474,25 @@ const sizeMessage = () => {
   ElMessage.error('图片大小不能超过15M')
 }
 
-const reUpload = e => {
-  const file = e.target.files[0]
+const reUpload = (e: Event) => {
+  const file = (e.target as HTMLInputElement)?.files?.[0]
+  if (!file) {
+    return
+  }
   if (file.size > maxImageSize) {
     sizeMessage()
     return
   }
   uploadFileResult(file, fileUrl => {
     state.commonBackground.outerImage = fileUrl
-    state.fileList = [{ url: imgUrlTrans(state.commonBackground.outerImage) }]
+    state.fileList = [
+      {
+        name: 'background',
+        status: 'success',
+        uid: Date.now(),
+        url: imgUrlTrans(state.commonBackground.outerImage)
+      } as any
+    ]
     onBackgroundChange()
   })
 }
@@ -519,7 +529,14 @@ const init = () => {
   updateInnerPadding()
   updateBorderRadius()
   if (state.commonBackground.outerImage) {
-    state.fileList = [{ url: imgUrlTrans(state.commonBackground.outerImage) }]
+    state.fileList = [
+      {
+        name: 'background',
+        status: 'success',
+        uid: Date.now(),
+        url: imgUrlTrans(state.commonBackground.outerImage)
+      } as any
+    ]
   } else {
     state.fileList = []
   }
@@ -552,7 +569,7 @@ const updateInnerPadding = () => {
     state.commonBackground.innerPadding.left = state.commonBackground.innerPadding.top
     state.commonBackground.innerPadding.right = state.commonBackground.innerPadding.top
     state.commonBackground.innerPadding.bottom = state.commonBackground.innerPadding.top
-  } else if (state.commonBackground.innerPadding.mode === ShorthandMode.Axis) {
+  } else if (state.commonBackground.innerPadding.mode === (ShorthandMode as any).Axis) {
     state.commonBackground.innerPadding.right = state.commonBackground.innerPadding.left
     state.commonBackground.innerPadding.bottom = state.commonBackground.innerPadding.top
   }
@@ -563,7 +580,7 @@ const updateBorderRadius = () => {
     state.commonBackground.borderRadius.topRight = state.commonBackground.borderRadius.topLeft
     state.commonBackground.borderRadius.bottomLeft = state.commonBackground.borderRadius.topLeft
     state.commonBackground.borderRadius.bottomRight = state.commonBackground.borderRadius.topLeft
-  } else if (state.commonBackground.borderRadius.mode === ShorthandMode.Axis) {
+  } else if (state.commonBackground.borderRadius.mode === (ShorthandMode as any).Axis) {
     state.commonBackground.borderRadius.bottomRight = state.commonBackground.borderRadius.topLeft
     state.commonBackground.borderRadius.topRight = state.commonBackground.borderRadius.bottomLeft
   }

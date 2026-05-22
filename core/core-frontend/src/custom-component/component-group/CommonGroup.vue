@@ -28,24 +28,31 @@ const state = reactive({
   groupList: CANVAS_MATERIAL
 })
 
+type GroupChartInfo = {
+  value: string
+  type: string
+  title?: string
+  icon: string
+}
+
 const scrollTo = offsetTop => {
   commonGroup?.value.setScrollTop(offsetTop)
 }
 
 const anchorPosition = anchor => {
-  const element = document.querySelector(anchor)
-  scrollTo(element.offsetTop)
+  const element = document.querySelector(anchor) as HTMLElement | null
+  scrollTo(element?.offsetTop || 0)
 }
 
-const newComponent = ({ category, innerType }) => {
+const newComponent = ({ category, innerType }: { category: string; innerType: string }) => {
   eventBus.emit('handleNew', { componentName: category, innerType: innerType })
 }
 
-const handleDragStart = e => {
+const handleDragStart = (e: DragEvent) => {
   e.dataTransfer.setData('id', e.target.dataset.id)
 }
 
-const groupActiveChange = category => {
+const groupActiveChange = (category: string) => {
   state.curCategory = category
   anchorPosition('#' + category)
 }
@@ -77,7 +84,7 @@ const groupActiveChange = category => {
           v-show="state.curCategory === groupInfo.category"
           :class="'item' + groupInfo.span"
           :span="groupInfo.span"
-          v-for="chartInfo in groupInfo.details"
+          v-for="chartInfo in groupInfo.details as GroupChartInfo[]"
           :key="chartInfo.title"
         >
           <div

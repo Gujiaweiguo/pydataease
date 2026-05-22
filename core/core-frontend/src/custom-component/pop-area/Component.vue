@@ -12,10 +12,10 @@
         <!--使用ComponentWrapper 保留扩展能力-->
         <ComponentWrapper
           v-for="(item, index) in popComponentData"
-          :id="'component-pop-' + item.id"
-          :view-info="canvasViewInfo[item.id]"
+          :id="'component-pop-' + (item as any).id"
+          :view-info="canvasViewInfo[(item as any).id] as any"
           :key="index"
-          :config="item"
+          :config="item as any"
           :index="index"
           :dv-info="dvInfo"
           :pop-active="curActive(item)"
@@ -108,7 +108,7 @@ const innerScale = computed(() =>
   props.showPosition === 'preview' ? props.scale : props.scale * 100
 )
 
-const curActive = item => {
+const curActive = (item: any) => {
   return curComponent.value?.id === item.id && props.showPosition === 'popEdit'
 }
 
@@ -162,8 +162,8 @@ const customPopStyle = computed(() => {
 const popCanvasStyle = computed(() => {
   if (canvasState.value.curPointArea === 'hidden') {
     let queryCount = 0
-    popComponentData.value.forEach(popItem => {
-      queryCount = 0 + popItem.propValue.length
+    popComponentData.value.forEach((popItem: any) => {
+      queryCount = 0 + (popItem.propValue?.length || 0)
     })
     return {
       height: queryCount < 8 ? '15%' : (queryCount * 45 * scale.value) / 4 + 'px'

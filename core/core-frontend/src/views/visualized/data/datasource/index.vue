@@ -302,13 +302,13 @@ const handleLoadExcel = data => {
 }
 
 const validateDS = () => {
-  let nodeTmpInfo = reactive<Node>(cloneDeep(defaultInfo))
+  const nodeTmpInfo = reactive(cloneDeep(defaultInfo) as any as Node)
   Object.assign(nodeTmpInfo, cloneDeep(nodeInfo))
   validateById(nodeTmpInfo.id as number)
     .then(res => {
       if (res.data.type.startsWith('API')) {
         let error = 0
-        const dsStatus = JSON.parse(res.data.status)
+        const dsStatus = JSON.parse(res.data.status) as Array<Record<string, any>>
         for (let i = 0; i < dsStatus.length; i++) {
           if (dsStatus[i].status === 'Error') {
             error++
@@ -448,7 +448,7 @@ const defaultInfo = {
   enableDataFill: false,
   extraFlag: 0
 }
-const nodeInfo = reactive<Node>(cloneDeep(defaultInfo))
+const nodeInfo = reactive(cloneDeep(defaultInfo) as any as Node)
 const infoList = computed(() => {
   return {
     creator: nodeInfo.creator,
@@ -501,7 +501,7 @@ const listDs = () => {
   interactiveStore
     .setInteractive(request)
     .then(res => {
-      const nodeData = (res as unknown as BusiTreeNode[]) || []
+      const nodeData = ((res as unknown as BusiTreeNode[]) || []) as any[]
       if (nodeData.length && nodeData[0]['id'] === '0' && nodeData[0]['name'] === 'root') {
         rootManage.value = nodeData[0]['weight'] >= 7
         state.datasourceTree = nodeData[0]['children'] || []
@@ -756,7 +756,7 @@ const editDatasource = (editType?: number) => {
     if (apiConfigurationStr) {
       apiConfigurationStr = safeDecrypt(apiConfigurationStr, symmetricKey.value)
     }
-    let datasource = reactive<Node>(cloneDeep(defaultInfo))
+    const datasource = reactive(cloneDeep(defaultInfo) as any as Node)
     Object.assign(datasource, {
       name,
       pid,
@@ -826,7 +826,7 @@ const handleCopy = async data => {
     if (apiConfigurationStr) {
       apiConfigurationStr = safeDecrypt(apiConfigurationStr, symmetricKey.value)
     }
-    let datasource = reactive<Node>(cloneDeep(defaultInfo))
+    const datasource = reactive(cloneDeep(defaultInfo) as any as Node)
     Object.assign(datasource, {
       name,
       pid,
@@ -1103,7 +1103,7 @@ const getMenuList = (val: boolean) => {
           svgName: icon_copy_filled,
           command: 'copy'
         }
-      ].concat(menuList)
+      ].concat(menuList as any)
 }
 </script>
 
@@ -1259,7 +1259,7 @@ const getMenuList = (val: boolean) => {
                   <handle-more
                     icon-size="24px"
                     @handle-command="cmd => handleDatasourceTree(cmd, data)"
-                    :menu-list="datasetTypeList as unknown as Menu[][]"
+                    :menu-list="datasetTypeList as unknown as Menu[]"
                     :icon-name="icon_add_outlined"
                     placement="bottom-start"
                     v-if="!data.leaf"
@@ -1271,7 +1271,7 @@ const getMenuList = (val: boolean) => {
                     @handle-command="
                       cmd => operation(cmd, data, data.leaf ? 'datasource' : 'folder')
                     "
-                    :menu-list="getMenuList(data.leaf) as unknown as Menu[][]"
+                    :menu-list="getMenuList(data.leaf) as unknown as Menu[]"
                   ></handle-more>
                 </div>
               </span>

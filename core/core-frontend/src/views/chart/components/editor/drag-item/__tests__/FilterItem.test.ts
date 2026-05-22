@@ -74,7 +74,7 @@ describe('FilterItem', () => {
       props: defaultProps(),
       global: { stubs: globalStubs, mocks: { $t: (k: string) => k } }
     })
-    wrapper.vm.removeItem()
+    ;(wrapper.vm as any).removeItem()
     expect(wrapper.emitted('onFilterItemRemove')).toBeTruthy()
     const emittedArg = wrapper.emitted('onFilterItemRemove')?.[0]?.[0] as any
     expect(emittedArg.index).toBe(0)
@@ -85,7 +85,7 @@ describe('FilterItem', () => {
       props: defaultProps(),
       global: { stubs: globalStubs, mocks: { $t: (k: string) => k } }
     })
-    wrapper.vm.editFilter()
+    ;(wrapper.vm as any).editFilter()
     expect(wrapper.emitted('editItemFilter')).toBeTruthy()
   })
 
@@ -94,7 +94,7 @@ describe('FilterItem', () => {
       props: defaultProps(),
       global: { stubs: globalStubs, mocks: { $t: (k: string) => k } }
     })
-    wrapper.vm.clickItem(null)
+    ;(wrapper.vm as any).clickItem(null)
     expect(wrapper.emitted('onFilterItemRemove')).toBeFalsy()
     expect(wrapper.emitted('editItemFilter')).toBeFalsy()
   })
@@ -104,7 +104,7 @@ describe('FilterItem', () => {
       props: defaultProps(),
       global: { stubs: globalStubs, mocks: { $t: (k: string) => k } }
     })
-    wrapper.vm.clickItem({ type: 'remove' })
+    ;(wrapper.vm as any).clickItem({ type: 'remove' })
     expect(wrapper.emitted('onFilterItemRemove')).toBeTruthy()
   })
 })

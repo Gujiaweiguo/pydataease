@@ -273,15 +273,16 @@ const calcData = async (view, callback) => {
           errMsg.value = res.msg
           callback?.()
         } else {
-          chartData.value = res as Partial<Chart['data']>
-          emit('onDrillFilters', res?.drillFilters)
-          if (!res?.drillFilters?.length) {
+          const response = res as any
+          chartData.value = response as Partial<Chart['data']>
+          emit('onDrillFilters', response?.drillFilters)
+          if (!response?.drillFilters?.length) {
             dynamicAreaId.value = ''
             scope = null
             gadmName = null
           } else {
             const chartExtRequest = view.chartExtRequest || view.value?.chartExtRequest
-            const extra = chartExtRequest?.drill?.[res?.drillFilters?.length - 1].extra
+            const extra = chartExtRequest?.drill?.[response?.drillFilters?.length - 1].extra
             dynamicAreaId.value = extra?.adcode + ''
             scope = extra?.scope
             gadmName = extra?.gadmName
@@ -304,7 +305,7 @@ const calcData = async (view, callback) => {
             }
           }
           dvMainStore.setViewDataDetails(view.id, res)
-          if (!res.drill && !res.chartExtRequest?.linkageFilters?.length) {
+          if (!response.drill && !response.chartExtRequest?.linkageFilters?.length) {
             dvMainStore.setViewOriginData(view.id, chartData.value)
             emitter.emit('chart-data-change')
           }

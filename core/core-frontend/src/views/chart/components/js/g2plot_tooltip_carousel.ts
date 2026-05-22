@@ -1,5 +1,7 @@
 import { DualAxes, Plot } from '@antv/g2plot'
 
+type G2PlotLike = Plot<any> | DualAxes
+
 /**
  * 使用 Map 来存储实例，键为 chart.container 对象
  */
@@ -69,7 +71,7 @@ type CarouselConfig = {
  * 图表轮播提示管理类
  * */
 class ChartCarouselTooltip {
-  private plot: Plot | DualAxes
+  private plot: G2PlotLike
   private config: Required<CarouselConfig>
   private currentIndex = 0
   private values: string[] = []
@@ -83,7 +85,7 @@ class ChartCarouselTooltip {
   // 图表是否在可视范围内
   private chartIsVisible: boolean
 
-  private constructor(plot: Plot | DualAxes, private chart: Chart, config: CarouselConfig) {
+  private constructor(plot: G2PlotLike, private chart: Chart, config: CarouselConfig) {
     this.plot = plot
     this.config = { ...DEFAULT_CAROUSEL_CONFIG, ...config }
     this.init()
@@ -92,7 +94,7 @@ class ChartCarouselTooltip {
   /**
    * 创建或更新实例
    * */
-  static manage(plot: Plot | DualAxes, chart: Chart, config: CarouselConfig) {
+  static manage(plot: G2PlotLike, chart: Chart, config: CarouselConfig) {
     if (!isSupport(chart.type)) return null
     const container = chart.container
     let instance = CAROUSEL_MANAGER_INSTANCES.get(container)
@@ -267,8 +269,8 @@ class ChartCarouselTooltip {
    *  判断是否满足启动条件' */
   private shouldStart() {
     return (
-      this.chart.customAttr?.tooltip?.show &&
-      this.chart.customAttr?.tooltip?.carousel?.enable &&
+      (this.chart.customAttr as any)?.tooltip?.show &&
+      (this.chart.customAttr as any)?.tooltip?.carousel?.enable &&
       this.values.length > 0 &&
       this.chartIsVisible &&
       !this.hasParentWithSwitchHidden(this.plot.chart.ele)
@@ -641,7 +643,7 @@ class ChartCarouselTooltip {
   /**
    * 更新配置
    * */
-  private update(plot: Plot | DualAxes, chart: Chart, config: CarouselConfig) {
+  private update(plot: G2PlotLike, chart: Chart, config: CarouselConfig) {
     this.stop()
     this.plot = plot
     this.chart = chart

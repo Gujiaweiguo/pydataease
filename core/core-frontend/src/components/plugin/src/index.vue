@@ -15,6 +15,13 @@ import tinymce from 'tinymce/tinymce'
 import { useEmitt } from '@/hooks/web/useEmitt'
 import { isNull } from '@/utils/utils'
 
+declare global {
+  interface Window {
+    _de_xpack_not_loaded?: boolean
+    tinymce?: typeof tinymce
+  }
+}
+
 const { wsCache } = useCache()
 
 const plugin = ref()

@@ -144,23 +144,23 @@ defineExpose({
       <drawer-tree-filter
         :ref="el => (myRefs[index] = el)"
         v-if="component.type === 'tree-select'"
-        :option-list="component.option"
+        :option-list="component.option as DrawerTreeOption[]"
         :title="component.title"
-        :property="component.property"
+        :property="component.property as any"
         @filter-change="v => filterChange(v, component.field, 'in')"
       />
       <drawer-filter
         :ref="el => (myRefs[index] = el)"
         v-if="component.type === 'select'"
-        :option-list="component.option"
+        :option-list="component.option as DrawerSelectOption[]"
         :title="component.title"
-        :property="component.property"
+        :property="component.property as any"
         @filter-change="v => filterChange(v, component.field, 'in')"
       />
       <drawer-enum-filter
         :ref="el => (myRefs[index] = el)"
         v-if="component.type === 'enum'"
-        :option-list="component.option"
+        :option-list="component.option as DrawerSelectOption[]"
         :title="component.title"
         @filter-change="v => filterChange(v, component.field, 'in')"
       />
@@ -168,7 +168,7 @@ defineExpose({
         :ref="el => (myRefs[index] = el)"
         v-if="component.type === 'time'"
         :title="component.title"
-        :property="component.property"
+        :property="component.property as any"
         @filter-change="v => filterChange(v, component.field, component.operator)"
       />
     </div>

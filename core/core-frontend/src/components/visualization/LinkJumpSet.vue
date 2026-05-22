@@ -17,17 +17,17 @@
             <Icon class-name="view-type-icon"
               ><component
                 class="svg-icon view-type-icon"
-                :is="iconChartMap[state.curJumpViewInfo.type]"
+                :is="iconChartMap[(state.curJumpViewInfo as any).type]"
               ></component
             ></Icon>
-            {{ state.curJumpViewInfo.title }}</span
+            {{ (state.curJumpViewInfo as any).title }}</span
           >
           <span class="top-area-text margin-left">{{ t('visualization.used_dataset') }}：</span>
           <span class="top-area-value">
             <Icon name="dataset-outline"
               ><datasetOutline style="vertical-align: -0.2em" class="svg-icon view-type-icon"
             /></Icon>
-            {{ state.curDatasetInfo.name }}</span
+            {{ (state.curDatasetInfo as any).name }}</span
           >
         </div>
       </el-row>
@@ -832,7 +832,7 @@ const init = viewItem => {
     if (rsp && rsp[0]?.id === '0') {
       state.panelList = rsp[0].children
     } else {
-      state.panelList = rsp
+      state.panelList = rsp as any[]
     }
     state.panelList = filterEmptyFolderTree(state.panelList)
     const curSortType = wsCache.get(`TreeSort-${dvInfo.value.type}`) || 'time_asc'
@@ -986,7 +986,7 @@ const getPanelViewList = dvId => {
       })
     }
     // 增加过滤组件匹配
-    JSON.parse(rsp.data.bashComponentData).forEach(componentItem => {
+    ;((JSON.parse(rsp.data.bashComponentData) as any[]) || []).forEach(componentItem => {
       if (componentItem.component === 'VQuery' && componentItem.propValue instanceof Array) {
         componentItem.propValue.forEach(filterItem => {
           state.currentLinkPanelViewArray.push({

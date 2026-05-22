@@ -1,4 +1,19 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import { useI18n } from '@/hooks/web/useI18n'
+
+defineProps({
+  themes: {
+    type: String,
+    default: 'dark'
+  },
+  dashboardActive: {
+    type: Boolean,
+    default: false
+  }
+})
+
+const { t } = useI18n()
+</script>
 
 <template>
   <el-collapse-item

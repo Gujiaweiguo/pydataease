@@ -14,6 +14,7 @@ type AssistLineField = ChartViewField
 type AssistLineItem = AssistLine & {
   curField?: AssistLineField | Record<string, never>
   yAxisType?: 'left' | 'right'
+  axis?: string
 }
 
 const props = defineProps({
@@ -57,7 +58,7 @@ const state = reactive({
     lineType: 'solid',
     color: '#ff0000',
     curField: {} as AssistLineField | Record<string, never>,
-    fontSize: '10'
+    fontSize: 10
   },
   fieldOptions: [
     { label: t('chart.field_fixed'), value: '0' },
@@ -113,7 +114,7 @@ const init = () => {
 }
 
 const addLine = () => {
-  const obj = {
+  const obj: AssistLineItem = {
     ...state.lineObj,
     curField: props.quotaFields ? props.quotaFields[0] : null,
     fieldId: props.quotaFields ? props.quotaFields[0]?.id : null

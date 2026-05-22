@@ -38,28 +38,28 @@ describe('user-view Component', () => {
 
   it('renders successfully with bash-shape wrapper', () => {
     const wrapper = shallowMount(Component, {
-      props: defaultProps
+      props: defaultProps as any
     })
     expect(wrapper.find('.bash-shape').exists()).toBe(true)
   })
 
   it('contains chart child component', () => {
     const wrapper = shallowMount(Component, {
-      props: defaultProps
+      props: defaultProps as any
     })
     expect(wrapper.findComponent({ name: 'chart' }).exists()).toBe(true)
   })
 
   it('passes scale prop correctly', () => {
     const wrapper = shallowMount(Component, {
-      props: { ...defaultProps, scale: 2 }
+      props: { ...defaultProps, scale: 2 } as any
     })
-    expect(wrapper.props('scale')).toBe(2)
+    expect((wrapper.props() as any).scale).toBe(2)
   })
 
   it('emits onPointClick event', async () => {
     const wrapper = shallowMount(Component, {
-      props: defaultProps
+      props: defaultProps as any
     })
     await wrapper.vm.$nextTick()
     expect(wrapper.find('.bash-shape').exists()).toBe(true)

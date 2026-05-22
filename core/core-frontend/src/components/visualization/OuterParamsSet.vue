@@ -64,7 +64,7 @@
                       <handle-more
                         style="margin-right: 15px"
                         @handle-command="cmd => outerParamsOperation(cmd, node, data)"
-                        :menu-list="state.optMenu as Menu[][]"
+                        :menu-list="state.optMenu as Menu[]"
                         :icon-name="icon_more_vertical_outlined"
                         placement="bottom-start"
                       />
@@ -438,7 +438,9 @@ const state = reactive({
     enabledDefault: false,
     defaultValue: null,
     targetViewInfoList: [],
-    paramsInfoId: null
+    paramsInfoId: null,
+    filterInfo: [] as any[],
+    datasetInfo: [] as any[]
   },
   currentFiledTreeNode: null,
   defaultOuterParamsInfo: {

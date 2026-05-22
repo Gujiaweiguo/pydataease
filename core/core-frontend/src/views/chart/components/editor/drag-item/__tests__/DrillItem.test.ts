@@ -34,7 +34,15 @@ const globalStubs = {
 }
 
 const defaultProps = () => ({
-  item: { id: '1', name: 'drill_field', deType: 0, sort: 'none', groupType: 'd', customSort: [] },
+  item: {
+    id: '1',
+    name: 'drill_field',
+    chartShowName: 'drill_field',
+    deType: 0,
+    sort: 'none',
+    groupType: 'd',
+    customSort: []
+  },
   index: 0,
   chart: { type: 'bar' },
   dimensionData: [
@@ -76,7 +84,7 @@ describe('DrillItem', () => {
       props: defaultProps(),
       global: { stubs: globalStubs }
     })
-    wrapper.vm.removeItem()
+    ;(wrapper.vm as any).removeItem()
     expect(wrapper.emitted('onDimensionItemRemove')).toBeTruthy()
   })
 
@@ -85,7 +93,7 @@ describe('DrillItem', () => {
       props: defaultProps(),
       global: { stubs: globalStubs }
     })
-    wrapper.vm.showRename()
+    ;(wrapper.vm as any).showRename()
     const emitted = wrapper.emitted('onNameEdit')?.[0]?.[0] as any
     expect(emitted.renameType).toBe('drillFields')
   })
@@ -95,7 +103,7 @@ describe('DrillItem', () => {
       props: defaultProps(),
       global: { stubs: globalStubs }
     })
-    wrapper.vm.sort({ type: 'custom_sort' })
+    ;(wrapper.vm as any).sort({ type: 'custom_sort' })
     expect(wrapper.emitted('onCustomSort')).toBeTruthy()
   })
 
@@ -104,7 +112,7 @@ describe('DrillItem', () => {
       props: defaultProps(),
       global: { stubs: globalStubs }
     })
-    wrapper.vm.sort({ type: 'asc' })
+    ;(wrapper.vm as any).sort({ type: 'asc' })
     expect(wrapper.emitted('onDimensionItemChange')).toBeTruthy()
   })
 
@@ -113,7 +121,7 @@ describe('DrillItem', () => {
       props: defaultProps(),
       global: { stubs: globalStubs }
     })
-    wrapper.vm.clickItem({ type: 'sortPriority' })
+    ;(wrapper.vm as any).clickItem({ type: 'sortPriority' })
     expect(wrapper.emitted('editSortPriority')).toBeTruthy()
   })
 })

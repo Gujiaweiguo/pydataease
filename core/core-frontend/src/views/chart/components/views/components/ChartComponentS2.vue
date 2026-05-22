@@ -136,7 +136,8 @@ const containerId = 'container-' + showPosition.value + '-' + view.value.id + '-
 const viewTrack = ref(null)
 
 const calcData = (viewInfo: Chart, callback, resetPageInfo = true) => {
-  if (viewInfo.customAttr.basicStyle.tablePageStyle === 'general') {
+  const basicStyle = (viewInfo.customAttr as any)?.basicStyle
+  if (basicStyle?.tablePageStyle === 'general') {
     if (state.currentPageSize !== 0) {
       ;(viewInfo.chartExtRequest as Record<string, any>).pageSize = state.currentPageSize
       state.pageInfo.pageSize = state.currentPageSize
@@ -196,14 +197,17 @@ const handleDefaultVal = (chart: Chart) => {
       tableHeader.tableHeaderColBgColor = tableHeader.tableHeaderBgColor
       tableHeader.tableHeaderColFontColor = tableHeader.tableHeaderFontColor
       tableHeader.tableTitleColFontSize = tableHeader.tableTitleFontSize
-      tableHeader.tableHeaderColAlign = tableHeader.tableHeaderAlign
+      tableHeader.tableHeaderColAlign = tableHeader.tableHeaderAlign as 'left' | 'center' | 'right'
       tableHeader.isColBolder = tableHeader.isBolder
       tableHeader.isColItalic = tableHeader.isItalic
 
       tableHeader.tableHeaderCornerBgColor = tableHeader.tableHeaderBgColor
       tableHeader.tableHeaderCornerFontColor = tableHeader.tableHeaderFontColor
       tableHeader.tableTitleCornerFontSize = tableHeader.tableTitleFontSize
-      tableHeader.tableHeaderCornerAlign = tableHeader.tableHeaderAlign
+      tableHeader.tableHeaderCornerAlign = tableHeader.tableHeaderAlign as
+        | 'left'
+        | 'center'
+        | 'right'
       tableHeader.isCornerBolder = tableHeader.isBolder
       tableHeader.isCornerItalic = tableHeader.isItalic
     }
@@ -225,7 +229,7 @@ const renderChart = (viewInfo: Chart, resetPageInfo: boolean) => {
   recursionTransObj(customStyleTrans, actualChart.customStyle, scale.value, terminal.value)
 
   setupPage(actualChart, resetPageInfo)
-  nextTick(() => debounceRender(resetPageInfo))
+  nextTick(() => debounceRender())
 }
 
 const debounceRender = debounce(() => {
@@ -632,8 +636,9 @@ const trackMenuCalc = itemId => {
 
 const resizeAction = resizeColumn => {
   // 从头开始滚动
-  if (myChart?.facet.timer) {
-    myChart?.facet.timer.stop()
+  const facet = myChart?.facet as any
+  if (facet?.timer) {
+    facet.timer.stop()
     nextTick(initScroll)
   }
   if (showPosition.value !== 'canvas') {

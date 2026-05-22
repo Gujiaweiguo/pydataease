@@ -35,11 +35,11 @@ const props = defineProps({
 })
 
 const quotaFields = computed<Array<any>>(() => {
-  return props.quotaData.filter(ele => ele.summary !== '' && ele.id !== '-1')
+  return (props.quotaData as any[]).filter(ele => ele.summary !== '' && ele.id !== '-1')
 })
 
 const quotaExtFields = computed<Array<any>>(() => {
-  return props.quotaExtData.filter(ele => ele.summary !== '' && ele.id !== '-1')
+  return (props.quotaExtData as any[]).filter(ele => ele.summary !== '' && ele.id !== '-1')
 })
 
 const useQuotaExt = computed<boolean>(() => {

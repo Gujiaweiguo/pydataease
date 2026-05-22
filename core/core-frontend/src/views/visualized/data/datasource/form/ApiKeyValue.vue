@@ -13,6 +13,9 @@ export interface Item {
   value: string
   description: string
   type: string
+  nameType?: string
+  originName?: string
+  enable?: boolean
 }
 const props = defineProps({
   keyPlaceholder: propTypes.string.def(''),
@@ -64,18 +67,18 @@ const change = () => {
 const isDisable = () => {
   return items.value.length === 1
 }
-const querySearch = (queryString, cb) => {
+const querySearch = (queryString: string, cb: (results: Item[]) => void) => {
   const results = queryString
     ? suggestions.value.filter(createFilter(queryString))
     : suggestions.value
   cb(results)
 }
 
-const changeNameType = element => {
+const changeNameType = (element: Item) => {
   element.value = ''
 }
 const createFilter = (queryString: string) => {
-  return restaurant => {
+  return (restaurant: Item) => {
     return restaurant.value.toLowerCase().indexOf(queryString.toLowerCase()) === 0
   }
 }
@@ -179,9 +182,9 @@ const timeFunLists = [
               >
                 <el-option
                   v-for="item in valueList"
-                  :key="item.originName"
+                  :key="item.originName || item.name"
                   :label="item.name"
-                  :value="item.originName"
+                  :value="item.originName || item.name"
                 />
               </el-select>
               <el-select
@@ -191,7 +194,7 @@ const timeFunLists = [
               >
                 <el-option
                   v-for="item in timeFunLists"
-                  :key="item.originName"
+                  :key="item.value"
                   :label="item.label"
                   :value="item.value"
                 />
