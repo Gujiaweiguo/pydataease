@@ -46,7 +46,7 @@ const mountComponent = () =>
     props: {
       optionList: [
         { id: '1', name: 'One' },
-        { name: 'Fallback', value: 'two' }
+        { id: '2', name: 'Fallback', value: 'two' }
       ],
       property: {
         placeholder: ' users'

@@ -17,7 +17,7 @@
             :append-to-body="false"
           >
             <el-dropdown-item
-              v-for="(item, key) in trackMenu"
+              v-for="(item, key) in trackMenu as TrackMenuKey[]"
               :key="key"
               @mousedown.stop
               @click="trackMenuClick(item)"
@@ -39,7 +39,7 @@ const emits = defineEmits(['trackClick'])
 
 const props = defineProps({
   trackMenu: {
-    type: Array,
+    type: Array as () => TrackMenuKey[],
     required: true
   },
   isDataVMobile: {
@@ -70,6 +70,8 @@ const state = reactive({
     event_refreshView: t('visualization.refresh_view')
   }
 })
+type TrackMenuKey = keyof typeof state.i18n_map
+
 const visibleChange = () => {
   document.querySelectorAll('.g2-tooltip')?.forEach(tooltip => {
     if (tooltip.id?.includes(chartId.value)) {
@@ -78,13 +80,13 @@ const visibleChange = () => {
   })
 }
 // 添加图表标识，用于区分不同图表的 tooltip
-const chartId = ref(null)
+const chartId = ref<string | null>(null)
 const trackButtonClick = (id?: string) => {
   chartId.value = id
-  trackButton.value.click()
+  ;(trackButton.value as HTMLInputElement | null)?.click()
 }
 
-const trackMenuClick = menu => {
+const trackMenuClick = (menu: TrackMenuKey) => {
   emits('trackClick', menu)
 }
 

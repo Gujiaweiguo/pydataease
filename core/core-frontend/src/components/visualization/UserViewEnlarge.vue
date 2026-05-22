@@ -109,6 +109,8 @@
           :opt-type="optType"
           :view-info="viewInfo as any"
           :config="config as any"
+          :canvas-style-data="canvasStyleData as any"
+          :canvas-view-info="{}"
           :dv-info="dvInfo"
           :font-family="canvasStyleData?.fontFamily"
           show-position="viewDialog"
@@ -314,8 +316,12 @@ const dialogInit = (_canvasStyle, view, item, opt, params = { scale: 0.5 }) => {
   if (opt === 'details') {
     if (!viewInfo.value.type?.includes('table')) {
       assign(viewInfo.value, DETAIL_CHART_ATTR)
-      viewInfo.value.xAxis.forEach(i => (i.hide = false))
-      viewInfo.value.yAxis.forEach(i => (i.hide = false))
+      viewInfo.value.xAxis.forEach(i => {
+        i.hide = false
+      })
+      viewInfo.value.yAxis.forEach(i => {
+        i.hide = false
+      })
       viewInfo.value['customAttr']['tableHeader']['tableHeaderFontColor'] =
         canvasStyleData.value.dialogButton
       viewInfo.value['customAttr']['tableCell']['tableFontColor'] =

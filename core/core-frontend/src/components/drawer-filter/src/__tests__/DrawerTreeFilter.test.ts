@@ -45,8 +45,8 @@ const mountComponent = () =>
   mount(DrawerTreeFilter, {
     props: {
       optionList: [
-        { value: 'admin', label: 'Admin', children: [] },
-        { value: 'user', label: 'User', children: [] }
+        { value: 'admin', label: 'Admin', children: [], disabled: false },
+        { value: 'user', label: 'User', children: [], disabled: false }
       ],
       title: 'Role Filter',
       property: {

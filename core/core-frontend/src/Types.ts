@@ -6,6 +6,7 @@ export enum ShorthandMode {
    * 统一模式，所有边使用相同的值
    */
   Uniform = 'uniform',
+  XY = 'xy',
   /**
    * 逐边模式，可单独设置每条边的值
    */

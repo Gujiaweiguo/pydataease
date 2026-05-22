@@ -273,7 +273,7 @@
                                             class="svg-icon"
                                             style="width: 14px; height: 14px"
                                             :class="`field-icon-${fieldType[curViewField.deType]}`"
-                                            :is="iconFieldMap[fieldType[curViewField.deType]]"
+                                            :is="iconFieldMap[fieldType[curViewField.deType] as keyof typeof iconFieldMap]"
                                           ></component
                                         ></Icon>
                                         <span
@@ -312,7 +312,7 @@
                                           ><component
                                             class="svg-icon view-type-icon"
                                             style="width: 14px; height: 14px"
-                                            :is="iconChartMap[item.type]"
+                                            :is="iconChartMap[item.type as keyof typeof iconChartMap]"
                                           ></component
                                         ></Icon>
                                         <span
@@ -832,7 +832,7 @@ const init = viewItem => {
     if (rsp && rsp[0]?.id === '0') {
       state.panelList = rsp[0].children
     } else {
-      state.panelList = rsp as any[]
+      state.panelList = rsp as unknown as any[]
     }
     state.panelList = filterEmptyFolderTree(state.panelList)
     const curSortType = wsCache.get(`TreeSort-${dvInfo.value.type}`) || 'time_asc'

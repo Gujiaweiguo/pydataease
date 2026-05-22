@@ -456,7 +456,7 @@ const openMessageLoading = cb => {
       '查看进度，进行下载'
     ]),
     iconClass,
-    icon: h(RefreshLeft),
+    icon: h(RefreshLeft) as any,
     showClose: true,
     customClass
   })
@@ -574,7 +574,7 @@ const linkageChange = item => {
 const existLinkage = computed(() => {
   let linkageFiltersCount = 0
   componentData.value.forEach(item => {
-    if (item.component === 'UserView' && item.innerType != 'VQuery') {
+    if (item.component === 'UserView' && item.innerType !== 'VQuery') {
       if (linkageChange(item)) {
         linkageFiltersCount++
       }

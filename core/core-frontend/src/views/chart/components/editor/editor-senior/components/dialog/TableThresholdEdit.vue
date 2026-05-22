@@ -12,7 +12,6 @@ import {
   transDateFormat,
   transDatePickerType
 } from '@/views/chart/components/editor/util/DateFormatUtil'
-import { TableThreshold } from '@/models/chart/chart-senior'
 
 const { t } = useI18n()
 

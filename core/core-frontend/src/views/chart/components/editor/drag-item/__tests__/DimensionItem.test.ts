@@ -67,7 +67,7 @@ describe('DimensionItem', () => {
 
   it('renders the item name via chartShowName or name', () => {
     const props = defaultProps()
-    props.item.chartShowName = 'display name'
+    ;(props.item as Record<string, any>).chartShowName = 'display name'
     const wrapper = shallowMount(DimensionItem, {
       props,
       global: { stubs: globalStubs }
@@ -80,7 +80,7 @@ describe('DimensionItem', () => {
       props: defaultProps(),
       global: { stubs: globalStubs }
     })
-    wrapper.vm.removeItem()
+    ;(wrapper.vm as any).removeItem()
     expect(wrapper.emitted('onDimensionItemRemove')).toBeTruthy()
   })
 

@@ -85,7 +85,7 @@ describe('QuotaItem', () => {
 
   it('renders item name from chartShowName when available', () => {
     const props = defaultProps()
-    props.item.chartShowName = 'display qty'
+    ;(props.item as Record<string, any>).chartShowName = 'display qty'
     const wrapper = shallowMount(QuotaItem, {
       props,
       global: { stubs: globalStubs }
@@ -98,7 +98,7 @@ describe('QuotaItem', () => {
       props: defaultProps(),
       global: { stubs: globalStubs }
     })
-    wrapper.vm.removeItem()
+    ;(wrapper.vm as any).removeItem()
     expect(wrapper.emitted('onQuotaItemRemove')).toBeTruthy()
   })
 
@@ -127,7 +127,7 @@ describe('QuotaItem', () => {
       props: defaultProps(),
       global: { stubs: globalStubs }
     })
-    wrapper.vm.editFilter()
+    ;(wrapper.vm as any).editFilter()
     expect(wrapper.emitted('editItemFilter')).toBeTruthy()
   })
 })

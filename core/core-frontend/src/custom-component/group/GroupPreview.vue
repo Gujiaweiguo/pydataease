@@ -1,15 +1,25 @@
 <script setup lang="ts">
-import { ref, toRefs } from 'vue'
+import { PropType, ref, toRefs } from 'vue'
 import ComponentWrapper from '@/components/data-visualization/canvas/ComponentWrapper.vue'
 import { toPercent } from '@/utils/translate'
 import { dvMainStoreWithOut } from '@/store/modules/data-visualization/dvMain'
 import UserViewEnlarge from '@/components/visualization/UserViewEnlarge.vue'
 const dvMainStore = dvMainStoreWithOut()
-const userViewEnlargeRef = ref(null)
+const userViewEnlargeRef = ref<any>(null)
+
+type GroupItem = Record<string, any> & {
+  id: string
+  groupStyle: {
+    width: number
+    height: number
+    top: number
+    left: number
+  }
+}
 
 const props = defineProps({
   propValue: {
-    type: Array,
+    type: Array as PropType<GroupItem[]>,
     default: () => []
   },
   element: {
@@ -26,7 +36,7 @@ const props = defineProps({
     default: 'canvas'
   },
   dvInfo: {
-    type: Object,
+    type: Object as PropType<Record<string, any>>,
     required: true
   },
   // 仪表板刷新计时器
@@ -41,7 +51,7 @@ const props = defineProps({
     default: 1
   },
   canvasViewInfo: {
-    type: Object,
+    type: Object as PropType<Record<string, any>>,
     required: true
   },
   // 字体
@@ -53,7 +63,7 @@ const props = defineProps({
 })
 
 const { propValue, dvInfo, searchCount, scale, canvasViewInfo } = toRefs(props)
-const customGroupStyle = item => {
+const customGroupStyle = (item: GroupItem) => {
   return {
     width: toPercent(item.groupStyle.width),
     height: toPercent(item.groupStyle.height),
@@ -62,7 +72,7 @@ const customGroupStyle = item => {
   }
 }
 
-const userViewEnlargeOpen = (opt, item) => {
+const userViewEnlargeOpen = (opt: any, item: GroupItem) => {
   userViewEnlargeRef.value.dialogInit(
     dvMainStore.canvasStyleData,
     canvasViewInfo.value[item.id],
@@ -79,6 +89,7 @@ const userViewEnlargeOpen = (opt, item) => {
       <component-wrapper
         v-for="(item, index) in propValue"
         :id="'component' + item.id"
+        :canvas-style-data="dvMainStore.canvasStyleData"
         :view-info="canvasViewInfo[item.id]"
         :key="index"
         :config="item"

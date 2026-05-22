@@ -542,7 +542,7 @@ const backgroundStyle = backgroundParams => {
     const paddingMode = commonBackground.innerPadding?.mode
     if (paddingMode === ShorthandMode.Uniform) {
       innerPaddingStyle = `${commonBackground.innerPadding?.top * scale.value}px`
-    } else if (paddingMode === ShorthandMode.XY) {
+    } else if (paddingMode === 'xy') {
       innerPaddingStyle = `${commonBackground.innerPadding?.top * scale.value}px ${
         commonBackground.innerPadding?.left * scale.value
       }px`
@@ -558,7 +558,7 @@ const backgroundStyle = backgroundParams => {
     const borderRadiusMode = commonBackground.borderRadius?.mode
     if (borderRadiusMode === ShorthandMode.Uniform) {
       borderRadiusStyle = `${commonBackground.borderRadius?.topLeft * scale.value}px`
-    } else if (borderRadiusMode === ShorthandMode.XY) {
+    } else if (borderRadiusMode === 'xy') {
       borderRadiusStyle = `${commonBackground.borderRadius?.topLeft * scale.value}px ${
         commonBackground.borderRadius?.bottomLeft * scale.value
       }px`

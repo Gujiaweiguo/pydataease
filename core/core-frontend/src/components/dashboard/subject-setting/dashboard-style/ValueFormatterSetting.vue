@@ -33,7 +33,7 @@ const state = reactive({
   exampleResult: '20000000'
 })
 
-function changeUnitLanguage(cfg: BaseFormatter, lang) {
+function changeUnitLanguage(cfg: BaseFormatter, lang: BaseFormatter['unitLanguage']) {
   onChangeFormatCfgUnitLanguage(cfg, lang)
   getExampleValue()
 }

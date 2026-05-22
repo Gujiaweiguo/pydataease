@@ -107,6 +107,7 @@ const valueOptions = computed(() => {
   return filterExpressionListByValue(expressionList, ['lt', 'gt', 'le', 'ge', 'between'])
 })
 const predefineColors = COLOR_PANEL
+type LineThreshold = TableThreshold
 
 const state = reactive({
   thresholdArr: [] as LineThreshold[],

@@ -67,3 +67,4 @@ core/pydataease-backend/.coverage
 .factorypath
 .project
 .settings/
+/.tmp-*.txt

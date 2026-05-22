@@ -65,7 +65,7 @@ const props = defineProps({
 const { t } = useI18n()
 const spanCount = ref(21)
 const activeName = ref('headers')
-const Body = ApiTestModel.Body as new () => ApiBodyItem
+const Body = (ApiTestModel as any).Body as new () => ApiBodyItem
 const headerSuggestions: Item[] = [
   'Accept',
   'Accept-Charset',

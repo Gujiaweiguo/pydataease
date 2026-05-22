@@ -78,7 +78,7 @@ describe('DeIndicator', () => {
     const wrapper = shallowMount(DeIndicator, {
       props: {
         element: { propValue: null },
-        view: { propValue: null, yAxis: [], drillFields: [], senior: {} },
+        view: { propValue: null, yAxis: [], drillFields: [], senior: {} } as any,
         showPosition: 'canvas',
         scale: 1,
         terminal: 'pc',
@@ -96,7 +96,7 @@ describe('DeIndicator', () => {
     const wrapper = shallowMount(DeIndicator, {
       props: {
         element: { propValue: null },
-        view: { propValue: null, yAxis: [], drillFields: [], senior: {} }
+        view: { propValue: null, yAxis: [], drillFields: [], senior: {} } as any
       },
       global: {
         stubs: { ViewTrackBar: true }

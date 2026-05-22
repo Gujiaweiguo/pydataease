@@ -165,11 +165,17 @@ import { dvMainStoreWithOut } from '@/store/modules/data-visualization/dvMain'
 import { storeToRefs } from 'pinia'
 const snapshotStore = snapshotStoreWithOut()
 const { t } = useI18n()
-const files = ref(null)
+const files = ref<HTMLInputElement | null>(null)
 const maxImageSize = 15000000
 
 const dvMainStore = dvMainStoreWithOut()
 const { canvasStyleData, dvInfo } = storeToRefs(dvMainStore)
+const watermarkInfo = computed(
+  () =>
+    dvInfo.value.watermarkInfo as {
+      settingContent?: { enable?: boolean; enablePanelCustom?: boolean }
+    }
+)
 
 withDefaults(
   defineProps<{
@@ -193,22 +199,23 @@ const state = reactive({
 
 const showWatermarkSetting = computed(() => {
   return (
-    dvInfo.value.watermarkInfo &&
-    dvInfo.value.watermarkInfo?.settingContent?.enable &&
-    dvInfo.value.watermarkInfo?.settingContent?.enablePanelCustom
+    watermarkInfo.value &&
+    watermarkInfo.value.settingContent?.enable &&
+    watermarkInfo.value.settingContent?.enablePanelCustom
   )
 })
 
 const goFile = () => {
-  files.value.click()
+  files.value?.click()
 }
 
 const sizeMessage = () => {
   ElMessage.success(t('visualization.pic_size_error'))
 }
 
-const reUpload = e => {
-  const file = e.target.files[0]
+const reUpload = (e: Event) => {
+  const file = (e.target as HTMLInputElement)?.files?.[0]
+  if (!file) return
   if (file.size > maxImageSize) {
     sizeMessage()
     return

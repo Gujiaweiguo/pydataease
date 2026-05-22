@@ -4,7 +4,7 @@ import Icon from '@/components/icon-custom/src/Icon.vue'
 
 const props = defineProps({
   icon: {
-    type: Object,
+    type: [Object, String],
     required: false
   },
   name: {

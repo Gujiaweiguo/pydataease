@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import dvRichText from '@/assets/svg/dv-richText.svg'
 import dvScrollText from '@/assets/svg/dv-scroll-text.svg'
-import { toRefs } from 'vue'
+import { PropType, toRefs } from 'vue'
 import eventBus from '@/utils/eventBus'
 import DragComponent from '@/custom-component/component-group/DragComponent.vue'
 import { commonHandleDragEnd, commonHandleDragStart } from '@/utils/canvasUtils'
@@ -25,7 +25,7 @@ const props = defineProps({
     }
   },
   themes: {
-    type: String,
+    type: String as PropType<EditorTheme>,
     default: 'dark'
   }
 })

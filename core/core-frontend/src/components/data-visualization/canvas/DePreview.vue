@@ -180,7 +180,7 @@ const baseComponentData = computed(() =>
   )
 )
 const canvasStyle = computed(() => {
-  let style = {}
+  let style: Record<string, string | number> = {}
   if (isMainCanvas(canvasId.value) && !isDashboard()) {
     style['overflowY'] = 'hidden !important'
   }
@@ -221,15 +221,15 @@ const getDownloadStatusMainHeightV2 = () => {
   const children = previewCanvas.value.childNodes
   let maxBottomPosition = 0
 
-  children.forEach(child => {
+  children.forEach((child: ChildNode) => {
     // 获取style中的top值
-    const styleTop = child.style?.top || 0
+    const styleTop = (child as HTMLElement).style?.top || 0
     // 获取style中的height
-    const styleHeight = child.style?.height || 0
+    const styleHeight = (child as HTMLElement).style?.height || 0
 
     // 转换为数字
-    const top = parseFloat(styleTop) || 0
-    const height = parseFloat(styleHeight) || 0
+    const top = parseFloat(String(styleTop)) || 0
+    const height = parseFloat(String(styleHeight)) || 0
 
     // 计算底部位置
     const bottomPosition = top + height
@@ -251,8 +251,9 @@ const getDownloadStatusMainHeight = () => {
   const children = previewCanvas.value.childNodes
   let maxHeight = 0
 
-  children.forEach(child => {
-    const height = (child.offsetHeight || 0) + (child.offsetTop || 0)
+  children.forEach((child: ChildNode) => {
+    const element = child as HTMLElement
+    const height = (element.offsetHeight || 0) + (element.offsetTop || 0)
     if (height > maxHeight) {
       maxHeight = height
     }

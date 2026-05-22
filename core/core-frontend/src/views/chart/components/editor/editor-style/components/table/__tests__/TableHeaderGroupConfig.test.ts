@@ -49,7 +49,7 @@ describe('TableHeaderGroupConfig', () => {
       },
       tableCell: {}
     }
-  }
+  } as any
 
   it('renders component', () => {
     const wrapper = shallowMount(TableHeaderGroupConfig, {

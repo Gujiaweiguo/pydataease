@@ -7,13 +7,21 @@ import { snapshotStoreWithOut } from '@/store/modules/data-visualization/snapsho
 import { storeToRefs } from 'pinia'
 import { ElIcon, ElMessage, ElRow } from 'element-plus-secondary'
 import Icon from '../icon-custom/src/Icon.vue'
-import { nextTick, ref, toRefs } from 'vue'
+import { nextTick, PropType, ref, toRefs } from 'vue'
 import draggable from 'vuedraggable'
 import { composeStoreWithOut } from '@/store/modules/data-visualization/compose'
 import RealTimeGroup from '@/components/data-visualization/RealTimeGroup.vue'
 import eventBus from '@/utils/eventBus'
 import { syncViewTitle } from '@/utils/canvasUtils'
 import { useI18n } from '@/hooks/web/useI18n'
+
+type RealTimeTabItem = Record<string, any> & {
+  id?: string
+  name?: string | null
+  title?: string
+  expand?: boolean
+  componentData?: Array<Record<string, any>>
+}
 
 const dvMainStore = dvMainStoreWithOut()
 const snapshotStore = snapshotStoreWithOut()
@@ -29,16 +37,22 @@ const props = defineProps({
     required: false,
     default: 'main'
   },
-  componentData: [],
-  tabElement: {}
+  componentData: {
+    type: Array as PropType<RealTimeTabItem[]>,
+    default: () => []
+  },
+  tabElement: {
+    type: Object as PropType<Record<string, any>>,
+    default: () => ({})
+  }
 })
 
 const { componentData, tabElement } = toRefs(props)
 
-const getComponent = index => {
+const getComponent = (index: number): RealTimeTabItem | undefined => {
   return componentData.value[index]
 }
-const onClick = item => {
+const onClick = (item?: RealTimeTabItem) => {
   if (item) {
     dvMainStore.setCurTabName(item.name)
   } else {
@@ -52,8 +66,8 @@ let nameEdit = ref(false)
 let editComponentId = ref('')
 let inputName = ref('')
 let nameInput = ref(null)
-let curEditComponent = null
-const editComponentName = item => {
+let curEditComponent: RealTimeTabItem | null = null
+const editComponentName = (item: RealTimeTabItem) => {
   curEditComponent = item
   editComponentId.value = `#component-label-${item.name}`
   nameEdit.value = true
@@ -80,14 +94,15 @@ const closeEditComponentName = () => {
   curEditComponent = null
 }
 
-const dragOnEnd = ({ newIndex }) => {
+const dragOnEnd = ({ newIndex }: { newIndex?: number }) => {
+  if (newIndex === undefined) return
   const source = componentData.value[newIndex]
-  dvMainStore.setCurTabName(source.title)
+  dvMainStore.setCurTabName(source?.title ?? null)
   eventBus.emit('onTabSortChange-' + tabElement.value?.id)
   snapshotStore.recordSnapshotCache('dragOnEnd')
 }
 
-const handleContextMenu = e => {
+const handleContextMenu = (e: MouseEvent) => {
   e.preventDefault()
   // 获取鼠标点击位置
   const x = e.clientX
@@ -108,8 +123,9 @@ const handleContextMenu = e => {
   })
 }
 
-const expandClick = component => {
-  component['expand'] = !component['expand']
+const expandClick = (component?: RealTimeTabItem) => {
+  if (!component) return
+  component.expand = !component.expand
 }
 </script>
 
@@ -164,7 +180,7 @@ const expandClick = component => {
               <div v-if="getComponent(index)?.expand">
                 <real-time-group
                   :tab-position="tabPosition"
-                  :component-data="getComponent(index).componentData"
+                  :component-data="(getComponent(index)?.componentData || []) as any"
                 ></real-time-group>
               </div>
             </div>

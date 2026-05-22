@@ -13,6 +13,8 @@ const expConstants = 10000
 
 const expTimeConstants = 90000
 
+type CachedRequestCallback = (token: string | null) => void
+
 const isExpired = () => {
   const exp = wsCache.get('user.exp')
   if (!exp) {
@@ -26,7 +28,7 @@ const isExpired = () => {
 }
 
 const delayExecute = (token: string) => {
-  const cachedRequestList = requestStore.getRequestList
+  const cachedRequestList = requestStore.getRequestList as unknown as CachedRequestCallback[]
   cachedRequestList.forEach(cb => {
     cb(token)
   })

@@ -318,8 +318,9 @@ const calcTabLength = () => {
         'tab-' + element.value.propValue[element.value.propValue.length - 1].name
       )
       if (containerDom) {
+        const parentElement = containerDom.parentNode as HTMLElement | null
         tabsAreaScroll.value =
-          containerDom?.parentNode?.clientWidth > tabComponentRef.value.clientWidth - 100
+          (parentElement?.clientWidth || 0) > tabComponentRef.value.clientWidth - 100
       }
     } else {
       tabsAreaScroll.value = false
@@ -334,7 +335,7 @@ const beforeHandleCommand = (item, param) => {
   }
 }
 function sureCurTitle() {
-  state.curItem.title = state.textarea
+  ;(state.curItem as Record<string, any>).title = state.textarea
   state.dialogVisible = false
   snapshotStore.recordSnapshotCache('sureCurTitle')
 }

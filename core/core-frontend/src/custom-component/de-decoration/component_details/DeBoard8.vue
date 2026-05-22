@@ -43,6 +43,7 @@ const pathD = computed(() => {
     height.value - 2.5
   } L2.5,2.5`
 })
+const length = computed(() => Math.max((width.value + height.value) * 2 - 10, 0))
 
 const border_style = computed(() => {
   return {

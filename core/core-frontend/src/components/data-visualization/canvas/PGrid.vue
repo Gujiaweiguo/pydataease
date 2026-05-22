@@ -11,12 +11,16 @@
 <script setup lang="ts">
 import { computed, toRefs } from 'vue'
 
+type GridCell = { el?: unknown }
+
 const props = defineProps({
   positionBox: {
-    type: Array
+    type: Array as () => GridCell[][],
+    default: () => []
   },
   matrixStyle: {
-    type: Object
+    type: Object as () => { width: number; height: number },
+    default: () => ({ width: 0, height: 0 })
   }
 })
 

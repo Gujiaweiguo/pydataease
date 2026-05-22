@@ -63,7 +63,8 @@ const mountComponent = (props?: Record<string, unknown>) =>
         {
           value: 'team',
           label: 'Team',
-          children: [{ value: 'east', label: 'East Team' }]
+          disabled: false,
+          children: [{ value: 'east', label: 'East Team', disabled: false }]
         }
       ],
       title: 'Tree Filter',

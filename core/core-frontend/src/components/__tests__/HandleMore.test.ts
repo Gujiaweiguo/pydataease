@@ -61,7 +61,7 @@ const ElIconStub = defineComponent({
 
 const mountComponent = (props: Record<string, unknown>) =>
   mount(HandleMore, {
-    props,
+    props: props as any,
     global: {
       stubs: {
         ElDropdown: ElDropdownStub,
