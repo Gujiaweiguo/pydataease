@@ -60,7 +60,7 @@ const state = reactive({
     color: '#ff0000',
     curField: {} as AssistLineField | Record<string, never>,
     fontSize: 10
-  },
+  } as AssistLineItem,
   fieldOptions: [
     { label: t('chart.field_fixed'), value: '0' },
     { label: t('chart.field_dynamic'), value: '1' }
@@ -117,8 +117,8 @@ const init = () => {
 const addLine = () => {
   const obj: AssistLineItem = {
     ...state.lineObj,
-    curField: props.quotaFields ? props.quotaFields[0] : null,
-    fieldId: props.quotaFields ? props.quotaFields[0]?.id : null
+    curField: props.quotaFields?.[0] || ({} as AssistLineField),
+    fieldId: props.quotaFields?.[0]?.id || ''
   }
   state.lineArr.push(JSON.parse(JSON.stringify(obj)))
   changeAssistLine()

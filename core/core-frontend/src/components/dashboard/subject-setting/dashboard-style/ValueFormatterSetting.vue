@@ -40,9 +40,7 @@ function changeUnitLanguage(cfg: BaseFormatter, lang: BaseFormatter['unitLanguag
 }
 
 const init = () => {
-  if (!formatterCfg.value) {
-    formatterCfg.value = formatterCfg
-
+  if (formatterCfg.value) {
     initFormatCfgUnit(formatterCfg.value)
   }
 }

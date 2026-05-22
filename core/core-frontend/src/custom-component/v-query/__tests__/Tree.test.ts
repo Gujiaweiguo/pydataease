@@ -60,8 +60,12 @@ const baseConfig = {
   optionFilter: [],
   id: 'test-tree',
   dataset: { id: 'ds1' },
-  field: { id: 'f1' }
-}
+  field: { id: 'f1' },
+  defaultMapValue: '',
+  mapValue: '',
+  placeholder: '',
+  checkedFields: []
+} as any
 
 const mountTree = (
   configOverrides: Record<string, any> = {},

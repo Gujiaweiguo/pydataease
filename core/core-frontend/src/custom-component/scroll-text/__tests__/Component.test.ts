@@ -49,7 +49,7 @@ const mountComponent = () =>
 
 describe('scroll-text/Component', () => {
   it('renders in preview mode', () => {
-    const wrapper = mountComponent('preview')
+    const wrapper = mountComponent()
     expect(wrapper.find('.v-text').exists()).toBe(true)
     expect(wrapper.find('.preview').exists()).toBe(true)
   })
@@ -68,16 +68,16 @@ describe('scroll-text/Component', () => {
 
   it('accepts propValue prop', () => {
     const wrapper = mountComponent()
-    expect(wrapper.props('propValue')).toBe('Scrolling Text')
+    expect((wrapper.props() as any).propValue).toBe('Scrolling Text')
   })
 
   it('accepts element prop', () => {
     const wrapper = mountComponent()
-    expect(wrapper.props('element').id).toBe('scroll-1')
+    expect((wrapper.props() as any).element.id).toBe('scroll-1')
   })
 
   it('accepts showPosition prop', () => {
     const wrapper = mountComponent()
-    expect(wrapper.props('showPosition')).toBe('preview')
+    expect((wrapper.props() as any).showPosition).toBe('preview')
   })
 })

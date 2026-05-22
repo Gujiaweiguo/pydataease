@@ -207,7 +207,7 @@ const changeThreshold = () => {
 }
 
 const addConditions = (item: LineThresholdItem) => {
-  const newCondition = JSON.parse(JSON.stringify(thresholdCondition)) as Threshold
+  const newCondition = JSON.parse(JSON.stringify(thresholdCondition)) as unknown as Threshold
   item.conditions.push(newCondition)
   changeThreshold()
 }

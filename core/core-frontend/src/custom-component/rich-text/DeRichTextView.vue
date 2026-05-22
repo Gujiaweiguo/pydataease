@@ -413,7 +413,7 @@ const assignment = content => {
   return content
 }
 
-const decodeHTMLEntities = text => {
+const decodeHTMLEntities = (text: string) => {
   if (!text) return text
 
   const textarea = document.createElement('textarea')
@@ -421,10 +421,12 @@ const decodeHTMLEntities = text => {
   return textarea.value
 }
 
-const initFontFamily = htmlText => {
+const initFontFamily = (htmlText: string) => {
   const regex = /font-family:\s*([^;"]+);/g
-  let match
-  while ((match = regex.exec(htmlText)) !== null) {
+  let match: RegExpExecArray | null
+  while (true) {
+    match = regex.exec(htmlText)
+    if (match === null) break
     const font = match[1].trim()
     if (systemFontFamily.includes(font)) {
       appearanceStore.setCurrentFont(font)
@@ -464,7 +466,7 @@ const resetSelect = (node?) => {
     }
     if (node) {
       const pNode = node.parentElement
-      if (pNode && pNode.id && pNode.id.indexOf('changeText') > -1) {
+      if (pNode?.id && pNode.id.indexOf('changeText') > -1) {
         const innerId = '#' + pNode.id
         const domTest = edInner.dom.select(innerId)[0]
         domTest.setAttribute('class', 'base-selected')
@@ -487,7 +489,7 @@ const computedCanEdit = computed<boolean>(() => {
 
 const showPlaceHolder = computed<boolean>(() => {
   return (
-    computedCanEdit.value && (myValue.value == undefined || myValue.value == '') && !isError.value
+    computedCanEdit.value && (myValue.value === undefined || myValue.value === '') && !isError.value
   )
 })
 

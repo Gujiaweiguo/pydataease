@@ -55,7 +55,7 @@ const mountComponent = (threshold: any[] = []) =>
         type: 'table-normal',
         xAxis: xAxisFields as any,
         yAxis: yAxisFields as any
-      },
+      } as any,
       threshold
     },
     global: { stubs: globalStubs }

@@ -42,7 +42,7 @@ const baseConfig = {
   aroundRange: 'f',
   arbitraryTimeRange: new Date(),
   id: 'test-dynamic-time-range'
-}
+} as any
 
 const mountDynamicTimeRange = (configOverrides: Record<string, any> = {}) =>
   shallowMount(DynamicTimeRange, {

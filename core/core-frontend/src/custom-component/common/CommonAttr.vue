@@ -180,7 +180,7 @@ onMounted(() => {
         :title="t('visualization.title_background')"
         name="titleBackground"
         v-model="element.titleBackground.enable"
-        @modelChange="val => onTitleBackgroundEnableChange(val)"
+        @modelChange="onTitleBackgroundEnableChange"
         v-if="element && titleBackgroundShow"
       >
         <tab-background-overall

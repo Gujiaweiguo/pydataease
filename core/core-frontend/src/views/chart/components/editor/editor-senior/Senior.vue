@@ -108,7 +108,7 @@ watch(
 const seniorCounts = computed(() => {
   let linkageCount = 0
   let jumpCount = 0
-  props.fieldsData?.forEach(item => {
+  ;(props.fieldsData as Array<{ id: string }> | undefined)?.forEach(item => {
     const sourceInfo = props.chart.id + '#' + item.id
     if (nowPanelTrackInfo.value[sourceInfo]) {
       linkageCount++

@@ -85,7 +85,7 @@ const ElCheckboxStub = defineComponent({
   template: '<label class="checkbox-stub"><slot />{{ label }}</label>'
 })
 
-const mountComponent = (formatterCfg: Record<string, unknown>) =>
+const mountComponent = (formatterCfg: BaseFormatter) =>
   mount(ValueFormatterSetting, {
     props: {
       formatterCfg,
@@ -118,31 +118,35 @@ describe('ValueFormatterSetting', () => {
       type: 'number',
       decimalCount: 2,
       unitLanguage: 'ch',
-      unit: 'ch-unit',
+      unit: 1,
       suffix: '元',
-      thousandSeparator: true
+      thousandSeparator: true,
+      showTotalPercent: false
     })
 
     expect(wrapper.findAll('.radio-stub')).toHaveLength(3)
     expect(wrapper.text()).toContain('t:chart.auto')
-    expect(wrapper.text()).toContain('20000000:number:ch:ch-unit:元:true')
+    expect(wrapper.text()).toContain('20000000:number:ch:1:元:true')
   })
 
   it('toggles formatter-specific fields based on formatter type', () => {
     const autoWrapper = mountComponent({
       type: 'auto',
+      decimalCount: 2,
       unitLanguage: 'ch',
-      unit: 'ch-unit',
+      unit: 1,
       suffix: '',
-      thousandSeparator: false
+      thousandSeparator: false,
+      showTotalPercent: false
     })
     const percentWrapper = mountComponent({
       type: 'percent',
       decimalCount: 1,
       unitLanguage: 'en',
-      unit: 'en-unit',
+      unit: 1,
       suffix: '%',
-      thousandSeparator: false
+      thousandSeparator: false,
+      showTotalPercent: false
     })
 
     expect(autoWrapper.findComponent(ElInputNumberStub).exists()).toBe(false)
@@ -150,13 +154,14 @@ describe('ValueFormatterSetting', () => {
   })
 
   it('emits formatter changes when the decimal input changes', async () => {
-    const formatterCfg = {
+    const formatterCfg: BaseFormatter = {
       type: 'number',
       decimalCount: 2,
       unitLanguage: 'ch',
-      unit: 'ch-unit',
+      unit: 1,
       suffix: '',
-      thousandSeparator: false
+      thousandSeparator: false,
+      showTotalPercent: false
     }
     const wrapper = mountComponent(formatterCfg)
 
@@ -166,13 +171,14 @@ describe('ValueFormatterSetting', () => {
   })
 
   it('updates unit language through the formatter helper', async () => {
-    const formatterCfg = {
+    const formatterCfg: BaseFormatter = {
       type: 'number',
       decimalCount: 2,
       unitLanguage: 'ch',
-      unit: 'ch-unit',
+      unit: 1,
       suffix: '',
-      thousandSeparator: false
+      thousandSeparator: false,
+      showTotalPercent: false
     }
     const wrapper = mountComponent(formatterCfg)
 

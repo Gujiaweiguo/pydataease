@@ -44,7 +44,7 @@ const yAxisFields = [
 const mountComponent = (threshold: any[] = []) =>
   shallowMount(LineThresholdEdit, {
     props: {
-      chart: { type: 'bar', yAxis: yAxisFields },
+      chart: { type: 'bar', yAxis: yAxisFields } as any,
       threshold
     },
     global: { stubs: globalStubs }

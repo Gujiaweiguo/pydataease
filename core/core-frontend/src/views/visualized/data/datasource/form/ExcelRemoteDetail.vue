@@ -37,28 +37,6 @@ export interface Param {
   staticMap?: any
 }
 
-type SyncSetting = {
-  updateType: string
-  syncRate: string
-  simpleCronValue: string | number
-  simpleCronType: string
-  startTime: Date | number | string
-  endTime: Date | number | string
-  endLimit: string | number
-  cron: string
-}
-
-type RemoteExcelForm = {
-  id?: string
-  name?: string
-  desc?: string
-  type?: string
-  editType?: number
-  syncRate?: string
-  configuration?: Record<string, any>
-  syncSetting?: SyncSetting
-}
-
 export interface Field {
   accuracy: number
   originName: string
@@ -89,7 +67,7 @@ const props = defineProps({
         editType: 0
       })
     },
-    type: Object as PropType<RemoteExcelForm>
+    type: Object as PropType<Record<string, any>>
   },
   isSupportSetKey: {
     type: Boolean,

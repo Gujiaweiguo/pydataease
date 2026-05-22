@@ -66,9 +66,13 @@ const baseConfig = {
   sortId: '',
   checkedFields: [],
   valueSource: [],
+  defaultMapValue: '',
+  mapValue: '',
+  defaultValueFirstItem: false,
+  dataset: { id: 'ds1' },
   placeholder: 'Select...',
   name: 'Test'
-}
+} as any
 
 const mountSelect = (
   configOverrides: Record<string, any> = {},

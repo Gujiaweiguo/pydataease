@@ -109,7 +109,11 @@ describe('EditorDetail', () => {
           type: 'API',
           apiConfiguration: []
         },
-        activeStep: 1
+        activeStep: 1,
+        isSupportSetKey: false,
+        pluginDs: [],
+        pluginIndex: '',
+        isPlugin: false
       },
       global: {
         stubs: globalStubs,

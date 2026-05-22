@@ -132,7 +132,7 @@ const baseAreaActive = computed(
 // 4.将[laterIndex,curClickIndex] 或者 [curClickIndex,laterIndex]区域的图层加入areaData.value.components(已包含的不再重复加入);
 const shiftDataPush = (curClickIndex: number) => {
   const areaDataIdArray = areaData.value.components.map(com => com.id)
-  let indexBegin, indexEnd
+  let indexBegin: number, indexEnd: number
   const laterIndexTrans = laterIndex.value === null ? componentData.value.length : laterIndex.value
   if (laterIndexTrans < curClickIndex) {
     indexBegin = laterIndexTrans
@@ -155,7 +155,7 @@ const shiftDataPush = (curClickIndex: number) => {
 }
 
 const hiddenAreaOnClick = (_e: MouseEvent, element: any) => {
-  let indexResult
+  let indexResult: number | undefined
   componentData.value.forEach((component, index) => {
     if (element.id === component.id) {
       indexResult = index
@@ -164,7 +164,7 @@ const hiddenAreaOnClick = (_e: MouseEvent, element: any) => {
   dvMainStore.setCurComponent({ component: element, index: indexResult })
 }
 
-const onClick = (e, index) => {
+const onClick = (e: MouseEvent, index: number) => {
   contextmenuStore.hideContextMenu()
   // 初始化点击是 laterIndex=0
   if (!curComponent.value) {
@@ -599,7 +599,10 @@ const canvasChange = () => {
                     effect="dark"
                     :hide-timeout="0"
                   >
-                    <span :class="'dropdownMore-' + index" @click="onClick($event, transformIndex(index))">
+                    <span
+                      :class="'dropdownMore-' + index"
+                      @click="onClick($event, transformIndex(index))"
+                    >
                       <el-icon class="component-base">
                         <Icon name="dv-more"><dvMore class="svg-icon opt-icon" /></Icon>
                       </el-icon>

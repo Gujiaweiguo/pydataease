@@ -443,7 +443,7 @@ export const dvMainStore = defineStore('dataVisualization', {
         this.componentData.forEach(componentItem => {
           if (
             component.canvasId.includes(componentItem.id) &&
-            componentItem.component == 'DeTabs'
+            componentItem.component === 'DeTabs'
           ) {
             componentItem.propValue.forEach(tabItem => {
               if (component.canvasId.includes(tabItem.name)) {
@@ -517,7 +517,9 @@ export const dvMainStore = defineStore('dataVisualization', {
           newView = chartViewInstance.setupDefaultOptions(newView)
           newView['title'] = component.name
         }
-        currentFont && (newView.customStyle.text.fontFamily = currentFont.name)
+        if (currentFont) {
+          newView.customStyle.text.fontFamily = currentFont.name
+        }
         this.canvasViewInfo[component.id] = newView
       }
       if (component.component === 'VQuery') {
@@ -650,7 +652,7 @@ export const dvMainStore = defineStore('dataVisualization', {
     // 清除相同sourceViewId 的 联动条件
     clearViewLinkage(viewId) {
       this.componentData.forEach(item => {
-        if (item.component === 'UserView' && item.innerType != 'VQuery') {
+        if (item.component === 'UserView' && item.innerType !== 'VQuery') {
           this.clearTargetViewLinkage(viewId, item)
         } else if (item.component === 'Group') {
           item.propValue.forEach(groupItem => {
@@ -834,38 +836,46 @@ export const dvMainStore = defineStore('dataVisualization', {
             const target = viewInfo[propertyInfo.custom][propertyInfo.property]
             set(target, propertyInfo.subProp, subValue)
             switch (propertyInfo.subProp) {
-              case 'alpha':
+              case 'alpha': {
                 const subAlpha = get(propertyInfo.value, 'subAlpha')
                 set(target, 'subAlpha', subAlpha)
                 break
-              case 'colorScheme':
+              }
+              case 'colorScheme': {
                 const subColorScheme = get(propertyInfo.value, 'subColorScheme')
                 set(target, 'subColorScheme', subColorScheme)
                 break
-              case 'seriesColor':
+              }
+              case 'seriesColor': {
                 const subSeriesColor = get(propertyInfo.value, 'subSeriesColor')
                 set(target, 'subSeriesColor', subSeriesColor)
                 break
-              case 'colors':
+              }
+              case 'colors': {
                 const subColors = get(propertyInfo.value, 'subColors')
                 set(target, 'subColors', subColors)
                 break
-              case 'lineWidth':
+              }
+              case 'lineWidth': {
                 const leftLineWidth = get(propertyInfo.value, 'leftLineWidth')
                 set(target, 'leftLineWidth', leftLineWidth)
                 break
-              case 'lineSymbol':
+              }
+              case 'lineSymbol': {
                 const leftLineSymbol = get(propertyInfo.value, 'leftLineSymbol')
                 set(target, 'leftLineSymbol', leftLineSymbol)
                 break
-              case 'lineSymbolSize':
+              }
+              case 'lineSymbolSize': {
                 const leftLineSymbolSize = get(propertyInfo.value, 'leftLineSymbolSize')
                 set(target, 'leftLineSymbolSize', leftLineSymbolSize)
                 break
-              case 'lineSmooth':
+              }
+              case 'lineSmooth': {
                 const leftLineSmooth = get(propertyInfo.value, 'leftLineSmooth')
                 set(target, 'leftLineSmooth', leftLineSmooth)
                 break
+              }
             }
           } else if (propertyInfo.subProp) {
             const subValue = get(propertyInfo.value, propertyInfo.subProp)
@@ -967,7 +977,7 @@ export const dvMainStore = defineStore('dataVisualization', {
       }
     },
     setHiddenListStatus(status?) {
-      if (status != undefined) {
+      if (status !== undefined) {
         this.hiddenListStatus = !!status
       } else {
         this.hiddenListStatus = !this.hiddenListStatus
@@ -1044,7 +1054,7 @@ export const dvMainStore = defineStore('dataVisualization', {
     // 添加联动 下钻 等查询组件
     addViewTrackFilter(data) {
       const viewId = data.viewId
-      let trackInfo
+      let trackInfo: Record<string, any>
       if (data.option === 'linkage') {
         // 维度日期类型转换
         viewFieldTimeTrans(this.canvasViewDataInfo[viewId], data)
@@ -1256,7 +1266,10 @@ export const dvMainStore = defineStore('dataVisualization', {
       // 外部参数 可能会包含多个参数
       Object.keys(params).forEach(function (sourceInfo) {
         // 获取外部参数的值 sourceInfo 是外部参数名称 支持数组传入
-        let operatorV2, paramValue, paramValueStr, parmaValueSource
+        let operatorV2: string | undefined,
+          paramValue: any,
+          paramValueStr: any,
+          parmaValueSource: any
         if (outerParamsVersion === 'v2') {
           operatorV2 = params[sourceInfo].operator
           paramValue = params[sourceInfo].value
@@ -1496,7 +1509,7 @@ export const dvMainStore = defineStore('dataVisualization', {
             } else {
               // 如果目标图表 和 当前循环组件id相等 则进行条件增减
               const targetFieldId = targetInfoArray[1] // 目标图表列ID
-              let condition
+              let condition: Record<string, any> | undefined
               if (QDItem.timeValue && Array.isArray(QDItem.timeValue)) {
                 // 如果dimension.timeValue存在值且是数组 目前判断为是时间组件
                 condition = {
@@ -1715,7 +1728,7 @@ export const dvMainStore = defineStore('dataVisualization', {
         this.canvasState[key] = value
       }
     },
-    createInit(dvType, resourceId?, pid?, watermarkInfo?, preName) {
+    createInit(dvType, resourceId?, pid?, watermarkInfo?, preName?) {
       const optName =
         dvType === 'dashboard' ? t('visualization.new_dashboard') : t('visualization.new_screen')
       const name = preName ? preName : optName

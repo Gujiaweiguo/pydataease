@@ -325,9 +325,13 @@ const isTableThresholdItem = (
   return Array.isArray((item as TableThresholdItem).conditions)
 }
 
-const addField = (item: TableThresholdItem | ThresholdConditionItem) => {
+const addField = (item: Threshold) => {
   const thresholdItem = item as ThresholdConditionItem
-  const tableThresholdItem = isTableThresholdItem(item) ? item : undefined
+  const tableThresholdItem = isTableThresholdItem(
+    item as TableThresholdItem | ThresholdConditionItem
+  )
+    ? (item as TableThresholdItem)
+    : undefined
   // get field
   if (state.fields && state.fields.length > 0) {
     state.fields.forEach(ele => {
@@ -385,8 +389,8 @@ const dynamicSummaryOptions = [
 
 const getConditionsFields = (
   fieldItem: TableThresholdItem,
-  conditionItem: ThresholdConditionItem,
-  conditionItemField: ThresholdDynamicField
+  conditionItem: Threshold,
+  conditionItemField: any
 ) => {
   const fieldItemObj = state.fields.filter(ele => ele.id === fieldItem.fieldId)
 
@@ -449,11 +453,12 @@ const isBetween = (item: Threshold) => {
 const isDynamic = (item: Threshold) => {
   return item.type === 'dynamic'
 }
-const changeConditionItemType = (item: ThresholdConditionItem) => {
-  if (item.type === 'dynamic') {
-    item.dynamicField.summary = 'value'
-    item.dynamicMinField.summary = 'value'
-    item.dynamicMaxField.summary = 'value'
+const changeConditionItemType = (item: Threshold) => {
+  const thresholdItem = item as ThresholdConditionItem
+  if (thresholdItem.type === 'dynamic') {
+    thresholdItem.dynamicField.summary = 'value'
+    thresholdItem.dynamicMinField.summary = 'value'
+    thresholdItem.dynamicMaxField.summary = 'value'
   }
 }
 const getFieldOptions = () => {
@@ -561,7 +566,7 @@ init()
                 <el-select
                   v-model="item.type"
                   class="select-item"
-                  @change="changeConditionItemType(item)"
+                  @change="changeConditionItemType(item as any)"
                   style="width: 100%"
                 >
                   <el-option
@@ -639,7 +644,7 @@ init()
                     class="series-select-option"
                     v-for="itemFieldOption in getConditionsFields(
                       fieldItem,
-                      item,
+                      item as any,
                       item.dynamicField
                     )"
                     :key="itemFieldOption.id"
@@ -738,12 +743,12 @@ init()
               :span="2"
             >
               <el-form-item class="form-item">
-                <el-select v-model="item.dynamicMinField.fieldId" @change="addField(item)">
+                <el-select v-model="item.dynamicMinField.fieldId" @change="addField(item as any)">
                   <el-option
                     class="series-select-option"
                     v-for="itemFieldOption in getConditionsFields(
                       fieldItem,
-                      item,
+                       item as any,
                       item.dynamicMinField
                     )"
                     :key="itemFieldOption.id"
@@ -802,12 +807,12 @@ init()
               :span="2"
             >
               <el-form-item class="form-item">
-                <el-select v-model="item.dynamicMaxField.fieldId" @change="addField(item)">
+                <el-select v-model="item.dynamicMaxField.fieldId" @change="addField(item as any)">
                   <el-option
                     class="series-select-option"
                     v-for="itemFieldOption in getConditionsFields(
                       fieldItem,
-                      item,
+                       item as any,
                       item.dynamicMaxField
                     )"
                     :key="itemFieldOption.id"

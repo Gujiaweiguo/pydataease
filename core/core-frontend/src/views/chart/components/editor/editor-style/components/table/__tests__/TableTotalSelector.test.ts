@@ -86,7 +86,7 @@ describe('TableTotalSelector', () => {
         }
       }
     }
-  }
+  } as any
 
   it('renders component', () => {
     const wrapper = shallowMount(TableTotalSelector, {

@@ -72,7 +72,7 @@ const baseConfig = {
     relativeToCurrentTypeRange: 'year',
     aroundRange: 'f'
   }
-}
+} as any
 
 const mountTime = (configOverrides: Record<string, any> = {}) =>
   shallowMount(Time, {

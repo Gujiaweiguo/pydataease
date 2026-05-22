@@ -47,7 +47,7 @@ const baseConfig = {
   defaultConditionValueS: '',
   hideConditionSwitching: false,
   placeholder: 'Search...'
-}
+} as any
 
 const mountTextSearch = (configOverrides: Record<string, any> = {}) =>
   shallowMount(TextSearch, {

@@ -60,7 +60,7 @@ const createChart = (type = 'table-normal') => ({
 const mountComponent = (chart = createChart(), propertyInner = ['slider', 'emptyDataStrategy']) =>
   shallowMount(FunctionCfg, {
     props: {
-      chart,
+      chart: chart as any,
       themes: 'dark',
       propertyInner
     },

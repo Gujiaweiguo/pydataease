@@ -327,6 +327,7 @@ const domId = ref('shape-id-' + element.value.id)
 const pointList = ['lt', 't', 'rt', 'r', 'rb', 'b', 'lb', 'l']
 const pointCorner = ['lt', 'rt', 'rb', 'lb']
 const pointList2 = ['r', 'l']
+type PointKey = (typeof pointList)[number]
 const initialAngle = {
   // 每个点对应的初始角度
   lt: 0,
@@ -338,7 +339,7 @@ const initialAngle = {
   lb: 270,
   l: 315
 }
-const cursors = ref({})
+const cursors = ref<Record<string, string>>({})
 
 const freezeFlag = computed(() => {
   return (
@@ -468,7 +469,7 @@ const getPointStyle = point => {
 
 const getCursor = () => {
   const rotate = mod360(curComponent.value.style.rotate) // 取余 360
-  const result = {}
+  const result: Record<PointKey, string> = {} as Record<PointKey, string>
   let lastMatchIndex = -1 // 从上一个命中的角度的索引开始匹配下一个，降低时间复杂度
 
   pointList.forEach(point => {

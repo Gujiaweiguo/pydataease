@@ -116,7 +116,7 @@ watch(
     })
   }
 )
-let oldId
+let oldId: string | undefined
 watch(
   () => config.value.treeFieldList,
   val => {
@@ -366,7 +366,7 @@ const getTreeOption = debounce(() => {
         if (!isValid) {
           config.value.selectValue = null
           ElMessage({
-            message: `【${config.value?.name}】${t('v_query.before_querying')}`,
+            message: `【${(config.value as any)?.name}】${t('v_query.before_querying')}`,
             type: 'error',
             duration: 3000
           })

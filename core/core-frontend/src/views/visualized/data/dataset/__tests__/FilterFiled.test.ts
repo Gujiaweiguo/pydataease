@@ -169,7 +169,7 @@ const mountComponent = (item: Record<string, unknown>, authTargetType = '') =>
   shallowMount(FilterFiled, {
     props: {
       index: 0,
-      item
+      item: item as any
     },
     global: {
       provide: {

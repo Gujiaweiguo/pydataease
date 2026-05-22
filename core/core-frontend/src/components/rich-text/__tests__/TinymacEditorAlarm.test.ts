@@ -64,7 +64,9 @@ vi.mock('tinymce/plugins/pagebreak', () => ({}))
 
 import TinymacEditorAlarm from '../TinymacEditorAlarm.vue'
 
-const mountComponent = (fieldList?: Array<Record<string, unknown>>) =>
+type AlarmField = { deType: number; id: string; name: string; groupType: string }
+
+const mountComponent = (fieldList?: AlarmField[]) =>
   shallowMount(TinymacEditorAlarm, {
     props: {
       modelValue: 'initial value',

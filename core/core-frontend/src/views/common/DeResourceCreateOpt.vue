@@ -40,6 +40,7 @@
       <el-row v-if="state.inputType === 'new_inner_template'" class="preview">
         <el-col :span="8" style="height: 100%; overflow-y: auto">
           <de-template-preview-list
+            :cur-canvas-type="props.curCanvasType"
             :template-list="state.templateList"
             @showCurrentTemplateInfo="showCurrentTemplateInfo"
           />

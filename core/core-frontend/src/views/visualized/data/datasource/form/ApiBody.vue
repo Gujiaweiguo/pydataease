@@ -5,7 +5,7 @@ import { useI18n } from '@/hooks/web/useI18n'
 import ApiVariable from './ApiVariable.vue'
 import CodeEdit from './CodeEdit.vue'
 import Convert from './convert.js'
-import { KeyValue, BODY_TYPE } from './ApiTestModel.js'
+import { BODY_TYPE } from './ApiTestModel.js'
 export interface ApiBodyItem {
   raw?: string
   typeChange: string
@@ -46,7 +46,7 @@ const props = defineProps({
 })
 const { t } = useI18n()
 const modes = ['text', 'json', 'xml', 'html']
-const hasOwnProperty = Object.prototype.hasOwnProperty
+const objectHasOwnProperty = Object.prototype.hasOwnProperty
 const propIsEnumerable = Object.prototype.propertyIsEnumerable
 const { body: apiBody, headers } = toRefs(props)
 
@@ -100,7 +100,7 @@ const assignKey = (to, from, key) => {
     return
   }
 
-  if (!hasOwnProperty.call(to, key) || !isObj(val)) {
+  if (!objectHasOwnProperty.call(to, key) || !isObj(val)) {
     to[key] = val
   } else {
     to[key] = assign(Object(to[key]), from[key])
@@ -113,7 +113,7 @@ const assign = (to, from) => {
   }
   from = Object(from)
   for (const key in from) {
-    if (hasOwnProperty.call(from, key)) {
+    if (objectHasOwnProperty.call(from, key)) {
       assignKey(to, from, key)
     }
   }
@@ -167,7 +167,7 @@ const setContentType = value => {
     }
   })
   if (!isType) {
-    headers.value.unshift(new KeyValue({ name: 'Content-Type', value: value }))
+    headers.value.unshift({ name: 'Content-Type', value } as Item)
   }
 }
 const removeContentType = () => {

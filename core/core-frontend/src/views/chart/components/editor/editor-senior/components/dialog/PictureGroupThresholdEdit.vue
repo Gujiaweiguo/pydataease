@@ -201,21 +201,24 @@ const valueOptions = [
   }
 ]
 
+type ThresholdOptionGroup = { label: string; options: Array<{ value: string; label: string }> }
+type PictureGroupThresholdItem = TableThreshold & { options?: ThresholdOptionGroup[] }
+
 const state = reactive({
-  thresholdArr: [] as TableThreshold[],
+  thresholdArr: [] as PictureGroupThresholdItem[],
   fields: [],
   thresholdObj: {
     fieldId: '',
     field: {},
     conditions: []
-  } as TableThreshold
+  } as PictureGroupThresholdItem
 })
 
 const init = () => {
-  state.thresholdArr = JSON.parse(JSON.stringify(props.threshold)) as TableThreshold[]
+  state.thresholdArr = JSON.parse(JSON.stringify(props.threshold)) as PictureGroupThresholdItem[]
   initFields()
 }
-const initOptions = item => {
+const initOptions = (item: PictureGroupThresholdItem) => {
   if (item.field) {
     if ([0, 5, 7].includes(item.field.deType)) {
       item.options = JSON.parse(JSON.stringify(textOptions))
@@ -259,16 +262,16 @@ const changeThreshold = () => {
   emit('onTableThresholdChange', state.thresholdArr)
 }
 
-const addConditions = item => {
-  item.conditions.push(JSON.parse(JSON.stringify(thresholdCondition)))
+const addConditions = (item: PictureGroupThresholdItem) => {
+  item.conditions.push(JSON.parse(JSON.stringify(thresholdCondition)) as unknown as Threshold)
   changeThreshold()
 }
-const removeCondition = (item, index) => {
+const removeCondition = (item: PictureGroupThresholdItem, index: number) => {
   item.conditions.splice(index, 1)
   changeThreshold()
 }
 
-const addField = item => {
+const addField = (item: PictureGroupThresholdItem) => {
   // get field
   if (state.fields && state.fields.length > 0) {
     state.fields.forEach(ele => {

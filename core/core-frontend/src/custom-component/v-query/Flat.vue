@@ -56,7 +56,7 @@ const handleItemClick = (item: FlatOption) => {
     <el-scrollbar>
       <div class="scrollbar-flex-content">
         <p
-          @click="handleItemClick(item)"
+          @click="handleItemClick(item as FlatOption)"
           v-for="item in options"
           :key="(item as FlatOption).value"
           :style="customColor"

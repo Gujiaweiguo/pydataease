@@ -49,7 +49,7 @@ const mountComponent = (
 ) =>
   shallowMount(AssistLine, {
     props: {
-      chart,
+      chart: chart as any,
       quotaData,
       quotaExtData,
       themes: 'dark',

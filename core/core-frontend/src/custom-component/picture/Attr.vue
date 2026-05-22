@@ -37,7 +37,9 @@ const handlePictureCardPreview = file => {
   dialogVisible.value = true
 }
 
-const handleRemove = (_file, _uploadList) => {
+const handleRemove = (file, uploadList) => {
+  void file
+  void uploadList
   uploadDisabled.value = false
   curComponent.value.propValue.url = null
   fileList.value = []

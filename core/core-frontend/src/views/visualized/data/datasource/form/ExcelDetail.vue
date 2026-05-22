@@ -12,7 +12,8 @@ import {
   toRefs,
   onMounted,
   onBeforeUnmount,
-  nextTick
+  nextTick,
+  type PropType
 } from 'vue'
 import { fieldType as fieldTypeLowercase } from '@/utils/attr'
 import { ElMessage, ElMessageBox } from 'element-plus-secondary'
@@ -25,7 +26,6 @@ import { cloneDeep, debounce } from 'lodash-es'
 import { uploadFile } from '@/api/datasource'
 import { useEmitt } from '@/hooks/web/useEmitt'
 import { iconFieldMap } from '@/components/icon-group/field-list'
-import { boolean } from 'mathjs'
 
 export interface Param {
   editType: number
@@ -68,11 +68,16 @@ const props = defineProps({
         editType: 0
       })
     },
-    type: Object
+    type: Object as PropType<Record<string, any>>
   },
   isSupportSetKey: {
-    type: boolean,
+    type: Boolean,
     required: true
+  },
+  editDs: {
+    type: Boolean,
+    required: false,
+    default: false
   }
 })
 

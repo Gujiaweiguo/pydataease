@@ -679,7 +679,7 @@ const list = [
 
 for (let i = 0, len = list.length; i < len; i++) {
   const item = list[i]
-  item.style = { ...commonStyle, ...item.style }
+  item.style = { ...commonStyle, ...item.style } as any
   item['commonBackground'] = deepCopy(COMMON_COMPONENT_BACKGROUND_BASE)
   item['state'] = 'prepare'
   list[i] = { ...commonAttr, ...item }
@@ -692,7 +692,7 @@ export function findNewComponentFromList(
   staticMap?: object
 ) {
   const isPlugin = !!staticMap
-  let newComponent
+  let newComponent: any
   list.forEach(comp => {
     if (comp.component === componentName) {
       newComponent = deepCopy(comp)

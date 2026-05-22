@@ -100,7 +100,7 @@ describe('Pagination', () => {
 
   it('should render with default empty page prop', () => {
     const wrapper = shallowMount(Pagination, {
-      props: { page: {} },
+      props: { page: {} as any },
       global: { stubs: elStubs, mocks: { $t: (k: string) => k } }
     })
     expect(wrapper).toBeTruthy()

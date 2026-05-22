@@ -125,7 +125,7 @@ const hanedleMessage = event => {
     const targetComponent = findComponentById(event.data.value)
     if (targetComponent) {
       changeTimes.value++
-      let targetViewInfo
+      let targetViewInfo: Record<string, any>
       const sourceViewInfo = canvasViewInfo.value[targetComponent.id]
       if (sourceViewInfo) {
         targetViewInfo = deepCopy(sourceViewInfo)

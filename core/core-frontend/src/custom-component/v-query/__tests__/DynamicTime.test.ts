@@ -25,7 +25,7 @@ const baseConfig = {
   defaultValueCheck: false,
   timeGranularity: 'date',
   id: 'test-dynamic-time'
-}
+} as any
 
 const mountDynamicTime = (configOverrides: Record<string, any> = {}) =>
   shallowMount(DynamicTime, {

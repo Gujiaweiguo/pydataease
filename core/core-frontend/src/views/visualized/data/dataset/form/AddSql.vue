@@ -480,9 +480,9 @@ const handleShowLeft = () => {
   LeftWidth.value = showLeft.value ? 240 : 0
 }
 
-const dsChange = debounce((val: string) => {
+const dsChange = debounce((val?: string) => {
   dsLoading.value = true
-  getTables({ datasourceId: val })
+  getTables({ datasourceId: val || sqlNode.value.datasourceId })
     .then(res => {
       tableList = res || []
       datasourceTableData.value = [...tableList]

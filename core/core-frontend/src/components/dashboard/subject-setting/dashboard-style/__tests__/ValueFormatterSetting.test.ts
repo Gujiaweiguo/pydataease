@@ -33,6 +33,26 @@ vi.mock('@/views/chart/components/js/formatter', () => ({
 
 import ValueFormatterSetting from '@/components/dashboard/subject-setting/dashboard-style/ValueFormatterSetting.vue'
 
+type FormatterCfg = {
+  type: string
+  decimalCount: number
+  unit: number
+  unitLanguage: 'ch' | 'en'
+  suffix: string
+  thousandSeparator: boolean
+  showTotalPercent: boolean
+}
+
+const createFormatterCfg = (type: FormatterCfg['type']): FormatterCfg => ({
+  type,
+  decimalCount: 2,
+  unit: 0,
+  unitLanguage: 'ch',
+  suffix: '',
+  thousandSeparator: true,
+  showTotalPercent: false
+})
+
 const stubs = {
   ElForm: { template: '<form><slot /></form>', props: ['effect', 'model', 'labelPosition'] },
   ElFormItem: { template: '<div><slot /></div>', props: ['label', 'class', 'effect'] },
@@ -65,14 +85,7 @@ describe('ValueFormatterSetting', () => {
   })
 
   it('renders successfully', () => {
-    const formatterCfg = {
-      type: 'auto',
-      decimalCount: 2,
-      unit: '',
-      unitLanguage: 'ch',
-      suffix: '',
-      thousandSeparator: true
-    }
+    const formatterCfg = createFormatterCfg('auto')
     const wrapper = shallowMount(ValueFormatterSetting, {
       props: { formatterCfg, themes: 'light' },
       global: { stubs }
@@ -81,14 +94,7 @@ describe('ValueFormatterSetting', () => {
   })
 
   it('accepts dark themes prop', () => {
-    const formatterCfg = {
-      type: 'auto',
-      decimalCount: 2,
-      unit: '',
-      unitLanguage: 'ch',
-      suffix: '',
-      thousandSeparator: true
-    }
+    const formatterCfg = createFormatterCfg('auto')
     const wrapper = shallowMount(ValueFormatterSetting, {
       props: { formatterCfg, themes: 'dark' },
       global: { stubs }
@@ -97,14 +103,7 @@ describe('ValueFormatterSetting', () => {
   })
 
   it('emits onFormatterItemChange on format change', () => {
-    const formatterCfg = {
-      type: 'value',
-      decimalCount: 2,
-      unit: '',
-      unitLanguage: 'ch',
-      suffix: '',
-      thousandSeparator: true
-    }
+    const formatterCfg = createFormatterCfg('value')
     const wrapper = shallowMount(ValueFormatterSetting, {
       props: { formatterCfg, themes: 'light' },
       global: { stubs }

@@ -58,8 +58,9 @@ const handlerSelected = multipleSelection => {
       notCurrentArr.push(resultIndex)
     }
   })
-  notCurrentArr.sort().reduceRight((_, next) => {
+  notCurrentArr.sort().reduceRight((acc, next) => {
     state.multipleSelectionCache.splice(next, 1)
+    return acc
   }, 0)
 }
 

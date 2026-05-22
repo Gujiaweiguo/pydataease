@@ -44,7 +44,7 @@ describe('SummarySelector', () => {
     },
     xAxis: [],
     yAxis: []
-  }
+  } as any
 
   it('renders component', () => {
     const wrapper = shallowMount(SummarySelector, {

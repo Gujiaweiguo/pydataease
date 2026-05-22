@@ -9,7 +9,7 @@ import deDelete from '@/assets/svg/de-delete.svg'
 import icon_warning_filled from '@/assets/svg/icon_warning_filled.svg'
 import icon_deleteTrash_outlined from '@/assets/svg/icon_delete-trash_outlined.svg'
 import icon_edit_outlined from '@/assets/svg/icon_edit_outlined.svg'
-import { ref, reactive, computed, toRefs, nextTick, watch } from 'vue'
+import { ref, reactive, computed, toRefs, nextTick, watch, type PropType } from 'vue'
 import { useI18n } from '@/hooks/web/useI18n'
 import type { FormInstance, FormRules } from 'element-plus-secondary'
 import EmptyBackground from '@/components/empty-background/src/EmptyBackground.vue'
@@ -26,7 +26,6 @@ import Cron from '@/components/cron/src/Cron.vue'
 import { ComponentPublicInstance } from 'vue'
 import { XpackComponent } from '@/components/plugin'
 import { iconFieldMap } from '@/components/icon-group/field-list'
-import { boolean } from 'mathjs'
 const { t } = useI18n()
 const prop = defineProps({
   form: {
@@ -58,11 +57,16 @@ const prop = defineProps({
     type: Number
   },
   isSupportSetKey: {
-    type: boolean,
+    type: Boolean as PropType<boolean>,
     required: true
   },
+  editDs: {
+    type: Boolean,
+    required: false,
+    default: false
+  },
   pluginDs: {
-    type: [],
+    type: Array as PropType<any[]>,
     required: true
   },
   pluginIndex: {
@@ -70,7 +74,7 @@ const prop = defineProps({
     required: true
   },
   isPlugin: {
-    type: boolean,
+    type: Boolean as PropType<boolean>,
     required: true
   }
 })
@@ -146,10 +150,10 @@ const defaultApiItem = {
     }
   },
   fields: [],
-  useJsonPath: false,
+  useJsonPath: false as boolean,
   jsonPath: ''
 }
-let time
+let time: ReturnType<typeof setTimeout> | undefined
 const initForm = (type, pluginDsList, indexPlugin, isPluginDs) => {
   pluginDs.value = pluginDsList
   pluginIndex.value = indexPlugin

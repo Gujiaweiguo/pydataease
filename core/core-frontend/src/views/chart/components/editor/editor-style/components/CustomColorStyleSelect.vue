@@ -323,6 +323,7 @@ const colorItemBorderColor = (index, state) => {
         <gradient-color-selector
           v-model="state"
           :themes="themes"
+          :property-inner="propertyInner || []"
           @select-color-case="selectColorCase"
         />
       </el-form-item>
