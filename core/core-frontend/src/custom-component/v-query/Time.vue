@@ -19,6 +19,7 @@ import VanPopup from 'vant/es/popup'
 import VanDatePicker from 'vant/es/date-picker'
 import VanTimePicker from 'vant/es/time-picker'
 import VanPickerGroup from 'vant/es/picker-group'
+import type { DatePickerColumnType } from 'vant/es/date-picker'
 import 'vant/es/popup/style'
 import 'vant/es/date-picker/style'
 import 'vant/es/picker-group/style'
@@ -202,8 +203,8 @@ const selectStyle = computed(() => {
 })
 
 const columnsType = computed(() => {
-  if (!dvMainStore.mobileInPc) return []
-  return ['year', 'month', 'day'].slice(0, getIndex() + 1)
+  if (!dvMainStore.mobileInPc) return [] as DatePickerColumnType[]
+  return ['year', 'month', 'day'].slice(0, getIndex() + 1) as DatePickerColumnType[]
 })
 
 const showTimePick = computed(() => {
@@ -229,8 +230,9 @@ const showPopupRight = () => {
       `${time.getMonth() + 1}`,
       `${time.getDate()}`
     ].slice(0, getIndex() + 1)
-    showTimePick.value &&
-      (currentTime.value = [`${time.getHours()}`, `${time.getMinutes()}`, `${time.getSeconds()}`])
+    if (showTimePick.value) {
+      currentTime.value = [`${time.getHours()}`, `${time.getMinutes()}`, `${time.getSeconds()}`]
+    }
   }
   selectSecond.value = true
   showDate.value = true
@@ -260,7 +262,7 @@ const queryTimeType = computed(() => {
   return noTime === 'date' ? 'day' : (noTime as ManipulateType)
 })
 
-const disabledDate = val => {
+const disabledDate = (val: string | Date) => {
   const timeStamp = +new Date(val)
   if (!config.value.setTimeRange) {
     return false
@@ -301,7 +303,7 @@ const disabledDate = val => {
     if (dynamicWindow) return isDynamicWindowTime
     return false
   }
-  let startTime
+  let startTime: Date | undefined
   if (relativeToCurrent === 'custom') {
     startTime = getAroundStart(relativeToCurrentType, around === 'f' ? 'subtract' : 'add', timeNum)
   } else {
@@ -360,7 +362,7 @@ const disabledDate = val => {
   }
 
   if (intervalType === 'timeInterval') {
-    let endTime
+    let endTime: Date | undefined
     if (relativeToCurrentRange === 'custom') {
       startTime =
         regularOrTrends === 'fixed'
@@ -383,7 +385,9 @@ const disabledDate = val => {
               timeNumRange
             )
     } else {
-      ;[startTime, endTime] = getCustomRange(relativeToCurrentRange)
+      const range = getCustomRange(relativeToCurrentRange)
+      startTime = range[0]
+      endTime = range[1]
     }
     return (
       timeStamp < +new Date(startTime) - 1000 ||
@@ -403,8 +407,9 @@ const showPopup = () => {
         `${time.getMonth() + 1}`,
         `${time.getDate()}`
       ].slice(0, getIndex() + 1)
-      showTimePick.value &&
-        (currentTime.value = [`${time.getHours()}`, `${time.getMinutes()}`, `${time.getSeconds()}`])
+      if (showTimePick.value) {
+        currentTime.value = [`${time.getHours()}`, `${time.getMinutes()}`, `${time.getSeconds()}`]
+      }
     }
   } else {
     const time = selectValue.value ? new Date(selectValue.value) : new Date()
@@ -413,8 +418,9 @@ const showPopup = () => {
       `${time.getMonth() + 1}`,
       `${time.getDate()}`
     ].slice(0, getIndex() + 1)
-    showTimePick.value &&
-      (currentTime.value = [`${time.getHours()}`, `${time.getMinutes()}`, `${time.getSeconds()}`])
+    if (showTimePick.value) {
+      currentTime.value = [`${time.getHours()}`, `${time.getMinutes()}`, `${time.getSeconds()}`]
+    }
   }
   selectSecond.value = false
   showDate.value = true

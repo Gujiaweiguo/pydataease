@@ -104,9 +104,9 @@ const groupConfigValid = computed(() => {
   if (noGroup) {
     return false
   }
-  const allAxis = [...props.chart?.xAxis]
+  const allAxis = [...(props.chart.xAxis || [])]
   if (props.chart.type === 'table-normal') {
-    allAxis.push(...props.chart?.yAxis)
+    allAxis.push(...(props.chart.yAxis || []))
   }
   const showColumns = []
   allAxis?.forEach(axis => {
@@ -143,14 +143,14 @@ const init = () => {
       tableHeader.tableHeaderColBgColor = tableHeader.tableHeaderBgColor
       tableHeader.tableHeaderColFontColor = tableHeader.tableHeaderFontColor
       tableHeader.tableTitleColFontSize = tableHeader.tableTitleFontSize
-      tableHeader.tableHeaderColAlign = tableHeader.tableHeaderAlign
+      tableHeader.tableHeaderColAlign = tableHeader.tableHeaderAlign as any
       tableHeader.isColBolder = tableHeader.isBolder
       tableHeader.isColItalic = tableHeader.isItalic
 
       tableHeader.tableHeaderCornerBgColor = tableHeader.tableHeaderBgColor
       tableHeader.tableHeaderCornerFontColor = tableHeader.tableHeaderFontColor
       tableHeader.tableTitleCornerFontSize = tableHeader.tableTitleFontSize
-      tableHeader.tableHeaderCornerAlign = tableHeader.tableHeaderAlign
+      tableHeader.tableHeaderCornerAlign = tableHeader.tableHeaderAlign as any
       tableHeader.isCornerBolder = tableHeader.isBolder
       tableHeader.isCornerItalic = tableHeader.isItalic
     }
@@ -164,9 +164,9 @@ const init = () => {
     }
   }
   if (['table-info', 'table-normal'].includes(props.chart.type)) {
-    const axis = [...props.chart?.xAxis]
+    const axis = [...(props.chart.xAxis || [])]
     if (props.chart?.type === 'table-normal') {
-      axis.push(...props.chart?.yAxis)
+      axis.push(...(props.chart.yAxis || []))
     }
     const alignCfg = props.chart?.customAttr?.tableHeader?.alignConfig || []
     const alignCfgMap = alignCfg?.reduce((p, n) => {

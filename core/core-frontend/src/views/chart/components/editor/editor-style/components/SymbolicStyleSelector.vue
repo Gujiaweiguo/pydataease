@@ -73,7 +73,9 @@ const onIconChange: UploadProps['onChange'] = async uploadFile => {
         // svg
         file = svgStrToUrl(customIcon)
       }
-      file && (state.fileList[0] = { url: file })
+      if (file) {
+        state.fileList[0] = { url: file }
+      }
     }
   } else {
     if (rawFile.type === 'image/svg+xml') {
@@ -93,13 +95,15 @@ const onIconChange: UploadProps['onChange'] = async uploadFile => {
 const changeMapSymbol = () => {
   const { mapSymbol, customIcon } = state.basicStyleForm
   if (mapSymbol === 'custom' && customIcon) {
-    let file
+    let file = ''
     if (customIcon.startsWith('data')) {
       file = customIcon
     } else {
       file = svgStrToUrl(state.basicStyleForm.customIcon)
     }
-    file && (state.fileList[0] = { url: file })
+    if (file) {
+      state.fileList[0] = { url: file }
+    }
   }
   changeBasicStyle('mapSymbol')
 }
@@ -110,8 +114,8 @@ const customSymbolicMapSizeRange = computed(() => {
 })
 const mapCustomRangeValidate = prop => {
   const { mapSymbolSizeMax = '0', mapSymbolSizeMin = '1' } = state.basicStyleForm
-  let max = parseInt(mapSymbolSizeMax)
-  let min = parseInt(mapSymbolSizeMin)
+  let max = parseInt(String(mapSymbolSizeMax))
+  let min = parseInt(String(mapSymbolSizeMin))
   state.basicStyleForm.mapSymbolSizeMin = Math.max(min, 0)
   state.basicStyleForm.mapSymbolSizeMax = Math.max(max, 1)
   if (max < min) {
@@ -127,13 +131,15 @@ const init = () => {
     basicStyle.mapSymbol === 'custom' &&
     state.basicStyleForm.customIcon !== basicStyle.customIcon
   ) {
-    let file
+    let file = ''
     if (basicStyle.customIcon?.startsWith('data')) {
       file = basicStyle.customIcon
     } else {
       file = svgStrToUrl(basicStyle.customIcon)
     }
-    file && (state.fileList[0] = { url: file })
+    if (file) {
+      state.fileList[0] = { url: file }
+    }
   }
   state.basicStyleForm = defaultsDeep(basicStyle, cloneDeep(DEFAULT_BASIC_STYLE)) as ChartBasicStyle
   if (!state.customColor) {

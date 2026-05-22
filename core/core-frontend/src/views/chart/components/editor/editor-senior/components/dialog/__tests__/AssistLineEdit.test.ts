@@ -51,9 +51,9 @@ const quotaFields = [
 const mountComponent = (line: any[] = [], useQuotaExt = false) =>
   shallowMount(AssistLineEdit, {
     props: {
-      chart: { type: 'bar' },
+      chart: { type: 'bar' } as any,
       line,
-      quotaFields,
+      quotaFields: quotaFields as any,
       quotaExtFields: [],
       useQuotaExt
     },

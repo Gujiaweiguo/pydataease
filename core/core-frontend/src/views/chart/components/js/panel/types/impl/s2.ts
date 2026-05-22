@@ -74,7 +74,7 @@ export abstract class S2ChartView<P extends SpreadSheet> extends AntVAbstractCha
     const cell = s2Instance.getCell(event.target)
     const meta = cell.getMeta()
     let content = ''
-    let field
+    let field: Meta | undefined
     switch (cell.cellType) {
       case 'dataCell':
       case 'mergedCell':
@@ -113,7 +113,7 @@ export abstract class S2ChartView<P extends SpreadSheet> extends AntVAbstractCha
       content,
       meta,
       event
-    })
+    } as any)
   }
 
   protected configTouchEvent(s2Instance: P, option: S2DrawOptions<P>, meta: Meta[]) {
@@ -164,10 +164,10 @@ export abstract class S2ChartView<P extends SpreadSheet> extends AntVAbstractCha
         }
         const cell = s2Instance.getCell(shape)
         const cellMeta = cell?.getMeta()
-        let fieldId
+        let fieldId: string | undefined
         if (cellMeta) {
           const field = find(meta, item => item.field === cellMeta.valueField)
-          fieldId = field?.id
+          fieldId = (field as (Meta & { id?: string }) | undefined)?.id
         }
         touchAction(callback, fieldId)
       })

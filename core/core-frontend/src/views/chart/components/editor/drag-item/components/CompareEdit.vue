@@ -191,8 +191,8 @@ const initFieldList = () => {
   }
   if (isIndicator.value) {
     t1.length = 0
-    t1.push(...props.dimensionData.filter(ele => ele.deType === 1))
-    t1.push(...props.quotaData.filter(ele => ele.deType === 1))
+    t1.push(...(props.dimensionData as ChartViewField[]).filter(ele => ele.deType === 1))
+    t1.push(...(props.quotaData as ChartViewField[]).filter(ele => ele.deType === 1))
   }
 
   state.fieldList = t1

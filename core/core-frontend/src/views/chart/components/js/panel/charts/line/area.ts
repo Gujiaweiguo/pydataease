@@ -129,7 +129,7 @@ export class Area extends G2PlotChartView<AreaOptions, G2Area> {
 
     newChart.on('point:click', action)
     extremumEvt(newChart, chart, options, container)
-    configPlotTooltipEvent(chart, newChart)
+    configPlotTooltipEvent(chart, newChart as any)
     listenYAxisNiceMinEvents(chart, newChart)
     return newChart
   }
@@ -152,7 +152,9 @@ export class Area extends G2PlotChartView<AreaOptions, G2Area> {
     const label = {
       fields: [],
       ...tmpOptions.label,
-      layout: labelAttr.fullDisplay ? [{ type: 'limit-in-plot' }] : tmpOptions.label.layout,
+      layout: labelAttr.fullDisplay
+        ? [{ type: 'limit-in-plot' }]
+        : ((tmpOptions.label as any)?.layout as any[]) || [],
       formatter: (data: Datum) => {
         if (data.EXTREME) {
           return ''
@@ -215,7 +217,7 @@ export class Area extends G2PlotChartView<AreaOptions, G2Area> {
     // custom color
     const { colors, alpha } = customAttr.basicStyle
     const areaColors = [...colors, ...colors]
-    let areaStyle
+    let areaStyle: AreaOptions['areaStyle']
     if (customAttr.basicStyle.gradient) {
       const colorMap = new Map()
       const yAxis = parseJson(chart.customStyle).yAxis
@@ -333,10 +335,10 @@ export class StackArea extends Area {
         label: false
       }
     }
-    const layout = []
+    const layout = [] as any[]
     if (!labelAttr.fullDisplay) {
       const tmpOptions = super.configLabel(chart, options)
-      layout.push(...tmpOptions.label.layout)
+      layout.push(...(((tmpOptions.label as any)?.layout as any[]) || []))
     } else {
       layout.push({ type: 'limit-in-plot' })
     }

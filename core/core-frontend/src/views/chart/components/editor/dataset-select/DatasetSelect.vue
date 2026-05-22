@@ -60,16 +60,16 @@ const sourceName = computed(() =>
   props.sourceType === 'datasource' ? t('datasource.datasource') : t('visualization.dataset')
 )
 
-const sortTypeChange = arr => {
+const sortTypeChange = (arr: Tree[]) => {
   const sortType = wsCache.get('TreeSort-dataset') || 'time_desc'
-  datasetTree.value = treeSort(arr, sortType)
+  datasetTree.value = treeSort(arr as any, sortType) as Tree[]
 }
 
 const initDataset = () => {
   loadingDatasetTree.value = true
-  const method = props.sourceType === 'datasource' ? getDatasourceList : getDatasetTree
-  const params = props.sourceType === 'datasource' ? null : {}
-  method(params)
+  const request =
+    props.sourceType === 'datasource' ? getDatasourceList(null as any) : getDatasetTree({} as any)
+  request
     .then(res => {
       sortTypeChange((res as unknown as Tree[]) || [])
     })
@@ -173,7 +173,7 @@ const rules = ref([
   }
 ])
 
-function flatTree(tree: Tree[]) {
+function flatTree(tree: Tree[]): Tree[] {
   let result = _.cloneDeep(tree)
   _.forEach(tree, node => {
     if (node.children && node.children.length > 0) {

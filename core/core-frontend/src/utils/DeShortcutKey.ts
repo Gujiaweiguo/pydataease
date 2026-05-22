@@ -83,14 +83,14 @@ const unlockMap = {
 const checkDialog = () => {
   let haveDialog = false
   document.querySelectorAll('.ed-overlay').forEach(element => {
-    if (window.getComputedStyle(element).getPropertyValue('display') != 'none') {
+    if (window.getComputedStyle(element).getPropertyValue('display') !== 'none') {
       haveDialog = true
     }
   })
   document.querySelectorAll('.ed-popper').forEach(element => {
     if (
       !element.classList?.contains('template-popper-tips') &&
-      window.getComputedStyle(element).getPropertyValue('display') != 'none'
+      window.getComputedStyle(element).getPropertyValue('display') !== 'none'
     ) {
       haveDialog = true
     }
@@ -126,7 +126,7 @@ export function listenGlobalKeyDown() {
       composeStore.setSpaceDownStatus(true)
       e.preventDefault()
       e.stopPropagation()
-    } else if ((keyCode == deleteKey || keyCode == macDeleteKey) && curComponent.value) {
+    } else if ((keyCode === deleteKey || keyCode === macDeleteKey) && curComponent.value) {
       deleteComponent()
     } else if (isCtrlOrCommandDown) {
       if (unlockMap[keyCode] && (!curComponent.value || !curComponent.value.isLock)) {
@@ -207,13 +207,13 @@ function move(keyCode) {
 
 function groupAreaAdaptor(leftOffset = 0, topOffset = 0) {
   const canvasId = curComponent.value.canvasId
-  const parentNode = document.querySelector('#editor-' + canvasId)
+  const parentNode = document.querySelector('#editor-' + canvasId) as HTMLElement | null
 
   //如果当前画布是Group内部画布 则对应组件定位在resize时要还原到groupStyle中
   if (isGroupCanvas(canvasId) || isTabCanvas(canvasId)) {
     groupStyleRevert(curComponent.value, {
-      width: parentNode.offsetWidth,
-      height: parentNode.offsetHeight
+      width: parentNode?.offsetWidth ?? 0,
+      height: parentNode?.offsetHeight ?? 0
     })
   } else if (curComponent.value.component === 'GroupArea' && areaData.value.components.length > 0) {
     areaData.value.components.forEach(component => {
@@ -244,7 +244,7 @@ function compose() {
 
 function decompose() {
   const curComponentLink = curComponent.value
-  if (curComponentLink && !curComponentLink.isLock && curComponentLink.component == 'Group') {
+  if (curComponentLink && !curComponentLink.isLock && curComponentLink.component === 'Group') {
     composeStore.decompose()
     snapshotStore.recordSnapshotCache('key-decompose')
   }

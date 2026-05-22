@@ -98,7 +98,7 @@ export class Rose extends G2PlotChartView<RoseOptions, G2Rose> {
     const plot = new G2Rose(container, options)
 
     plot.on('interval:click', action)
-    configPlotTooltipEvent(chart, plot)
+    configPlotTooltipEvent(chart, plot as any)
     return plot
   }
 
@@ -119,10 +119,10 @@ export class Rose extends G2PlotChartView<RoseOptions, G2Rose> {
       }
     }
     const total = options.data?.reduce((pre, next) => add(pre, next.value ?? 0), 0)
-    const layout = []
+    const layout = [] as any[]
     if (!labelAttr.fullDisplay) {
       const tmpOptions = super.configLabel(chart, options)
-      layout.push(...tmpOptions.label.layout)
+      layout.push(...(((tmpOptions.label as any)?.layout as any[]) || []))
     }
     const labelOptions: Label = {
       autoRotate: true,

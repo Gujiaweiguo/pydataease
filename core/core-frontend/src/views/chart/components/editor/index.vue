@@ -155,7 +155,9 @@ const closeEditComponentName = () => {
   }
   view.value.title = inputComponentName.value.name
   if (view.value.type === 'VQuery') {
-    view.value.customStyle.component.title = inputComponentName.value.name
+    const customStyle = view.value.customStyle as ChartStyle & { component?: { title?: string } }
+    customStyle.component = customStyle.component || {}
+    customStyle.component.title = inputComponentName.value.name
   }
   if (curComponent.value) {
     curComponent.value.label = inputComponentName.value.name
@@ -1467,7 +1469,7 @@ const saveRename = ref => {
           break
         case 'drillFields':
           axisType = 'drillFields'
-          axis = view.value.drillFields[index]
+          axis = view.value.drillFields[index] as Axis
           view.value.drillFields[index].chartShowName = chartShowName
           break
         default:
@@ -2013,7 +2015,7 @@ const drop = (ev: MouseEvent, type = 'xAxis') => {
         break
       }
     }
-    let newDraggableIndex
+    let newDraggableIndex: number
     if (index !== -1) {
       view.value[type].splice(index + 1 + i, 0, obj)
       newDraggableIndex = index + 1 + i

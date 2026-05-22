@@ -5,6 +5,21 @@ import { useI18n } from '@/hooks/web/useI18n'
 import DynamicTime from './DynamicTimeFiltering.vue'
 import DynamicTimeRange from './DynamicTimeRangeFiltering.vue'
 import { ManipulateType } from 'dayjs'
+
+type TimeGranularityMultiple =
+  | 'month'
+  | 'year'
+  | 'years'
+  | 'months'
+  | 'week'
+  | 'date'
+  | 'datetime'
+  | 'dates'
+  | 'datetimerange'
+  | 'daterange'
+  | 'monthrange'
+  | 'yearrange'
+
 const props = defineProps({
   timeRange: {
     type: Object as PropType<TimeRange>,
@@ -25,7 +40,7 @@ const props = defineProps({
     })
   },
   timeGranularityMultiple: {
-    type: String,
+    type: String as PropType<TimeGranularityMultiple>,
     default: 'yearrange'
   }
 })
@@ -61,6 +76,7 @@ const filterTypeCom = computed(() => {
   const { intervalType } = timeRange.value
   return intervalType === 'timeInterval' ? DynamicTimeRange : DynamicTime
 })
+const childConfig = computed(() => timeRange.value as any)
 
 const aroundList = [
   {
@@ -457,7 +473,7 @@ watch(
         <div class="setting-label" v-if="dynamicTime">{{ t('template_manage.preview') }}</div>
         <div :class="dynamicTime ? 'setting-value' : 'w100'">
           <component
-            :config="timeRange"
+            :config="childConfig"
             :timeGranularityMultiple="timeGranularityMultiple"
             ref="inputCom"
             :is="filterTypeCom"

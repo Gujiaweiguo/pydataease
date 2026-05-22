@@ -60,7 +60,9 @@ export class G2PlotWrapper<O extends PickOptions, P extends Plot<O>> extends Cha
       return
     }
     if (Array.isArray(this.chartInstance)) {
-      this.chartInstance?.forEach(p => p.destroy())
+      this.chartInstance?.forEach(p => {
+        p.destroy()
+      })
     } else {
       this.chartInstance?.destroy()
     }
@@ -71,7 +73,9 @@ export class G2PlotWrapper<O extends PickOptions, P extends Plot<O>> extends Cha
       return
     }
     if (Array.isArray(this.chartInstance)) {
-      this.chartInstance?.forEach(p => p.render())
+      this.chartInstance?.forEach(p => {
+        p.render()
+      })
     } else {
       this.chartInstance?.render()
     }
@@ -139,7 +143,10 @@ export abstract class G2PlotChartView<
   }
 
   protected configAnalyseHorizontal(chart: Chart, options: O): O {
-    const annotations = [...(options.annotations ?? []), ...getAnalyseHorizontal(chart)]
+    const annotations = [
+      ...(((options as unknown as Options).annotations as Options['annotations']) ?? []),
+      ...getAnalyseHorizontal(chart)
+    ]
     return { ...options, annotations }
   }
 
@@ -167,8 +174,8 @@ export abstract class G2PlotChartView<
     return { ...options, color }
   }
 
-  public setupSeriesColor(chart: ChartObj, data?: any[]): ChartBasicStyle['seriesColor'] {
-    return setupSeriesColor(chart, data)
+  public setupSeriesColor(chart: ChartObj): ChartBasicStyle['seriesColor'] {
+    return setupSeriesColor(chart)
   }
   // eslint-disable-next-line
   public setupSubSeriesColor(_chart: ChartObj, _data?: any[]): ChartBasicStyle['seriesColor'] {

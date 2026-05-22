@@ -231,7 +231,7 @@ export class Quadrant extends G2PlotChartView<ScatterOptions, G2Scatter> {
       configYaxisTitleLengthLimit(chart, newChart)
       configAxisLabelLengthLimit(chart, newChart, 'axis-title')
     }
-    configPlotTooltipEvent(chart, newChart)
+    configPlotTooltipEvent(chart, newChart as any)
     return newChart
   }
 
@@ -310,7 +310,7 @@ export class Quadrant extends G2PlotChartView<ScatterOptions, G2Scatter> {
   }
 
   protected configLabel(chart: Chart, options: ScatterOptions): ScatterOptions {
-    let label
+    let label: ScatterOptions['label'] | false | undefined
     let customAttr: DeepPartial<ChartAttr>
     if (chart.customAttr) {
       customAttr = parseJson(chart.customAttr)
@@ -391,7 +391,7 @@ export class Quadrant extends G2PlotChartView<ScatterOptions, G2Scatter> {
         const dynamicTooltipValue = optionsData.find(
           d => d.field === originalItems[0]['title']
         )?.dynamicTooltipValue
-        if (dynamicTooltipValue.length > 0) {
+        if (dynamicTooltipValue?.length > 0) {
           dynamicTooltipValue.forEach(dy => {
             const q = tooltipAttr.seriesTooltipFormatter.filter(i => i.id === dy.fieldId)
             if (q && q.length > 0) {
@@ -456,13 +456,13 @@ export class Quadrant extends G2PlotChartView<ScatterOptions, G2Scatter> {
       return optionTmp
     }
     const customStyle = parseJson(chart.customStyle)
-    let size
+    let size: number
     if (customStyle && customStyle.legend) {
       size = defaults(JSON.parse(JSON.stringify(customStyle.legend)), DEFAULT_LEGEND_STYLE).size
     } else {
       size = DEFAULT_LEGEND_STYLE.size
     }
-    optionTmp.legend.marker.style = style => {
+    ;(optionTmp.legend.marker as any).style = style => {
       return {
         r: size,
         fill: style.fill

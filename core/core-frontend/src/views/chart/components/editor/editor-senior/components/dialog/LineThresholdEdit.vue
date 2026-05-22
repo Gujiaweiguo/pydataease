@@ -108,22 +108,24 @@ const valueOptions = computed(() => {
 })
 const predefineColors = COLOR_PANEL
 type LineThreshold = TableThreshold
+type ThresholdOptionGroup = { label: string; options: Array<{ value: string; label: string }> }
+type LineThresholdItem = LineThreshold & { options?: ThresholdOptionGroup[] }
 
 const state = reactive({
-  thresholdArr: [] as LineThreshold[],
-  fields: [],
+  thresholdArr: [] as LineThresholdItem[],
+  fields: [] as ChartViewField[],
   thresholdObj: {
     fieldId: '',
     field: {},
     conditions: []
-  } as LineThreshold
+  } as LineThresholdItem
 })
 
 const init = () => {
-  state.thresholdArr = JSON.parse(JSON.stringify(props.threshold)) as LineThreshold[]
+  state.thresholdArr = JSON.parse(JSON.stringify(props.threshold)) as LineThresholdItem[]
   initFields()
 }
-const initOptions = (item, fieldObj) => {
+const initOptions = (item: LineThresholdItem, fieldObj?: ChartViewField) => {
   if (fieldObj) {
     item.options = JSON.parse(JSON.stringify(valueOptions.value))
     item.conditions &&
@@ -161,7 +163,7 @@ const isBarOrHorizontal = computed(() => {
 })
 
 const initFields = () => {
-  let fields = []
+  let fields: ChartViewField[] = []
   if (isSymbolicMap.value) {
     const extBubble = JSON.parse(JSON.stringify(props.chart.extBubble))
     fields = [...extBubble]
@@ -204,17 +206,17 @@ const changeThreshold = () => {
   emit('onLineThresholdChange', state.thresholdArr)
 }
 
-const addConditions = item => {
-  const newCondition = JSON.parse(JSON.stringify(thresholdCondition))
+const addConditions = (item: LineThresholdItem) => {
+  const newCondition = JSON.parse(JSON.stringify(thresholdCondition)) as Threshold
   item.conditions.push(newCondition)
   changeThreshold()
 }
-const removeCondition = (item, index) => {
+const removeCondition = (item: LineThresholdItem, index: number) => {
   item.conditions.splice(index, 1)
   changeThreshold()
 }
 
-const addField = item => {
+const addField = (item: LineThresholdItem) => {
   // get field
   if (state.fields && state.fields.length > 0) {
     state.fields.forEach(ele => {
@@ -229,19 +231,19 @@ const addField = item => {
 
 const fieldOptions = [{ label: t('chart.field_fixed'), value: 'fixed' }]
 
-const isNotEmptyAndNull = item => {
+const isNotEmptyAndNull = (item: Threshold) => {
   return !item.term.includes('null') && !item.term.includes('empty')
 }
 
-const isBetween = item => {
+const isBetween = (item: Threshold) => {
   return item.term === 'between'
 }
 
-const isDynamic = item => {
+const isDynamic = (item: Threshold) => {
   return item.type === 'dynamic'
 }
 
-const getFieldOptions = fieldItem => {
+const getFieldOptions = (fieldItem: LineThresholdItem) => {
   const deType = state.fields.filter(ele => ele.id === fieldItem.fieldId)?.[0]?.deType
   if (deType === 1) {
     return fieldOptions.filter(ele => ele.value === 'fixed')

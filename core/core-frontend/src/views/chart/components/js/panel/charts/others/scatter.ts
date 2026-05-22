@@ -157,7 +157,7 @@ export class Scatter extends G2PlotChartView<ScatterOptions, G2Scatter> {
         })
       })
     }
-    configPlotTooltipEvent(chart, newChart)
+    configPlotTooltipEvent(chart, newChart as any)
     return newChart
   }
 
@@ -275,13 +275,13 @@ export class Scatter extends G2PlotChartView<ScatterOptions, G2Scatter> {
       return optionTmp
     }
     const customStyle = parseJson(chart.customStyle)
-    let size
+    let size: number
     if (customStyle && customStyle.legend) {
       size = defaults(JSON.parse(JSON.stringify(customStyle.legend)), DEFAULT_LEGEND_STYLE).size
     } else {
       size = DEFAULT_LEGEND_STYLE.size
     }
-    optionTmp.legend.marker.style = style => {
+    ;(optionTmp.legend.marker as any).style = style => {
       return {
         r: size,
         fill: style.fill

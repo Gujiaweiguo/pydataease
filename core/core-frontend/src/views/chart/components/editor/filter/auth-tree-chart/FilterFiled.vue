@@ -246,7 +246,7 @@ const confirmTimeSelect = () => {
     relativeToCurrent
   } = item.value.dynamicTimeSetting
   if (arbitraryTime) {
-    item.value.dynamicTimeSetting.arbitraryTime =
+    ;(item.value.dynamicTimeSetting as any).arbitraryTime =
       formatDate(new Date(arbitraryTime).toLocaleDateString()) +
       ' ' +
       new Date(arbitraryTime).toLocaleTimeString()
@@ -443,7 +443,7 @@ const showTimeDialog = (obj: any) => {
 
 const saveTime = (type: string, value: string) => {
   item.value.timeType = type
-  item.value.value = value
+  ;(item.value as any).value = value
 }
 
 const emits = defineEmits(['update:item', 'del'])

@@ -51,7 +51,7 @@ describe('FilterFiled (auth-tree-chart)', () => {
 
   it('renders component', () => {
     const wrapper = shallowMount(FilterFiled, {
-      props: { index: 0, item: defaultItem },
+      props: { index: 0, item: defaultItem as any },
       global: {
         provide: {
           getAuthTargetType: { authTargetType: '' },
@@ -65,7 +65,7 @@ describe('FilterFiled (auth-tree-chart)', () => {
 
   it('contains white-nowrap wrapper', () => {
     const wrapper = shallowMount(FilterFiled, {
-      props: { index: 0, item: defaultItem },
+      props: { index: 0, item: defaultItem as any },
       global: {
         provide: {
           getAuthTargetType: { authTargetType: '' },

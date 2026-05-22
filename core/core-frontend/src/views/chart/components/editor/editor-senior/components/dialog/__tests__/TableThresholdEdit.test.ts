@@ -53,8 +53,8 @@ const mountComponent = (threshold: any[] = []) =>
     props: {
       chart: {
         type: 'table-normal',
-        xAxis: xAxisFields,
-        yAxis: yAxisFields
+        xAxis: xAxisFields as any,
+        yAxis: yAxisFields as any
       },
       threshold
     },

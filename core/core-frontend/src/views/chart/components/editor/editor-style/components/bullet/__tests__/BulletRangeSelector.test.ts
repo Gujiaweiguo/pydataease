@@ -85,12 +85,12 @@ describe('BulletRangeSelector', () => {
 
   it('accepts chart prop as required', () => {
     const wrapper = createWrapper()
-    expect(wrapper.props('chart')).toBeDefined()
+    expect((wrapper.props() as any).chart).toBeDefined()
   })
 
   it('accepts themes prop with default dark', () => {
     const wrapper = createWrapper()
-    expect(wrapper.props('themes')).toBe('dark')
+    expect((wrapper.props() as any).themes).toBe('dark')
   })
 
   it('emits onMiscChange when changeStyle is called', async () => {
@@ -106,7 +106,7 @@ describe('BulletRangeSelector', () => {
     const wrapper = createWrapper()
     const vm = wrapper.vm as any
     vm.changeStyle()
-    const emittedArgs = wrapper.emitted('onMiscChange')?.[0] || []
+    const emittedArgs = (wrapper.emitted('onMiscChange')?.[0] || []) as any[]
     expect(emittedArgs[0].data).toHaveProperty('bullet')
     expect(emittedArgs[0].requestData).toBe(true)
   })

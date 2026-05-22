@@ -678,8 +678,13 @@ onMounted(() => {
                 v-model="state.tooltipForm.tooltipFormatter.unitLanguage"
                 :placeholder="$t('chart.pls_select_field')"
                 @change="
-                  v => changeUnitLanguage(state.tooltipForm.tooltipFormatter, v, 'tooltipFormatter')
-                "
+                    v =>
+                      changeUnitLanguage(
+                        state.tooltipForm.tooltipFormatter as BaseFormatter,
+                        v,
+                        'tooltipFormatter'
+                      )
+                  "
               >
                 <el-option :label="$t('chart.value_formatter_unit_language_ch')" value="ch" />
                 <el-option :label="$t('chart.value_formatter_unit_language_en')" value="en" />
@@ -911,7 +916,7 @@ onMounted(() => {
                     @change="
                       v =>
                         changeUnitLanguage(
-                          curSeriesFormatter.formatterCfg,
+                          curSeriesFormatter.formatterCfg as BaseFormatter,
                           v,
                           'seriesTooltipFormatter'
                         )
