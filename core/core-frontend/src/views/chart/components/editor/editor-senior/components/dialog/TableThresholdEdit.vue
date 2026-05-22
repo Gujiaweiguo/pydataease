@@ -330,7 +330,7 @@ const addField = (item: Threshold) => {
   const tableThresholdItem = isTableThresholdItem(
     item as TableThresholdItem | ThresholdConditionItem
   )
-    ? (item as TableThresholdItem)
+    ? (item as unknown as TableThresholdItem)
     : undefined
   // get field
   if (state.fields && state.fields.length > 0) {
@@ -392,6 +392,7 @@ const getConditionsFields = (
   conditionItem: Threshold,
   conditionItemField: any
 ) => {
+  const thresholdItem = conditionItem as ThresholdConditionItem
   const fieldItemObj = state.fields.filter(ele => ele.id === fieldItem.fieldId)
 
   if (
@@ -400,7 +401,7 @@ const getConditionsFields = (
     fieldItemObj[0]?.deType === null
   ) {
     fieldItem.fieldId = null
-    conditionItem.fieldId = null
+    thresholdItem.fieldId = null
     conditionItemField.fieldId = null
     return []
   }
@@ -420,7 +421,7 @@ const getConditionsFields = (
     }) ?? []
   if (!result.find(ele => ele.id === conditionItemField.fieldId)) {
     conditionItemField.fieldId = result[0]?.id
-    addField(conditionItem)
+    addField(conditionItem as unknown as Threshold)
   }
   return result
 }
@@ -492,7 +493,7 @@ init()
             <el-select
               style="width: 181px"
               v-model="fieldItem.fieldId"
-              @change="addField(fieldItem)"
+              @change="addField(fieldItem as any)"
             >
               <el-option
                 class="series-select-option"
@@ -570,7 +571,7 @@ init()
                   style="width: 100%"
                 >
                   <el-option
-                    v-for="opt in getFieldOptions(fieldItem)"
+                    v-for="opt in getFieldOptions()"
                     :key="opt.value"
                     :label="opt.label"
                     :value="opt.value"

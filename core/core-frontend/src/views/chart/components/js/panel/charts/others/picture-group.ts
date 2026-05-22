@@ -7,6 +7,7 @@ const { t } = useI18n()
  */
 export class PictureGroupView extends AbstractChartView {
   properties: EditorProperty[] = ['background-overall-component', 'border-style', 'threshold']
+  selectorSpec: EditorSelectorSpec = {}
   propertyInner: EditorPropertyInner = {
     'background-overall-component': ['all'],
     'border-style': ['all'],

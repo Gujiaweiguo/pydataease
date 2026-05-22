@@ -233,8 +233,8 @@ onMounted(() => {
   })
   useEmitt({
     name: 'curComponentChange',
-    callback: info => {
-      curComponentChangeHandle(info)
+    callback: () => {
+      curComponentChangeHandle()
     }
   })
   setMobileStyle()

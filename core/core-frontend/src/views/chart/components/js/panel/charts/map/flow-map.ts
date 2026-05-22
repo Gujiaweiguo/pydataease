@@ -81,6 +81,10 @@ export class FlowMap extends L7ChartView<Scene, L7Config> {
     super('flow-map', [])
   }
 
+  protected setupOptions(chart: Chart, options: L7Config): L7Config {
+    return this.configEmptyDataStrategy(chart, options)
+  }
+
   async drawChart(drawOption: L7DrawConfig<L7Config>) {
     const { chart, container } = drawOption
     const containerDom = document.getElementById(container)

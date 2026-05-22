@@ -93,7 +93,9 @@ export abstract class L7ChartView<
     const data = cloneDeep(options.sourceOption.data)
     if (emptyDataStrategy === 'setZero') {
       data.forEach(item => {
-        item.value === null && (item.value = 0)
+        if (item.value === null) {
+          item.value = 0
+        }
       })
     }
     if (emptyDataStrategy === 'ignoreData') {
@@ -132,7 +134,7 @@ export abstract class L7ChartView<
       await queryMapKeyApi().then(res => mapStore.setKey(res.data))
     }
     if (mapStore.mapKey.securityCode) {
-      window._AMapSecurityConfig = {
+      ;(window as any)._AMapSecurityConfig = {
         securityJsCode: mapStore.mapKey.securityCode
       }
     }

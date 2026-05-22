@@ -40,7 +40,7 @@ export class SankeyBar extends G2PlotChartView<SankeyOptions, Sankey> {
       limit: 1,
       type: 'q'
     }
-  }
+  } as any
   properties = SANKEY_EDITOR_PROPERTY
   propertyInner = {
     ...SANKEY_EDITOR_PROPERTY_INNER,
@@ -168,7 +168,7 @@ export class SankeyBar extends G2PlotChartView<SankeyOptions, Sankey> {
   }
 
   protected configTooltip(chart: Chart, options: SankeyOptions): SankeyOptions {
-    let tooltip
+    let tooltip: SankeyOptions['tooltip']
     let customAttr: DeepPartial<ChartAttr>
     if (chart.customAttr) {
       customAttr = parseJson(chart.customAttr)

@@ -138,7 +138,7 @@ export class Pie extends G2PlotChartView<PieOptions, G2Pie> {
       }
       action(d)
     })
-    configPlotTooltipEvent(chart, newChart)
+    configPlotTooltipEvent(chart, newChart as any)
     return newChart
   }
 

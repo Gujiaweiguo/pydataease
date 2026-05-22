@@ -184,7 +184,7 @@ export class MultiScatter extends G2PlotChartView<ScatterOptions, G2Scatter> {
     if (scatterContext.isTimeX) {
       meta[scatterContext.xField] = { type: 'cat' }
     }
-    const baseOptions: ScatterOptions = {
+    const baseOptions = {
       data: scatterContext.data,
       xField: scatterContext.xField,
       yField: scatterContext.yField,
@@ -217,7 +217,7 @@ export class MultiScatter extends G2PlotChartView<ScatterOptions, G2Scatter> {
           }
         }
       ]
-    }
+    } as ScatterOptions
     const options = this.setupOptions(chart, baseOptions)
     const { Scatter: G2Scatter } = await import('@antv/g2plot/esm/plots/scatter')
     const newChart = new G2Scatter(container, options)
@@ -449,7 +449,7 @@ export class MultiScatter extends G2PlotChartView<ScatterOptions, G2Scatter> {
       return optionTmp
     }
     const customStyle = parseJson(chart.customStyle)
-    let size
+    let size: number
     if (customStyle && customStyle.legend) {
       size = defaults(JSON.parse(JSON.stringify(customStyle.legend)), DEFAULT_LEGEND_STYLE).size
     } else {

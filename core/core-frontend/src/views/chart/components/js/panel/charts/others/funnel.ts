@@ -110,13 +110,13 @@ export class Funnel extends G2PlotChartView<FunnelOptions, G2Funnel> {
     const { Funnel: G2Funnel } = await import('@antv/g2plot/esm/plots/funnel')
     const newChart = new G2Funnel(container, options)
     newChart.on('interval:click', action)
-    configPlotTooltipEvent(chart, newChart)
+    configPlotTooltipEvent(chart, newChart as any)
     return newChart
   }
 
   protected configLabel(chart: Chart, options: FunnelOptions): FunnelOptions {
-    let label
-    let conversionTag
+    let label: any
+    let conversionTag: any
     let customAttr: DeepPartial<ChartAttr>
     if (chart.customAttr) {
       customAttr = parseJson(chart.customAttr)

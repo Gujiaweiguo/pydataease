@@ -281,7 +281,7 @@ const renderTable = (chart: ChartObj) => {
     const curMeta = s2.dataCfg.meta
     const activeCells = s2.interaction.getActiveCells()
     const colKeys = activeCells?.map(cell => cell.getMeta().field)
-    const activeColumns = getColumns(colKeys, curColumns)
+    const activeColumns = getColumns(colKeys, curColumns as any)
     const curCell = s2.getCell(e.target)
     groupMenuContainer.innerText = ''
     // 右键点击的目标单元格不在已选的单元格中，清空已选单元格，隐藏菜单
@@ -305,7 +305,7 @@ const renderTable = (chart: ChartObj) => {
         const parent = curCell.getMeta().parent as CellMetaLike | undefined
         if (parent?.id === 'root') {
           const startIndex = curColumns.findIndex(cell => cell.key === curCell.getMeta().field)
-          const [curCol] = getColumns([curCell.getMeta().field], curColumns)
+          const [curCol] = getColumns([curCell.getMeta().field], curColumns as any)
           curColumns.splice(startIndex, 1, ...curCol.children)
           const index = curMeta.findIndex(meta => meta.field === curCell.getMeta().field)
           curMeta.splice(index, 1)
@@ -317,12 +317,12 @@ const renderTable = (chart: ChartObj) => {
           })
           s2.render(true)
         } else {
-          const [parentColumn] = getColumns([parent.field], curColumns)
+          const [parentColumn] = getColumns([parent.field], curColumns as any)
           if (parentColumn) {
             const startIndex = parentColumn.children?.findIndex(
               cell => cell.key === curCell.getMeta().field
             )
-            const [curCol] = getColumns([curCell.getMeta().field], parentColumn.children)
+            const [curCol] = getColumns([curCell.getMeta().field], parentColumn.children as any)
             parentColumn.children?.splice(startIndex, 1, ...curCol.children)
             const index = curMeta.findIndex(meta => meta.field === curCell.getMeta().field)
             curMeta.splice(index, 1)
@@ -344,7 +344,7 @@ const renderTable = (chart: ChartObj) => {
         s2.hideTooltip()
         const parent = curCell.getMeta().parent as CellMetaLike | undefined
         if (parent?.id === 'root') {
-          const [curCol] = getColumns([curCell.getMeta().field], curColumns)
+          const [curCol] = getColumns([curCell.getMeta().field], curColumns as any)
           const leafNodes = getLeafNodes(curCol.children)
           const startIndex = curColumns.findIndex(cell => cell.key === curCell.getMeta().field)
           curColumns.splice(startIndex, 1, ...leafNodes)
@@ -358,9 +358,9 @@ const renderTable = (chart: ChartObj) => {
           })
           s2.render(true)
         } else {
-          const [parentColumn] = getColumns([parent.field], curColumns)
+          const [parentColumn] = getColumns([parent.field], curColumns as any)
           if (parentColumn) {
-            const [curCol] = getColumns([curCell.getMeta().field], parentColumn.children)
+            const [curCol] = getColumns([curCell.getMeta().field], parentColumn.children as any)
             const leafNodes = getLeafNodes(curCol.children)
             const startIndex = parentColumn.children?.findIndex(
               cell => cell.key === curCell.getMeta().field
@@ -466,7 +466,7 @@ const renderTable = (chart: ChartObj) => {
       if (parent?.id === 'root') {
         totalColumns.push(...curColumns.slice(startIndex, endIndex + 1))
       } else {
-        const [parentColumn] = getColumns([parent.field], curColumns)
+        const [parentColumn] = getColumns([parent.field], curColumns as any)
         totalColumns.push(...(parentColumn.children?.slice(startIndex, endIndex + 1) || []))
       }
       const chiildDepth = getTreesMaxDepth(totalColumns)
@@ -514,7 +514,7 @@ const renderTable = (chart: ChartObj) => {
               })
               s2.render(true)
             } else {
-              const [parentColumn] = getColumns([parent.field], curColumns)
+              const [parentColumn] = getColumns([parent.field], curColumns as any)
               const newKey = uuid.v4()
               parentColumn.children?.splice(startIndex, endIndex - startIndex + 1, {
                 key: newKey,

@@ -912,13 +912,13 @@ defineExpose({
           ></ds-type-list>
           <editor-detail
             ref="detail"
-            :form="form"
+            :form="form as any"
             :is-plugin="isPlugin"
-            :plugin-ds="pluginDs"
+            :plugin-ds="pluginDs as any"
             :plugin-index="pluginIndex"
             :editDs="editDs"
             :active-step="activeApiStep"
-            :is-supportSetKey="isSupportSetKey"
+            :isSupportSetKey="isSupportSetKey"
             v-if="
               activeStep !== 0 &&
               currentDsType &&
@@ -947,17 +947,17 @@ defineExpose({
           <template v-if="activeStep !== 0 && currentDsType == 'Excel'">
             <excel-detail
               :editDs="editDs"
-              :is-supportSetKey="isSupportSetKey"
+              :isSupportSetKey="isSupportSetKey"
               ref="excel"
-              :param="form2"
+              :param="form2 as any"
             ></excel-detail>
           </template>
           <template v-if="activeStep !== 0 && currentDsType == 'ExcelRemote'">
             <excel-remote-detail
-              :is-supportSetKey="isSupportSetKey"
+              :isSupportSetKey="isSupportSetKey"
               ref="excelRemote"
               :active-step="activeApiStep"
-              :form="form2"
+              :form="form2 as any"
             ></excel-remote-detail>
           </template>
         </div>

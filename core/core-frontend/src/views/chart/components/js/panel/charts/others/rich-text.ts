@@ -12,6 +12,7 @@ export class RichTextChartView extends AbstractChartView {
     'threshold',
     'function-cfg'
   ]
+  selectorSpec: EditorSelectorSpec = {}
   propertyInner: EditorPropertyInner = {
     'background-overall-component': ['all'],
     'border-style': ['all'],
