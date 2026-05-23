@@ -134,7 +134,13 @@ class DatasetService:
 
         now = _timestamp_ms()
         info_value = self._normalize_info(payload.info)
-        info_value = self._merge_source_info(info_value, payload.datasource_id, payload.table_name)
+        datasource_id, table_name, source_info = self._resolve_source_payload(
+            info_value,
+            payload.datasource_id,
+            payload.table_name,
+            payload.union,
+        )
+        info_value = self._merge_source_info(source_info, datasource_id, table_name)
 
         created = await self.group_repo.create({
             "id": _new_identifier(),
@@ -152,10 +158,15 @@ class DatasetService:
             "is_cross": payload.is_cross,
         })
 
-        await self._sync_dataset_source(created.id, payload.name.strip(), info_value)
+        dataset_table = await self._sync_dataset_source(created.id, payload.name.strip(), info_value)
 
         if payload.all_fields:
-            await self._save_fields_for_group(created.id, payload.all_fields)
+            if dataset_table is not None:
+                await self.field_repo.delete_by_group(created.id)
+            await self._save_fields_for_group(
+                created.id,
+                self._normalize_fields_for_dataset_table(payload.all_fields, dataset_table),
+            )
 
         return cast(DatasetNodeResponse, cast(object, DatasetNodeResponse.model_validate(created).model_dump(by_alias=True)))
 
@@ -170,7 +181,13 @@ class DatasetService:
         now = _timestamp_ms()
         info_value = payload.info if payload.info is not None else existing.info
         info_value = self._normalize_info(info_value)
-        info_value = self._merge_source_info(info_value, payload.datasource_id, payload.table_name)
+        datasource_id, table_name, source_info = self._resolve_source_payload(
+            info_value,
+            payload.datasource_id,
+            payload.table_name,
+            payload.union,
+        )
+        info_value = self._merge_source_info(source_info, datasource_id, table_name)
 
         update_data: dict[str, object] = {
             "update_by": str(user.user_id),
@@ -193,11 +210,14 @@ class DatasetService:
             update_data["is_cross"] = payload.is_cross
 
         updated = await self.group_repo.update(existing, update_data)
-        await self._sync_dataset_source(updated.id, updated.name or "", info_value)
+        dataset_table = await self._sync_dataset_source(updated.id, updated.name or "", info_value)
 
         if payload.all_fields is not None:
             await self.field_repo.delete_by_group(payload.id)
-            await self._save_fields_for_group(payload.id, payload.all_fields)
+            await self._save_fields_for_group(
+                payload.id,
+                self._normalize_fields_for_dataset_table(payload.all_fields, dataset_table),
+            )
 
         return cast(DatasetNodeResponse, cast(object, DatasetNodeResponse.model_validate(updated).model_dump(by_alias=True)))
 
@@ -287,6 +307,18 @@ class DatasetService:
             fields = await self.field_repo.list_checked_by_group_no_chart_filter(request.dataset_group_id)
             if not fields:
                 return {"allFields": [], "data": {"fields": [], "data": [], "total": 0}}
+
+            file_preview = await self._preview_file_dataset_data(
+                group=group,
+                dataset_group_id=request.dataset_group_id,
+                limit=limit,
+                offset=offset,
+            )
+            if file_preview is not None:
+                return {
+                    "allFields": [self._field_to_dict(field) for field in fields],
+                    "data": file_preview,
+                }
 
             base_sql = await self._build_dataset_sql(group)
             if base_sql is None:
@@ -528,21 +560,28 @@ class DatasetService:
                 "dataset_table_id": field_input.get("datasetTableId", field_input.get("dataset_table_id")),
             })
 
-    async def _sync_dataset_source(self, group_id: int, group_name: str, info: object) -> None:
+    async def _sync_dataset_source(self, group_id: int, group_name: str, info: object) -> CoreDatasetTable | None:
+        info = self._normalize_info(info)
         if not isinstance(info, dict):
-            return
+            return None
         datasource_id = info.get("datasourceId") or info.get("datasource_id")
         table_name = info.get("table") or info.get("tableName") or info.get("table_name")
         if datasource_id is None or not isinstance(table_name, str) or not table_name.strip():
-            return
+            return None
 
         datasource_id_int = int(str(datasource_id))
         table_name_str = table_name.strip()
         dataset_table = await self._get_or_create_dataset_table(group_id, group_name, datasource_id_int, table_name_str)
+
+        sql = info.get("sql")
+        if isinstance(sql, str) and sql.strip():
+            return dataset_table
+
         await self.field_repo.delete_by_group(group_id)
         fields = await self._load_datasource_fields(datasource_id_int, table_name_str)
         normalized_fields = [self._field_to_storage_payload(field, datasource_id_int, dataset_table.id) for field in fields]
         await self._save_fields_for_group(group_id, normalized_fields)
+        return dataset_table
 
     async def _get_or_create_dataset_table(
         self,
@@ -610,7 +649,7 @@ class DatasetService:
             return None
 
         ds_type = str(current_ds.get("type") or "").strip()
-        if ds_type.upper() == "TABLE":
+        if ds_type.lower() in {"db", "table"}:
             table_name = current_ds.get("tableName") or current_ds.get("table_name")
             if not isinstance(table_name, str) or not table_name.strip():
                 return None
@@ -633,6 +672,32 @@ class DatasetService:
             return await self._execute_sql_for_datasource(sql, datasource.id)
 
         return await self.sql_executor.execute_select(sql, limit=1000)
+
+    async def _preview_file_dataset_data(
+        self,
+        group: CoreDatasetGroup,
+        dataset_group_id: int,
+        limit: int,
+        offset: int,
+    ) -> dict[str, object] | None:
+        datasource, table_name = await self._resolve_dataset_source(group, dataset_group_id)
+        if datasource is None or not DatasourceService._is_file_type(datasource.type):
+            return None
+        if not table_name:
+            return {"fields": [], "data": [], "total": 0}
+
+        ds_service = DatasourceService(self.session, DatasourceRepository(self.session))
+        preview = await ds_service.preview_data({"datasourceId": datasource.id, "tableName": table_name})
+        data_payload = preview.get("data")
+        if not isinstance(data_payload, dict):
+            return {"fields": [], "data": [], "total": 0}
+
+        raw_fields = data_payload.get("fields")
+        fields = cast(list[object], raw_fields) if isinstance(raw_fields, list) else []
+        raw_rows = data_payload.get("data")
+        rows = cast(list[object], raw_rows) if isinstance(raw_rows, list) else []
+        sliced_rows = rows[offset: offset + limit]
+        return {"fields": fields, "data": sliced_rows, "total": len(rows)}
 
     async def _execute_sql_for_datasource(self, sql: str, datasource_id: int) -> dict[str, object]:
         datasource = await DatasourceRepository(self.session).get_by_id(datasource_id)
@@ -665,12 +730,93 @@ class DatasetService:
         except (TypeError, ValueError):
             return None
 
+    @classmethod
+    def _resolve_source_payload(
+        cls,
+        info: object,
+        datasource_id: int | None,
+        table_name: str | None,
+        union_data: Sequence[object] | None,
+    ) -> tuple[int | None, str | None, object]:
+        normalized_info = cls._normalize_info(info)
+        resolved_datasource_id = datasource_id
+        resolved_table_name = table_name
+        resolved_info = normalized_info
+
+        if resolved_datasource_id is None or resolved_table_name is None:
+            union_datasource_id, union_table_name, union_info = cls._extract_source_from_union(union_data)
+            if resolved_datasource_id is None:
+                resolved_datasource_id = union_datasource_id
+            if resolved_table_name is None:
+                resolved_table_name = union_table_name
+            if not isinstance(resolved_info, dict) and union_info is not None:
+                resolved_info = union_info
+
+        return resolved_datasource_id, resolved_table_name, resolved_info
+
+    @classmethod
+    def _extract_source_from_union(
+        cls, union_data: Sequence[object] | None
+    ) -> tuple[int | None, str | None, object | None]:
+        first_node = union_data[0] if union_data else None
+        if not isinstance(first_node, dict):
+            return None, None, None
+        current_ds = first_node.get("currentDs")
+        if not isinstance(current_ds, dict):
+            return None, None, None
+
+        datasource_id_raw = current_ds.get("datasourceId") or current_ds.get("datasource_id")
+        try:
+            datasource_id = int(str(datasource_id_raw)) if datasource_id_raw is not None else None
+        except (TypeError, ValueError):
+            datasource_id = None
+
+        table_name_raw = current_ds.get("tableName") or current_ds.get("table_name")
+        table_name = table_name_raw.strip() if isinstance(table_name_raw, str) and table_name_raw.strip() else None
+        info = cls._normalize_info(current_ds.get("info"))
+
+        return datasource_id, table_name, info
+
     async def _resolve_datasource_for_dataset(self, tables: Sequence[object]) -> CoreDatasource | None:
         first_table = tables[0] if tables else None
         datasource_id = getattr(first_table, "datasource_id", None)
         if not isinstance(datasource_id, int):
             return None
         return await DatasourceRepository(self.session).get_by_id(datasource_id)
+
+    async def _resolve_dataset_source(
+        self,
+        group: CoreDatasetGroup,
+        dataset_group_id: int,
+    ) -> tuple[CoreDatasource | None, str | None]:
+        table_name: str | None = None
+        info = self._normalize_info(group.info)
+        if isinstance(info, dict):
+            raw_table_name = info.get("table") or info.get("tableName") or info.get("table_name")
+            if isinstance(raw_table_name, str) and raw_table_name.strip():
+                table_name = raw_table_name.strip()
+
+        tables = list(await self.table_repo.list_by_group(dataset_group_id))
+        first_table = tables[0] if tables else None
+        if table_name is None:
+            raw_table_name = getattr(first_table, "table_name", None)
+            if isinstance(raw_table_name, str) and raw_table_name.strip():
+                table_name = raw_table_name.strip()
+
+        datasource = await self._resolve_datasource_for_dataset(tables)
+        if datasource is not None:
+            return datasource, table_name
+
+        datasource_id: int | None = None
+        if isinstance(info, dict):
+            raw_datasource_id = info.get("datasourceId") or info.get("datasource_id")
+            try:
+                datasource_id = int(str(raw_datasource_id)) if raw_datasource_id is not None else None
+            except (TypeError, ValueError):
+                datasource_id = None
+        if datasource_id is None:
+            return None, table_name
+        return await DatasourceRepository(self.session).get_by_id(datasource_id), table_name
 
     @staticmethod
     def _field_to_storage_payload(field: DatasourceFieldResponse, datasource_id: int, dataset_table_id: int) -> dict[str, object]:
@@ -690,6 +836,27 @@ class DatasetService:
             "datasourceId": datasource_id,
             "datasetTableId": dataset_table_id,
         }
+
+    @staticmethod
+    def _normalize_fields_for_dataset_table(
+        fields_data: Sequence[object] | None,
+        dataset_table: CoreDatasetTable | None,
+    ) -> Sequence[object]:
+        if dataset_table is None:
+            return fields_data or []
+
+        normalized_fields: list[object] = []
+        for field_input in fields_data or []:
+            if not isinstance(field_input, dict):
+                normalized_fields.append(field_input)
+                continue
+            payload = dict(field_input)
+            payload["datasetTableId"] = dataset_table.id
+            payload["dataset_table_id"] = dataset_table.id
+            payload["datasourceId"] = dataset_table.datasource_id
+            payload["datasource_id"] = dataset_table.datasource_id
+            normalized_fields.append(payload)
+        return normalized_fields
 
     @staticmethod
     def _datasource_field_to_response_dict(
