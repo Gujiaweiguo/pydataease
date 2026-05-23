@@ -393,14 +393,19 @@ class DatasetService:
                 continue
         return results
 
-    async def get_fields(self, request: DatasetTableFieldRequest) -> list[DatasetFieldResponse]:
+    async def get_fields(self, request: DatasetTableFieldRequest) -> list[dict[str, object]]:
         if request.dataset_group_id:
             fields = await self.field_repo.list_by_group(request.dataset_group_id)
-        elif request.datasource_id and request.table_name:
+            return [DatasetFieldResponse.model_validate(field).model_dump(by_alias=True) for field in fields]
+
+        if request.datasource_id and request.table_name:
             fields = await self._load_datasource_fields(request.datasource_id, request.table_name)
-        else:
-            fields = []
-        return [DatasetFieldResponse.model_validate(f) for f in fields]
+            return [
+                self._datasource_field_to_response_dict(field, request.datasource_id, idx)
+                for idx, field in enumerate(fields)
+            ]
+
+        return []
 
     async def preview_sql(self, payload: dict[str, object]) -> dict[str, object]:
         raw_sql = str(payload.get("sql", ""))
@@ -622,26 +627,34 @@ class DatasetService:
         }
 
     @staticmethod
-    def _datasource_field_to_dataset_field(field: DatasourceFieldResponse, datasource_id: int):
-        class _MappedField:
-            def __init__(self) -> None:
-                self.datasource_id = 0
-                self.origin_name = ""
-                self.name = ""
-                self.type = ""
-                self.de_type = 0
-                self.checked = False
-
-        payload = DatasetService._field_to_storage_payload(field, datasource_id, 0)
-        mapped = _MappedField()
-        mapped.datasource_id = datasource_id
-        mapped.origin_name = str(payload["originName"])
-        mapped.name = str(payload["name"])
-        mapped.type = str(payload["type"])
-        de_type_value = payload.get("deType")
-        mapped.de_type = 1 if field.data_type == "DATETIME" else 0 if de_type_value == 0 else int(cast(int, de_type_value))
-        mapped.checked = True
-        return mapped
+    def _datasource_field_to_response_dict(
+        field: DatasourceFieldResponse, datasource_id: int, idx: int,
+    ) -> dict[str, object]:
+        data_type = str(getattr(field, "data_type", "varchar") or "varchar")
+        return {
+            "id": 0,
+            "originName": field.origin_name,
+            "name": field.name,
+            "dataeaseName": field.name,
+            "fieldShortName": field.name,
+            "groupType": "d",
+            "type": field.type or data_type,
+            "size": None,
+            "deType": field.de_type,
+            "deExtractType": 0,
+            "extField": 0,
+            "checked": True,
+            "columnIndex": idx,
+            "accuracy": None,
+            "dateFormat": None,
+            "dateFormatType": None,
+            "datasourceId": datasource_id,
+            "datasetTableId": 0,
+            "datasetGroupId": None,
+            "chartId": None,
+            "lastSyncTime": None,
+            "description": None,
+        }
 
     @staticmethod
     def _normalize_info(info: object) -> object:
