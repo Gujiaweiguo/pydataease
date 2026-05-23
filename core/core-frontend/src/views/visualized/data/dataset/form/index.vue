@@ -1198,51 +1198,51 @@ const initGroupField = val => {
   editGroupField.value = true
 }
 
-const confirmGroupField = () => {
-  ruleGroupFieldRef.value.validate(val => {
-    let count = 0
-    let time: ReturnType<typeof setTimeout> | null = null
-    refsForm.value.forEach(ele => {
-      ele?.validate(val => {
-        if (val) {
-          count++
-        }
-      })
-    })
-    time = setTimeout(() => {
-      clearTimeout(time)
-      time = null
-      if (val && count === currentGroupField.groupList.length) {
-        const groupList = []
-        currentGroupField.groupList.forEach(ele => {
-          const { name, text = [], time, min, max, minTerm, maxTerm } = ele
-          const obj = {
-            name,
-            text,
-            min,
-            max,
-            minTerm,
-            maxTerm,
-            startTime: '',
-            endTime: ''
-          }
-          if (currentGroupField.deTypeOrigin === 1) {
-            const [startTime, endTime] = time
-            obj.startTime = dayjs(startTime).format('YYYY-MM-DD HH:mm:ss')
-            obj.endTime = dayjs(endTime).format('YYYY-MM-DD HH:mm:ss')
-          }
-          groupList.push(obj)
-        })
-        const index = allfields.value.findIndex(ele => ele.id === currentGroupField.id)
-        if (index !== -1) {
-          allfields.value.splice(index, 1, { ...currentGroupField, groupList })
-        } else {
-          allfields.value.push({ ...currentGroupField, groupList })
-        }
-        editGroupField.value = false
-      }
-    }, 1000)
+const confirmGroupField = async () => {
+  try {
+    // Validate the main form (field name, originName) via Promise
+    await ruleGroupFieldRef.value.validate()
+  } catch {
+    return
+  }
+
+  // Validate each group-list sub-form via Promise
+  for (const formRef of refsForm.value) {
+    try {
+      await formRef?.validate()
+    } catch {
+      return
+    }
+  }
+
+  // All validations passed — build groupList and push to allfields
+  const groupList = []
+  currentGroupField.groupList.forEach(ele => {
+    const { name, text = [], time, min, max, minTerm, maxTerm } = ele
+    const obj = {
+      name,
+      text,
+      min,
+      max,
+      minTerm,
+      maxTerm,
+      startTime: '',
+      endTime: ''
+    }
+    if (currentGroupField.deTypeOrigin === 1) {
+      const [startTime, endTime] = time
+      obj.startTime = dayjs(startTime).format('YYYY-MM-DD HH:mm:ss')
+      obj.endTime = dayjs(endTime).format('YYYY-MM-DD HH:mm:ss')
+    }
+    groupList.push(obj)
   })
+  const index = allfields.value.findIndex(ele => ele.id === currentGroupField.id)
+  if (index !== -1) {
+    allfields.value.splice(index, 1, { ...currentGroupField, groupList })
+  } else {
+    allfields.value.push({ ...currentGroupField, groupList })
+  }
+  editGroupField.value = false
 }
 
 const notConfirmEditUnion = () => {
