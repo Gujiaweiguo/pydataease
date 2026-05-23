@@ -279,19 +279,40 @@ class DatasetService:
         return int(cast(int | str, rows[0][0])) if rows else 0
 
     async def preview_data(self, request: DatasetPreviewDataRequest) -> dict[str, object]:
-        group = await self._get_group(request.dataset_group_id)
-        fields = await self.field_repo.list_checked_by_group_no_chart_filter(request.dataset_group_id)
-        if not fields:
-            return {"fields": [], "data": [], "total": 0}
-
-        base_sql = await self._build_dataset_sql(group)
-        if base_sql is None:
-            return {"fields": [], "data": [], "total": 0}
-
         limit = max(1, request.limit)
         offset = max(0, request.offset)
-        sql = f"SELECT * FROM ({base_sql}) AS dataset_preview LIMIT {limit} OFFSET {offset}"
-        return await self._execute_dataset_sql(sql, request.dataset_group_id)
+
+        if request.dataset_group_id:
+            group = await self._get_group(request.dataset_group_id)
+            fields = await self.field_repo.list_checked_by_group_no_chart_filter(request.dataset_group_id)
+            if not fields:
+                return {"allFields": [], "data": {"fields": [], "data": [], "total": 0}}
+
+            base_sql = await self._build_dataset_sql(group)
+            if base_sql is None:
+                return {"allFields": [], "data": {"fields": [], "data": [], "total": 0}}
+
+            sql = f"SELECT * FROM ({base_sql}) AS dataset_preview LIMIT {limit} OFFSET {offset}"
+            result = await self._execute_dataset_sql(sql, request.dataset_group_id)
+            return {
+                "allFields": [self._field_to_dict(field) for field in fields],
+                "data": result,
+            }
+
+        if request.union:
+            base_sql = self._build_sql_from_union(request.union)
+            datasource_id = self._extract_union_datasource_id(request.union)
+            if base_sql is None or datasource_id is None:
+                return {"allFields": self._normalize_preview_all_fields(request.all_fields), "data": {"fields": [], "data": [], "total": 0}}
+
+            sql = f"SELECT * FROM ({base_sql}) AS dataset_preview LIMIT {limit} OFFSET {offset}"
+            result = await self._execute_sql_for_datasource(sql, datasource_id)
+            return {
+                "allFields": self._normalize_preview_all_fields(request.all_fields),
+                "data": result,
+            }
+
+        return {"allFields": [], "data": {"fields": [], "data": [], "total": 0}}
 
     async def get_enum_values(self, request: DatasetEnumValueRequest) -> list[str]:
         group = await self._get_group(request.dataset_group_id)
@@ -580,25 +601,69 @@ class DatasetService:
                     return f'SELECT * FROM "{safe}"'
         return None
 
+    def _build_sql_from_union(self, union_data: Sequence[object]) -> str | None:
+        first_node = union_data[0] if union_data else None
+        if not isinstance(first_node, dict):
+            return None
+        current_ds = first_node.get("currentDs")
+        if not isinstance(current_ds, dict):
+            return None
+
+        ds_type = str(current_ds.get("type") or "").strip()
+        if ds_type.upper() == "TABLE":
+            table_name = current_ds.get("tableName") or current_ds.get("table_name")
+            if not isinstance(table_name, str) or not table_name.strip():
+                return None
+            return f"SELECT * FROM {self._quote_identifier(table_name.strip())}"
+
+        if ds_type.lower() == "sql":
+            info = self._normalize_info(current_ds.get("info"))
+            if isinstance(info, dict):
+                sql = info.get("sql")
+                if isinstance(sql, str) and sql.strip():
+                    return sql.strip()
+
+        return None
+
     async def _execute_dataset_sql(self, sql: str, dataset_group_id: int) -> dict[str, object]:
         tables = list(await self.table_repo.list_by_group(dataset_group_id))
         datasource = await self._resolve_datasource_for_dataset(tables)
 
         if datasource is not None:
-            ds_service = DatasourceService(self.session, DatasourceRepository(self.session))
-            config = datasource.configuration
-            if isinstance(config, str):
-                config = json.loads(config)
-            connection = await ds_service._open_connection(_as_config_dict(config), ds_type=datasource.type)
-            try:
-                records = await connection.fetch(sql)
-            finally:
-                await connection.close()
-            rows = [list(record) for record in records]
-            fields = self._build_external_fields(records, rows)
-            return {"sql": sql, "fields": fields, "data": rows, "total": len(rows)}
+            return await self._execute_sql_for_datasource(sql, datasource.id)
 
         return await self.sql_executor.execute_select(sql, limit=1000)
+
+    async def _execute_sql_for_datasource(self, sql: str, datasource_id: int) -> dict[str, object]:
+        datasource = await DatasourceRepository(self.session).get_by_id(datasource_id)
+        if datasource is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Datasource not found")
+
+        ds_service = DatasourceService(self.session, DatasourceRepository(self.session))
+        config = datasource.configuration
+        if isinstance(config, str):
+            config = json.loads(config)
+        connection = await ds_service._open_connection(_as_config_dict(config), ds_type=datasource.type)
+        try:
+            records = await connection.fetch(sql)
+        finally:
+            await connection.close()
+        rows = [list(record) for record in records]
+        fields = self._build_external_fields(records, rows)
+        return {"sql": sql, "fields": fields, "data": rows, "total": len(rows)}
+
+    def _extract_union_datasource_id(self, union_data: Sequence[object]) -> int | None:
+        first_node = union_data[0] if union_data else None
+        if not isinstance(first_node, dict):
+            return None
+        current_ds = first_node.get("currentDs")
+        if not isinstance(current_ds, dict):
+            return None
+        datasource_id = current_ds.get("datasourceId") or current_ds.get("datasource_id")
+        try:
+            return int(str(datasource_id)) if datasource_id is not None else None
+        except (TypeError, ValueError):
+            return None
 
     async def _resolve_datasource_for_dataset(self, tables: Sequence[object]) -> CoreDatasource | None:
         first_table = tables[0] if tables else None
@@ -655,6 +720,17 @@ class DatasetService:
             "lastSyncTime": None,
             "description": None,
         }
+
+    @staticmethod
+    def _datasource_field_to_dataset_field(field: DatasourceFieldResponse, datasource_id: int) -> object:
+        return type("DatasetFieldPayload", (), {
+            "datasource_id": datasource_id,
+            "origin_name": field.origin_name,
+            "name": field.name,
+            "type": field.type or str(getattr(field, "data_type", "varchar") or "varchar"),
+            "de_type": field.de_type,
+            "checked": True,
+        })()
 
     @staticmethod
     def _normalize_info(info: object) -> object:
@@ -735,6 +811,19 @@ class DatasetService:
             "deType": getattr(field, "de_type", None),
             "groupType": getattr(field, "group_type", None),
         }
+
+    @staticmethod
+    def _normalize_preview_all_fields(fields: Sequence[object] | None) -> list[dict[str, object]]:
+        normalized: list[dict[str, object]] = []
+        for field in fields or []:
+            if not isinstance(field, dict):
+                continue
+            payload = dict(field)
+            origin_name = payload.get("originName") or payload.get("origin_name") or payload.get("name")
+            if origin_name is not None:
+                payload["originName"] = origin_name
+            normalized.append(payload)
+        return normalized
 
     async def _filter_by_permission(
         self, groups: Sequence[CoreDatasetGroup]

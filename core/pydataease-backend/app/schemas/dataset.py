@@ -62,14 +62,17 @@ class DatasetTableFieldRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     dataset_group_id: int | None = Field(default=None, validation_alias=AliasChoices("datasetGroupId", "dataset_group_id"), serialization_alias="datasetGroupId")
-    datasource_id: int | None = Field(default=None, validation_alias=AliasChoices("datasourceId", "datasource_id"), serialization_alias="datasourceId")
+    datasource_id: int | None = Field(default=None, validation_alias=AliasChoices("datasourceId", "datasource_id", "id"), serialization_alias="datasourceId")
     table_name: str | None = Field(default=None, validation_alias=AliasChoices("tableName", "table_name"), serialization_alias="tableName")
 
 
 class DatasetPreviewDataRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
-    dataset_group_id: int = Field(validation_alias=AliasChoices("datasetGroupId", "dataset_group_id"), serialization_alias="datasetGroupId")
+    dataset_group_id: int | None = Field(default=None, validation_alias=AliasChoices("datasetGroupId", "dataset_group_id"), serialization_alias="datasetGroupId")
+    union: JSONList | None = Field(default=None, validation_alias=AliasChoices("union"), serialization_alias="union")
+    all_fields: JSONList | None = Field(default=None, validation_alias=AliasChoices("allFields", "all_fields"), serialization_alias="allFields")
+    is_cross: bool | None = Field(default=None, validation_alias=AliasChoices("isCross", "is_cross"), serialization_alias="isCross")
     limit: int = 100
     offset: int = 0
     sort_fields: JSONList | None = Field(default=None, validation_alias=AliasChoices("sortFields", "sort_fields"), serialization_alias="sortFields")
