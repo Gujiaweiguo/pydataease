@@ -484,7 +484,8 @@ const dsChange = debounce((val?: string) => {
   dsLoading.value = true
   getTables({ datasourceId: val || sqlNode.value.datasourceId })
     .then(res => {
-      tableList = res || []
+      const datasourceId = val || sqlNode.value.datasourceId
+      tableList = (res || []).map(table => ({ ...table, datasourceId }))
       datasourceTableData.value = [...tableList]
     })
     .finally(() => {

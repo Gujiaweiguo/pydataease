@@ -289,6 +289,34 @@ const generateColumns = (arr: Field[]) =>
     )
   }))
 
+const normalizePreviewFields = (fields: Array<Record<string, unknown>>, allFields: Field[]) => {
+  return fields.map(field => {
+    const fieldName = String(field.dataeaseName || field.name || field.originName || '')
+    const matched = allFields.find(ele => {
+      return [ele.dataeaseName, ele.name, ele.originName].includes(fieldName)
+    })
+    return {
+      dataeaseName: matched?.dataeaseName || fieldName,
+      fieldShortName: matched?.fieldShortName || fieldName,
+      name: matched?.name || fieldName,
+      originName: matched?.originName || fieldName,
+      deType: matched?.deType ?? 0
+    } as Field
+  })
+}
+
+const normalizePreviewRows = (fields: Field[], rows: Array<unknown>) => {
+  return rows.map(row => {
+    if (!Array.isArray(row)) {
+      return row as Record<string, unknown>
+    }
+    return fields.reduce((acc, field, index) => {
+      acc[field.dataeaseName || field.name || field.originName] = row[index]
+      return acc
+    }, {} as Record<string, unknown>)
+  })
+}
+
 const dtLoading = ref(false)
 const isCreated = ref(false)
 const getData = () => {
@@ -520,8 +548,15 @@ const handleClick = (tabName: TabPaneName) => {
         .then(res => {
           allFields = (res?.allFields as unknown as Field[]) || []
           datasetTableFiled.value = allFields
-          columnsPreview = generateColumns((res?.data?.fields as Field[]) || [])
-          dataPreview = (res?.data?.data as Array<{}>) || []
+          const previewFields = normalizePreviewFields(
+            (res?.data?.fields as Array<Record<string, unknown>>) || [],
+            allFields
+          )
+          columnsPreview = generateColumns(previewFields)
+          dataPreview = normalizePreviewRows(
+            previewFields,
+            (res?.data?.data as Array<unknown>) || []
+          )
           columns.value = columnsPreview
           tableData.value = dataPreview
         })

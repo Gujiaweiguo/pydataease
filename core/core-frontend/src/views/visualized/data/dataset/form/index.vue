@@ -67,6 +67,7 @@ import {
 import type { Table } from '@/api/dataset'
 import DatasetUnion from './DatasetUnion.vue'
 import { cloneDeep, debounce } from 'lodash-es'
+import { applyCalculatedPreviewFields } from './previewCalculatedFields'
 import { XpackComponent } from '@/components/plugin'
 import { iconFieldMap } from '@/components/icon-group/field-list'
 import { iconDatasourceMap } from '@/components/icon-group/datasource-list'
@@ -75,6 +76,9 @@ interface DragEvent extends MouseEvent {
 }
 
 interface Field {
+  id?: string
+  extField?: number
+  params?: Array<{ id: string; value: number | string | null }>
   fieldShortName: string
   name: string
   dataeaseName: string
@@ -686,12 +690,41 @@ const generateColumns = (arr: Field[]) =>
     )
   }))
 
+const normalizePreviewFields = (fields: Array<Record<string, unknown>>) => {
+  return fields.map(field => {
+    const fieldName = String(field.dataeaseName || field.name || field.originName || '')
+    const matched = allfields.value.find(ele => {
+      return [ele.dataeaseName, ele.name, ele.originName].includes(fieldName)
+    })
+    return {
+      dataeaseName: matched?.dataeaseName || fieldName,
+      fieldShortName: matched?.fieldShortName || fieldName,
+      name: matched?.name || fieldName,
+      originName: matched?.originName || fieldName,
+      deType: matched?.deType ?? 0,
+      type: String(field.type || matched?.type || '')
+    } as Field
+  })
+}
+
+const normalizePreviewRows = (fields: Field[], rows: Array<unknown>) => {
+  return rows.map(row => {
+    if (!Array.isArray(row)) {
+      return row as Record<string, unknown>
+    }
+    return fields.reduce((acc, field, index) => {
+      acc[field.dataeaseName || field.name || field.originName] = row[index]
+      return acc
+    }, {} as Record<string, unknown>)
+  })
+}
+
 const dsChange = (val: string) => {
   dsLoading.value = true
   sqlNode.datasourceId = dataSource.value
   return getTables({ datasourceId: val })
     .then(res => {
-      tableList = res || []
+      tableList = (res || []).map(table => ({ ...table, datasourceId: val }))
       datasourceTableData.value = [...tableList]
     })
     .finally(() => {
@@ -724,9 +757,10 @@ const initEdite = async () => {
     }
     isEdit.value = true
   }
+  await getDatasource(isEdit.value ? 0 : 2)
   if (datasourceId) {
     dataSource.value = datasourceId as string
-    getTableName(datasourceId as string, tableName)
+    await getTableName(datasourceId as string, tableName)
   }
   if (!id && !copyId) return
 
@@ -748,9 +782,16 @@ const initEdite = async () => {
     allfields.value = res.allFields || []
     isCross.value = res.isCross || false
     dfsUnion(arr, res.union || [])
-    const [fir] = res.union as { currentDs: { datasourceId: string } }[]
-    dataSource.value = fir?.currentDs?.datasourceId
-    dsChange(dataSource.value)
+    const [fir] = (res.union || []) as {
+      currentDs?: { datasourceId?: string; tableName?: string }
+    }[]
+    const currentDs = fir?.currentDs || {}
+    dataSource.value = currentDs?.datasourceId || (datasourceId as string) || ''
+    activeName.value = currentDs?.tableName || ''
+    searchTable.value = ''
+    if (dataSource.value) {
+      await dsChange(dataSource.value)
+    }
     datasetDrag.value.initState(arr)
   } catch (error) {
     console.error(error)
@@ -1160,7 +1201,7 @@ const initGroupField = val => {
 const confirmGroupField = () => {
   ruleGroupFieldRef.value.validate(val => {
     let count = 0
-    let time
+    let time: ReturnType<typeof setTimeout> | null = null
     refsForm.value.forEach(ele => {
       ele?.validate(val => {
         if (val) {
@@ -1337,13 +1378,14 @@ const saveAndBack = () => {
   pushDataset()
 }
 
-let p = null
-const XpackLoaded = () => p(true)
+let resolveXpackLoaded: ((value: boolean) => void) | null = null
+const XpackLoaded = () => resolveXpackLoaded?.(true)
 onMounted(async () => {
   isEdit.value = false
-  await new Promise(r => (p = r))
+  await new Promise<boolean>(resolve => {
+    resolveXpackLoaded = resolve
+  })
   await initEdite()
-  getDatasource(isEdit.value ? 0 : 2)
   window.addEventListener('resize', handleResize)
   getSqlResultHeight()
   quotaTableHeight.value = sqlResultHeight.value - 242
@@ -1356,7 +1398,7 @@ const getSqlResultHeight = () => {
   sqlResultHeight.value = (document.querySelector('.sql-result') as HTMLElement).offsetHeight
 }
 const getDatasource = (weight?: number) => {
-  getDatasourceList(weight).then(res => {
+  return getDatasourceList(weight).then(res => {
     const _list = (res as unknown as DataSource[]) || []
     if (_list && _list.length > 0 && _list[0].id === '0' && _list[0].children?.length) {
       state.dataSourceList = dfsChild(_list[0].children)
@@ -1449,8 +1491,24 @@ const datasetPreview = () => {
   datasetPreviewLoading.value = true
   getPreviewData({ union: arr, allFields: allfields.value, isCross: isCross.value })
     .then(res => {
-      columns.value = generateColumns((res.data.fields as Field[]) || [])
-      tableData.value = (res.data.data as Array<{}>) || []
+      const preview = res?.data || { fields: [], data: [] }
+      const previewFields = normalizePreviewFields(
+        (preview.fields as Array<Record<string, unknown>>) || []
+      )
+      const previewRows = normalizePreviewRows(
+        previewFields,
+        (preview.data as Array<unknown>) || []
+      )
+      const calculatedPreview = applyCalculatedPreviewFields(
+        previewFields,
+        previewRows,
+        allfields.value as Field[]
+      )
+      columns.value = generateColumns(calculatedPreview.fields as Field[])
+      tableData.value = calculatedPreview.rows
+    })
+    .catch(error => {
+      console.error(error)
     })
     .finally(() => {
       datasetPreviewLoading.value = false
