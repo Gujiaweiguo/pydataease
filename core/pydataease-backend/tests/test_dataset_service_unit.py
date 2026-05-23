@@ -8,9 +8,9 @@ from typing import Any, cast
 import pytest
 
 from app.models.datasource import CoreDatasource  # pyright: ignore[reportImplicitRelativeImport]
-from app.models.dataset import CoreDatasetGroup  # pyright: ignore[reportImplicitRelativeImport]
+from app.models.dataset import CoreDatasetGroup, CoreDatasetTable, CoreDatasetTableField  # pyright: ignore[reportImplicitRelativeImport]
 from app.schemas.auth import TokenUser  # pyright: ignore[reportImplicitRelativeImport]
-from app.schemas.dataset import DatasetGroupCreate, DatasetGroupUpdate, DatasetPreviewDataRequest  # pyright: ignore[reportImplicitRelativeImport]
+from app.schemas.dataset import DatasetEnumValueRequest, DatasetGroupCreate, DatasetGroupUpdate, DatasetPreviewDataRequest  # pyright: ignore[reportImplicitRelativeImport]
 from app.schemas.datasource import DatasourceFieldResponse  # pyright: ignore[reportImplicitRelativeImport]
 from app.services.dataset_service import DatasetService, _build_tree, _compute_level  # pyright: ignore[reportImplicitRelativeImport]
 from app.repositories.datasource_repo import DatasourceRepository  # pyright: ignore[reportImplicitRelativeImport]
@@ -79,6 +79,21 @@ def make_datasource_field(**overrides: object) -> DatasourceFieldResponse:
     }
     payload.update(overrides)
     return DatasourceFieldResponse.model_validate(payload)
+
+
+def make_table(**overrides: object) -> SimpleNamespace:
+    payload: dict[str, object] = {
+        "id": 303,
+        "name": "orders",
+        "table_name": "orders",
+        "datasource_id": 202,
+        "dataset_group_id": 1,
+        "type": "db",
+        "info": None,
+        "sql_variable_details": None,
+    }
+    payload.update(overrides)
+    return SimpleNamespace(**payload)
 
 
 class TestComputeLevel:
@@ -401,6 +416,13 @@ class TestCreateAndSaveUnionFallback:
             "tableName": "orders",
             "table_name": "orders",
             "table": "orders",
+            "union": [{
+                "currentDs": {
+                    "datasourceId": 88,
+                    "tableName": "orders",
+                    "info": {"sql": "SELECT * FROM orders"},
+                }
+            }],
         }
         cast(Any, service._sync_dataset_source).assert_awaited_once_with(1001, "union dataset", create_info)
 
@@ -464,6 +486,13 @@ class TestCreateAndSaveUnionFallback:
             "tableName": "line_items",
             "table_name": "line_items",
             "table": "line_items",
+            "union": [{
+                "currentDs": {
+                    "datasourceId": 66,
+                    "tableName": "line_items",
+                    "info": {"sql": "SELECT * FROM line_items"},
+                }
+            }],
         }
         cast(Any, service._sync_dataset_source).assert_awaited_once_with(1002, "union-dataset-updated", update_info)
 
@@ -607,6 +636,8 @@ class TestFieldToDict:
             "accuracy": 6,
             "dateFormat": "yyyy-MM-dd",
             "dateFormatType": "custom",
+            "groupList": None,
+            "otherGroup": None,
             "datasourceId": "202",
             "datasetTableId": "303",
         }
@@ -665,6 +696,62 @@ class TestFieldToPreviewField:
         assert payload["type"] is None
         assert payload["deType"] is None
         assert payload["groupType"] is None
+
+
+class TestUnionPersistenceHelpers:
+    def test_attach_union_to_info_merges_into_existing_dict(self) -> None:
+        info = {"datasourceId": 88, "tableName": "orders"}
+        union = [{"currentDs": {"datasourceId": 88, "tableName": "orders"}}]
+
+        payload = DatasetService._attach_union_to_info(info, union)
+
+        assert payload == {
+            "datasourceId": 88,
+            "tableName": "orders",
+            "union": union,
+        }
+
+    def test_attach_union_to_info_wraps_non_dict_payload(self) -> None:
+        union = [{"currentDs": {"datasourceId": 88, "tableName": "orders"}}]
+
+        payload = DatasetService._attach_union_to_info(None, union)
+
+        assert payload == {"union": union}
+
+    def test_build_detail_union_prefers_stored_union(self) -> None:
+        service = DatasetService(
+            session=AsyncMock(),
+            group_repo=cast(Any, SimpleNamespace()),
+            table_repo=cast(Any, SimpleNamespace()),
+            field_repo=cast(Any, SimpleNamespace()),
+        )
+        stored_union = [{"currentDs": {"datasourceId": "88", "tableName": "orders"}, "childrenDs": []}]
+
+        payload = service._build_detail_union(
+            cast(CoreDatasetGroup, cast(object, make_group(info={"union": stored_union}))),
+            cast(list[CoreDatasetTable], []),
+            [],
+        )
+
+        assert payload == stored_union
+
+    def test_build_detail_union_falls_back_to_dataset_tables(self) -> None:
+        service = DatasetService(
+            session=AsyncMock(),
+            group_repo=cast(Any, SimpleNamespace()),
+            table_repo=cast(Any, SimpleNamespace()),
+            field_repo=cast(Any, SimpleNamespace()),
+        )
+
+        payload = cast(list[dict[str, Any]], service._build_detail_union(
+            cast(CoreDatasetGroup, cast(object, make_group(info={"datasourceId": 202, "tableName": "orders"}))),
+            cast(list[CoreDatasetTable], [make_table()]),
+            cast(list[CoreDatasetTableField], [make_field(dataset_table_id=303, datasource_id=202, origin_name="id", name="id")]),
+        ))
+
+        assert payload[0]["currentDs"]["datasourceId"] == "202"
+        assert payload[0]["currentDs"]["tableName"] == "orders"
+        assert payload[0]["currentDsFields"][0]["originName"] == "id"
 
 
 class TestPreviewDataForFileDatasources:
@@ -778,3 +865,250 @@ class TestPreviewDataForFileDatasources:
         payload = cast(dict[str, object], result["data"])
         assert payload["data"] == [{"id": "1", "name": "alice"}, {"id": "2", "name": "bob"}]
         assert payload["total"] == 2
+
+    @pytest.mark.asyncio
+    async def test_get_dataset_preview_uses_file_preview_for_saved_excel_dataset(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        field_repo = SimpleNamespace(
+            list_by_group=AsyncMock(return_value=self._fields()),
+            list_checked_by_group_no_chart_filter=AsyncMock(return_value=self._fields()),
+        )
+        service = self._build_service(field_repo)
+        service._get_group = AsyncMock(return_value=make_group(  # type: ignore[method-assign]
+            id=321,
+            name="产品数据集",
+            node_type="dataset",
+            info={"datasourceId": 88, "tableName": "数据1"},
+        ))
+        service.table_repo = cast(Any, SimpleNamespace(list_by_group=AsyncMock(return_value=[make_table(
+            id=303,
+            name="产品数据集",
+            table_name="数据1",
+            datasource_id=88,
+            type="db",
+        )])))
+
+        datasource = CoreDatasource(
+            id=88,
+            name="orders-file",
+            type="Excel",
+            pid=None,
+            edit_type=None,
+            configuration=[{
+                "tableName": "数据1",
+                "deTableName": "excel_data_1",
+                "fields": [
+                    {"originName": "订单号", "name": "订单号", "fieldType": "DOUBLE", "deType": 3},
+                    {"originName": "客户名称", "name": "客户名称", "fieldType": "TEXT", "deType": 0},
+                ],
+                "jsonArray": [
+                    {"订单号": 1, "客户名称": "alice"},
+                    {"订单号": 2, "客户名称": "bob"},
+                ],
+            }],
+            description=None,
+            create_time=1,
+            update_time=2,
+            update_by=7,
+            create_by="7",
+            status="Success",
+            qrtz_instance=None,
+            task_status="WaitingForExecution",
+            enable_data_fill=False,
+        )
+        monkeypatch.setattr(DatasourceRepository, "get_by_id", AsyncMock(return_value=datasource))
+
+        result = await service.get_dataset_preview(321)
+
+        assert result["id"] == "321"
+        assert result["name"] == "产品数据集"
+        assert result["total"] == 2
+        payload = cast(dict[str, object], result["data"])
+        assert payload["fields"] == [
+            {"name": "订单号", "originName": "订单号", "deType": 3, "fieldType": "DOUBLE"},
+            {"name": "客户名称", "originName": "客户名称", "deType": 0, "fieldType": "TEXT"},
+        ]
+        assert payload["data"] == [
+            {"订单号": 1, "客户名称": "alice"},
+            {"订单号": 2, "客户名称": "bob"},
+        ]
+
+    @pytest.mark.asyncio
+    async def test_get_dataset_total_uses_file_preview_for_saved_excel_dataset(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        field_repo = SimpleNamespace(
+            list_by_group=AsyncMock(return_value=self._fields()),
+            list_checked_by_group_no_chart_filter=AsyncMock(return_value=self._fields()),
+        )
+        service = self._build_service(field_repo)
+        service._get_group = AsyncMock(return_value=make_group(  # type: ignore[method-assign]
+            id=321,
+            name="产品数据集",
+            node_type="dataset",
+            info={"datasourceId": 88, "tableName": "数据1"},
+        ))
+        service.table_repo = cast(Any, SimpleNamespace(list_by_group=AsyncMock(return_value=[make_table(
+            id=303,
+            name="产品数据集",
+            table_name="数据1",
+            datasource_id=88,
+            type="db",
+        )])))
+
+        datasource = CoreDatasource(
+            id=88,
+            name="orders-file",
+            type="Excel",
+            pid=None,
+            edit_type=None,
+            configuration=[{
+                "tableName": "数据1",
+                "deTableName": "excel_data_1",
+                "fields": [
+                    {"originName": "订单号", "name": "订单号", "fieldType": "DOUBLE", "deType": 3},
+                ],
+                "jsonArray": [
+                    {"订单号": 1},
+                    {"订单号": 2},
+                    {"订单号": 3},
+                ],
+            }],
+            description=None,
+            create_time=1,
+            update_time=2,
+            update_by=7,
+            create_by="7",
+            status="Success",
+            qrtz_instance=None,
+            task_status="WaitingForExecution",
+            enable_data_fill=False,
+        )
+        monkeypatch.setattr(DatasourceRepository, "get_by_id", AsyncMock(return_value=datasource))
+
+        assert await service.get_dataset_total(321) == 3
+
+    @pytest.mark.asyncio
+    async def test_get_enum_values_uses_file_preview_for_saved_excel_dataset(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        excel_fields = [
+            make_field(id=1, origin_name="订单号", name="订单号", dataease_name="订单号", type="DOUBLE", de_type=3),
+            make_field(id=2, origin_name="客户名称", name="客户名称", dataease_name="客户名称", type="TEXT", de_type=0),
+        ]
+        field_repo = SimpleNamespace(
+            list_by_group=AsyncMock(return_value=excel_fields),
+            list_checked_by_group_no_chart_filter=AsyncMock(return_value=excel_fields),
+        )
+        service = self._build_service(field_repo)
+        service._get_group = AsyncMock(return_value=make_group(  # type: ignore[method-assign]
+            id=321,
+            name="产品数据集",
+            node_type="dataset",
+            info={"datasourceId": 88, "tableName": "数据1"},
+        ))
+        service.table_repo = cast(Any, SimpleNamespace(list_by_group=AsyncMock(return_value=[make_table(
+            id=303,
+            name="产品数据集",
+            table_name="数据1",
+            datasource_id=88,
+            type="db",
+        )])))
+
+        datasource = CoreDatasource(
+            id=88,
+            name="orders-file",
+            type="Excel",
+            pid=None,
+            edit_type=None,
+            configuration=[{
+                "tableName": "数据1",
+                "deTableName": "excel_data_1",
+                "fields": [
+                    {"originName": "订单号", "name": "订单号", "fieldType": "DOUBLE", "deType": 3},
+                    {"originName": "客户名称", "name": "客户名称", "fieldType": "TEXT", "deType": 0},
+                ],
+                "jsonArray": [
+                    {"订单号": 1, "客户名称": "alice"},
+                    {"订单号": 2, "客户名称": "bob"},
+                    {"订单号": 3, "客户名称": "alice"},
+                    {"订单号": None, "客户名称": None},
+                ],
+            }],
+            description=None,
+            create_time=1,
+            update_time=2,
+            update_by=7,
+            create_by="7",
+            status="Success",
+            qrtz_instance=None,
+            task_status="WaitingForExecution",
+            enable_data_fill=False,
+        )
+        monkeypatch.setattr(DatasourceRepository, "get_by_id", AsyncMock(return_value=datasource))
+
+        assert await service.get_enum_values(DatasetEnumValueRequest(
+            dataset_group_id=321,
+            field_id=2,
+            result_limit=10,
+        )) == ["alice", "bob", ""]
+
+    @pytest.mark.asyncio
+    async def test_preview_data_uses_file_preview_for_excel_union_payload(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        field_repo = SimpleNamespace(list_checked_by_group_no_chart_filter=AsyncMock(return_value=self._fields()))
+        service = self._build_service(field_repo)
+
+        datasource = CoreDatasource(
+            id=88,
+            name="orders-file",
+            type="Excel",
+            pid=None,
+            edit_type=None,
+            configuration=[{
+                "tableName": "数据1",
+                "deTableName": "excel_data_1",
+                "fields": [
+                    {"originName": "订单号", "name": "订单号", "fieldType": "DOUBLE", "deType": 3},
+                    {"originName": "客户名称", "name": "客户名称", "fieldType": "TEXT", "deType": 0},
+                ],
+                "jsonArray": [
+                    {"订单号": 1, "客户名称": "alice"},
+                    {"订单号": 2, "客户名称": "bob"},
+                    {"订单号": 3, "客户名称": "carol"},
+                ],
+            }],
+            description=None,
+            create_time=1,
+            update_time=2,
+            update_by=7,
+            create_by="7",
+            status="Success",
+            qrtz_instance=None,
+            task_status="WaitingForExecution",
+            enable_data_fill=False,
+        )
+        monkeypatch.setattr(DatasourceRepository, "get_by_id", AsyncMock(return_value=datasource))
+
+        result = await service.preview_data(DatasetPreviewDataRequest.model_validate({
+            "union": [{
+                "currentDs": {
+                    "id": "303",
+                    "datasourceId": "88",
+                    "tableName": "数据1",
+                    "type": "TABLE",
+                    "info": '{"table":"数据1","sql":""}',
+                },
+                "currentDsFields": [],
+                "childrenDs": [],
+                "unionToParent": {"unionType": "left", "unionFields": []},
+            }],
+            "allFields": self._fields(),
+            "limit": 2,
+            "offset": 1,
+        }))
+
+        payload = cast(dict[str, object], result["data"])
+        assert payload["fields"] == [
+            {"name": "订单号", "originName": "订单号", "deType": 3, "fieldType": "DOUBLE"},
+            {"name": "客户名称", "originName": "客户名称", "deType": 0, "fieldType": "TEXT"},
+        ]
+        assert payload["data"] == [
+            {"订单号": 2, "客户名称": "bob"},
+            {"订单号": 3, "客户名称": "carol"},
+        ]
+        assert payload["total"] == 3
