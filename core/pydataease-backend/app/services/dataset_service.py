@@ -733,7 +733,10 @@ class DatasetService:
             field_identity = self._field_identity(field_input)
             existing_field = existing_fields.get(field_identity) if field_identity is not None else None
             existing_id = getattr(existing_field, "id", None)
-            field_id = field_input.get("id") or field_input.get("field_id") or existing_id or _new_identifier()
+            raw_field_id = field_input.get("id") or field_input.get("field_id") or existing_id or _new_identifier()
+            field_id = int(raw_field_id)
+            raw_ds_id = field_input.get("datasourceId", field_input.get("datasource_id"))
+            raw_table_id = field_input.get("datasetTableId", field_input.get("dataset_table_id"))
             await self.field_repo.create({
                 "id": field_id,
                 "dataset_group_id": group_id,
@@ -754,8 +757,8 @@ class DatasetService:
                 "date_format_type": field_input.get("dateFormatType"),
                 "group_list": field_input.get("groupList", field_input.get("group_list")),
                 "other_group": field_input.get("otherGroup", field_input.get("other_group")),
-                "datasource_id": field_input.get("datasourceId", field_input.get("datasource_id")),
-                "dataset_table_id": field_input.get("datasetTableId", field_input.get("dataset_table_id")),
+                "datasource_id": int(raw_ds_id) if raw_ds_id is not None else None,
+                "dataset_table_id": int(raw_table_id) if raw_table_id is not None else None,
             })
 
     async def _sync_dataset_source(self, group_id: int, group_name: str, info: object) -> CoreDatasetTable | None:
