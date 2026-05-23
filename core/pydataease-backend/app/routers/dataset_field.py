@@ -41,9 +41,19 @@ async def list_by_dataset_group(
     id: int,
     _: TokenUser = Depends(get_current_user),
     repo: DatasetFieldRepository = Depends(get_field_repo),
-) -> list[DatasetFieldResponse]:
+) -> list[dict[str, object]]:
     rows = await repo.list_checked_by_group(id)
-    return [DatasetFieldResponse.model_validate(r) for r in rows]
+    return [DatasetFieldResponse.model_validate(r).model_dump(by_alias=True) for r in rows]
+
+
+@router.get("/listWithPermissions/{id}")
+async def list_with_permissions(
+    id: int,
+    _: TokenUser = Depends(get_current_user),
+    repo: DatasetFieldRepository = Depends(get_field_repo),
+) -> list[dict[str, object]]:
+    rows = await repo.list_checked_by_group(id)
+    return [DatasetFieldResponse.model_validate(r).model_dump(by_alias=True) for r in rows]
 
 
 @router.post("/listByDQ/{id}")
@@ -51,10 +61,10 @@ async def list_by_dq(
     id: int,
     _: TokenUser = Depends(get_current_user),
     repo: DatasetFieldRepository = Depends(get_field_repo),
-) -> dict[str, list[DatasetFieldResponse]]:
+) -> dict[str, list[dict[str, object]]]:
     rows = await repo.list_checked_by_group_no_chart_filter(id)
-    dimension_list = [DatasetFieldResponse.model_validate(r) for r in rows if r.group_type == "d"]
-    quota_list = [DatasetFieldResponse.model_validate(r) for r in rows if r.group_type == "q"]
+    dimension_list = [DatasetFieldResponse.model_validate(r).model_dump(by_alias=True) for r in rows if r.group_type == "d"]
+    quota_list = [DatasetFieldResponse.model_validate(r).model_dump(by_alias=True) for r in rows if r.group_type == "q"]
     return {"dimensionList": dimension_list, "quotaList": quota_list}
 
 
@@ -63,11 +73,11 @@ async def get_field(
     id: int,
     _: TokenUser = Depends(get_current_user),
     repo: DatasetFieldRepository = Depends(get_field_repo),
-) -> DatasetFieldResponse:
+) -> dict[str, object]:
     field = await repo.get_by_id(id)
     if field is None:
         raise HTTPException(status_code=404, detail="Field not found")
-    return DatasetFieldResponse.model_validate(field)
+    return DatasetFieldResponse.model_validate(field).model_dump(by_alias=True)
 
 
 @router.post("/save")
@@ -75,7 +85,7 @@ async def save_field(
     payload: DatasetFieldSaveRequest,
     _: TokenUser = Depends(get_current_user),
     repo: DatasetFieldRepository = Depends(get_field_repo),
-) -> DatasetFieldResponse:
+) -> dict[str, object]:
     field_data = payload.model_dump(by_alias=False, exclude_none=True)
 
     if payload.chart_id is not None and payload.ext_field == 1:
@@ -91,7 +101,7 @@ async def save_field(
     field_data.setdefault("de_extract_type", 0)
 
     saved = await repo.save_field(field_data)
-    return DatasetFieldResponse.model_validate(saved)
+    return DatasetFieldResponse.model_validate(saved).model_dump(by_alias=True)
 
 
 @router.post("/delete/{id}")
@@ -108,12 +118,30 @@ async def list_by_ds_ids(
     payload: DatasetFieldIdsRequest,
     _: TokenUser = Depends(get_current_user),
     repo: DatasetFieldRepository = Depends(get_field_repo),
-) -> dict[str, list[DatasetFieldResponse]]:
+) -> dict[str, list[dict[str, object]]]:
     result = await repo.list_origin_fields_by_groups(payload.ids)
     return {
-        key: [DatasetFieldResponse.model_validate(f) for f in fields]
+        key: [DatasetFieldResponse.model_validate(f).model_dump(by_alias=True) for f in fields]
         for key, fields in result.items()
     }
+
+
+@router.post("/multFieldValuesForPermissions")
+async def mult_field_values_for_permissions(
+    payload: dict[str, object],
+    _: TokenUser = Depends(get_current_user),
+) -> list[object]:
+    return []
+
+
+@router.post("/copilotFields/{id}")
+async def copilot_fields(
+    id: int,
+    _: TokenUser = Depends(get_current_user),
+    repo: DatasetFieldRepository = Depends(get_field_repo),
+) -> list[dict[str, object]]:
+    rows = await repo.list_checked_by_group(id)
+    return [DatasetFieldResponse.model_validate(r).model_dump(by_alias=True) for r in rows]
 
 
 @router.post("/getFunction")

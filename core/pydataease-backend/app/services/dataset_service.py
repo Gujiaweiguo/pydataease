@@ -105,7 +105,7 @@ class DatasetService:
         built_tree = _build_tree(list(groups))
 
         def _node_to_dict(node: DatasetTreeNodeResponse) -> dict[str, object]:
-            d = node.model_dump()
+            d = node.model_dump(by_alias=True)
             d["id"] = str(d["id"])
             d["pid"] = str(d["pid"]) if d["pid"] is not None else "0"
             d["weight"] = 9
@@ -157,7 +157,7 @@ class DatasetService:
         if payload.all_fields:
             await self._save_fields_for_group(created.id, payload.all_fields)
 
-        return DatasetNodeResponse.model_validate(created)
+        return cast(DatasetNodeResponse, cast(object, DatasetNodeResponse.model_validate(created).model_dump(by_alias=True)))
 
     async def save(self, payload: DatasetGroupUpdate, user: TokenUser) -> DatasetNodeResponse:
         existing = await self._get_group(payload.id)
@@ -199,7 +199,7 @@ class DatasetService:
             await self.field_repo.delete_by_group(payload.id)
             await self._save_fields_for_group(payload.id, payload.all_fields)
 
-        return DatasetNodeResponse.model_validate(updated)
+        return cast(DatasetNodeResponse, cast(object, DatasetNodeResponse.model_validate(updated).model_dump(by_alias=True)))
 
     async def rename(self, payload: DatasetGroupRename, user: TokenUser) -> DatasetNodeResponse:
         existing = await self._get_group(payload.id)
@@ -208,7 +208,7 @@ class DatasetService:
             "update_by": str(user.user_id),
             "last_update_time": _timestamp_ms(),
         })
-        return DatasetNodeResponse.model_validate(updated)
+        return cast(DatasetNodeResponse, cast(object, DatasetNodeResponse.model_validate(updated).model_dump(by_alias=True)))
 
     async def move(self, payload: DatasetGroupMove, user: TokenUser) -> DatasetNodeResponse:
         existing = await self._get_group(payload.id)
@@ -221,7 +221,7 @@ class DatasetService:
             "update_by": str(user.user_id),
             "last_update_time": _timestamp_ms(),
         })
-        return DatasetNodeResponse.model_validate(updated)
+        return cast(DatasetNodeResponse, cast(object, DatasetNodeResponse.model_validate(updated).model_dump(by_alias=True)))
 
     async def delete(self, group_id: int) -> None:
         await self._get_group(group_id)
@@ -246,21 +246,37 @@ class DatasetService:
     async def get_dataset_preview(self, group_id: int) -> dict[str, object]:
         group = await self._get_group(group_id)
         fields = await self.field_repo.list_by_group(group_id)
-        preview_fields = [self._field_to_preview_field(field) for field in fields]
+
+        base_sql = await self._build_dataset_sql(group)
+        data_result: dict[str, object]
+        total = 0
+        if base_sql:
+            preview_sql = f"SELECT * FROM ({base_sql}) AS dataset_preview LIMIT 100"
+            data_result = await self._execute_dataset_sql(preview_sql, group_id)
+            count_sql = f"SELECT COUNT(*) AS cnt FROM ({base_sql}) AS dataset_count"
+            count_result = await self._execute_dataset_sql(count_sql, group_id)
+            rows = cast(list[list[object]], count_result.get("data", []))
+            total = int(cast(int | str, rows[0][0])) if rows else 0
+        else:
+            data_result = {"fields": [], "data": []}
+
         return {
             "id": _sid(group.id),
             "name": group.name,
             "allFields": [self._field_to_dict(field) for field in fields],
-            "data": {
-                "fields": preview_fields,
-                "data": [],
-            },
-            "total": 0,
+            "data": data_result,
+            "total": total,
         }
 
     async def get_dataset_total(self, group_id: int) -> int:
-        await self._get_group(group_id)
-        return 0
+        group = await self._get_group(group_id)
+        base_sql = await self._build_dataset_sql(group)
+        if base_sql is None:
+            return 0
+        count_sql = f"SELECT COUNT(*) AS cnt FROM ({base_sql}) AS dataset_count"
+        result = await self._execute_dataset_sql(count_sql, group_id)
+        rows = cast(list[list[object]], result.get("data", []))
+        return int(cast(int | str, rows[0][0])) if rows else 0
 
     async def preview_data(self, request: DatasetPreviewDataRequest) -> dict[str, object]:
         group = await self._get_group(request.dataset_group_id)
@@ -268,7 +284,7 @@ class DatasetService:
         if not fields:
             return {"fields": [], "data": [], "total": 0}
 
-        base_sql = self._build_dataset_sql(group)
+        base_sql = await self._build_dataset_sql(group)
         if base_sql is None:
             return {"fields": [], "data": [], "total": 0}
 
@@ -279,7 +295,7 @@ class DatasetService:
 
     async def get_enum_values(self, request: DatasetEnumValueRequest) -> list[str]:
         group = await self._get_group(request.dataset_group_id)
-        base_sql = self._build_dataset_sql(group)
+        base_sql = await self._build_dataset_sql(group)
         if base_sql is None or request.field_id is None:
             return []
 
@@ -547,8 +563,17 @@ class DatasetService:
                 return f'SELECT * FROM "{safe}"'
         return None
 
-    def _build_dataset_sql(self, group: CoreDatasetGroup) -> str | None:
-        return self._build_dataset_sql_static(group)
+    async def _build_dataset_sql(self, group: CoreDatasetGroup) -> str | None:
+        result = self._build_dataset_sql_static(group)
+        if result is not None:
+            return result
+        tables = list(await self.table_repo.list_by_group(group.id))
+        for t in tables:
+            if t.table_name and t.table_name.strip():
+                safe = t.table_name.strip()
+                if _SAFE_IDENTIFIER_RE.match(safe):
+                    return f'SELECT * FROM "{safe}"'
+        return None
 
     async def _execute_dataset_sql(self, sql: str, dataset_group_id: int) -> dict[str, object]:
         tables = list(await self.table_repo.list_by_group(dataset_group_id))

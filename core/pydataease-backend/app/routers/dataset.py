@@ -255,6 +255,21 @@ async def get_field_tree(
     return await service.get_field_tree(group_id)
 
 
+@router.post("/datasetTree/getSqlParams")
+async def get_sql_params(
+    payload: dict[str, object],
+    user: TokenUser = Depends(get_current_user),
+    service: DatasetService = Depends(get_dataset_service),
+    perm: PermissionService = Depends(get_permission_service),
+) -> list[object]:
+    await perm.require_resource_access(user, "dataset", "use")
+    _ = service
+    group_id = payload.get("id") or payload.get("groupId") or payload.get("group_id")
+    if group_id is not None:
+        int(str(group_id))
+    return []
+
+
 @router.post("/datasetData/innerExportDataSetDetails")
 async def inner_export_dataset_details(
     payload: dict[str, object],
