@@ -12,7 +12,7 @@ from fastapi import Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.dependencies.database import get_db
-from app.models.dataset import CoreDatasetGroup, CoreDatasetTable
+from app.models.dataset import CoreDatasetGroup, CoreDatasetTable, CoreDatasetTableField
 from app.models.datasource import CoreDatasource
 from app.repositories.dataset_repo import (
     DatasetFieldRepository,
@@ -141,6 +141,7 @@ class DatasetService:
             payload.union,
         )
         info_value = self._merge_source_info(source_info, datasource_id, table_name)
+        info_value = self._attach_union_to_info(info_value, payload.union)
 
         created = await self.group_repo.create({
             "id": _new_identifier(),
@@ -188,6 +189,7 @@ class DatasetService:
             payload.union,
         )
         info_value = self._merge_source_info(source_info, datasource_id, table_name)
+        info_value = self._attach_union_to_info(info_value, payload.union)
 
         update_data: dict[str, object] = {
             "update_by": str(user.user_id),
@@ -257,15 +259,37 @@ class DatasetService:
     async def get_details(self, group_id: int) -> dict[str, object]:
         group = await self._get_group(group_id)
         fields = await self.field_repo.list_by_group(group_id)
+        tables = list(await self.table_repo.list_by_group(group_id))
         payload = DatasetNodeResponse.model_validate(group).model_dump(by_alias=True)
         payload["id"] = _sid(payload["id"])
         payload["pid"] = _sid(payload["pid"])
         payload["allFields"] = [self._field_to_dict(field) for field in fields]
+        payload["union"] = self._build_detail_union(group, tables, fields)
         return payload
 
     async def get_dataset_preview(self, group_id: int) -> dict[str, object]:
         group = await self._get_group(group_id)
         fields = await self.field_repo.list_by_group(group_id)
+
+        file_preview = await self._preview_file_dataset_data(
+            group=group,
+            dataset_group_id=group_id,
+            limit=100,
+            offset=0,
+        )
+        if file_preview is not None:
+            raw_total = file_preview.get("total", 0)
+            total_value = int(cast(int | str, raw_total)) if isinstance(raw_total, int | str) else 0
+            return {
+                "id": _sid(group.id),
+                "name": group.name,
+                "allFields": [self._field_to_dict(field) for field in fields],
+                "data": {
+                    "fields": file_preview.get("fields", []),
+                    "data": file_preview.get("data", []),
+                },
+                "total": total_value,
+            }
 
         base_sql = await self._build_dataset_sql(group)
         data_result: dict[str, object]
@@ -290,6 +314,16 @@ class DatasetService:
 
     async def get_dataset_total(self, group_id: int) -> int:
         group = await self._get_group(group_id)
+        file_preview = await self._preview_file_dataset_data(
+            group=group,
+            dataset_group_id=group_id,
+            limit=1,
+            offset=0,
+        )
+        if file_preview is not None:
+            raw_total = file_preview.get("total", 0)
+            return int(cast(int | str, raw_total)) if isinstance(raw_total, int | str) else 0
+
         base_sql = await self._build_dataset_sql(group)
         if base_sql is None:
             return 0
@@ -332,6 +366,17 @@ class DatasetService:
             }
 
         if request.union:
+            file_preview = await self._preview_file_union_data(
+                union_data=request.union,
+                limit=limit,
+                offset=offset,
+            )
+            if file_preview is not None:
+                return {
+                    "allFields": self._normalize_preview_all_fields(request.all_fields),
+                    "data": file_preview,
+                }
+
             base_sql = self._build_sql_from_union(request.union)
             datasource_id = self._extract_union_datasource_id(request.union)
             if base_sql is None or datasource_id is None:
@@ -348,8 +393,43 @@ class DatasetService:
 
     async def get_enum_values(self, request: DatasetEnumValueRequest) -> list[str]:
         group = await self._get_group(request.dataset_group_id)
+        if request.field_id is None:
+            return []
+
+        file_preview = await self._preview_file_dataset_data(
+            group=group,
+            dataset_group_id=request.dataset_group_id,
+            limit=max(1, request.result_limit),
+            offset=0,
+        )
+        if file_preview is not None:
+            fields = await self.field_repo.list_by_group(request.dataset_group_id)
+            target = next((field for field in fields if field.id == request.field_id), None)
+            if target is None:
+                return []
+
+            column_name = target.dataease_name or target.origin_name
+            if not isinstance(column_name, str) or not column_name.strip():
+                return []
+
+            rows = cast(list[object], file_preview.get("data", []))
+            values: list[str] = []
+            seen: set[str] = set()
+            for row in rows:
+                if not isinstance(row, dict):
+                    continue
+                raw_value = row.get(column_name)
+                normalized = "" if raw_value is None else str(raw_value)
+                if normalized in seen:
+                    continue
+                seen.add(normalized)
+                values.append(normalized)
+                if len(values) >= max(1, request.result_limit):
+                    break
+            return values
+
         base_sql = await self._build_dataset_sql(group)
-        if base_sql is None or request.field_id is None:
+        if base_sql is None:
             return []
 
         fields = await self.field_repo.list_by_group(request.dataset_group_id)
@@ -374,18 +454,36 @@ class DatasetService:
         return [{"text": value, "value": value} for value in values]
 
     async def get_enum_values_from_datasource(self, request: DatasetEnumValueDsRequest) -> list[str]:
-        datasource = await DatasourceRepository(self.session).get_by_id(request.datasource_id)
+        datasource_id, table_name, column_name = self._resolve_enum_ds_params(request)
+
+        if datasource_id is None or not table_name or not column_name:
+            return []
+
+        datasource = await DatasourceRepository(self.session).get_by_id(datasource_id)
         if datasource is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Datasource not found")
 
-        column_name = request.column_name.strip()
-        table_name = request.table_name.strip()
-        if not column_name or not table_name:
-            return []
+        limit = max(1, request.result_limit)
+
+        # For file-type datasources, use the union-based preview which
+        # correctly re-parses the stored Excel/CSV content.
+        if DatasourceService._is_file_type(datasource.type):
+            union_data = None
+            dataset_payload = request.dataset
+            if isinstance(dataset_payload, dict):
+                union_data = dataset_payload.get("union")
+            if isinstance(union_data, list) and union_data:
+                return await self._enum_values_from_file_union(
+                    union_data, column_name, limit,
+                )
+            # Fallback: no union data, try datasource preview
+            return await self._enum_values_from_file_datasource(
+                datasource, table_name, column_name, limit,
+            )
 
         sql = (
             f'SELECT DISTINCT {self._quote_identifier(column_name)} '
-            f'FROM {self._quote_identifier(table_name)} LIMIT {max(1, request.result_limit)}'
+            f'FROM {self._quote_identifier(table_name)} LIMIT {limit}'
         )
         ds_service = DatasourceService(self.session, DatasourceRepository(self.session))
         config = datasource.configuration
@@ -397,6 +495,95 @@ class DatasetService:
         finally:
             await connection.close()
         return ["" if record[0] is None else str(record[0]) for record in records]
+
+    @staticmethod
+    def _resolve_enum_ds_params(
+        request: DatasetEnumValueDsRequest,
+    ) -> tuple[int | None, str | None, str | None]:
+        if request.datasource_id is not None and request.table_name and request.column_name:
+            return request.datasource_id, request.table_name.strip(), request.column_name.strip()
+
+        dataset_payload = request.dataset
+        if isinstance(dataset_payload, dict):
+            union_data = dataset_payload.get("union")
+            if isinstance(union_data, list) and union_data:
+                ds_id, tbl_name_raw, _ = DatasetService._extract_source_from_union(union_data)
+                tbl_name = tbl_name_raw if isinstance(tbl_name_raw, str) and tbl_name_raw.strip() else None
+                col_name: str | None = None
+                field_payload = request.field
+                if isinstance(field_payload, dict):
+                    raw_col = (
+                        field_payload.get("dataeaseName")
+                        or field_payload.get("originName")
+                        or field_payload.get("name")
+                    )
+                    col_name = raw_col.strip() if isinstance(raw_col, str) and raw_col.strip() else None
+                return ds_id, tbl_name, col_name
+
+        return None, None, None
+
+    async def _enum_values_from_file_datasource(
+        self,
+        datasource: CoreDatasource,
+        table_name: str,
+        column_name: str,
+        limit: int,
+    ) -> list[str]:
+        ds_service = DatasourceService(self.session, DatasourceRepository(self.session))
+        preview = await ds_service.preview_data(
+            {"datasourceId": datasource.id, "tableName": table_name},
+        )
+        # DatasourceService.preview_data returns {"data": {"fields": [...], "data": [...]}}
+        outer = preview.get("data")
+        if isinstance(outer, dict):
+            data_rows = outer.get("data")
+        elif isinstance(outer, list):
+            data_rows = outer
+        else:
+            return []
+        if not isinstance(data_rows, list):
+            return []
+
+        return self._extract_distinct_values(data_rows, column_name, limit)
+
+    async def _enum_values_from_file_union(
+        self,
+        union_data: list[object],
+        column_name: str,
+        limit: int,
+    ) -> list[str]:
+        """Extract distinct enum values from file-type dataset via union preview."""
+        file_preview = await self._preview_file_union_data(
+            union_data=union_data,
+            limit=1000,
+            offset=0,
+        )
+        if file_preview is None:
+            return []
+        data_rows = file_preview.get("data")
+        if not isinstance(data_rows, list):
+            return []
+        return self._extract_distinct_values(data_rows, column_name, limit)
+
+    @staticmethod
+    def _extract_distinct_values(
+        data_rows: list[object],
+        column_name: str,
+        limit: int,
+    ) -> list[str]:
+        values: list[str] = []
+        seen: set[str] = set()
+        for row in data_rows:
+            if not isinstance(row, dict):
+                continue
+            raw = row.get(column_name)
+            normalized = "" if raw is None else str(raw)
+            if normalized not in seen:
+                seen.add(normalized)
+                values.append(normalized)
+                if len(values) >= limit:
+                    break
+        return values
 
     async def get_field_tree(self, dataset_group_id: int) -> dict[str, object]:
         fields = await self.field_repo.list_checked_by_group_no_chart_filter(dataset_group_id)
@@ -535,11 +722,20 @@ class DatasetService:
         return group
 
     async def _save_fields_for_group(self, group_id: int, fields_data: Sequence[object]) -> None:
+        existing_fields = {
+            self._field_identity(field): field
+            for field in await self.field_repo.list_by_group(group_id)
+            if self._field_identity(field) is not None
+        }
         for idx, field_input in enumerate(fields_data):
             if not isinstance(field_input, dict):
                 continue
+            field_identity = self._field_identity(field_input)
+            existing_field = existing_fields.get(field_identity) if field_identity is not None else None
+            existing_id = getattr(existing_field, "id", None)
+            field_id = field_input.get("id") or field_input.get("field_id") or existing_id or _new_identifier()
             await self.field_repo.create({
-                "id": _new_identifier(),
+                "id": field_id,
                 "dataset_group_id": group_id,
                 "origin_name": field_input.get("originName", field_input.get("origin_name", "")),
                 "name": field_input.get("name"),
@@ -556,6 +752,8 @@ class DatasetService:
                 "accuracy": field_input.get("accuracy"),
                 "date_format": field_input.get("dateFormat"),
                 "date_format_type": field_input.get("dateFormatType"),
+                "group_list": field_input.get("groupList", field_input.get("group_list")),
+                "other_group": field_input.get("otherGroup", field_input.get("other_group")),
                 "datasource_id": field_input.get("datasourceId", field_input.get("datasource_id")),
                 "dataset_table_id": field_input.get("datasetTableId", field_input.get("dataset_table_id")),
             })
@@ -683,6 +881,31 @@ class DatasetService:
         datasource, table_name = await self._resolve_dataset_source(group, dataset_group_id)
         if datasource is None or not DatasourceService._is_file_type(datasource.type):
             return None
+        return await self._load_file_preview_data(datasource, table_name, limit, offset)
+
+    async def _preview_file_union_data(
+        self,
+        union_data: Sequence[object],
+        limit: int,
+        offset: int,
+    ) -> dict[str, object] | None:
+        datasource_id, table_name = self._resolve_union_source(union_data)
+        if datasource_id is None:
+            return None
+
+        datasource = await DatasourceRepository(self.session).get_by_id(datasource_id)
+        if datasource is None or not DatasourceService._is_file_type(datasource.type):
+            return None
+
+        return await self._load_file_preview_data(datasource, table_name, limit, offset)
+
+    async def _load_file_preview_data(
+        self,
+        datasource: CoreDatasource,
+        table_name: str | None,
+        limit: int,
+        offset: int,
+    ) -> dict[str, object]:
         if not table_name:
             return {"fields": [], "data": [], "total": 0}
 
@@ -718,17 +941,101 @@ class DatasetService:
         return {"sql": sql, "fields": fields, "data": rows, "total": len(rows)}
 
     def _extract_union_datasource_id(self, union_data: Sequence[object]) -> int | None:
+        datasource_id, _ = self._resolve_union_source(union_data)
+        return datasource_id
+
+    @classmethod
+    def _resolve_union_source(
+        cls, union_data: Sequence[object]
+    ) -> tuple[int | None, str | None]:
         first_node = union_data[0] if union_data else None
         if not isinstance(first_node, dict):
-            return None
+            return None, None
         current_ds = first_node.get("currentDs")
         if not isinstance(current_ds, dict):
-            return None
-        datasource_id = current_ds.get("datasourceId") or current_ds.get("datasource_id")
+            return None, None
+
+        datasource_id_raw = current_ds.get("datasourceId") or current_ds.get("datasource_id")
         try:
-            return int(str(datasource_id)) if datasource_id is not None else None
+            datasource_id = int(str(datasource_id_raw)) if datasource_id_raw is not None else None
         except (TypeError, ValueError):
-            return None
+            datasource_id = None
+
+        table_name_raw = current_ds.get("tableName") or current_ds.get("table_name")
+        table_name = table_name_raw.strip() if isinstance(table_name_raw, str) and table_name_raw.strip() else None
+        if table_name is None:
+            info = cls._normalize_info(current_ds.get("info"))
+            if isinstance(info, dict):
+                info_table_name = info.get("table") or info.get("tableName") or info.get("table_name")
+                if isinstance(info_table_name, str) and info_table_name.strip():
+                    table_name = info_table_name.strip()
+
+        return datasource_id, table_name
+
+    @staticmethod
+    def _attach_union_to_info(info: object, union_data: Sequence[object] | None) -> object:
+        if union_data is None:
+            return info
+        if isinstance(info, dict):
+            payload = dict(info)
+            payload["union"] = list(union_data)
+            return payload
+        return {"union": list(union_data)}
+
+    def _build_detail_union(
+        self,
+        group: CoreDatasetGroup,
+        tables: Sequence[CoreDatasetTable],
+        fields: Sequence[CoreDatasetTableField],
+    ) -> list[dict[str, object]]:
+        info = self._normalize_info(group.info)
+        if isinstance(info, dict):
+            stored_union = info.get("union")
+            if isinstance(stored_union, list):
+                return cast(list[dict[str, object]], stored_union)
+
+        if not tables:
+            return []
+
+        fields_by_table: dict[int, list[dict[str, object]]] = {}
+        fallback_fields = [self._field_to_dict(field) for field in fields]
+        for field in fields:
+            if field.dataset_table_id is None:
+                continue
+            fields_by_table.setdefault(field.dataset_table_id, []).append(self._field_to_dict(field))
+
+        nodes: list[dict[str, object]] = []
+        for index, table in enumerate(tables):
+            info_payload: dict[str, object] = {
+                "table": table.table_name or "",
+                "sql": "",
+            }
+            if table.datasource_id is not None:
+                info_payload["datasourceId"] = _sid(table.datasource_id)
+            if table.info:
+                normalized_table_info = self._normalize_info(table.info)
+                if isinstance(normalized_table_info, dict):
+                    info_payload.update(cast(dict[str, object], normalized_table_info))
+
+            table_fields = fields_by_table.get(table.id)
+            if table_fields is None and index == 0:
+                table_fields = fallback_fields
+
+            nodes.append({
+                "currentDs": {
+                    "id": _sid(table.id),
+                    "datasourceId": _sid(table.datasource_id),
+                    "tableName": table.table_name,
+                    "type": table.type,
+                    "info": json.dumps(info_payload),
+                    "sqlVariableDetails": table.sql_variable_details,
+                },
+                "currentDsFields": table_fields or [],
+                "childrenDs": [],
+                "unionToParent": None,
+            })
+
+        return nodes
 
     @classmethod
     def _resolve_source_payload(
@@ -964,9 +1271,33 @@ class DatasetService:
             "accuracy": getattr(field, "accuracy", None),
             "dateFormat": getattr(field, "date_format", None),
             "dateFormatType": getattr(field, "date_format_type", None),
+            "groupList": getattr(field, "group_list", None),
+            "otherGroup": getattr(field, "other_group", None),
             "datasourceId": _sid(getattr(field, "datasource_id", None)),
             "datasetTableId": _sid(getattr(field, "dataset_table_id", None)),
         }
+
+    @staticmethod
+    def _field_identity(field: object) -> str | None:
+        if isinstance(field, dict):
+            ext_field = field.get("extField", field.get("ext_field"))
+            dataset_table_id = field.get("datasetTableId", field.get("dataset_table_id"))
+            origin_name = field.get("originName", field.get("origin_name"))
+            name = field.get("name")
+        else:
+            ext_field = getattr(field, "ext_field", None)
+            dataset_table_id = getattr(field, "dataset_table_id", None)
+            origin_name = getattr(field, "origin_name", None)
+            name = getattr(field, "name", None)
+
+        ext_field_value = 0 if ext_field is None else int(ext_field)
+        if ext_field_value in {0, 2}:
+            if dataset_table_id is None or origin_name is None:
+                return None
+            return f"{dataset_table_id}:{origin_name}:{ext_field_value}"
+        if name is None:
+            return None
+        return f"{name}:{ext_field_value}"
 
     @staticmethod
     def _field_to_preview_field(field: object) -> dict[str, object]:

@@ -88,12 +88,18 @@ class DatasetEnumValueRequest(BaseModel):
 
 
 class DatasetEnumValueDsRequest(BaseModel):
+    """Accepts both the flat format (datasourceId/tableName/columnName)
+    and the wrapped format ({ dataset: { union, allFields, isCross }, field })
+    sent by the frontend grouping-field dialog."""
+
     model_config = ConfigDict(populate_by_name=True)
 
-    datasource_id: int = Field(validation_alias=AliasChoices("datasourceId", "datasource_id"), serialization_alias="datasourceId")
-    table_name: str = Field(validation_alias=AliasChoices("tableName", "table_name"), serialization_alias="tableName")
-    column_name: str = Field(validation_alias=AliasChoices("columnName", "column_name"), serialization_alias="columnName")
+    datasource_id: int | None = Field(default=None, validation_alias=AliasChoices("datasourceId", "datasource_id"), serialization_alias="datasourceId")
+    table_name: str | None = Field(default=None, validation_alias=AliasChoices("tableName", "table_name"), serialization_alias="tableName")
+    column_name: str | None = Field(default=None, validation_alias=AliasChoices("columnName", "column_name"), serialization_alias="columnName")
     result_limit: int = Field(default=100, validation_alias=AliasChoices("resultLimit", "result_limit"), serialization_alias="resultLimit")
+    dataset: JSONDict | None = Field(default=None, validation_alias=AliasChoices("dataset"))
+    field: JSONDict | None = Field(default=None, validation_alias=AliasChoices("field"))
 
 
 class DatasetNodeResponse(BaseModel):
@@ -159,6 +165,8 @@ class DatasetFieldResponse(BaseModel):
     accuracy: int | None = None
     date_format: str | None = Field(default=None, serialization_alias="dateFormat")
     date_format_type: str | None = Field(default=None, serialization_alias="dateFormatType")
+    group_list: JSONList | None = Field(default=None, serialization_alias="groupList")
+    other_group: JSONDict | None = Field(default=None, serialization_alias="otherGroup")
 
 
 class DatasetBarInfoResponse(BaseModel):
@@ -194,6 +202,8 @@ class DatasetFieldSaveRequest(BaseModel):
     date_format: str | None = Field(default=None, validation_alias=AliasChoices("dateFormat", "date_format"), serialization_alias="dateFormat")
     date_format_type: str | None = Field(default=None, validation_alias=AliasChoices("dateFormatType", "date_format_type"), serialization_alias="dateFormatType")
     accuracy: int | None = None
+    group_list: JSONList | None = Field(default=None, validation_alias=AliasChoices("groupList", "group_list"), serialization_alias="groupList")
+    other_group: JSONDict | None = Field(default=None, validation_alias=AliasChoices("otherGroup", "other_group"), serialization_alias="otherGroup")
 
 
 class DatasetFieldIdsRequest(BaseModel):
