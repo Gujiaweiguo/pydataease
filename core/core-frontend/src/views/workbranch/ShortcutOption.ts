@@ -1,5 +1,6 @@
 import { useI18n } from '@/hooks/web/useI18n'
 import request from '@/config/axios'
+import { normalizeShortcutRow } from '@/utils/visualizationResource'
 const { t } = useI18n()
 export interface ShortcutRequest {
   keyword?: string
@@ -71,7 +72,9 @@ class ShortcutOption {
       .post({ url, data: param })
       .then(res => {
         const responseData = res?.data ?? []
-        const data = Array.isArray(responseData) ? responseData : responseData?.list ?? []
+        const data = (Array.isArray(responseData) ? responseData : responseData?.list ?? []).map(
+          item => normalizeShortcutRow(item)
+        )
         if (this.emptyParam(param)) {
           this.busiRecordMap[this.busiFlag].dataCache = data
         }

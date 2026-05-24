@@ -24,6 +24,12 @@ import { useEmbedded } from '@/store/modules/embedded'
 import { useAppStoreWithOut } from '@/store/modules/app'
 import { useShareStoreWithOut } from '@/store/modules/share'
 import { queryShareBaseApi } from '@/api/visualization/dataVisualization'
+import {
+  hasCreatePermission,
+  isScreenTemplateType,
+  matchesTemplateType,
+  type InteractivePermissionLike
+} from '@/utils/visualizationResource'
 
 const shareStore = useShareStoreWithOut()
 
@@ -41,7 +47,13 @@ const resourceCreateOpt = ref(null)
 const embeddedStore = useEmbedded()
 const appStore = useAppStoreWithOut()
 const openType = wsCache.get('open-backend') === '1' ? '_self' : '_blank'
-const quickCreationList = shallowRef([
+type QuickCreationItem = InteractivePermissionLike & {
+  icon: string
+  name: string
+  color: string
+}
+
+const quickCreationList = shallowRef<QuickCreationItem[]>([
   {
     icon: icon_dashboard_outlined,
     name: 'panel',
@@ -77,11 +89,11 @@ const createAuth = computed(() => {
 })
 
 const havePanelAuth = computed(() => {
-  return quickCreationList.value[0]['menuAuth'] && quickCreationList.value[0]['anyManage']
+  return hasCreatePermission(quickCreationList.value[0])
 })
 
 const haveScreenAuth = computed(() => {
-  return quickCreationList.value[1]['menuAuth'] && quickCreationList.value[1]['anyManage']
+  return hasCreatePermission(quickCreationList.value[1])
 })
 
 const activeTabChange = value => {
@@ -154,11 +166,7 @@ const initTemplateShow = () => {
 }
 
 const templateShowCur = templateItem => {
-  let templateTypeMarch = false
-  if (activeTabBtn.value === templateItem.templateType) {
-    templateTypeMarch = true
-  }
-  return templateTypeMarch
+  return matchesTemplateType(activeTabBtn.value, templateItem.templateType)
 }
 const fillCardInfo = () => {
   for (const key in busiDataMap.value) {
@@ -168,6 +176,7 @@ const fillCardInfo = () => {
     if (quickCreationList.value[key]) {
       quickCreationList.value[key]['menuAuth'] = busiDataMap.value[key]['menuAuth']
       quickCreationList.value[key]['anyManage'] = busiDataMap.value[key]['anyManage']
+      quickCreationList.value[key]['rootManage'] = busiDataMap.value[key]['rootManage']
     }
   }
 }
@@ -245,7 +254,7 @@ const apply = () => {
     templateId: state.dvCreateForm.templateId
   }
   const baseUrl =
-    (['dataV', 'SCREEN'].includes(state.dvCreateForm.nodeType)
+    (isScreenTemplateType(state.dvCreateForm.nodeType)
       ? '#/dvCanvas?opt=create&createType=template'
       : '#/dashboard?opt=create&createType=template') +
     '&templateParams=' +
@@ -338,13 +347,13 @@ loadShareBase()
             :key="ele.name"
             class="item border-radius-12"
             :class="{
-              'quick-create-disabled': !ele['menuAuth'] || !ele['anyManage']
+              'quick-create-disabled': !hasCreatePermission(ele)
             }"
             v-for="(ele, index) in quickCreationList"
-            @click="quickCreate(index, ele['menuAuth'] && ele['anyManage'])"
+            @click="quickCreate(index, hasCreatePermission(ele))"
           >
             <el-tooltip
-              v-if="!ele['menuAuth'] || !ele['anyManage']"
+              v-if="!hasCreatePermission(ele)"
               class="box-item"
               effect="dark"
               :content="t('work_branch.permission_to_create')"

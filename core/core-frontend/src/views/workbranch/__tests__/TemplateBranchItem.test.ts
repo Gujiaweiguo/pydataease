@@ -61,6 +61,30 @@ describe('TemplateBranchItem', () => {
     expect(wrapper.emitted('templateApply')?.[0]).toEqual([defaultTemplate])
   })
 
+  it('disables apply when createAuth does not allow aliased template type', async () => {
+    const wrapper = mountItem({
+      template: { ...defaultTemplate, templateType: 'dataV' },
+      createAuth: { PANEL: true, SCREEN: false }
+    })
+    const buttons = wrapper.findAll('button')
+    expect(buttons[1]?.attributes('disabled')).toBeDefined()
+    const vm = wrapper.vm as any
+    vm.apply()
+    expect(wrapper.emitted('templateApply')).toBeFalsy()
+  })
+
+  it('allows dashboard alias template type through PANEL createAuth', () => {
+    const wrapper = mountItem({
+      template: { ...defaultTemplate, templateType: 'dashboard' },
+      createAuth: { PANEL: true, SCREEN: false }
+    })
+    const vm = wrapper.vm as any
+    vm.apply()
+    expect(wrapper.emitted('templateApply')?.[0]).toEqual([
+      { ...defaultTemplate, templateType: 'dashboard' }
+    ])
+  })
+
   it('emits templatePreview when templateInnerPreview method is called', () => {
     const wrapper = mountItem()
     const vm = wrapper.vm as any

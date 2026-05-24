@@ -25,6 +25,13 @@ import ShareHandler from '@/views/share/share/ShareHandler.vue'
 import { useAppStoreWithOut } from '@/store/modules/app'
 import { useEmbedded } from '@/store/modules/embedded'
 import { XpackComponent } from '@/components/plugin'
+import {
+  getVisualizationRoute,
+  INTERACTIVE_PERMISSION_ORDER,
+  isVisualizationLike,
+  normalizeShortcutRow,
+  toStoreResourceType
+} from '@/utils/visualizationResource'
 const userStore = useUserStoreWithOut()
 const { resolve } = useRouter()
 const { t } = useI18n()
@@ -69,7 +76,7 @@ const iconMap = {
 }
 
 const jumpActiveCheck = row => {
-  return row && ['dashboard', 'panel', 'dataV', 'screen'].includes(row.type)
+  return row && isVisualizationLike(row.type)
 }
 
 const handleClick = (ele: TabsPaneContext) => {
@@ -84,11 +91,10 @@ const handleClick = (ele: TabsPaneContext) => {
   }
 }
 const getBusiListWithPermission = () => {
-  const baseFlagList = ['panel', 'screen', 'dataset', 'datasource']
   const busiFlagList = []
   for (const key in busiDataMap.value) {
     if (busiDataMap.value[key].menuAuth) {
-      busiFlagList.push(baseFlagList[parseInt(key)])
+      busiFlagList.push(INTERACTIVE_PERMISSION_ORDER[parseInt(key)])
     }
   }
   baseTablePaneList.value[0].disabled = !busiFlagList?.length
@@ -136,7 +142,7 @@ const loadTableData = () => {
   shortcutOption
     .loadData({ type: queryType, keyword: panelKeyword.value, asc: !orderDesc.value })
     .then(res => {
-      state.tableData = res.data
+      state.tableData = (res.data || []).map(item => normalizeShortcutRow(item))
     })
     .finally(() => {
       imgType.value = getEmptyImg()
@@ -201,12 +207,12 @@ const sortChange = param => {
 }
 
 const handleCellClick = row => {
-  if (row && !checkDisabled(row)) {
-    const sourceId = activeName.value === 'recent' ? row.id : row.resourceId
-    if (['dashboard', 'panel'].includes(row.type)) {
-      window.open('#/panel/index?dvId=' + sourceId, '_self')
-    } else if (['dataV', 'screen'].includes(row.type)) {
-      window.open('#/screen/index?dvId=' + sourceId, '_self')
+  const normalizedRow = normalizeShortcutRow(row)
+  if (normalizedRow && !checkDisabled(normalizedRow)) {
+    const sourceId = normalizedRow.resourceId
+    const routePath = getVisualizationRoute(normalizedRow.type)
+    if (routePath) {
+      window.open(`#${routePath}?dvId=${sourceId}`, '_self')
     } else if (['dataset'].includes(row.type)) {
       const routeName =
         embeddedStore.getToken && appStore.getIsIframe ? 'dataset-embedded' : 'dataset'
@@ -216,7 +222,7 @@ const handleCellClick = row => {
           id: sourceId
         }
       })
-    } else if (['datasource'].includes(row.type)) {
+    } else if (['datasource'].includes(normalizedRow.type)) {
       push({
         name: 'datasource',
         params: {
@@ -232,9 +238,10 @@ const setLoading = (val: boolean) => {
 }
 
 const executeStore = rowInfo => {
+  const normalizedRow = normalizeShortcutRow(rowInfo)
   const param = {
-    id: rowInfo.id,
-    type: rowInfo.type
+    id: normalizedRow.resourceId,
+    type: toStoreResourceType(normalizedRow.type)
   }
   storeApi(param).then(() => {
     rowInfo.favorite = !rowInfo.favorite
@@ -242,20 +249,28 @@ const executeStore = rowInfo => {
 }
 
 const checkDisabled = row => {
-  return activeName.value === 'store' && !row.extFlag1
+  const normalizedRow = normalizeShortcutRow(row)
+  return activeName.value === 'store' && !normalizedRow.extFlag1
 }
 
 const executeCancelStore = rowInfo => {
-  if (!checkDisabled(rowInfo)) {
+  const normalizedRow = normalizeShortcutRow(rowInfo)
+  if (!checkDisabled(normalizedRow)) {
     const param = {
-      id: rowInfo.resourceId,
-      type: rowInfo.type === 'dataV' ? 'screen' : 'panel'
+      id: normalizedRow.resourceId,
+      type: toStoreResourceType(normalizedRow.type)
     }
     storeApi(param).then(() => {
       loadTableData()
     })
   }
 }
+
+const getNormalizedRow = row => normalizeShortcutRow(row)
+
+const getRowResourceId = row => getNormalizedRow(row).resourceId
+
+const isDatasetRow = row => getNormalizedRow(row).type === 'dataset'
 
 const imgType = ref()
 const emptyDesc = ref('')
@@ -389,7 +404,7 @@ const getEmptyDesc = (): string => {
                   >
                 </el-tooltip>
                 <el-icon
-                  v-if="activeName === 'recent' && ['screen', 'panel'].includes(scope.row.type)"
+                  v-if="activeName === 'recent' && isVisualizationLike(scope.row.type)"
                   class="custom-icon"
                   @click.stop="executeStore(scope.row)"
                   :style="{ color: scope.row.favorite ? '#FFC60A' : '#646A73' }"
@@ -442,12 +457,7 @@ const getEmptyDesc = (): string => {
                   >
                     <el-icon
                       class="hover-icon hover-icon-in-table"
-                      @click.stop="
-                        preview(
-                          activeName === 'recent' ? scope.row.id : scope.row.resourceId,
-                          checkDisabled(scope.row)
-                        )
-                      "
+                      @click.stop="preview(getRowResourceId(scope.row), checkDisabled(scope.row))"
                     >
                       <Icon name="icon_pc_outlined"><icon_pc_outlined class="svg-icon" /></Icon>
                     </el-icon>
@@ -457,7 +467,7 @@ const getEmptyDesc = (): string => {
                     :in-grid="true"
                     :disabled="checkDisabled(scope.row)"
                     :weight="scope.row.weight"
-                    :resource-id="activeName === 'recent' ? scope.row.id : scope.row.resourceId"
+                    :resource-id="getRowResourceId(scope.row)"
                     :resource-type="scope.row.type"
                   />
                   <el-tooltip
@@ -476,7 +486,7 @@ const getEmptyDesc = (): string => {
                   </el-tooltip>
                 </template>
 
-                <template v-if="['dataset'].includes(scope.row.type)">
+                <template v-if="isDatasetRow(scope.row)">
                   <el-tooltip
                     effect="dark"
                     :content="t('work_branch.open_dataset')"
@@ -484,9 +494,7 @@ const getEmptyDesc = (): string => {
                   >
                     <el-icon
                       class="hover-icon hover-icon-in-table"
-                      @click.stop="
-                        openDataset(activeName === 'recent' ? scope.row.id : scope.row.resourceId)
-                      "
+                      @click.stop="openDataset(getRowResourceId(scope.row))"
                     >
                       <Icon name="icon_pc_outlined"><icon_pc_outlined class="svg-icon" /></Icon>
                     </el-icon>

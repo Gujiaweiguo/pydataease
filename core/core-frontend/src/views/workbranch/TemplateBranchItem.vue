@@ -3,16 +3,20 @@
     <div class="photo">
       <div class="img" :style="classBackground"></div>
     </div>
-    <div class="apply" :class="{ 'fix-height': !createAuth[template.templateType] }">
+    <div class="apply" :class="{ 'fix-height': !canCreateCurrentTemplate }">
       <span :title="template.title" class="name ellipsis">
         {{ template.title }}
       </span>
       <el-button class="flex-center" secondary @click="templateInnerPreview">{{
         t('dataset.preview')
       }}</el-button>
-      <el-button class="flex-center" type="primary" @click="apply">{{
-        t('commons.apply')
-      }}</el-button>
+      <el-button
+        class="flex-center"
+        type="primary"
+        :disabled="!canCreateCurrentTemplate"
+        @click="apply"
+        >{{ t('commons.apply') }}</el-button
+      >
     </div>
   </div>
 </template>
@@ -21,6 +25,7 @@
 import { useI18n } from '@/hooks/web/useI18n'
 import { computed } from 'vue'
 import { imgUrlTrans } from '@/utils/imgUtils'
+import { hasTemplateCreatePermission } from '@/utils/visualizationResource'
 const { t } = useI18n()
 
 const emits = defineEmits(['templateApply', 'templatePreview'])
@@ -64,7 +69,14 @@ const thumbnailUrl = computed(() => {
   }
 })
 
+const canCreateCurrentTemplate = computed(() =>
+  hasTemplateCreatePermission(props.createAuth, props.template?.templateType)
+)
+
 const apply = () => {
+  if (!canCreateCurrentTemplate.value) {
+    return
+  }
   emits('templateApply', props.template)
 }
 
