@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import inspect
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -41,6 +43,41 @@ from app.services.permission_service import PermissionService, get_permission_se
 router = APIRouter(tags=["visualization"])
 
 
+def _empty_interactive_branch() -> list[dict[str, object]]:
+    return [{"id": "0", "name": "root", "pid": -1, "leaf": False, "weight": 7, "extraFlag": 0, "extraFlag1": 0, "children": []}]
+
+
+def _visualization_resource_type(raw_value: str | None, default: str = "dashboard") -> str:
+    if not raw_value:
+        return default
+    normalized = raw_value.lower()
+    if normalized in {"dashboard", "dashboard-copy", "panel"}:
+        return "dashboard"
+    if normalized in {"datav", "datav-copy", "screen"}:
+        return "screen"
+    return default
+
+
+async def _resource_type_from_visualization(
+    service: VisualizationService,
+    visualization_id: int | None,
+    fallback: str | None = None,
+) -> str:
+    if visualization_id is not None:
+        find_dv_type = getattr(service, "find_dv_type", None)
+        if callable(find_dv_type):
+            resolved = find_dv_type(visualization_id)
+            if inspect.isawaitable(resolved):
+                resolved = await resolved
+            if isinstance(resolved, dict):
+                resolved = resolved.get("type")
+            if isinstance(resolved, str):
+                return _visualization_resource_type(resolved, default="")
+    if fallback is not None:
+        return _visualization_resource_type(fallback, default="")
+    return "dashboard"
+
+
 @router.post("/dataVisualization/tree")
 async def visualization_tree(
     payload: VisualizationTreeRequest,
@@ -48,7 +85,9 @@ async def visualization_tree(
     service: VisualizationService = Depends(get_visualization_service),
     perm: PermissionService = Depends(get_permission_service),
 ) -> object:
-    await perm.require_resource_access(user, "dashboard", "use")
+    resource_type = _visualization_resource_type(payload.busi_flag)
+    if not await perm.has_resource_permission(user, resource_type, "use"):
+        return _empty_interactive_branch()
     return await service.tree(payload)
 
 
@@ -68,7 +107,11 @@ async def save_visualization(
     service: VisualizationService = Depends(get_visualization_service),
     perm: PermissionService = Depends(get_permission_service),
 ) -> object:
-    await perm.require_resource_access(user, "dashboard", "manage")
+    await perm.require_resource_access(
+        user,
+        await _resource_type_from_visualization(service, payload.id, payload.type),
+        "manage",
+    )
     return await service.save(payload, user)
 
 
@@ -77,7 +120,13 @@ async def save_canvas(
     payload: VisualizationCanvasRequest,
     user: TokenUser = Depends(get_current_user),
     service: VisualizationService = Depends(get_visualization_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> object:
+    await perm.require_resource_access(
+        user,
+        await _resource_type_from_visualization(service, payload.id, payload.type),
+        "manage",
+    )
     return await service.save_canvas(payload, user)
 
 
@@ -88,7 +137,11 @@ async def update_visualization(
     service: VisualizationService = Depends(get_visualization_service),
     perm: PermissionService = Depends(get_permission_service),
 ) -> object:
-    await perm.require_resource_access(user, "dashboard", "manage")
+    await perm.require_resource_access(
+        user,
+        await _resource_type_from_visualization(service, payload.id, payload.type),
+        "manage",
+    )
     return await service.update(payload, user)
 
 
@@ -97,7 +150,13 @@ async def update_canvas(
     payload: VisualizationCanvasRequest,
     user: TokenUser = Depends(get_current_user),
     service: VisualizationService = Depends(get_visualization_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> object:
+    await perm.require_resource_access(
+        user,
+        await _resource_type_from_visualization(service, payload.id, payload.type),
+        "manage",
+    )
     return await service.update_canvas(payload, user)
 
 
@@ -148,13 +207,25 @@ async def recover_to_published(
 
 @router.post("/dataVisualization/delete")
 async def delete_visualization(
-    payload: dict[str, int],
+    payload: dict[str, object],
     user: TokenUser = Depends(get_current_user),
     service: VisualizationService = Depends(get_visualization_service),
     perm: PermissionService = Depends(get_permission_service),
 ) -> object:
-    await perm.require_resource_access(user, "dashboard", "manage")
-    return await service.delete(int(payload["id"]), user)
+    raw_busi_flag = payload.get("busiFlag") or payload.get("busi_flag") or payload.get("type")
+    raw_id = payload.get("id")
+    if not isinstance(raw_id, int | str):
+        raise ValueError("Visualization id is required")
+    await perm.require_resource_access(
+        user,
+        await _resource_type_from_visualization(
+            service,
+            int(raw_id),
+            raw_busi_flag if isinstance(raw_busi_flag, str) else None,
+        ),
+        "manage",
+    )
+    return await service.delete(int(raw_id), user)
 
 
 @router.post("/dataVisualization/deleteLogic/{dv_id}/{busi_flag}")
@@ -163,7 +234,13 @@ async def delete_logic(
     busi_flag: str,
     user: TokenUser = Depends(get_current_user),
     service: VisualizationService = Depends(get_visualization_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> object:
+    await perm.require_resource_access(
+        user,
+        await _resource_type_from_visualization(service, dv_id, busi_flag),
+        "manage",
+    )
     return await service.delete_logic(VisualizationDeleteLogicRequest(dv_id=dv_id, busi_flag=busi_flag), user)
 
 
@@ -209,7 +286,13 @@ async def copy_visualization(
     payload: VisualizationCopyRequest,
     user: TokenUser = Depends(get_current_user),
     service: VisualizationService = Depends(get_visualization_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> object:
+    await perm.require_resource_access(
+        user,
+        await _resource_type_from_visualization(service, payload.id, payload.busi_flag or payload.type),
+        "manage",
+    )
     return await service.copy(payload, user)
 
 
@@ -236,10 +319,11 @@ async def interactive_tree(
             return []
         resource_type = permission_map.get(raw_flag.lower())
         if resource_type and not await perm.has_resource_permission(user, resource_type, "use"):
-            return []
+            return _empty_interactive_branch()
         return await service.interactive_tree(payload, user)
 
     filtered_payload: dict[str, object] = {}
+    denied_keys: set[str] = set()
     for key, value in payload.items():
         raw_request = value if isinstance(value, dict) else {"busiFlag": key}
         busi_flag = raw_request.get("busiFlag") or raw_request.get("busi_flag") or key
@@ -248,7 +332,16 @@ async def interactive_tree(
         resource_type = permission_map.get(busi_flag.lower())
         if resource_type and await perm.has_resource_permission(user, resource_type, "use"):
             filtered_payload[key] = value
-    return await service.interactive_tree(filtered_payload, user)
+        elif resource_type:
+            denied_keys.add(key)
+
+    result = await service.interactive_tree(filtered_payload, user)
+    if not isinstance(result, dict):
+        return result
+
+    for denied_key in denied_keys:
+        result[denied_key] = _empty_interactive_branch()
+    return result
 
 
 @router.post("/dataVisualization/appCanvasNameCheck")

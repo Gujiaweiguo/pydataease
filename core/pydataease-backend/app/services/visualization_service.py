@@ -638,6 +638,18 @@ class VisualizationService:
             data["children"] = [_node_to_dict(child) for child in (node.children or [])] if node.children is not None else None
             return data
 
+        if not nodes:
+            return [{
+                "id": "0",
+                "name": "root",
+                "pid": -1,
+                "leaf": False,
+                "weight": 7,
+                "extraFlag": 0,
+                "extraFlag1": 1,
+                "children": [],
+            }]
+
         return [_node_to_dict(node) for node in nodes]  # type: ignore[return-value]
 
     async def find_by_id(self, payload: VisualizationFindByIdRequest) -> object:
