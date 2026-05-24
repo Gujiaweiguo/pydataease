@@ -7,6 +7,11 @@ import type { BusiTreeRequest, BusiTreeNode } from '@/models/tree/TreeNode'
 import { pathValid } from '@/store/modules/permission'
 import { useCache } from '@/hooks/web/useCache'
 import { useAppStoreWithOut } from '@/store/modules/app'
+import {
+  getInteractiveIndex,
+  INTERACTIVE_CANVAS_ORDER,
+  INTERACTIVE_PERMISSION_ORDER
+} from '@/utils/visualizationResource'
 const appStore = useAppStoreWithOut()
 const { wsCache } = useCache()
 export interface InnerInteractive {
@@ -22,8 +27,6 @@ interface InteractiveState {
 }
 
 const apiMap = [queryTreeApi, queryTreeApi, getDatasetTree, listDatasources]
-
-const busiFlagMap = ['dashboard', 'dataV', 'dataset', 'datasource']
 
 export const interactiveStore = defineStore('interactive', {
   state: (): InteractiveState => ({
@@ -48,7 +51,10 @@ export const interactiveStore = defineStore('interactive', {
   },
   actions: {
     async setInteractive(param: BusiTreeRequest, resParam?: object) {
-      const flag = busiFlagMap.findIndex(item => item === param.busiFlag)
+      const flag = getInteractiveIndex(param.busiFlag)
+      if (flag < 0) {
+        return []
+      }
       if (!hasMenuAuth(flag) && !window.DataEaseBi && !appStore.getIsIframe) {
         const tempData: InnerInteractive = {
           rootManage: false,
@@ -89,7 +95,7 @@ export const interactiveStore = defineStore('interactive', {
       while (index--) {
         if (!this.data[index] || refresh) {
           const param: BusiTreeRequest = {
-            busiFlag: busiFlagMap[index]
+            busiFlag: INTERACTIVE_CANVAS_ORDER[index]
           }
           await this.setInteractive(param)
         }
@@ -97,8 +103,8 @@ export const interactiveStore = defineStore('interactive', {
     },
     async loadBusiInteractive() {
       const param = {}
-      for (let i = 0; i < busiFlagMap.length; i++) {
-        const key = busiFlagMap[i]
+      for (let i = 0; i < INTERACTIVE_CANVAS_ORDER.length; i++) {
+        const key = INTERACTIVE_CANVAS_ORDER[i]
         if (window.DataEaseBi || appStore.getIsIframe || hasMenuAuth(i)) {
           param[key] = { busiFlag: key }
         }
@@ -148,7 +154,9 @@ const convertInteractive = (list): InnerInteractive => {
       ++leafNodeCount
     }
     if (node?.children?.length) {
-      node.children.forEach(kid => stack.push(kid))
+      node.children.forEach(kid => {
+        stack.push(kid)
+      })
     }
   }
   result.leafNodeCount = leafNodeCount
@@ -156,12 +164,13 @@ const convertInteractive = (list): InnerInteractive => {
 }
 
 const hasMenuAuth = (flag: number): boolean => {
+  const permissionType = INTERACTIVE_PERMISSION_ORDER[flag]
   let path = '/panel/index'
-  if (flag === 1) {
+  if (permissionType === 'screen') {
     path = '/screen/index'
-  } else if (flag === 2) {
+  } else if (permissionType === 'dataset') {
     path = '/data/dataset'
-  } else if (flag === 3) {
+  } else if (permissionType === 'datasource') {
     path = '/data/datasource'
   }
   const valid = pathValid(path)
@@ -182,7 +191,9 @@ const convertLocalStorage = (data?: InnerInteractive) => {
       result[id] = weight
     }
     if (node.children?.length) {
-      node.children.forEach(kid => stack.push(kid))
+      node.children.forEach(kid => {
+        stack.push(kid)
+      })
     }
   }
   return result

@@ -15,6 +15,11 @@ import dayjs from 'dayjs'
 import { propTypes } from '@/utils/propTypes'
 import ShareHandler from './ShareHandler.vue'
 import { interactiveStoreWithOut } from '@/store/modules/interactive'
+import {
+  getVisualizationRoute,
+  normalizeShortcutRow,
+  INTERACTIVE_PERMISSION_ORDER
+} from '@/utils/visualizationResource'
 
 const props = defineProps({
   activeName: propTypes.string.def('')
@@ -73,7 +78,7 @@ const loadTableData = () => {
       data: { type: queryType, keyword: panelKeyword.value, asc: !orderDesc.value }
     })
     .then(res => {
-      state.tableData = res.data
+      state.tableData = (res.data || []).map(item => normalizeShortcutRow(item))
     })
     .finally(() => {
       imgType.value = getEmptyImg()
@@ -89,11 +94,13 @@ const sortChange = param => {
   loadTableData()
 }
 const getBusiListWithPermission = () => {
-  const baseFlagList: string[] = ['panel', 'screen']
   const busiFlagList: string[] = []
   for (const key in busiDataMap.value) {
     if (busiDataMap.value[key].menuAuth) {
-      busiFlagList.push(baseFlagList[parseInt(key)])
+      const normalizedType = INTERACTIVE_PERMISSION_ORDER[parseInt(key)]
+      if (normalizedType === 'panel' || normalizedType === 'screen') {
+        busiFlagList.push(normalizedType)
+      }
     }
   }
   return busiFlagList
@@ -118,12 +125,12 @@ const getEmptyDesc = (): string => {
 }
 
 const handleCellClick = row => {
-  if (row && row.extFlag1) {
-    const sourceId = row.resourceId
-    if (['dashboard', 'panel'].includes(row.type)) {
-      window.open('#/panel/index?dvId=' + sourceId, '_self')
-    } else if (['dataV', 'screen'].includes(row.type)) {
-      window.open('#/screen/index?dvId=' + sourceId, '_self')
+  const normalizedRow = normalizeShortcutRow(row)
+  if (normalizedRow && normalizedRow.extFlag1) {
+    const sourceId = normalizedRow.resourceId
+    const routePath = getVisualizationRoute(normalizedRow.type)
+    if (routePath) {
+      window.open(`#${routePath}?dvId=${sourceId}`, '_self')
     }
   }
 }

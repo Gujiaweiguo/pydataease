@@ -1,13 +1,27 @@
 import { ref } from 'vue'
 import { shallowMount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { queryTreeApi } from '@/api/visualization/dataVisualization'
 
 vi.mock('pinia', () => ({
   defineStore: () => () => ({}),
   createPinia: () => ({}),
   storeToRefs: () => ({
     dvInfo: ref({ id: 'dv1', type: 'dashboard', name: 'Test' }),
-    canvasViewInfo: ref({}),
+    canvasViewInfo: ref({
+      'view-1': {
+        xAxis: [],
+        xAxisExt: [],
+        drillFields: [],
+        type: 'bar',
+        extStack: [],
+        yAxis: [],
+        yAxisExt: [],
+        extColor: [],
+        extBubble: [],
+        tableId: null
+      }
+    }),
     componentData: ref([])
   })
 }))
@@ -105,6 +119,13 @@ const stubs = {
   ElTooltip: { template: '<div><slot /></div>' },
   ElInput: { template: '<input />', props: ['modelValue'] },
   ElScrollbar: { template: '<div><slot /></div>' },
+  ElHeader: { template: '<div><slot /></div>' },
+  ElMain: { template: '<div><slot /></div>' },
+  ElContainer: { template: '<div><slot /></div>' },
+  ElTreeSelect: { template: '<div><slot /></div>', props: ['modelValue', 'data', 'props'] },
+  ElTabs: { template: '<div><slot /></div>', props: ['modelValue', 'size'] },
+  ElTabPane: { template: '<div><slot /></div>', props: ['label', 'name'] },
+  ElForm: { template: '<form><slot /></form>' },
   ElFormItem: { template: '<div><slot /></div>' },
   Icon: { template: '<span><slot /></span>' },
   XpackComponent: { template: '<div />' },
@@ -126,5 +147,16 @@ describe('LinkJumpSet', () => {
     const wrapper = shallowMount(LinkJumpSet, { global: { stubs } })
     const vm = wrapper.vm as any
     expect(typeof vm.dialogInit).toBe('function')
+  })
+
+  it('loads both dashboard and screen trees for target resources', async () => {
+    const wrapper = shallowMount(LinkJumpSet, { global: { stubs } })
+    const vm = wrapper.vm as any
+
+    vm.dialogInit({ id: 'view-1', type: 'bar' })
+    await new Promise(resolve => setTimeout(resolve, 0))
+
+    expect(queryTreeApi).toHaveBeenCalledWith({ busiFlag: 'dashboard' })
+    expect(queryTreeApi).toHaveBeenCalledWith({ busiFlag: 'dataV' })
   })
 })

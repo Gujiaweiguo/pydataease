@@ -23,6 +23,7 @@ import { useShareStoreWithOut } from '@/store/modules/share'
 import { exportPermission } from '@/utils/utils'
 import { useCache } from '@/hooks/web/useCache'
 import { isDesktop } from '@/utils/ModelUtil'
+import { isScreenLike, toStoreResourceType } from '@/utils/visualizationResource'
 
 const shareStore = useShareStoreWithOut()
 const { wsCache } = useCache('localStorage')
@@ -70,18 +71,18 @@ const downloadAsAppTemplate = downloadType => {
 const dvEdit = () => {
   if (isDataEaseBi.value || isIframe.value) {
     embeddedStore.clearState()
-    if (dvInfo.value.type === 'dataV') {
+    if (isScreenLike(dvInfo.value.type)) {
       embeddedStore.setDvId(dvInfo.value.id)
     } else {
       embeddedStore.setResourceId(dvInfo.value.id)
     }
     useEmitt().emitter.emit(
       'changeCurrentComponent',
-      dvInfo.value.type === 'dataV' ? 'VisualizationEditor' : 'DashboardEditor'
+      isScreenLike(dvInfo.value.type) ? 'VisualizationEditor' : 'DashboardEditor'
     )
     return
   }
-  const baseUrl = dvInfo.value.type === 'dataV' ? '#/dvCanvas?dvId=' : '#/dashboard?resourceId='
+  const baseUrl = isScreenLike(dvInfo.value.type) ? '#/dvCanvas?dvId=' : '#/dashboard?resourceId='
   const newWindow = window.open(baseUrl + dvInfo.value.id, openType)
   initOpenHandler(newWindow)
 }
@@ -89,7 +90,7 @@ const dvEdit = () => {
 const executeStore = () => {
   const param = {
     id: dvInfo.value.id,
-    type: dvInfo.value.type === 'dashboard' ? 'panel' : 'screen'
+    type: toStoreResourceType(dvInfo.value.type)
   }
   storeApi(param).then(() => {
     storeQuery()

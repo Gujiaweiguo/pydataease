@@ -68,6 +68,17 @@ describe('checkPermission directive', () => {
     expect(mockEl.parentNode.removeChild).toHaveBeenCalled()
   })
 
+  it('should accept dashboard and dataV aliases in permission bindings', () => {
+    mockGetData.mockReturnValue([
+      { menuAuth: true, anyManage: true },
+      { menuAuth: true, anyManage: true },
+      { menuAuth: false, anyManage: false },
+      { menuAuth: false, anyManage: false }
+    ])
+    checkPermission(mockEl, { value: ['dashboard', 'dataV'] })
+    expect(mockEl.parentNode.removeChild).not.toHaveBeenCalled()
+  })
+
   it('should not throw when element has no parentNode', () => {
     mockEl.parentNode = null
     mockGetData.mockReturnValue([

@@ -786,6 +786,27 @@ const initCurFilterFieldArray = componentDataCheck => {
 
 const isIndicator = computed(() => 'indicator' === state.viewType)
 
+const normalizeTreeBranch = (rsp: unknown) => {
+  if (Array.isArray(rsp) && rsp[0]?.id === '0') {
+    return rsp[0].children || []
+  }
+  return Array.isArray(rsp) ? rsp : []
+}
+
+const loadTargetPanelList = async () => {
+  const [dashboardTree, screenTree] = await Promise.all([
+    queryTreeApi({ busiFlag: 'dashboard' } as BusiTreeRequest),
+    queryTreeApi({ busiFlag: 'dataV' } as BusiTreeRequest)
+  ])
+
+  state.panelList = filterEmptyFolderTree([
+    ...normalizeTreeBranch(dashboardTree),
+    ...normalizeTreeBranch(screenTree)
+  ])
+  const curSortType = wsCache.get(`TreeSort-${dvInfo.value.type}`) || 'time_asc'
+  state.panelList = treeSort(state.panelList, curSortType)
+}
+
 const init = viewItem => {
   state.initState = false
   state.viewId = viewItem.id
@@ -826,18 +847,7 @@ const init = viewItem => {
   } else {
     checkJumpStr = checkAllAxisStr
   }
-  const request = { busiFlag: 'dashboard-dataV' } as BusiTreeRequest
-  // 获取可关联的仪表板
-  queryTreeApi(request).then(rsp => {
-    if (rsp && rsp[0]?.id === '0') {
-      state.panelList = rsp[0].children
-    } else {
-      state.panelList = rsp as unknown as any[]
-    }
-    state.panelList = filterEmptyFolderTree(state.panelList)
-    const curSortType = wsCache.get(`TreeSort-${dvInfo.value.type}`) || 'time_asc'
-    state.panelList = treeSort(state.panelList, curSortType)
-  })
+  loadTargetPanelList()
 
   // 获取当前过滤条件明细 过滤原则：1.在当前仪表板或者大屏 2.作用于当前图表
   state.linkJumpCurFilterFieldArray = []
