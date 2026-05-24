@@ -2,14 +2,16 @@ from __future__ import annotations
 
 import json
 from types import SimpleNamespace
-from typing import cast
+from typing import Any, cast
 from unittest.mock import AsyncMock
+
+import pytest
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.visualization import DataVisualizationInfo
 from app.schemas.auth import TokenUser
-from app.schemas.visualization import StoreExecuteRequest, StoreResponse
+from app.schemas.visualization import StoreExecuteRequest, StoreResponse, VisualizationTreeRequest
 from app.services.visualization_service import VisualizationService, _enrich_component_data
 
 
@@ -110,7 +112,7 @@ def test_duplicate_canvas_view_info_and_replace_nested_ids_remap_chart_identifie
 
 
 async def test_execute_store_toggles_between_add_and_remove() -> None:
-    service = VisualizationService(cast(AsyncSession, SimpleNamespace()))
+    service = VisualizationService(cast(AsyncSession, cast(Any, SimpleNamespace())))
     user = TokenUser(user_id=7, oid=9)
     service.store_repo.get_by_resource = AsyncMock(side_effect=[None, SimpleNamespace(id=1)])  # type: ignore[attr-defined]
     service.add_store = AsyncMock(return_value=StoreResponse(resource_id=10, favorited=True))  # type: ignore[method-assign]
@@ -123,3 +125,22 @@ async def test_execute_store_toggles_between_add_and_remove() -> None:
     assert removed.favorited is False
     service.add_store.assert_awaited_once_with(10, 1, user)  # type: ignore[attr-defined]
     service.remove_store.assert_awaited_once_with(10, 1, user)  # type: ignore[attr-defined]
+
+
+@pytest.mark.asyncio
+async def test_tree_returns_empty_root_when_no_visualizations_exist() -> None:
+    service = VisualizationService(cast(AsyncSession, cast(Any, SimpleNamespace())))
+    service.visualization_repo.list_all_ordered = AsyncMock(return_value=[])  # type: ignore[attr-defined]
+
+    tree = await service.tree(VisualizationTreeRequest(busi_flag="dataV"))
+
+    assert tree == [{
+        "id": "0",
+        "name": "root",
+        "pid": -1,
+        "leaf": False,
+        "weight": 7,
+        "extraFlag": 0,
+        "extraFlag1": 1,
+        "children": [],
+    }]

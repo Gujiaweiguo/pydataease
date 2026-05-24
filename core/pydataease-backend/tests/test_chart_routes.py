@@ -46,6 +46,17 @@ class FakeChartService:
     async def view_detail_list(self, scene_id: int) -> list[ChartResponse]:
         return [ChartResponse(id=scene_id + 1, title="child", scene_id=scene_id, table_id=202, type="bar", render="antv")]
 
+    async def list_fields_by_dq(self, dataset_group_id: int, chart_id: int) -> dict[str, list[dict[str, object]]]:
+        _ = dataset_group_id, chart_id
+        return {
+            "dimensionList": [
+                {"id": 1, "name": "区域", "originName": "region", "groupType": "d", "checked": True}
+            ],
+            "quotaList": [
+                {"id": 2, "name": "销售额", "originName": "amount", "groupType": "q", "checked": True}
+            ],
+        }
+
     async def export_details(self, payload: object) -> dict:
         return {"file": "export.xlsx", "status": "SUCCESS"}
 
@@ -127,6 +138,17 @@ async def test_chart_view_detail_list_route(client, auth_headers: dict[str, str]
     assert response.status_code == 200
     data = response.json()["data"]
     assert data[0]["sceneId"] == 222
+
+
+@pytest.mark.asyncio
+async def test_chart_list_by_dq_route_returns_dimension_and_quota_lists(
+    client, auth_headers: dict[str, str], fake_service: FakeChartService
+) -> None:
+    response = await client.post("/de2api/chart/listByDQ/202/303", headers=auth_headers, json={"type": "bar"})
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert data["dimensionList"][0]["groupType"] == "d"
+    assert data["quotaList"][0]["groupType"] == "q"
 
 
 @pytest.mark.asyncio

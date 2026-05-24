@@ -13,6 +13,7 @@ from app.schemas.visualization import StoreResponse, VisualizationResponse, Visu
 from app.services.visualization_service import get_visualization_service  # pyright: ignore[reportImplicitRelativeImport]
 from app.services.outer_params_service import get_outer_params_service  # pyright: ignore[reportImplicitRelativeImport]
 from app.services.linkage_service import get_linkage_service  # pyright: ignore[reportImplicitRelativeImport]
+from app.services.permission_service import get_permission_service  # pyright: ignore[reportImplicitRelativeImport]
 from app.services.watermark_service import get_watermark_service  # pyright: ignore[reportImplicitRelativeImport]
 from tests.fixtures.auth_fixtures import _build_token  # pyright: ignore[reportImplicitRelativeImport]
 
@@ -50,21 +51,35 @@ class FakeVisualizationService:
         self.copied.append((payload, user))
         return "copied-10"
 
-    async def interactive_tree(self, payload: object, user: TokenUser) -> dict[str, object]:
+    async def interactive_tree(self, payload: object, user: TokenUser) -> object:
         self.interactive_tree_payloads.append((payload, user))
-        return {"dashboard": [{"id": "0", "name": "root", "children": []}]}
+        if isinstance(payload, dict) and "busiFlag" not in payload and "busi_flag" not in payload:
+            return {key: [{"id": "0", "name": "root", "children": []}] for key in payload}
+        return [{"id": "0", "name": "root", "children": []}]
 
     async def save(self, payload: object, user: TokenUser) -> VisualizationResponse:
         self.saved.append((payload, user))
         return VisualizationResponse(id=11, name="saved", pid=0, node_type="leaf", type="panel")
 
+    async def save_canvas(self, payload: object, user: TokenUser) -> dict[str, object]:
+        self.saved.append((payload, user))
+        return {"id": "canvas-11", "status": 0}
+
     async def update(self, payload: object, user: TokenUser) -> VisualizationResponse:
         self.updated.append((payload, user))
         return VisualizationResponse(id=12, name="updated", pid=0, node_type="leaf", type="panel")
 
+    async def update_canvas(self, payload: object, user: TokenUser) -> dict[str, object]:
+        self.updated.append((payload, user))
+        return {"status": 2}
+
     async def delete(self, visualization_id: int, user: TokenUser) -> VisualizationResponse:
         self.deleted.append((visualization_id, user))
         return VisualizationResponse(id=visualization_id, name="deleted", pid=0, node_type="leaf", type="panel", delete_flag=True)
+
+    async def delete_logic(self, payload: object, user: TokenUser) -> dict[str, object]:
+        self.deleted.append((getattr(payload, "dv_id", 0), user))
+        return {"dvId": getattr(payload, "dv_id", None), "busiFlag": getattr(payload, "busi_flag", None), "deleted": True}
 
     async def move(self, payload: object, user: TokenUser) -> VisualizationResponse:
         self.moved.append((payload, user))
@@ -205,6 +220,33 @@ class FakeLinkageService:
         self.removed_linkage.append(request)
 
 
+class DenyDashboardPermissionService:
+    async def require_resource_access(self, user, resource_type: str, permission_type: str = "use") -> None:
+        return None
+
+    async def has_resource_permission(self, user, resource_type: str, permission_type: str = "use") -> bool:
+        _ = user, permission_type
+        return resource_type != "dashboard"
+
+    async def get_effective_menu_ids(self, user_id: int, oid: int) -> set[int]:
+        _ = user_id, oid
+        return set()
+
+
+class StrictDenyDashboardPermissionService:
+    async def require_resource_access(self, user, resource_type: str, permission_type: str = "use") -> None:
+        _ = user, permission_type
+        assert resource_type != "dashboard", "dashboard permission should not be required"
+
+    async def has_resource_permission(self, user, resource_type: str, permission_type: str = "use") -> bool:
+        _ = user, permission_type
+        return resource_type != "dashboard"
+
+    async def get_effective_menu_ids(self, user_id: int, oid: int) -> set[int]:
+        _ = user_id, oid
+        return set()
+
+
 @pytest.fixture
 def auth_headers() -> dict[str, str]:
     return {"X-DE-TOKEN": _build_token(uid=7, oid=9)}
@@ -232,6 +274,21 @@ def fake_service() -> Generator[FakeVisualizationService, None, None]:
 @pytest.mark.asyncio
 async def test_visualization_tree_route(client, auth_headers: dict[str, str], fake_service: FakeVisualizationService) -> None:
     response = await client.post("/de2api/dataVisualization/tree", headers=auth_headers, json={"busiFlag": "dashboard"})
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert data[0]["children"][0]["leaf"] is True
+
+
+@pytest.mark.asyncio
+async def test_visualization_tree_route_uses_screen_permission_for_datav(
+    client, auth_headers: dict[str, str], fake_service: FakeVisualizationService
+) -> None:
+    app.dependency_overrides[get_permission_service] = lambda: StrictDenyDashboardPermissionService()
+    try:
+        response = await client.post("/de2api/dataVisualization/tree", headers=auth_headers, json={"busiFlag": "dataV"})
+    finally:
+        _ = app.dependency_overrides.pop(get_permission_service, None)
+
     assert response.status_code == 200
     data = response.json()["data"]
     assert data[0]["children"][0]["leaf"] is True
@@ -344,6 +401,102 @@ async def test_visualization_extra_routes(client, auth_headers: dict[str, str], 
     )
     assert execute_resp.status_code == 200
     assert execute_resp.json()["data"]["favorited"] is True
+
+
+@pytest.mark.asyncio
+async def test_visualization_screen_routes_do_not_require_dashboard_permission(
+    client, auth_headers: dict[str, str], fake_service: FakeVisualizationService
+) -> None:
+    app.dependency_overrides[get_permission_service] = lambda: StrictDenyDashboardPermissionService()
+    try:
+        save_resp = await client.post(
+            "/de2api/dataVisualization/save",
+            headers=auth_headers,
+            json={"name": "screen-new", "pid": 0, "nodeType": "leaf", "type": "screen"},
+        )
+        update_resp = await client.post(
+            "/de2api/dataVisualization/update",
+            headers=auth_headers,
+            json={"id": 12, "name": "screen-up", "pid": 0, "nodeType": "leaf", "type": "screen"},
+        )
+        save_canvas_resp = await client.post(
+            "/de2api/dataVisualization/saveCanvas",
+            headers=auth_headers,
+            json={"name": "screen-canvas", "pid": 0, "type": "screen", "canvasViewInfo": {}},
+        )
+        update_canvas_resp = await client.post(
+            "/de2api/dataVisualization/updateCanvas",
+            headers=auth_headers,
+            json={"id": 12, "name": "screen-canvas-up", "pid": 0, "type": "screen", "canvasViewInfo": {}},
+        )
+        copy_resp = await client.post(
+            "/de2api/dataVisualization/copy",
+            headers=auth_headers,
+            json={"id": 10, "name": "screen-copy", "pid": 0, "type": "screen", "busiFlag": "screen"},
+        )
+        delete_resp = await client.post(
+            "/de2api/dataVisualization/delete",
+            headers=auth_headers,
+            json={"id": 12, "busiFlag": "screen"},
+        )
+        delete_logic_resp = await client.post(
+            "/de2api/dataVisualization/deleteLogic/12/screen",
+            headers=auth_headers,
+        )
+    finally:
+        _ = app.dependency_overrides.pop(get_permission_service, None)
+
+    assert save_resp.status_code == 200
+    assert update_resp.status_code == 200
+    assert save_canvas_resp.status_code == 200
+    assert update_canvas_resp.status_code == 200
+    assert copy_resp.status_code == 200
+    assert delete_resp.status_code == 200
+    assert delete_logic_resp.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_interactive_tree_returns_empty_root_branch_when_single_resource_permission_denied(
+    client, auth_headers: dict[str, str], fake_service: FakeVisualizationService
+) -> None:
+    app.dependency_overrides[get_permission_service] = lambda: DenyDashboardPermissionService()
+    try:
+        response = await client.post(
+            "/de2api/dataVisualization/interactiveTree",
+            headers=auth_headers,
+            json={"busiFlag": "dashboard"},
+        )
+    finally:
+        _ = app.dependency_overrides.pop(get_permission_service, None)
+
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert data == [{"id": "0", "name": "root", "pid": -1, "leaf": False, "weight": 7, "extraFlag": 0, "extraFlag1": 0, "children": []}]
+
+
+@pytest.mark.asyncio
+async def test_interactive_tree_returns_empty_root_branch_when_batch_resource_permission_denied(
+    client, auth_headers: dict[str, str], fake_service: FakeVisualizationService
+) -> None:
+    app.dependency_overrides[get_permission_service] = lambda: DenyDashboardPermissionService()
+    try:
+        response = await client.post(
+            "/de2api/dataVisualization/interactiveTree",
+            headers=auth_headers,
+            json={
+                "dashboard": {"busiFlag": "dashboard"},
+                "screen": {"busiFlag": "screen"},
+            },
+        )
+    finally:
+        _ = app.dependency_overrides.pop(get_permission_service, None)
+
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert data["dashboard"] == [
+        {"id": "0", "name": "root", "pid": -1, "leaf": False, "weight": 7, "extraFlag": 0, "extraFlag1": 0, "children": []}
+    ]
+    assert data["screen"][0]["id"] == "0"
 
 
 @pytest.mark.asyncio
