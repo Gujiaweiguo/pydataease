@@ -192,10 +192,12 @@ class ChartService:
             "fields": [DatasetService._field_to_dict(field) for field in fields],
         }
 
-    async def list_fields_by_dq(self, dataset_group_id: int, chart_id: int) -> list[dict[str, object]]:
+    async def list_fields_by_dq(self, dataset_group_id: int, chart_id: int) -> dict[str, list[dict[str, object]]]:
         await self.group_repo.get_by_id(dataset_group_id)
         fields = await self.field_repo.list_by_chart(dataset_group_id, chart_id)
-        return [DatasetService._field_to_dict(field) for field in fields]
+        dimension_list = [DatasetService._field_to_dict(field) for field in fields if field.group_type == "d"]
+        quota_list = [DatasetService._field_to_dict(field) for field in fields if field.group_type == "q"]
+        return {"dimensionList": dimension_list, "quotaList": quota_list}
 
     async def copy_field(self, field_id: int, chart_id: int) -> dict[str, object]:
         chart = await self._get_optional_chart(chart_id)
