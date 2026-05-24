@@ -127,7 +127,7 @@
             <el-button
               style="float: right"
               type="primary"
-              :disabled="!createAuth[state.curTemplate?.templateType]"
+              :disabled="!canCreateCurrentTemplate"
               @click="templateApply(state.curTemplate)"
             >
               {{ t('visualization.apply_this_template') }}
@@ -148,11 +148,12 @@ import icon_left_outlined from '@/assets/svg/icon_left_outlined.svg'
 import iconFilter from '@/assets/svg/icon-filter.svg'
 import no_result from '@/assets/svg/no_result.svg'
 import { searchMarketPreview } from '@/api/templateMarket'
-import { onMounted, reactive, watch, ref } from 'vue'
+import { onMounted, reactive, watch, ref, computed } from 'vue'
 import { useI18n } from '@/hooks/web/useI18n'
 import TemplateMarketPreviewItem from '@/views/template-market/component/TemplateMarketPreviewItem.vue'
 import { deepCopy, getActiveCategories } from '@/utils/utils'
 import { imgUrlTrans } from '@/utils/imgUtils'
+import { hasTemplateCreatePermission, matchesTemplateType } from '@/utils/visualizationResource'
 
 const { t } = useI18n()
 
@@ -178,6 +179,9 @@ const props = defineProps({
 
 const emits = defineEmits(['templateApply', 'closeDialog', 'closePreview'])
 const activeCategories = ref([])
+const canCreateCurrentTemplate = computed(() =>
+  hasTemplateCreatePermission(props.createAuth, state.curTemplate?.templateType)
+)
 
 const state = reactive({
   hasResult: true,
@@ -322,7 +326,7 @@ const templateShow = templateItem => {
   let templateTypeMarch = false
   let searchMarch = false
   let templateSourceTypeMarch = false
-  if (state.templateType === 'all' || templateItem.templateType === state.templateType) {
+  if (matchesTemplateType(state.templateType, templateItem.templateType)) {
     templateTypeMarch = true
   }
   if (!state.searchText || templateItem.title.indexOf(state.searchText) > -1) {

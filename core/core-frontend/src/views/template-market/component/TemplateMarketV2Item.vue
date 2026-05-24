@@ -7,11 +7,11 @@
     <el-row
       class="bottom-area-show"
       :class="{
-        'create-area': !createAuth[template.templateType]
+        'create-area': !canCreateCurrentTemplate
       }"
     >
       <el-row class="demonstration"> {{ template.title }} </el-row>
-      <el-row class="template-button" v-show="createAuth[template.templateType]">
+      <el-row class="template-button" v-show="canCreateCurrentTemplate">
         <el-button secondary style="width: calc(50% - 18px)" @click="templateInnerPreview">{{
           t('visualization.preview')
         }}</el-button>
@@ -27,6 +27,7 @@
 import { useI18n } from '@/hooks/web/useI18n'
 import { computed } from 'vue'
 import { imgUrlTrans } from '@/utils/imgUtils'
+import { hasTemplateCreatePermission } from '@/utils/visualizationResource'
 const { t } = useI18n()
 
 const emits = defineEmits(['templateApply', 'templatePreview'])
@@ -79,6 +80,10 @@ const thumbnailUrl = computed(() => {
     return props.baseUrl + props.template.thumbnail
   }
 })
+
+const canCreateCurrentTemplate = computed(() =>
+  hasTemplateCreatePermission(props.createAuth, props.template?.templateType)
+)
 
 const apply = () => {
   emits('templateApply', props.template)

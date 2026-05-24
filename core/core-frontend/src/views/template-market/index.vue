@@ -111,8 +111,10 @@
               :current-node-key="state.marketActiveTab"
               @node-click="nodeClick"
             >
-              <template #default="{ data }">
-                <span :title="data.label" class="ed-tree-node__label">{{ data.label }}</span>
+              <template #default="nodeScope">
+                <span :title="nodeScope.data.label" class="ed-tree-node__label">{{
+                  nodeScope.data.label
+                }}</span>
               </template>
             </el-tree>
           </div>
@@ -205,6 +207,11 @@ import { XpackComponent } from '@/components/plugin'
 import { useEmitt } from '@/hooks/web/useEmitt'
 import { Base64 } from 'js-base64'
 import { getActiveCategories } from '@/utils/utils'
+import {
+  hasCreatePermission,
+  isScreenTemplateType,
+  matchesTemplateType
+} from '@/utils/visualizationResource'
 const { t } = useI18n()
 const { wsCache } = useCache()
 const embeddedStore = useEmbedded()
@@ -340,8 +347,8 @@ const state = reactive({
 const createAuth = computed(() => {
   const authMap = interactiveStore.getData
   return {
-    PANEL: authMap['0']?.menuAuth && authMap['0']?.anyManage,
-    SCREEN: authMap['1']?.menuAuth && authMap['1']?.anyManage
+    PANEL: hasCreatePermission(authMap['0']),
+    SCREEN: hasCreatePermission(authMap['1'])
   }
 })
 
@@ -438,7 +445,7 @@ const initMarketTemplate = async () => {
       state.marketTabs = rsp.data.categories.filter(category =>
         activeCategories.has(category.label)
       )
-      state.marketActiveTab = state.marketTabs[1].label
+      state.marketActiveTab = state.marketTabs[1]?.label || state.marketTabs[0]?.label || null
     })
     .catch(err => {
       console.error('searchMarket:', err)
@@ -449,6 +456,9 @@ const initMarketTemplate = async () => {
 const initStyle = () => {
   nextTick(() => {
     const tree = document.querySelector('.custom-market-tree')
+    if (!tree?.firstElementChild) {
+      return
+    }
     // 创建横线元素
     const line = document.createElement('hr')
     line.classList.add('custom-line')
@@ -501,7 +511,7 @@ const apply = () => {
   state.curApplyTemplate.recentUseTime = Date.now()
   state.curApplyTemplate.categoryNames.push(t('work_branch.recent'))
   const baseUrl =
-    (['dataV', 'SCREEN'].includes(state.dvCreateForm.nodeType)
+    (isScreenTemplateType(state.dvCreateForm.nodeType)
       ? '#/dvCanvas?opt=create&createType=template'
       : '#/dashboard?opt=create&createType=template') +
     '&templateParams=' +
@@ -520,9 +530,7 @@ const apply = () => {
     }
     useEmitt().emitter.emit(
       'changeCurrentComponent',
-      ['dataV', 'SCREEN'].includes(state.dvCreateForm.nodeType)
-        ? 'VisualizationEditor'
-        : 'DashboardEditor'
+      isScreenTemplateType(state.dvCreateForm.nodeType) ? 'VisualizationEditor' : 'DashboardEditor'
     )
     return
   }
@@ -567,7 +575,7 @@ const templateShow = templateItem => {
     searchMarch = true
   }
 
-  if (state.templateType === 'all' || templateItem.templateType === state.templateType) {
+  if (matchesTemplateType(state.templateType, templateItem.templateType)) {
     templateTypeMarch = true
   }
 

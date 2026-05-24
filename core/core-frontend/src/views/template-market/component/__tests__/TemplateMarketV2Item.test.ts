@@ -62,4 +62,29 @@ describe('TemplateMarketV2Item', () => {
     })
     expect(wrapper.find('.testcase-template').exists()).toBe(true)
   })
+
+  it('shows template buttons for dashboard alias when PANEL createAuth is true', () => {
+    const wrapper = shallowMount(TemplateMarketV2Item, {
+      props: {
+        ...defaultProps,
+        template: { ...defaultProps.template, templateType: 'dashboard' }
+      },
+      global: { stubs }
+    })
+    expect(wrapper.find('.template-button').attributes('style') ?? '').not.toContain(
+      'display: none'
+    )
+  })
+
+  it('hides template buttons for dataV alias when SCREEN createAuth is false', () => {
+    const wrapper = shallowMount(TemplateMarketV2Item, {
+      props: {
+        ...defaultProps,
+        template: { ...defaultProps.template, templateType: 'dataV' },
+        createAuth: { PANEL: true, SCREEN: false }
+      },
+      global: { stubs }
+    })
+    expect(wrapper.find('.bottom-area-show').classes()).toContain('create-area')
+  })
 })

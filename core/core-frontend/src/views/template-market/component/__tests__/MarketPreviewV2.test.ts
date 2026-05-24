@@ -1,4 +1,4 @@
-import { shallowMount } from '@vue/test-utils'
+import { flushPromises, shallowMount } from '@vue/test-utils'
 import { describe, expect, it, vi } from 'vitest'
 
 vi.mock('@/hooks/web/useI18n', () => ({
@@ -111,11 +111,27 @@ describe('MarketPreviewV2', () => {
     expect(templateApplyEvents?.[0]?.[0]).toEqual(tpl)
   })
 
-  it('state has correct default baseUrl', () => {
+  it('state has correct default baseUrl', async () => {
     const wrapper = shallowMount(MarketPreviewV2, {
       global: { stubs: globalStubs }
     })
+    await flushPromises()
     const vm = wrapper.vm as any
     expect(vm.state.baseUrl).toBe('https://dataease.io/templates')
+  })
+
+  it('matches aliased template type when filtering preview list', () => {
+    const wrapper = shallowMount(MarketPreviewV2, {
+      props: { previewId: null, templateShowList: [], createAuth: { PANEL: true, SCREEN: true } },
+      global: { stubs: globalStubs }
+    })
+    const vm = wrapper.vm as any
+    vm.state.templateType = 'SCREEN'
+    expect(
+      vm.templateShow({ title: 'Screen Template', templateType: 'dataV', source: 'market' })
+    ).toBe(true)
+    expect(
+      vm.templateShow({ title: 'Dashboard Template', templateType: 'dashboard', source: 'market' })
+    ).toBe(false)
   })
 })
