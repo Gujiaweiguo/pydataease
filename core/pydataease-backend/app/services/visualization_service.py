@@ -1356,7 +1356,9 @@ class VisualizationService:
                 payload[key] = _json.dumps(val, ensure_ascii=False)
         # Ensure componentData is always a JSON array (frontend calls .forEach on parsed result)
         cd_str = payload.get("componentData")
-        if isinstance(cd_str, str):
+        if cd_str is None:
+            payload["componentData"] = "[]"
+        elif isinstance(cd_str, str):
             try:
                 parsed = _json.loads(cd_str)
                 if not isinstance(parsed, list):
