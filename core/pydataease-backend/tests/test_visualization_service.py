@@ -6,6 +6,7 @@ from typing import Any, cast
 from unittest.mock import AsyncMock
 
 import pytest
+from fastapi import HTTPException
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -40,6 +41,52 @@ def test_serialize_visualization_normalizes_component_dict_to_empty_array() -> N
 
     component_data = payload["componentData"]
     assert component_data == "[]"
+
+
+def test_build_chart_payload_normalizes_numeric_string_fields() -> None:
+    service = VisualizationService(cast(AsyncSession, cast(Any, SimpleNamespace())))
+
+    payload = service._build_chart_payload(
+        {
+            "id": "1001",
+            "title": "指标卡",
+            "type": "indicator",
+            "tableId": "1779526006431860713",
+            "resultCount": "1000",
+            "copyId": "1779526006438529243",
+        },
+        1001,
+        2001,
+        "7",
+        3001,
+        None,
+    )
+
+    assert payload["table_id"] == 1779526006431860713
+    assert payload["result_count"] == 1000
+    assert payload["copy_id"] == 1779526006438529243
+
+
+def test_build_chart_payload_rejects_invalid_numeric_string_fields() -> None:
+    service = VisualizationService(cast(AsyncSession, cast(Any, SimpleNamespace())))
+
+    with pytest.raises(HTTPException) as exc_info:
+        service._build_chart_payload(
+            {
+                "id": "1001",
+                "title": "指标卡",
+                "type": "indicator",
+                "tableId": "not-a-number",
+            },
+            1001,
+            2001,
+            "7",
+            3001,
+            None,
+        )
+
+    assert exc_info.value.status_code == 400
+    assert exc_info.value.detail == "Invalid integer value for chart field 'table_id'"
 
 
 def test_enrich_component_data_adds_userview_defaults_for_dashboard() -> None:
