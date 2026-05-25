@@ -66,18 +66,19 @@ const emit = defineEmits([
 ])
 
 const { item } = toRefs(props)
+const chartType = computed(() => props.chart?.type || '')
 const toolTip = computed(() => {
   return props.themes || 'dark'
 })
 const showValueFormatter = computed<boolean>(() => {
   return (
-    (props.chart.type === 'table-normal' || props.chart.type === 'table-info') &&
+    (chartType.value === 'table-normal' || chartType.value === 'table-info') &&
     (props.item.deType === 2 || props.item.deType === 3)
   )
 })
 
 watch(
-  [() => props.dimensionData, () => props.item, () => props.chart.type],
+  [() => props.dimensionData, () => props.item, () => props.chart?.type],
   () => {
     getItemTagType()
   },
@@ -187,7 +188,7 @@ const valueFormatter = () => {
   emit('valueFormatter', item.value)
 }
 const showCustomSort = item => {
-  if (props.chart.type === 'symbolic-map' || props.chart.type === 'flow-map') {
+  if (chartType.value === 'symbolic-map' || chartType.value === 'flow-map') {
     return false
   }
   return !item.chartId && (item.deType === 0 || item.deType === 5)
@@ -195,18 +196,18 @@ const showCustomSort = item => {
 
 const NOT_SUPPORT_SORT = ['word-cloud', 'stock-line', 'treemap', 'circle-packing']
 const showSort = computed(() => {
-  const { type: chartType } = props.chart
+  const ct = chartType.value
   const { type: propType } = props
-  const notShowSort = NOT_SUPPORT_SORT.includes(chartType)
+  const notShowSort = NOT_SUPPORT_SORT.includes(ct)
   if (notShowSort || propType === 'extColor') {
     return false
   }
-  const isChartMix = chartType.includes('chart-mix')
+  const isChartMix = ct.includes('chart-mix')
   const isDimensionType = ['dimension', 'dimensionStack', 'dimensionExt'].includes(propType)
   return !isChartMix || isDimensionType
 })
 const showSortPriority = computed(() => {
-  if (props.chart.type.includes('chart-mix')) {
+  if (chartType.value.includes('chart-mix')) {
     return false
   }
   return showSort.value
@@ -218,7 +219,7 @@ const toggleHide = () => {
   emit('onToggleHide', item.value)
 }
 const showHideIcon = computed(() => {
-  return ['table-info', 'table-normal'].includes(props.chart.type) && item.value.hide
+  return ['table-info', 'table-normal'].includes(chartType.value) && item.value.hide
 })
 
 onMounted(() => {
@@ -420,8 +421,8 @@ onMounted(() => {
             @click.prevent
             v-if="item.deType === 1"
             :divided="
-              !chart.type.includes('chart-mix') ||
-              (chart.type.includes('chart-mix') &&
+              !chartType.includes('chart-mix') ||
+              (chartType.includes('chart-mix') &&
                 (type === 'dimension' || type === 'dimensionStack' || type === 'dimensionExt'))
             "
           >
@@ -524,7 +525,7 @@ onMounted(() => {
                   <el-dropdown-item
                     class="menu-item-padding"
                     v-if="
-                      !(chart.type.includes('bar-range') && ['quota', 'quotaExt'].includes(type))
+                      !(chartType.includes('bar-range') && ['quota', 'quotaExt'].includes(type))
                     "
                     :command="beforeDateStyle('H_m_s')"
                     divided
@@ -545,7 +546,7 @@ onMounted(() => {
                     class="menu-item-padding"
                     :command="beforeDateStyle('y_M_d_H')"
                     :divided="
-                      chart.type.includes('bar-range') && ['quota', 'quotaExt'].includes(type)
+                      chartType.includes('bar-range') && ['quota', 'quotaExt'].includes(type)
                     "
                   >
                     <span
@@ -564,7 +565,7 @@ onMounted(() => {
                     class="menu-item-padding"
                     :command="beforeDateStyle('y_M_d_H_m')"
                     :divided="
-                      chart.type.includes('bar-range') && ['quota', 'quotaExt'].includes(type)
+                      chartType.includes('bar-range') && ['quota', 'quotaExt'].includes(type)
                     "
                   >
                     <span
@@ -662,8 +663,8 @@ onMounted(() => {
           <el-dropdown-item
             class="menu-item-padding"
             :divided="
-              !chart.type.includes('chart-mix') ||
-              (chart.type.includes('chart-mix') &&
+              !chartType.includes('chart-mix') ||
+              (chartType.includes('chart-mix') &&
                 (type === 'dimension' || type === 'dimensionStack' || type === 'dimensionExt'))
             "
             :command="beforeClickItem('rename')"
@@ -675,7 +676,7 @@ onMounted(() => {
           </el-dropdown-item>
           <el-dropdown-item
             class="menu-item-padding"
-            v-if="['table-normal', 'table-info'].includes(chart.type)"
+            v-if="['table-normal', 'table-info'].includes(chartType)"
             :command="beforeClickItem('toggleHide')"
           >
             <el-icon>

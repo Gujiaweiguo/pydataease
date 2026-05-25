@@ -89,7 +89,7 @@ const yAxisIds = computed(() => {
 })
 
 watch(
-  [() => yAxisIds.value, () => props.chart.type],
+  [() => yAxisIds.value, () => props.chart?.type],
   () => {
     initSeriesLabel()
   },

@@ -164,7 +164,7 @@ const extTooltip = computed(() => {
     i => !quotaIds.includes(i.id) && i.show && quotaData.value?.findIndex(j => j.id === i.id) !== -1
   )
 })
-const isMultiScatter = computed(() => props.chart.type === 'multi-scatter')
+const isMultiScatter = computed(() => props.chart?.type === 'multi-scatter')
 const showFormatterSummary = computed(() => {
   // 多维散点图不聚合，不显示汇总方式选择
   if (isMultiScatter.value) {

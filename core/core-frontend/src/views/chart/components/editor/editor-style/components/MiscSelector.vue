@@ -290,8 +290,8 @@ const isNumType = field => {
 const quotaData = computed(() => {
   return state.quotaData
 })
-const isLiquid = computed(() => props.chart.type === 'liquid')
-const isGauge = computed(() => props.chart.type === 'gauge')
+const isLiquid = computed(() => props.chart?.type === 'liquid')
+const isGauge = computed(() => props.chart?.type === 'gauge')
 onMounted(() => {
   init()
   initField()
