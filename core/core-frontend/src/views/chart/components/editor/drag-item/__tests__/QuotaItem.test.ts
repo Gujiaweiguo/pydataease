@@ -130,4 +130,19 @@ describe('QuotaItem', () => {
     ;(wrapper.vm as any).editFilter()
     expect(wrapper.emitted('editItemFilter')).toBeTruthy()
   })
+
+  it('handles undefined chart type during reactive updates', async () => {
+    const props = defaultProps()
+    const wrapper = shallowMount(QuotaItem, {
+      props,
+      global: { stubs: globalStubs }
+    })
+
+    await wrapper.setProps({
+      chart: undefined as unknown as { type: string; xAxis: string; xAxisExt: string }
+    })
+
+    expect(wrapper.exists()).toBe(true)
+    expect((wrapper.vm as any).showValueFormatter).toBe(false)
+  })
 })
