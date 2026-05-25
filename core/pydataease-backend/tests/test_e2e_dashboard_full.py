@@ -78,6 +78,27 @@ def _find_node_by_id(nodes: object, target_id: int) -> dict[str, object] | None:
     return None
 
 
+def _find_component_by_id(components: object, target_id: str) -> dict[str, Any] | None:
+    if not isinstance(components, list):
+        return None
+    for component in components:
+        if not isinstance(component, dict):
+            continue
+        if component.get("id") == target_id:
+            return cast(dict[str, Any], component)
+        prop_value = component.get("propValue")
+        if isinstance(prop_value, list):
+            nested = _find_component_by_id(prop_value, target_id)
+            if nested is not None:
+                return nested
+            for item in prop_value:
+                if isinstance(item, dict):
+                    nested = _find_component_by_id(item.get("componentData"), target_id)
+                    if nested is not None:
+                        return nested
+    return None
+
+
 @pytest.mark.skipif(os.getenv("DE_E2E") != "1", reason="Requires running server (set DE_E2E=1)")
 @pytest.mark.asyncio
 async def test_e2e_dashboard_full() -> None:
@@ -173,6 +194,12 @@ async def test_e2e_dashboard_full() -> None:
             assert name_check_existing_body["data"] is False
             print(f"Step 6: Name Check - OK (id={ids['dashboard']})")
 
+            chart_ids = {
+                "indicator": int(time.time_ns()),
+                "tab_chart": int(time.time_ns()) + 1,
+                "group_chart": int(time.time_ns()) + 2,
+            }
+            chart_dataset_id = str(int(time.time_ns()) + 3)
             component_data: list[dict[str, Any]] = [
                 {
                     "id": "text-1",
@@ -180,8 +207,166 @@ async def test_e2e_dashboard_full() -> None:
                     "label": "Overview",
                     "propValue": "Revenue Overview",
                     "rect": {"x": 16, "y": 20, "w": 12, "h": 4},
-                }
+                },
+                {
+                    "id": "view-indicator-1",
+                    "component": "UserView",
+                    "innerType": "indicator",
+                    "datasetId": chart_dataset_id,
+                    "label": "指标卡",
+                    "name": "指标卡",
+                    "canvasId": "canvas-main",
+                    "rect": {"x": 16, "y": 28, "w": 12, "h": 8},
+                },
+                {
+                    "id": "query-1",
+                    "component": "VQuery",
+                    "innerType": "VQuery",
+                    "canvasId": "canvas-main",
+                    "propValue": [],
+                    "rect": {"x": 2, "y": 2, "w": 8, "h": 3},
+                },
+                {
+                    "id": "picture-1",
+                    "component": "Picture",
+                    "innerType": "Picture",
+                    "canvasId": "canvas-main",
+                    "propValue": {"url": "https://example.com/pic.png"},
+                    "rect": {"x": 30, "y": 20, "w": 8, "h": 6},
+                },
+                {
+                    "id": "video-1",
+                    "component": "DeVideo",
+                    "innerType": "DeVideo",
+                    "canvasId": "canvas-main",
+                    "propValue": {"url": "https://example.com/video.mp4"},
+                    "rect": {"x": 40, "y": 20, "w": 8, "h": 6},
+                },
+                {
+                    "id": "stream-1",
+                    "component": "DeStreamMedia",
+                    "innerType": "DeStreamMedia",
+                    "canvasId": "canvas-main",
+                    "streamMediaLinks": {
+                        "videoType": "mp4",
+                        "mp4": {"url": "https://example.com/live.mp4", "loop": True, "isLive": False},
+                    },
+                    "rect": {"x": 50, "y": 20, "w": 8, "h": 6},
+                },
+                {
+                    "id": "tabs-1",
+                    "component": "DeTabs",
+                    "innerType": "DeTabs",
+                    "canvasId": "canvas-main",
+                    "editableTabsValue": "tab-a",
+                    "propValue": [
+                        {
+                            "name": "tab-a",
+                            "title": "Tab A",
+                            "componentData": [
+                                {
+                                    "id": "tab-chart-1",
+                                    "component": "UserView",
+                                    "innerType": "bar",
+                                    "datasetId": chart_dataset_id,
+                                    "canvasId": "tabs-1--tab-a",
+                                },
+                                {
+                                    "id": "tab-query-1",
+                                    "component": "VQuery",
+                                    "innerType": "VQuery",
+                                    "canvasId": "tabs-1--tab-a",
+                                    "propValue": [],
+                                },
+                            ],
+                        }
+                    ],
+                    "rect": {"x": 16, "y": 40, "w": 20, "h": 10},
+                },
+                {
+                    "id": "group-1",
+                    "component": "Group",
+                    "innerType": "Group",
+                    "canvasId": "canvas-main",
+                    "propValue": [
+                        {
+                            "id": "group-chart-1",
+                            "component": "UserView",
+                            "innerType": "line",
+                            "datasetId": chart_dataset_id,
+                            "canvasId": "group-1",
+                        }
+                    ],
+                    "rect": {"x": 40, "y": 40, "w": 16, "h": 10},
+                },
+                {
+                    "id": "rich-text-1",
+                    "component": "UserView",
+                    "innerType": "rich-text",
+                    "canvasId": "canvas-main",
+                    "propValue": {"textValue": "<p>Dashboard Note</p>"},
+                    "rect": {"x": 16, "y": 54, "w": 20, "h": 6},
+                },
             ]
+            canvas_view_info = {
+                str(chart_ids["indicator"]): {
+                    "id": str(chart_ids["indicator"]),
+                    "title": "指标卡",
+                    "type": "indicator",
+                    "render": "custom",
+                    "tableId": chart_dataset_id,
+                    "resultCount": "1000",
+                    "resultMode": "custom",
+                    "xAxis": [],
+                    "xAxisExt": [],
+                    "yAxis": [],
+                    "yAxisExt": [],
+                    "customAttr": {"basicStyle": {"alpha": 100}},
+                    "customStyle": {},
+                    "customFilter": {},
+                    "drillFields": [],
+                    "senior": {},
+                    "viewFields": [],
+                },
+                str(chart_ids["tab_chart"]): {
+                    "id": str(chart_ids["tab_chart"]),
+                    "title": "Tab Chart",
+                    "type": "bar",
+                    "render": "antv",
+                    "tableId": chart_dataset_id,
+                    "resultCount": "500",
+                    "resultMode": "custom",
+                    "xAxis": [],
+                    "xAxisExt": [],
+                    "yAxis": [],
+                    "yAxisExt": [],
+                    "customAttr": {"label": {"show": True}},
+                    "customStyle": {},
+                    "customFilter": {},
+                    "drillFields": [],
+                    "senior": {},
+                    "viewFields": [],
+                },
+                str(chart_ids["group_chart"]): {
+                    "id": str(chart_ids["group_chart"]),
+                    "title": "Group Chart",
+                    "type": "line",
+                    "render": "antv",
+                    "tableId": chart_dataset_id,
+                    "resultCount": "250",
+                    "resultMode": "custom",
+                    "xAxis": [],
+                    "xAxisExt": [],
+                    "yAxis": [],
+                    "yAxisExt": [],
+                    "customAttr": {"basicStyle": {"lineWidth": 2}},
+                    "customStyle": {},
+                    "customFilter": {},
+                    "drillFields": [],
+                    "senior": {},
+                    "viewFields": [],
+                },
+            }
             canvas_style_data = {
                 "width": 1920,
                 "height": 1080,
@@ -200,7 +385,7 @@ async def test_e2e_dashboard_full() -> None:
                     "type": "dashboard",
                     "componentData": json.dumps(component_data),
                     "canvasStyleData": json.dumps(canvas_style_data),
-                    "canvasViewInfo": {},
+                    "canvasViewInfo": canvas_view_info,
                     "mobileLayout": False,
                 },
             )
@@ -213,6 +398,8 @@ async def test_e2e_dashboard_full() -> None:
 
             # === Step 8: Update Canvas ===
             component_data[0]["propValue"] = "Revenue Overview Updated"
+            component_data[1]["name"] = "指标卡更新"
+            component_data[-1]["propValue"]["textValue"] = "<p>Dashboard Note Updated</p>"
             component_data.append(
                 {
                     "id": "shape-1",
@@ -231,7 +418,14 @@ async def test_e2e_dashboard_full() -> None:
                     "type": "dashboard",
                     "componentData": json.dumps(component_data),
                     "canvasStyleData": json.dumps({**canvas_style_data, "backgroundColor": "#ffffff"}),
-                    "canvasViewInfo": {},
+                    "canvasViewInfo": {
+                        **canvas_view_info,
+                        str(chart_ids["indicator"]): {
+                            **canvas_view_info[str(chart_ids["indicator"])],
+                            "title": "指标卡更新",
+                            "customAttr": {"basicStyle": {"alpha": 90}},
+                        },
+                    },
                     "contentId": ids["content_id"],
                     "checkVersion": ids["check_version"],
                     "mobileLayout": False,
@@ -241,6 +435,27 @@ async def test_e2e_dashboard_full() -> None:
             update_canvas_data = _data_dict(update_canvas_body)
             assert update_canvas_data["status"] == 2
             print(f"Step 8: Update Canvas - OK (id={ids['dashboard']})")
+
+            verify_canvas_response = await api_client.post(
+                "/de2api/dataVisualization/findById",
+                headers=headers,
+                json={"id": ids["dashboard"], "busiFlag": "dashboard"},
+            )
+            verify_canvas_body = _assert_ok(verify_canvas_response)
+            verify_canvas_data = _data_dict(verify_canvas_body)
+            saved_component_data = json.loads(cast(str, verify_canvas_data["componentData"]))
+            saved_canvas_view_info = cast(dict[str, Any], verify_canvas_data["canvasViewInfo"])
+            assert _find_component_by_id(saved_component_data, "view-indicator-1") is not None
+            assert _find_component_by_id(saved_component_data, "query-1") is not None
+            assert _find_component_by_id(saved_component_data, "picture-1") is not None
+            assert _find_component_by_id(saved_component_data, "video-1") is not None
+            assert _find_component_by_id(saved_component_data, "stream-1") is not None
+            assert _find_component_by_id(saved_component_data, "tabs-1") is not None
+            assert _find_component_by_id(saved_component_data, "group-1") is not None
+            assert _find_component_by_id(saved_component_data, "rich-text-1") is not None
+            assert saved_canvas_view_info[str(chart_ids["indicator"])] ["title"] == "指标卡更新"
+            assert saved_canvas_view_info[str(chart_ids["tab_chart"])] ["title"] == "Tab Chart"
+            assert saved_canvas_view_info[str(chart_ids["group_chart"])] ["title"] == "Group Chart"
 
             # === Step 9: Update Base ===
             update_base_response = await api_client.post(
@@ -304,6 +519,7 @@ async def test_e2e_dashboard_full() -> None:
             )
             view_detail_body = _assert_ok(view_detail_response)
             assert isinstance(view_detail_body["data"], list)
+            assert len(cast(list[Any], view_detail_body["data"])) >= 3
             print(f"Step 14: View Detail List - OK (id={ids['dashboard']})")
 
             # === Step 15: Find Copy Resource ===

@@ -307,6 +307,9 @@ def test_axis_merge_helpers_and_identifier_validation() -> None:
     assert service._column_reference("*") == "*"
     assert service._column_reference("sales") == 'chart_source."sales"'
     assert service._quote_identifier("schema.table") == '"schema"."table"'
+    # Unicode identifiers (e.g. Chinese table names) must be accepted and double-quoted
+    assert service._quote_identifier("数据1") == '"数据1"'
+    assert service._column_reference("数据1") == 'chart_source."数据1"'
     with pytest.raises(ValueError):
         service._quote_identifier("bad-name")
 
@@ -317,6 +320,7 @@ def test_build_base_sql_and_build_chart_sql_cover_key_paths() -> None:
     assert service._build_base_sql(" SELECT 1 ", None, []) == "SELECT 1"
     assert service._build_base_sql(None, {"sql": " select * from demo "}, []) == "select * from demo"
     assert service._build_base_sql(None, {"table": "orders"}, []) == 'SELECT * FROM "orders"'
+    assert service._build_base_sql(None, {"table": "数据1"}, []) == 'SELECT * FROM "数据1"'
     assert service._build_base_sql(None, None, [SimpleNamespace(table_name="orders")]) == 'SELECT * FROM "orders"'
     assert service._build_base_sql(None, None, []) is None
 
@@ -397,7 +401,7 @@ async def test_execute_chart_sql_uses_external_datasource_connection() -> None:
     connection = FakeConnection(records)
 
     async def _resolve(*_args: object, **_kwargs: object) -> object:
-        return SimpleNamespace(configuration={"host": "x"})
+        return SimpleNamespace(configuration={"host": "x"}, type="MySQL")
 
     cast(Any, service)._resolve_datasource = _resolve
 
@@ -407,6 +411,10 @@ async def test_execute_chart_sql_uses_external_datasource_connection() -> None:
 
         async def _open_connection(self, _config: dict[str, object]) -> FakeConnection:
             return connection
+
+        @staticmethod
+        def _is_file_type(datasource_type: str) -> bool:
+            return datasource_type in {"Excel", "ExcelRemote"}
 
     from app import services as _services_pkg  # pyright: ignore[reportImplicitRelativeImport]
     from app.services import chart_service as chart_service_module  # pyright: ignore[reportImplicitRelativeImport]
@@ -423,6 +431,46 @@ async def test_execute_chart_sql_uses_external_datasource_connection() -> None:
     assert payload["fields"] == [{"name": "region", "type": "varchar"}, {"name": "sales", "type": "numeric"}]
     assert connection.sql == "SELECT * FROM ext"
     assert connection.closed is True
+
+
+async def test_execute_chart_sql_file_type_datasource_uses_internal_executor() -> None:
+    service = _unit_service()
+
+    async def _resolve(*_args: object, **_kwargs: object) -> object:
+        return SimpleNamespace(configuration=[{"file": "data.xlsx"}], type="Excel")
+
+    cast(Any, service)._resolve_datasource = _resolve
+
+    internal_result: dict[str, object] = {"sql": "ok", "data": [["a"]], "fields": [], "total": 1}
+
+    class FakeSQLExecutor:
+        async def execute_select(self, sql: str, limit: int = 1000) -> dict[str, object]:
+            return internal_result
+
+    cast(Any, service).sql_executor = FakeSQLExecutor()
+
+    from app.services import chart_service as chart_service_module  # pyright: ignore[reportImplicitRelativeImport]
+
+    original = chart_service_module.DatasourceService
+
+    class ShouldNotBeCalledService:
+        def __init__(self, *_args: object, **_kwargs: object) -> None:
+            pass
+
+        async def _open_connection(self, *_args: object, **_kwargs: object) -> None:
+            raise AssertionError("Should not open external connection for file-type datasource")
+
+        @staticmethod
+        def _is_file_type(datasource_type: str) -> bool:
+            return datasource_type in {"Excel", "ExcelRemote"}
+
+    chart_service_module.DatasourceService = ShouldNotBeCalledService  # type: ignore[assignment]
+    try:
+        result = await service._execute_chart_sql("SELECT * FROM \"数据1\"", [SimpleNamespace()], SimpleNamespace())
+    finally:
+        chart_service_module.DatasourceService = original  # type: ignore[reportImplicitRelativeImport]
+
+    assert result is internal_result
 
 
 class TestChartServiceIntegration:
@@ -608,6 +656,10 @@ class TestChartServiceIntegration:
 
                 async def _open_connection(self, _config: dict[str, object]) -> FakeConnection:
                     return connection
+
+                @staticmethod
+                def _is_file_type(datasource_type: str) -> bool:
+                    return datasource_type in {"Excel", "ExcelRemote"}
 
             from app.services import chart_service as chart_service_module  # pyright: ignore[reportImplicitRelativeImport]
 

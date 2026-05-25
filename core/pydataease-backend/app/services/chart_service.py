@@ -37,7 +37,7 @@ from app.services.sql_executor import SQLExecutor
 
 logger = logging.getLogger(__name__)
 
-_SAFE_IDENTIFIER_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+_SAFE_IDENTIFIER_RE = re.compile(r"^[^\W\d]\w*$", re.UNICODE)
 _SUMMARY_TO_AGGREGATE = {
     "sum": "SUM",
     "avg": "AVG",
@@ -428,7 +428,7 @@ class ChartService:
         limit: int = 1000,
     ) -> dict[str, object]:
         datasource = await self._resolve_datasource(dataset_tables, dataset_group)
-        if datasource is None:
+        if datasource is None or DatasourceService._is_file_type(datasource.type):
             return await self.sql_executor.execute_select(sql, limit=limit)
 
         datasource_service = DatasourceService(self.session, self.datasource_repo)
