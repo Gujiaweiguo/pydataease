@@ -96,6 +96,10 @@ def _viz_payload(
     }
 
 
+def _token_user() -> TokenUser:
+    return TokenUser(user_id=7, oid=9)
+
+
 def _chart_payload(
     *,
     chart_id: int,
@@ -355,6 +359,115 @@ class TestVisualizationServiceIntegration:
         finally:
             await _cleanup_entities(db_session, visualization_ids=created_ids, chart_ids=chart_ids, store_resource_ids=[])
 
+    async def test_update_canvas_accepts_numeric_string_chart_fields(self, db_session: AsyncSession) -> None:
+        service = VisualizationService(db_session)
+        repo = VisualizationRepository(db_session)
+        chart_repo = ChartRepository(db_session)
+        stamp = _stamp()
+        created_ids: list[int] = []
+        chart_ids: list[int] = []
+        try:
+            folder = await repo.create(_viz_payload(stamp, name="folder-str", node_type="folder"))
+            created_ids.append(folder.id)
+            chart_id = _stamp()
+            stale_chart_id = _stamp()
+            chart_ids.extend([chart_id, stale_chart_id])
+
+            created = cast(
+                dict[str, Any],
+                await service.save_canvas(
+                    VisualizationCanvasRequest(
+                        name="Canvas String IDs",
+                        pid=str(folder.id),
+                        type="dashboard",
+                        canvas_style_data='{"width":1280}',
+                        component_data='[{"id":"view-1","component":"UserView","datasetId":"1779526006431860713"}]',
+                        canvas_view_info={
+                            str(chart_id): {
+                                "id": str(chart_id),
+                                "title": "指标卡",
+                                "type": "indicator",
+                                "tableId": "1779526006431860713",
+                                "resultCount": "1000",
+                                "yAxis": [],
+                                "xAxis": [],
+                                "xAxisExt": [],
+                                "customAttr": {},
+                                "customStyle": {},
+                                "senior": {},
+                            },
+                            str(stale_chart_id): {
+                                "id": str(stale_chart_id),
+                                "title": "旧图表",
+                                "type": "bar",
+                                "tableId": "1779526006431860713",
+                                "resultCount": "200",
+                                "yAxis": [],
+                                "xAxis": [],
+                                "xAxisExt": [],
+                                "customAttr": {},
+                                "customStyle": {},
+                                "senior": {},
+                            }
+                        },
+                        mobile_layout=False,
+                        content_id="c-str-1",
+                        check_version="v-str-1",
+                    ),
+                    _token_user(),
+                ),
+            )
+            created_id = int(created["id"])
+            created_ids.append(created_id)
+
+            chart = await chart_repo.get_by_id(chart_id)
+            assert chart is not None
+            assert chart.table_id == 1779526006431860713
+            assert chart.result_count == 1000
+            stale_chart = await chart_repo.get_by_id(stale_chart_id)
+            assert stale_chart is not None
+            assert stale_chart.result_count == 200
+
+            update_result = await service.update_canvas(
+                VisualizationCanvasRequest(
+                    id=created_id,
+                    name="Canvas String IDs Updated",
+                    pid=0,
+                    type="dashboard",
+                    canvas_style_data='{"height":720}',
+                    component_data='[{"id":"view-1","component":"UserView","datasetId":"1779526006431860713"}]',
+                    canvas_view_info={
+                        str(chart_id): {
+                            "id": str(chart_id),
+                            "title": "指标卡",
+                            "type": "indicator",
+                            "tableId": "1779526006431860713",
+                            "resultCount": "1000",
+                            "yAxis": [],
+                            "xAxis": [],
+                            "xAxisExt": [],
+                            "customAttr": {"basicStyle": {"alpha": 100}},
+                            "customStyle": {},
+                            "senior": {},
+                        }
+                    },
+                    content_id="c-str-2",
+                    check_version="v-str-2",
+                    mobile_layout=False,
+                ),
+                _token_user(),
+            )
+            assert update_result == {"status": 2}
+
+            updated_chart = await chart_repo.get_by_id(chart_id)
+            assert updated_chart is not None
+            assert updated_chart.table_id == 1779526006431860713
+            assert updated_chart.result_count == 1000
+            assert updated_chart.custom_attr == {"basicStyle": {"alpha": 100}}
+            assert await chart_repo.get_by_id(stale_chart_id) is None
+        finally:
+            await _cleanup_entities(db_session, visualization_ids=created_ids, chart_ids=chart_ids, store_resource_ids=[])
+
     async def test_update_base_check_canvas_change_and_find_dv_type(self, db_session: AsyncSession) -> None:
         service = VisualizationService(db_session)
         repo = VisualizationRepository(db_session)
@@ -387,7 +500,7 @@ class TestVisualizationServiceIntegration:
                     mobile_layout=True,
                     status=3,
                 ),
-                _user(),
+                _token_user(),
             )
             assert updated["name"] == "after"
             assert updated["pid"] == str(parent.id)

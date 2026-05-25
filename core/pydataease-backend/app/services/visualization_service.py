@@ -6,6 +6,7 @@ import time
 from typing import Any, cast, final
 
 from fastapi import Depends, HTTPException, status
+from sqlalchemy import BigInteger, Integer
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.dependencies.database import get_db
@@ -1212,12 +1213,30 @@ class VisualizationService:
             if snake_key in {"id", "scene_id", "update_by"}:
                 continue
             if snake_key in field_names:
-                payload[snake_key] = value
+                payload[snake_key] = self._normalize_chart_field_value(snake_key, value)
         if "title" not in payload:
             payload["title"] = chart_info.get("title") or chart_info.get("name") or ""
         if "type" not in payload:
             payload["type"] = chart_info.get("type") or chart_info.get("chartType") or "bar"
         return payload
+
+    @staticmethod
+    def _normalize_chart_field_value(field_name: str, value: object) -> object:
+        column = CoreChartView.__table__.columns.get(field_name)
+        if column is None:
+            return value
+        if isinstance(column.type, (BigInteger, Integer)):
+            if value in (None, "", "null"):
+                return None
+            if isinstance(value, str):
+                try:
+                    return int(value)
+                except ValueError as exc:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=f"Invalid integer value for chart field '{field_name}'",
+                    ) from exc
+        return value
 
     @staticmethod
     def _resolve_chart_id(raw_view_id: str, chart_info: dict[str, object]) -> int:
