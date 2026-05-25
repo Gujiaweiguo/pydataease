@@ -96,6 +96,10 @@ const resultObject = computed(() => {
   if (list && list.length > 0) {
     return list[0]
   }
+  const data = chartData.value?.data || chartData.value
+  if (Array.isArray(data) && data.length > 0) {
+    return { data }
+  }
   return undefined
 })
 
@@ -111,7 +115,8 @@ const result = computed(() => {
   const list = resultObject.value?.data
   let _result = undefined
   if (list && list.length > 0) {
-    _result = list[0]
+    const first = list[0]
+    _result = typeof first === 'object' && first !== null ? first.value : first
   }
   if (_result === null || _result === undefined) {
     if (view.value.senior && view.value.senior?.functionCfg?.emptyDataStrategy === 'setZero') {
