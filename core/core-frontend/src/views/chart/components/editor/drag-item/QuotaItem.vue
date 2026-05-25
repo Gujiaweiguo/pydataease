@@ -98,7 +98,7 @@ watch(
     // 不支持累加计算的图表，自动设置快速计算为无
     if (
       state.notSupportAccumulateViews.indexOf(chartType.value) > -1 &&
-      item.value.compareCalc.type === 'accumulate'
+      item.value.compareCalc?.type === 'accumulate'
     ) {
       quickCalc({ type: 'none' })
     }

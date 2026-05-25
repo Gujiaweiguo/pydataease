@@ -59,7 +59,7 @@ const emit = defineEmits([
 const { item } = toRefs(props)
 
 watch(
-  [() => props.dimensionData, () => props.item, () => props.chart.type],
+  [() => props.dimensionData, () => props.item, () => props.chart?.type],
   () => {
     getItemTagType()
   },
