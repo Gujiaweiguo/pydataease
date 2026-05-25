@@ -79,11 +79,12 @@ const emit = defineEmits([
 ])
 
 const { item, chart } = toRefs(props)
+const chartType = computed(() => chart.value?.type || '')
 const toolTip = computed(() => {
   return props.themes || 'dark'
 })
 watch(
-  [() => props.quotaData, () => props.item, () => props.chart.type],
+  [() => props.quotaData, () => props.item, () => props.chart?.type],
   () => {
     getItemTagType()
   },
@@ -96,7 +97,7 @@ watch(
     isEnableCompare()
     // 不支持累加计算的图表，自动设置快速计算为无
     if (
-      state.notSupportAccumulateViews.indexOf(chart.value.type) > -1 &&
+      state.notSupportAccumulateViews.indexOf(chartType.value) > -1 &&
       item.value.compareCalc.type === 'accumulate'
     ) {
       quickCalc({ type: 'none' })
@@ -107,15 +108,19 @@ watch(
 const AXIS_FORMAT_VIEW = ['table-normal', 'table-info', 'table-pivot', 'indicator', 'rich-text']
 const showValueFormatter = computed<boolean>(() => {
   return (
-    AXIS_FORMAT_VIEW.includes(props.chart.type) &&
+    AXIS_FORMAT_VIEW.includes(chartType.value) &&
     (props.item.deType === 2 || props.item.deType === 3)
   )
 })
 
 const isEnableCompare = () => {
   // 指标卡开放同环比配置
-  if (chart.value.type === 'indicator') {
+  if (chartType.value === 'indicator') {
     state.disableEditCompare = false
+    return
+  }
+  if (!chart.value) {
+    state.disableEditCompare = true
     return
   }
   let xAxis = null
@@ -128,7 +133,7 @@ const isEnableCompare = () => {
     return ele.deType === 1 && SUPPORT_Y_M.includes(ele.dateStyle)
   })
 
-  if (chart.value.type === 'table-pivot') {
+  if (chartType.value === 'table-pivot') {
     let xAxisExt = null
     if (Object.prototype.toString.call(chart.value.xAxisExt) === '[object Array]') {
       xAxisExt = JSON.parse(JSON.stringify(chart.value.xAxisExt))
@@ -145,9 +150,9 @@ const isEnableCompare = () => {
   // 暂时只支持类别轴/维度的时间类型字段
   if (
     t1.length > 0 &&
-    chart.value.type !== 'label' &&
-    chart.value.type !== 'gauge' &&
-    chart.value.type !== 'liquid'
+    chartType.value !== 'label' &&
+    chartType.value !== 'gauge' &&
+    chartType.value !== 'liquid'
   ) {
     state.disableEditCompare = false
   } else {
@@ -255,7 +260,7 @@ const quickCalc = param => {
     case 'setting':
       // 选择占比外，设置自动
       // 指标卡不需要重置数值格式
-      if (chart.value.type !== 'indicator') {
+      if (chartType.value !== 'indicator') {
         resetValueFormatter(item.value)
       }
       editCompare()
@@ -301,7 +306,7 @@ const toggleHide = () => {
   emit('onToggleHide', item.value)
 }
 const showHideIcon = computed(() => {
-  return ['tale-info', 'table-normal'].includes(props.chart.type) && item.value.hide
+  return ['tale-info', 'table-normal'].includes(chartType.value) && item.value.hide
 })
 
 const NOT_SUPPORT_SORT = [
@@ -315,15 +320,15 @@ const NOT_SUPPORT_SORT = [
 ]
 
 const showSort = computed(() => {
-  if (chart.value.type === 'multi-scatter') {
+  if (chartType.value === 'multi-scatter') {
     return false
   }
   return (
     props.type !== 'extLabel' &&
     props.type !== 'extTooltip' &&
     props.type !== 'extBubble' &&
-    !NOT_SUPPORT_SORT.includes(chart.value.type) &&
-    !chart.value.type.includes('chart-mix')
+    !NOT_SUPPORT_SORT.includes(chartType.value) &&
+    !chartType.value.includes('chart-mix')
   )
 })
 
@@ -394,7 +399,7 @@ onMounted(() => {
           >
             <span class="item-name">{{ item.chartShowName ? item.chartShowName : item.name }}</span>
             <span
-              v-if="item.summary !== '' && chart.type !== 'multi-scatter'"
+              v-if="item.summary !== '' && chartType !== 'multi-scatter'"
               class="item-right-summary"
             >
               ({{ t('chart.' + item.summary) }})
@@ -403,7 +408,7 @@ onMounted(() => {
           </span>
         </el-tooltip>
         <span
-          v-if="false && chart.type !== 'table-info' && item.summary && !item.chartId"
+          v-if="false && chartType !== 'table-info' && item.summary && !item.chartId"
           class="summary-span"
         >
           {{ t('chart.' + item.summary) }}
@@ -449,7 +454,7 @@ onMounted(() => {
         >
           <el-dropdown-item
             @click.prevent
-            v-if="!['table-info', 'multi-scatter'].includes(chart.type) && item.summary !== ''"
+            v-if="!['table-info', 'multi-scatter'].includes(chartType) && item.summary !== ''"
           >
             <el-dropdown
               :effect="themes"
@@ -619,7 +624,7 @@ onMounted(() => {
           <el-dropdown-item
             @click.prevent
             v-if="
-              !['table-info', 'bullet-graph', 'multi-scatter'].includes(chart.type) &&
+              !['table-info', 'bullet-graph', 'multi-scatter'].includes(chartType) &&
               props.type !== 'extBubble'
             "
           >
@@ -687,13 +692,13 @@ onMounted(() => {
                   </el-dropdown-item>
                   <el-dropdown-item
                     class="menu-item-padding"
-                    :disabled="state.quotaViews.indexOf(chart.type) > -1"
+                    :disabled="state.quotaViews.indexOf(chartType) > -1"
                     :command="beforeQuickCalc('percent')"
                   >
                     <div
                       class="sub-menu-content"
                       :class="'percent' === item.compareCalc.type ? 'content-active' : ''"
-                      :disabled="state.quotaViews.indexOf(chart.type) > -1"
+                      :disabled="state.quotaViews.indexOf(chartType) > -1"
                     >
                       {{ t('chart.percent') }}
                       <el-icon class="sub-menu-content--icon">
@@ -705,13 +710,13 @@ onMounted(() => {
                   </el-dropdown-item>
                   <el-dropdown-item
                     class="menu-item-padding"
-                    :disabled="state.notSupportAccumulateViews.indexOf(chart.type) > -1"
+                    :disabled="state.notSupportAccumulateViews.indexOf(chartType) > -1"
                     :command="beforeQuickCalc('accumulate')"
                   >
                     <div
                       class="sub-menu-content"
                       :class="'accumulate' === item.compareCalc.type ? 'content-active' : ''"
-                      :disabled="state.notSupportAccumulateViews.indexOf(chart.type) > -1"
+                      :disabled="state.notSupportAccumulateViews.indexOf(chartType) > -1"
                     >
                       {{ t('chart.accumulate') }}
                       <el-icon class="sub-menu-content--icon">
@@ -728,7 +733,7 @@ onMounted(() => {
             </el-dropdown>
           </el-dropdown-item>
 
-          <el-dropdown-item @click.prevent v-if="showSort" :divided="chart.type !== 'table-info'">
+          <el-dropdown-item @click.prevent v-if="showSort" :divided="chartType !== 'table-info'">
             <el-dropdown
               :effect="themes"
               placement="right-start"
@@ -813,11 +818,11 @@ onMounted(() => {
               props.type !== 'extLabel' &&
               props.type !== 'extTooltip' &&
               props.type !== 'extBubble' &&
-              chart.type !== 'multi-scatter'
+              chartType !== 'multi-scatter'
             "
             :icon="iconFilter"
             :command="beforeClickItem('filter')"
-            :divided="chart.type.includes('chart-mix')"
+            :divided="chartType.includes('chart-mix')"
           >
             <span>{{ t('chart.filter') }}</span>
           </el-dropdown-item>
@@ -825,7 +830,7 @@ onMounted(() => {
           <el-dropdown-item
             class="menu-item-padding"
             v-if="item.groupType === 'q' && props.type !== 'extBubble' && showValueFormatter"
-            :divided="chart.type !== 'table-info'"
+            :divided="chartType !== 'table-info'"
             :command="beforeClickItem('formatter')"
           >
             <el-icon />
@@ -840,7 +845,7 @@ onMounted(() => {
           </el-dropdown-item>
           <el-dropdown-item
             class="menu-item-padding"
-            v-if="['table-normal', 'table-info'].includes(chart.type)"
+            v-if="['table-normal', 'table-info'].includes(chartType)"
             :command="beforeClickItem('toggleHide')"
           >
             <el-icon>
