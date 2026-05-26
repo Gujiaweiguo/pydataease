@@ -72,4 +72,37 @@ describe('SummarySelector', () => {
     })
     expect(wrapper.exists()).toBe(true)
   })
+
+  it('does not crash when chart.type is undefined', () => {
+    const incompleteChart = {
+      id: 'test-chart',
+      customAttr: {
+        basicStyle: { showSummary: false, seriesSummary: [], summaryLabel: '', alpha: 100 }
+      },
+      xAxis: [],
+      yAxis: []
+    } as any
+
+    const wrapper = shallowMount(SummarySelector, {
+      props: { chart: incompleteChart, themes: 'dark' },
+      global: {
+        provide: { dimension: () => [], quota: () => [] },
+        stubs: {
+          'el-form': { template: '<div><slot /></div>' },
+          'el-form-item': { template: '<div><slot /></div>' },
+          'el-input': true,
+          'el-select': true,
+          'el-option': true,
+          'el-checkbox': true,
+          'el-icon': { template: '<div><slot /></div>' },
+          'el-dialog': { template: '<div><slot /><slot name="footer" /></div>' },
+          'el-button': true,
+          'el-col': { template: '<div><slot /></div>' },
+          Setting: true,
+          'custom-aggr-edit': true
+        }
+      }
+    })
+    expect(wrapper.exists()).toBe(true)
+  })
 })

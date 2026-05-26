@@ -108,4 +108,64 @@ describe('TableCellSelector', () => {
     })
     expect(wrapper.exists()).toBe(true)
   })
+
+  it('does not crash when chart.type is undefined', () => {
+    const incompleteChart = {
+      customAttr: {
+        basicStyle: { alpha: 100 },
+        tableCell: {
+          tableItemBgColor: '#fff',
+          tableItemFontSize: 12,
+          tableFontColor: '#000',
+          tableItemAlign: 'left',
+          tableItemHeight: 40,
+          enableTableCrossBG: false,
+          isBolder: false,
+          isItalic: false,
+          tableFreeze: false,
+          tableColumnFreezeHead: 0,
+          tableRowFreezeHead: 0,
+          mergeCells: false,
+          showHorizonBorder: true,
+          showVerticalBorder: true,
+          alignConfig: []
+        },
+        tableHeader: {}
+      },
+      xAxis: [],
+      yAxis: []
+    } as any
+
+    const wrapper = shallowMount(TableCellSelector, {
+      props: { chart: incompleteChart, themes: 'dark' },
+      global: {
+        stubs: {
+          'el-form': { template: '<div><slot /></div>' },
+          'el-form-item': { template: '<div><slot /></div>' },
+          'el-input': true,
+          'el-select': true,
+          'el-option': true,
+          'el-checkbox': true,
+          'el-icon': { template: '<div><slot /></div>' },
+          'el-tooltip': { template: '<div><slot /></div>' },
+          'el-color-picker': true,
+          'el-input-number': true,
+          'el-radio-group': { template: '<div><slot /></div>' },
+          'el-radio': { template: '<div><slot /></div>' },
+          'el-row': { template: '<div><slot /></div>' },
+          'el-col': { template: '<div><slot /></div>' },
+          'el-space': { template: '<div><slot /></div>' },
+          Icon: { template: '<div><slot /></div>' },
+          icon_bold_outlined: true,
+          icon_italic_outlined: true,
+          icon_leftAlignment_outlined: true,
+          icon_centerAlignment_outlined: true,
+          icon_rightAlignment_outlined: true,
+          icon_customAlignment_outlined: true,
+          icon_info_outlined: true
+        }
+      }
+    })
+    expect(wrapper.exists()).toBe(true)
+  })
 })

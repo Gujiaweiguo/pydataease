@@ -114,4 +114,69 @@ describe('TableHeaderSelector', () => {
     })
     expect(wrapper.exists()).toBe(true)
   })
+
+  it('does not crash when chart.type is undefined', () => {
+    const incompleteChart = {
+      customAttr: {
+        basicStyle: { alpha: 100 },
+        tableHeader: {
+          tableHeaderBgColor: '#f0f0f0',
+          tableHeaderFontColor: '#000000',
+          tableTitleFontSize: 12,
+          tableHeaderAlign: 'left',
+          tableTitleHeight: 36,
+          isBolder: false,
+          isItalic: false,
+          showIndex: false,
+          indexLabel: '',
+          tableHeaderSort: false,
+          showTableHeader: true,
+          showHorizonBorder: true,
+          showVerticalBorder: true,
+          rowHeaderFreeze: false,
+          headerGroup: false,
+          headerGroupConfig: { columns: [], meta: [] },
+          alignConfig: []
+        },
+        tableCell: {}
+      },
+      xAxis: [],
+      yAxis: []
+    } as any
+
+    const wrapper = shallowMount(TableHeaderSelector, {
+      props: { chart: incompleteChart, themes: 'dark' },
+      global: {
+        stubs: {
+          'el-form': { template: '<div><slot /></div>' },
+          'el-form-item': { template: '<div><slot /></div>' },
+          'el-input': true,
+          'el-select': true,
+          'el-option': true,
+          'el-checkbox': true,
+          'el-icon': { template: '<div><slot /></div>' },
+          'el-tooltip': { template: '<div><slot /></div>' },
+          'el-color-picker': true,
+          'el-input-number': true,
+          'el-radio-group': { template: '<div><slot /></div>' },
+          'el-radio': { template: '<div><slot /></div>' },
+          'el-row': { template: '<div><slot /></div>' },
+          'el-col': { template: '<div><slot /></div>' },
+          'el-space': { template: '<div><slot /></div>' },
+          'el-divider': true,
+          'el-dialog': { template: '<div><slot /><slot name="header" /></div>' },
+          Icon: { template: '<div><slot /></div>' },
+          icon_bold_outlined: true,
+          icon_italic_outlined: true,
+          icon_leftAlignment_outlined: true,
+          icon_centerAlignment_outlined: true,
+          icon_rightAlignment_outlined: true,
+          icon_customAlignment_outlined: true,
+          icon_edit_outlined: true,
+          'table-header-group-config': true
+        }
+      }
+    })
+    expect(wrapper.exists()).toBe(true)
+  })
 })

@@ -157,4 +157,21 @@ describe('XAxisSelector', () => {
     })
     expect((wrapper.vm as any).toolTip).toBe('dark')
   })
+
+  it('does not crash when chart.type is undefined', () => {
+    const incompleteChart = {
+      yAxis: [],
+      yAxisExt: [],
+      customStyle: {
+        xAxis: { show: true, nameShow: true, name: '', color: '#333', fontSize: 12 }
+      },
+      customAttr: { basicStyle: { layout: 'vertical' } }
+    } as any
+
+    const wrapper = shallowMount(XAxisSelector, {
+      props: { chart: incompleteChart, themes: 'dark', propertyInner: ['name'] },
+      global: { stubs: globalStubs }
+    })
+    expect(wrapper.exists()).toBe(true)
+  })
 })

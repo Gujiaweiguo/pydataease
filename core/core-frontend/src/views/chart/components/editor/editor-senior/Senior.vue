@@ -99,6 +99,7 @@ const props = defineProps({
 })
 
 const { chart, themes, properties, propertyInnerAll } = toRefs(props)
+const chartType = computed(() => chart.value?.type || '')
 watch(
   () => chart.value?.senior,
   () => {
@@ -126,9 +127,7 @@ const seniorCounts = computed(() => {
 
 const eventsShow = computed(() => {
   return (
-    !batchOptStatus.value &&
-    ['indicator', 'rich-text'].includes(chart.value.type) &&
-    props.eventInfo
+    !batchOptStatus.value && ['indicator', 'rich-text'].includes(chartType.value) && props.eventInfo
   )
 })
 
@@ -167,7 +166,7 @@ const linkJumpSetOpen = () => {
   }
   //跳转设置需要先触发保存
   canvasSave(() => {
-    linkJumpRef.value.dialogInit({ id: chart.value.id, type: chart.value.type })
+    linkJumpRef.value.dialogInit({ id: chart.value.id, type: chartType.value })
   })
 }
 const linkageSetOpen = () => {
@@ -193,9 +192,7 @@ const SENIOR_PROP: EditorProperty[] = [
 ]
 const excludeTypeList = ['chart-mix', 'chart-mix-stack', 'chart-mix-group']
 const noSenior = computed(() => {
-  return (
-    !includesAny(properties.value, ...SENIOR_PROP) && excludeTypeList.includes(chart.value.type)
-  )
+  return !includesAny(properties.value, ...SENIOR_PROP) && excludeTypeList.includes(chartType.value)
 })
 
 const linkJumpActiveChange = () => {
