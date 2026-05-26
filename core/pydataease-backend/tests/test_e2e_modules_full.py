@@ -188,7 +188,7 @@ async def test_e2e_modules_full() -> None:
             schema_body = _assert_ok(schema_resp, "Step 7")
             schema_data = _data_list(schema_body, "Step 7")
             assert len(schema_data) > 0, f"Step 7 failed: {schema_body}"
-            table_name = str(schema_data[0]["name"])
+            table_name = str(schema_data[0].get("tableName") or schema_data[0]["name"])
 
             print("Step 8: Datasource table field")
             field_resp = await client.get(
@@ -198,6 +198,23 @@ async def test_e2e_modules_full() -> None:
             field_body = _assert_ok(field_resp, "Step 8")
             field_data = _data_list(field_body, "Step 8")
             assert len(field_data) > 0, f"Step 8 failed: {field_body}"
+            # Convert datasource fields to allFields format for dataset save
+            ds_fields = []
+            for idx, f in enumerate(field_data):
+                ds_fields.append({
+                    "originName": f.get("originName", f.get("name", "")),
+                    "name": f.get("name", ""),
+                    "dataeaseName": f.get("name", ""),
+                    "fieldShortName": f.get("name", ""),
+                    "groupType": "d",
+                    "type": f.get("type", "varchar"),
+                    "deType": f.get("deType", 0),
+                    "deExtractType": 0,
+                    "extField": 0,
+                    "checked": True,
+                    "columnIndex": idx,
+                    "datasourceId": ids["datasource"],
+                })
 
             print("Step 9: Datasource types")
             types_resp = await client.get("/de2api/datasource/types", headers=headers)
@@ -264,6 +281,7 @@ async def test_e2e_modules_full() -> None:
                     "datasourceId": ids["datasource"],
                     "tableName": table_name,
                     "info": {"datasourceId": ids["datasource"], "table": table_name, "sql": f"SELECT * FROM {table_name}"},
+                    "allFields": ds_fields,
                 },
             )
             dataset_save_body = _assert_ok(dataset_save_resp, "Step 15")

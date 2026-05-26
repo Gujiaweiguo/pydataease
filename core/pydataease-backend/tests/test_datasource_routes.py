@@ -88,7 +88,7 @@ class FakeDatasourceService:
         return DatasourceValidateResponse(success=True, message="Connection successful", datasource_type="pg")
 
     async def get_tables(self, datasource_id: int) -> list[DatasourceTableResponse]:
-        return [DatasourceTableResponse(name="orders", schema_name="public")]
+        return [DatasourceTableResponse(name="orders", table_name="orders", schema_name="public")]
 
     async def get_fields(self, datasource_id: int, table_name: str) -> list[DatasourceFieldResponse]:
         return [DatasourceFieldResponse(name="id", origin_name="id", data_type="bigint", de_type=2, type="bigint", nullable=False)]
@@ -206,7 +206,7 @@ async def test_datasource_validate_tables_and_fields_routes(
         "message": "Connection successful",
         "datasource_type": "pg",
     }
-    assert schema_response.json()["data"] == [{"name": "orders", "schema": "public", "type": "TABLE"}]
+    assert schema_response.json()["data"] == [{"name": "orders", "tableName": "orders", "schema": "public", "type": "TABLE"}]
     assert field_response.json()["data"] == [{"name": "id", "originName": "id", "fieldType": "bigint", "deType": 2, "type": "bigint", "nullable": False}]
 
 
