@@ -71,7 +71,7 @@ const splitLineStyle = [
 ]
 
 const isBarRangeTime = computed<boolean>(() => {
-  if (props.chart.type === 'bar-range') {
+  if (props.chart?.type === 'bar-range') {
     const tempYAxis = props.chart.yAxis[0]
     const tempYAxisExt = props.chart.yAxisExt[0]
     if (
@@ -119,11 +119,11 @@ const init = () => {
 const showProperty = prop => props.propertyInner?.includes(prop)
 
 const isBidirectionalBar = computed(() => {
-  return props.chart.type === 'bidirectional-bar'
+  return props.chart?.type === 'bidirectional-bar'
 })
 
 const isBulletGraph = computed(() => {
-  return ['bullet-graph'].includes(props.chart.type)
+  return ['bullet-graph'].includes(props.chart?.type)
 })
 
 const isHorizontalLayout = computed(() => {

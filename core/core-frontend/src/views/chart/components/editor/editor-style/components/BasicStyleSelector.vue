@@ -49,7 +49,7 @@ const showProperty = (prop: string) => {
   if (!has) {
     return false
   }
-  if (props.chart.type.includes('map') && mapType.value === 'tianditu' && prop === 'showLabel') {
+  if (props.chart?.type.includes('map') && mapType.value === 'tianditu' && prop === 'showLabel') {
     return false
   }
   return has
@@ -205,12 +205,12 @@ const configCompat = (basicStyle: ChartBasicStyle) => {
 }
 const COLUMN_WIDTH_TYPE = ['table-info', 'table-normal']
 const initTableColumnWidth = () => {
-  if (!COLUMN_WIDTH_TYPE.includes(props.chart.type)) {
+  if (!COLUMN_WIDTH_TYPE.includes(props.chart?.type)) {
     return
   }
   let { xAxis, yAxis, customAttr } = JSON.parse(JSON.stringify(props.chart))
   let allAxis = xAxis
-  if (props.chart.type === 'table-normal') {
+  if (props.chart?.type === 'table-normal') {
     allAxis = allAxis.concat(yAxis)
   }
   const { tableHeader } = customAttr
@@ -355,7 +355,7 @@ const heatMapTypeOptions = [
  * 表格是否合并单元格
  */
 const mergeCell = computed(() => {
-  if (COLUMN_WIDTH_TYPE.includes(props.chart.type)) {
+  if (COLUMN_WIDTH_TYPE.includes(props.chart?.type)) {
     let { customAttr } = JSON.parse(JSON.stringify(props.chart))
     const { tableCell } = customAttr
     return tableCell.mergeCells
@@ -540,7 +540,7 @@ onMounted(async () => {
         <el-radio value="rightAngle" :effect="themes">{{ t('chart.rightAngle') }}</el-radio>
         <el-radio value="roundAngle" :effect="themes">{{ t('chart.roundAngle') }}</el-radio>
         <el-radio
-          v-if="!props.chart.type.includes('-stack')"
+          v-if="!props.chart?.type.includes('-stack')"
           label="topRoundAngle"
           :effect="themes"
           >{{ t('chart.topRoundAngle') }}</el-radio
@@ -567,7 +567,7 @@ onMounted(async () => {
     <!--flow map begin-->
     <el-form-item
       v-if="showProperty('heatMapStyle')"
-      :label="t('chart.type')"
+      :label="t('chart?.type')"
       class="form-item"
       :class="'form-item-' + themes"
     >
@@ -966,10 +966,10 @@ onMounted(async () => {
         <el-radio value="custom" :effect="themes">
           {{ t('chart.table_column_fixed') }}
         </el-radio>
-        <el-radio v-show="chart.type !== 'table-pivot'" label="field" :effect="themes">
+        <el-radio v-show="chart?.type !== 'table-pivot'" label="field" :effect="themes">
           {{ t('chart.table_column_custom') }}
         </el-radio>
-        <el-radio v-show="chart.type === 'table-pivot'" label="colAdapt" :effect="themes">
+        <el-radio v-show="chart?.type === 'table-pivot'" label="colAdapt" :effect="themes">
           {{ t('chart.table_column_col_adapt') }}
         </el-radio>
       </el-radio-group>

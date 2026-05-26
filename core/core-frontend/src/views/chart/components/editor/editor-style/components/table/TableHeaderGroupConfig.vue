@@ -57,7 +57,7 @@ const onCancelConfig = () => {
 }
 const allAxis = computed(() => {
   const axis = [...props.chart.xAxis]
-  if (props.chart.type === 'table-normal') {
+  if (props.chart?.type === 'table-normal') {
     axis.push(...props.chart.yAxis)
   }
   return axis

@@ -114,7 +114,7 @@ const changeMisc = prop => {
 
 const legendSort = ref()
 const sortAxis = computed(() => {
-  if (props.chart.type === 'line') {
+  if (props.chart?.type === 'line') {
     return 'xAxisExt'
   }
   return 'extStack'
@@ -256,7 +256,7 @@ const getMapCustomRange = index => {
 const customSort = []
 const changeLegendSort = sort => {
   if (sort === 'custom') {
-    if (props.chart.type === 'line') {
+    if (props.chart?.type === 'line') {
       state.customSortField = cloneDeep(props.chart.xAxisExt?.[0])
     } else {
       state.customSortField = cloneDeep(props.chart.extStack?.[0])

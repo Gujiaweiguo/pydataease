@@ -105,7 +105,7 @@ const groupConfigValid = computed(() => {
     return false
   }
   const allAxis = [...(props.chart.xAxis || [])]
-  if (props.chart.type === 'table-normal') {
+  if (props.chart?.type === 'table-normal') {
     allAxis.push(...(props.chart.yAxis || []))
   }
   const showColumns = []
@@ -133,7 +133,7 @@ const changeAlignConfig = () => {
   }
 }
 const showCustomAlign = computed(() => {
-  return ['table-info', 'table-normal'].includes(props.chart.type)
+  return ['table-info', 'table-normal'].includes(props.chart?.type)
 })
 const init = () => {
   const tableHeader = props.chart?.customAttr?.tableHeader
@@ -163,7 +163,7 @@ const init = () => {
       )
     }
   }
-  if (['table-info', 'table-normal'].includes(props.chart.type)) {
+  if (['table-info', 'table-normal'].includes(props.chart?.type)) {
     const axis = [...(props.chart.xAxis || [])]
     if (props.chart?.type === 'table-normal') {
       axis.push(...(props.chart.yAxis || []))
@@ -218,7 +218,7 @@ onMounted(() => {
   >
     <el-form-item
       :label="
-        chart.type === 'table-pivot' ? t('chart.rowBackgroundColor') : t('chart.backgroundColor')
+        chart?.type === 'table-pivot' ? t('chart.rowBackgroundColor') : t('chart.backgroundColor')
       "
       class="form-item"
       :class="'form-item-' + themes"
@@ -494,7 +494,7 @@ onMounted(() => {
         </el-radio-group>
       </el-col>
     </el-row>
-    <template v-if="chart.type === 'table-pivot' && showProperty('tableHeaderBgColor')">
+    <template v-if="chart?.type === 'table-pivot' && showProperty('tableHeaderBgColor')">
       <el-divider class="m-divider" :class="{ 'divider-dark': themes === 'dark' }" />
       <el-form-item
         :label="t('chart.colBackgroundColor')"

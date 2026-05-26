@@ -180,7 +180,7 @@ const getQuotaExtField = (id?: string | null): AssistLineField | Record<string, 
 }
 
 const getFieldOptions = computed(() => {
-  if (['percentage-bar-stack', 'percentage-bar-stack-horizontal'].includes(props.chart.type)) {
+  if (['percentage-bar-stack', 'percentage-bar-stack-horizontal'].includes(props.chart?.type)) {
     return state.fieldOptions.filter(item => item.value === '0')
   }
   return state.fieldOptions

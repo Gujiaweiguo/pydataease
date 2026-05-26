@@ -216,7 +216,7 @@ const valueOptions = [
 const predefineColors = COLOR_PANEL
 
 const targetOptions = computed(() => {
-  if (props.chart.type === 'rich-text') {
+  if (props.chart?.type === 'rich-text') {
     return [
       { label: t('chart.self'), value: 'self' },
       { label: t('chart.custom'), value: 'custom' }
@@ -262,9 +262,9 @@ const initOptions = (item: TableThresholdItem, fieldObj?: DateFieldLike & { deTy
 }
 const initFields = () => {
   let fields: Axis[] = []
-  if (props.chart.type === 'table-info') {
+  if (props.chart?.type === 'table-info') {
     fields = JSON.parse(JSON.stringify(props.chart.xAxis))
-  } else if (props.chart.type === 'table-pivot') {
+  } else if (props.chart?.type === 'table-pivot') {
     const xAxis = JSON.parse(JSON.stringify(props.chart.xAxis))
     const xAxisExt = JSON.parse(JSON.stringify(props.chart.xAxisExt))
     const yAxis = JSON.parse(JSON.stringify(props.chart.yAxis))
@@ -501,7 +501,7 @@ init()
                 :key="fieldOption.id"
                 :label="fieldOption.name"
                 :value="fieldOption.id"
-                :disabled="chart.type === 'table-info' && fieldOption.deType === 7"
+                :disabled="chart?.type === 'table-info' && fieldOption.deType === 7"
               >
                 <el-icon style="margin-right: 8px">
                   <Icon
@@ -560,7 +560,7 @@ init()
             </el-col>
             <el-col
               :span="2"
-              v-if="isNotEmptyAndNull(item) && chart.type !== 'rich-text'"
+              v-if="isNotEmptyAndNull(item) && chart?.type !== 'rich-text'"
               style="padding-left: 0 !important"
             >
               <el-form-item class="form-item">
@@ -651,7 +651,7 @@ init()
                     :key="itemFieldOption.id"
                     :label="itemFieldOption.name"
                     :value="itemFieldOption.id"
-                    :disabled="chart.type === 'table-info' && itemFieldOption.deType === 7"
+                    :disabled="chart?.type === 'table-info' && itemFieldOption.deType === 7"
                   >
                     <el-icon style="margin-right: 8px">
                       <Icon
@@ -755,7 +755,7 @@ init()
                     :key="itemFieldOption.id"
                     :label="itemFieldOption.name"
                     :value="itemFieldOption.id"
-                    :disabled="chart.type === 'table-info' && itemFieldOption.deType === 7"
+                    :disabled="chart?.type === 'table-info' && itemFieldOption.deType === 7"
                   >
                     <el-icon style="margin-right: 8px">
                       <Icon
@@ -819,7 +819,7 @@ init()
                     :key="itemFieldOption.id"
                     :label="itemFieldOption.name"
                     :value="itemFieldOption.id"
-                    :disabled="chart.type === 'table-info' && itemFieldOption.deType === 7"
+                    :disabled="chart?.type === 'table-info' && itemFieldOption.deType === 7"
                   >
                     <el-icon style="margin-right: 8px">
                       <Icon

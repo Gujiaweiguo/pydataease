@@ -427,7 +427,7 @@ onMounted(() => {
         />
       </el-form-item>
       <el-form-item
-        v-if="chart.type === 'table-pivot'"
+        v-if="chart?.type === 'table-pivot'"
         :label="t('chart.total_sort')"
         class="form-item"
         :class="'form-item-' + themes"
@@ -443,7 +443,7 @@ onMounted(() => {
         </el-radio-group>
       </el-form-item>
       <el-form-item
-        v-if="chart.type === 'table-pivot' && state.tableTotalForm.row.totalSort !== 'none'"
+        v-if="chart?.type === 'table-pivot' && state.tableTotalForm.row.totalSort !== 'none'"
         :label="t('chart.total_sort_field')"
         class="form-item"
         :class="'form-item-' + themes"
@@ -734,7 +734,7 @@ onMounted(() => {
         />
       </el-form-item>
       <el-form-item
-        v-if="chart.type === 'table-pivot'"
+        v-if="chart?.type === 'table-pivot'"
         :label="t('chart.total_sort')"
         class="form-item"
         :class="'form-item-' + themes"
@@ -750,7 +750,7 @@ onMounted(() => {
         </el-radio-group>
       </el-form-item>
       <el-form-item
-        v-show="chart.type === 'table-pivot' && state.tableTotalForm.col?.totalSort !== 'none'"
+        v-show="chart?.type === 'table-pivot' && state.tableTotalForm.col?.totalSort !== 'none'"
         :label="t('chart.total_sort_field')"
         class="form-item"
       >

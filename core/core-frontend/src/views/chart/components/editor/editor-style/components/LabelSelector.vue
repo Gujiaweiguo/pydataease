@@ -59,7 +59,7 @@ watch(
   { deep: false }
 )
 const yAxis = computed(() => {
-  if (props.chart.type.includes('chart-mix') || props.chart.type.includes('bidirectional-bar')) {
+  if (props.chart?.type.includes('chart-mix') || props.chart?.type.includes('bidirectional-bar')) {
     return union(
       defaultTo(
         map(props.chart.yAxis, y => {
@@ -97,7 +97,7 @@ watch(
 )
 
 const computedIdKey = computed(() => {
-  if (props.chart.type.includes('chart-mix')) {
+  if (props.chart?.type.includes('chart-mix')) {
     return 'seriesId'
   }
   return 'id'
@@ -132,7 +132,7 @@ const initSeriesLabel = () => {
     const optionLabel: string = `${next.chartShowName ?? next.name}${
       next.summary !== '' ? '(' + t('chart.' + next.summary) + ')' : ''
     }${
-      props.chart.type.includes('chart-mix')
+      props.chart?.type.includes('chart-mix')
         ? next.axisType === 'yAxis'
           ? `(${t('chart.left_axis')})`
           : `(${t('chart.right_axis')})`
@@ -141,7 +141,7 @@ const initSeriesLabel = () => {
     const optionShowName: string = `${next.chartShowName ?? next.name}${
       next.summary !== '' ? '(' + t('chart.' + next.summary) + ')' : ''
     }${
-      props.chart.type.includes('chart-mix')
+      props.chart?.type.includes('chart-mix')
         ? next.axisType === 'yAxis'
           ? `(${t('chart.left_axis')})`
           : `(${t('chart.right_axis')})`
@@ -338,7 +338,7 @@ const showDivider = computed(() => {
 })
 
 const isBarRangeTime = computed<boolean>(() => {
-  if (props.chart.type === 'bar-range') {
+  if (props.chart?.type === 'bar-range') {
     const tempYAxis = props.chart.yAxis[0]
     const tempYAxisExt = props.chart.yAxisExt[0]
     if (
@@ -352,7 +352,7 @@ const isBarRangeTime = computed<boolean>(() => {
 })
 const showPositionH = computed(() => {
   if (showProperty('hPosition')) {
-    if (props.chart.type !== 'bidirectional-bar') {
+    if (props.chart?.type !== 'bidirectional-bar') {
       return true
     }
     return props.chart.customAttr.basicStyle.layout === 'horizontal'
@@ -361,7 +361,7 @@ const showPositionH = computed(() => {
 })
 const showPositionV = computed(() => {
   if (showProperty('vPosition')) {
-    if (props.chart.type !== 'bidirectional-bar' && props.chart.type !== 'bar-group') {
+    if (props.chart?.type !== 'bidirectional-bar' && props.chart?.type !== 'bar-group') {
       return true
     }
     return props.chart.customAttr.basicStyle.layout === 'vertical'
@@ -483,7 +483,7 @@ onMounted(() => {
   init()
 })
 const isGroupBar = computed(() => {
-  return props.chart.type === 'bar-group'
+  return props.chart?.type === 'bar-group'
 })
 const conversionPrecision = [
   { name: t('chart.reserve_zero'), value: 0 },
@@ -491,13 +491,13 @@ const conversionPrecision = [
   { name: t('chart.reserve_two'), value: 2 }
 ]
 const noFullDisplay = computed(() => {
-  return !['liquid', 'gauge', 'indicator'].includes(props.chart.type)
+  return !['liquid', 'gauge', 'indicator'].includes(props.chart?.type)
 })
 const isGauge = computed(() => {
-  return props.chart.type === 'gauge'
+  return props.chart?.type === 'gauge'
 })
 const isProgressBar = computed(() => {
-  return props.chart.type === 'progress-bar'
+  return props.chart?.type === 'progress-bar'
 })
 </script>
 
@@ -692,7 +692,7 @@ const isProgressBar = computed(() => {
           class="item"
           :effect="toolTip"
           placement="top"
-          v-if="chart.type.includes('chart-mix')"
+          v-if="chart?.type.includes('chart-mix')"
         >
           <template #content>
             <span v-html="t('chart.chart_mix_label_only_left')"></span>
@@ -1543,7 +1543,7 @@ const isProgressBar = computed(() => {
               class="item"
               :effect="toolTip"
               placement="top"
-              v-if="chart.type.includes('chart-mix')"
+              v-if="chart?.type.includes('chart-mix')"
             >
               <template #content>
                 <span v-html="t('chart.chart_mix_label_only_left')"></span>

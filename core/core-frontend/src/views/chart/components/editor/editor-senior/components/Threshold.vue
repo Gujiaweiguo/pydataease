@@ -193,7 +193,7 @@ const changeTableThreshold = () => {
     }
     for (let j = 0; j < field.conditions.length; j++) {
       const ele = field.conditions[j]
-      if (props.chart.type === 'picture-group' && !ele.url) {
+      if (props.chart?.type === 'picture-group' && !ele.url) {
         ElMessage.error(t('visualization.img_can_not_null'))
         return
       }
@@ -430,7 +430,7 @@ init()
     </el-col>
 
     <!--文本卡-->
-    <el-col v-if="props.chart.type && props.chart.type === 'label'">
+    <el-col v-if="props.chart?.type && props.chart?.type === 'label'">
       <el-col>
         <el-button
           :title="t('chart.edit')"
@@ -495,7 +495,7 @@ init()
     </el-col>
 
     <!--指标卡-->
-    <el-col v-if="props.chart.type && props.chart.type === 'indicator'">
+    <el-col v-if="props.chart?.type && props.chart?.type === 'indicator'">
       <el-col>
         <div class="inner-container">
           <span class="label" :class="'label-' + props.themes">{{
@@ -760,7 +760,7 @@ init()
                 </span>
                 <span v-else>&nbsp;</span>
               </div>
-              <template v-if="chart.type === 'picture-group'">
+              <template v-if="chart?.type === 'picture-group'">
                 <div title="显示图片" class="pic-group-main">
                   <img
                     draggable="false"
@@ -771,7 +771,7 @@ init()
                 </div>
               </template>
 
-              <template v-if="chart.type !== 'picture-group'">
+              <template v-if="chart?.type !== 'picture-group'">
                 <div
                   :title="t('chart.textColor')"
                   :style="{
@@ -910,7 +910,7 @@ init()
                 </span>
                 <span v-else>&nbsp;</span>
               </div>
-              <template v-if="chart.type !== 'picture-group'">
+              <template v-if="chart?.type !== 'picture-group'">
                 <div
                   :title="t('chart.color')"
                   :style="{
@@ -1036,7 +1036,7 @@ init()
                 </span>
                 <span v-else>&nbsp;</span>
               </div>
-              <template v-if="chart.type !== 'picture-group'">
+              <template v-if="chart?.type !== 'picture-group'">
                 <div
                   :title="t('chart.color')"
                   :style="{
@@ -1111,7 +1111,7 @@ init()
       append-to-body
     >
       <picture-group-threshold-edit
-        v-if="chart.type === 'picture-group' && curComponent"
+        v-if="chart?.type === 'picture-group' && curComponent"
         :threshold="state.thresholdForm.tableThreshold"
         :chart="chart"
         :element="curComponent"

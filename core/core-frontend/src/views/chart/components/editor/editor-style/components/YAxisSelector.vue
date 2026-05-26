@@ -104,7 +104,7 @@ const init = () => {
 
 const showProperty = prop => props.propertyInner?.includes(prop)
 const isBulletGraph = computed(() => {
-  return ['bullet-graph'].includes(props.chart.type)
+  return ['bullet-graph'].includes(props.chart?.type)
 })
 
 const isHorizontalLayout = computed(() => {
