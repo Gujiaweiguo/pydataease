@@ -108,8 +108,16 @@ def ns_id() -> int:
     return int(time.time_ns())
 
 
+_cached_token: str | None = None
+_cached_token_ts: float = 0
+_TOKEN_TTL = 30 * 60  # 30 minutes
+
+
 async def login(client: httpx.AsyncClient) -> dict[str, str]:
-    """Login and return auth headers dict."""
+    """Login and return auth headers dict. Caches token per process to avoid 429."""
+    global _cached_token, _cached_token_ts
+    if _cached_token and (time.time() - _cached_token_ts) < _TOKEN_TTL:
+        return {"X-DE-TOKEN": _cached_token}
     dekey_resp = await client.get("/de2api/dekey")
     dekey_body = assert_ok(dekey_resp)
     dekey = dekey_body["data"]
@@ -123,6 +131,8 @@ async def login(client: httpx.AsyncClient) -> dict[str, str]:
     login_data = data_dict(login_body)
     token = login_data["token"]
     assert isinstance(token, str) and token
+    _cached_token = token
+    _cached_token_ts = time.time()
     return {"X-DE-TOKEN": token}
 
 
