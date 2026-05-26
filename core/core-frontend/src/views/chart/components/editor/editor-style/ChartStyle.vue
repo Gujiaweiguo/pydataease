@@ -107,6 +107,9 @@ const {
   commonBorderPop,
   selectorSpec
 } = toRefs(props)
+
+const chartType = computed(() => chart.value?.type || '')
+
 const emit = defineEmits([
   'onColorChange',
   'onMiscChange',
@@ -158,7 +161,7 @@ const onChangeXAxisForm = (val, prop) => {
 }
 
 const onChangeYAxisForm = (val, prop) => {
-  if (prop === 'show' && chart.value.type.includes('chart-mix')) {
+  if (prop === 'show' && chartType.value.includes('chart-mix')) {
     chart.value.customStyle.yAxisExt.show = val.show
     onChangeYAxisExtForm(chart.value.customStyle.yAxisExt, 'show')
   }
@@ -442,7 +445,7 @@ watch(
           </collapse-switch-item>
           <el-collapse-item
             :effect="themes"
-            v-if="showProperties('misc-selector') && !chart.type.includes('mix')"
+            v-if="showProperties('misc-selector') && !chartType.includes('mix')"
             name="size"
             :title="t('visualization.component_size')"
           >
