@@ -125,4 +125,29 @@ describe('DimensionItem', () => {
     })
     expect((wrapper.vm as any).toolTip).toBe('light')
   })
+
+  it('does not crash when chart prop is undefined', async () => {
+    const props = defaultProps()
+    const wrapper = shallowMount(DimensionItem, {
+      props,
+      global: { stubs: globalStubs }
+    })
+
+    await wrapper.setProps({
+      chart: undefined as unknown as { type: string }
+    })
+
+    expect(wrapper.exists()).toBe(true)
+    expect((wrapper.vm as any).chartType).toBe('')
+  })
+
+  it('chartType computed returns empty string when chart has no type', () => {
+    const props = defaultProps()
+    props.chart = {} as { type: string }
+    const wrapper = shallowMount(DimensionItem, {
+      props,
+      global: { stubs: globalStubs }
+    })
+    expect((wrapper.vm as any).chartType).toBe('')
+  })
 })

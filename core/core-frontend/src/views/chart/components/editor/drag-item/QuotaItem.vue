@@ -415,12 +415,12 @@ onMounted(() => {
           <span
             v-if="
               item.compareCalc &&
-              item.compareCalc.type &&
-              item.compareCalc.type !== '' &&
-              item.compareCalc.type !== 'none'
+              item.compareCalc?.type &&
+              item.compareCalc?.type !== '' &&
+              item.compareCalc?.type !== 'none'
             "
           >
-            -{{ t('chart.' + item.compareCalc.type) }}
+            -{{ t('chart.' + item.compareCalc?.type) }}
           </span>
         </span>
         <el-icon v-if="showHideIcon" style="margin-left: 4px">
@@ -643,7 +643,7 @@ onMounted(() => {
                   <span>{{ t('chart.quick_calc') }}</span>
                   <span class="summary-span-item">
                     ({{
-                      !item.compareCalc ? t('chart.none') : t('chart.' + item.compareCalc.type)
+                      !item.compareCalc ? t('chart.none') : t('chart.' + item.compareCalc?.type)
                     }})
                   </span>
                 </span>
@@ -660,11 +660,11 @@ onMounted(() => {
                   <el-dropdown-item class="menu-item-padding" :command="beforeQuickCalc('none')">
                     <span
                       class="sub-menu-content"
-                      :class="'none' === item.compareCalc.type ? 'content-active' : ''"
+                      :class="'none' === item.compareCalc?.type ? 'content-active' : ''"
                     >
                       {{ t('chart.none') }}
                       <el-icon class="sub-menu-content--icon">
-                        <Icon name="icon_done_outlined" v-if="'none' === item.compareCalc.type"
+                        <Icon name="icon_done_outlined" v-if="'none' === item.compareCalc?.type"
                           ><icon_done_outlined class="svg-icon"
                         /></Icon>
                       </el-icon>
@@ -677,14 +677,14 @@ onMounted(() => {
                   >
                     <div
                       class="sub-menu-content"
-                      :class="yoyLabel.includes(item.compareCalc.type) ? 'content-active' : ''"
+                      :class="yoyLabel.includes(item.compareCalc?.type) ? 'content-active' : ''"
                       :disabled="state.disableEditCompare"
                     >
                       {{ t('chart.yoy_label') }}
                       <el-icon class="sub-menu-content--icon">
                         <Icon
                           name="icon_done_outlined"
-                          v-if="yoyLabel.includes(item.compareCalc.type)"
+                          v-if="yoyLabel.includes(item.compareCalc?.type)"
                           ><icon_done_outlined class="svg-icon"
                         /></Icon>
                       </el-icon>
@@ -697,12 +697,12 @@ onMounted(() => {
                   >
                     <div
                       class="sub-menu-content"
-                      :class="'percent' === item.compareCalc.type ? 'content-active' : ''"
+                      :class="'percent' === item.compareCalc?.type ? 'content-active' : ''"
                       :disabled="state.quotaViews.indexOf(chartType) > -1"
                     >
                       {{ t('chart.percent') }}
                       <el-icon class="sub-menu-content--icon">
-                        <Icon name="icon_done_outlined" v-if="'percent' === item.compareCalc.type"
+                        <Icon name="icon_done_outlined" v-if="'percent' === item.compareCalc?.type"
                           ><icon_done_outlined class="svg-icon"
                         /></Icon>
                       </el-icon>
@@ -715,14 +715,14 @@ onMounted(() => {
                   >
                     <div
                       class="sub-menu-content"
-                      :class="'accumulate' === item.compareCalc.type ? 'content-active' : ''"
+                      :class="'accumulate' === item.compareCalc?.type ? 'content-active' : ''"
                       :disabled="state.notSupportAccumulateViews.indexOf(chartType) > -1"
                     >
                       {{ t('chart.accumulate') }}
                       <el-icon class="sub-menu-content--icon">
                         <Icon
                           name="icon_done_outlined"
-                          v-if="'accumulate' === item.compareCalc.type"
+                          v-if="'accumulate' === item.compareCalc?.type"
                           ><icon_done_outlined class="svg-icon"
                         /></Icon>
                       </el-icon>

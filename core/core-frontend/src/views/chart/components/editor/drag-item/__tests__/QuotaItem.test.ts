@@ -145,4 +145,19 @@ describe('QuotaItem', () => {
     expect(wrapper.exists()).toBe(true)
     expect((wrapper.vm as any).showValueFormatter).toBe(false)
   })
+
+  it('does not crash when item.compareCalc is undefined', async () => {
+    const props = defaultProps()
+    delete (props.item as Record<string, any>).compareCalc
+    const wrapper = shallowMount(QuotaItem, {
+      props,
+      global: { stubs: globalStubs }
+    })
+
+    await wrapper.setProps({
+      chart: { type: 'gauge', xAxis: '[]', xAxisExt: '[]' }
+    })
+
+    expect(wrapper.exists()).toBe(true)
+  })
 })
