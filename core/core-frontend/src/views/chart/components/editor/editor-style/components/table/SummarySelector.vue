@@ -61,7 +61,7 @@ watch(
 )
 
 function getAxisList() {
-  return props.chart.type === 'table-info'
+  return props.chart?.type === 'table-info'
     ? filter(props.chart.xAxis, axis => [2, 3, 4].includes(axis.deType))
     : props.chart.yAxis
 }

@@ -135,7 +135,7 @@ const init = () => {
     state.colorIndex = 0
   }
   if (
-    props.chart.type.includes('-stack') &&
+    props.chart?.type.includes('-stack') &&
     state.basicStyleForm.radiusColumnBar === 'topRoundAngle'
   ) {
     state.basicStyleForm.radiusColumnBar = 'roundAngle'
@@ -174,7 +174,7 @@ onMounted(() => {
           />
         </template>
 
-        <template v-if="chart.type !== 'chart-mix-dual-line'">
+        <template v-if="chart?.type !== 'chart-mix-dual-line'">
           <el-form-item
             class="form-item"
             :class="'form-item-' + themes"
@@ -224,7 +224,7 @@ onMounted(() => {
           </el-row>
         </div>
 
-        <template v-if="chart.type !== 'chart-mix-dual-line'">
+        <template v-if="chart?.type !== 'chart-mix-dual-line'">
           <el-form-item
             class="form-item"
             v-if="showProperty('radiusColumnBar')"
@@ -241,7 +241,7 @@ onMounted(() => {
               <el-radio value="rightAngle" :effect="themes">{{ t('chart.rightAngle') }}</el-radio>
               <el-radio value="roundAngle" :effect="themes">{{ t('chart.roundAngle') }}</el-radio>
               <el-radio
-                v-if="!props.chart.type.includes('-stack')"
+                v-if="!props.chart?.type.includes('-stack')"
                 label="topRoundAngle"
                 :effect="themes"
               >

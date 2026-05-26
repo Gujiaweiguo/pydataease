@@ -56,19 +56,19 @@ const init = () => {
 }
 const showIgnoreOption = computed(() => {
   return !(
-    equalsAny(props.chart.type, 'table-pivot', 'table-info', 'indicator') ||
-    props.chart.type.includes('chart-mix')
+    equalsAny(props.chart?.type, 'table-pivot', 'table-info', 'indicator') ||
+    props.chart?.type.includes('chart-mix')
   )
 })
 
 const isRichText = computed(() => {
-  return equalsAny(props.chart.type, 'rich-text')
+  return equalsAny(props.chart?.type, 'rich-text')
 })
 
 const showEmptyDataFieldCtrl = computed(() => {
   return (
     showProperty('emptyDataStrategy') &&
-    includesAny(props.chart.type, 'table') &&
+    includesAny(props.chart?.type, 'table') &&
     state.functionForm.emptyDataStrategy !== 'breakLine'
   )
 })
@@ -78,10 +78,10 @@ const initFieldCtrl = () => {
   if (showEmptyDataFieldCtrl.value) {
     fieldOptions.value = []
     let axis
-    if (equalsAny(props.chart.type, 'table-normal', 'table-pivot')) {
+    if (equalsAny(props.chart?.type, 'table-normal', 'table-pivot')) {
       axis = props.chart.yAxis
     }
-    if (props.chart.type === 'table-info') {
+    if (props.chart?.type === 'table-info') {
       axis = props.chart.xAxis
     }
     axis.forEach(item => {
@@ -95,7 +95,7 @@ const initFieldCtrl = () => {
   }
 }
 const isCirclePacking = computed(() => {
-  return equalsAny(props.chart.type, 'circle-packing')
+  return equalsAny(props.chart?.type, 'circle-packing')
 })
 onMounted(() => {
   init()

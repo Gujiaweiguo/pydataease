@@ -34,7 +34,7 @@ const init = () => {
   } else {
     state.sortList.splice(0, state.sortList.length, ...chart.sortPriority)
   }
-  const chartInstance = chartViewManager.getChartView(chart.render, chart.type)
+  const chartInstance = chartViewManager.getChartView(chart?.render, chart?.type)
   if (chartInstance) {
     const axis = chartInstance.axis
     const axisMap = axis?.reduce((p, n) => {

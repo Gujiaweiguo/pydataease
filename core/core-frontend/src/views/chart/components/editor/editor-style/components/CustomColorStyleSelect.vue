@@ -83,8 +83,8 @@ const setupSeriesColor = () => {
   }
 
   instance.value = chartViewManager.getChartView(
-    props.chart.render,
-    props.chart.type
+    props.chart?.render,
+    props.chart?.type
   ) as G2PlotChartView
 
   if (!props.sub) {
@@ -102,7 +102,7 @@ const setupSeriesColor = () => {
     return
   }
 
-  if (props.chart.type.includes('chart-mix')) {
+  if (props.chart?.type.includes('chart-mix')) {
     if (props.sub) {
       viewData = viewData.right?.data?.[0]
     } else {

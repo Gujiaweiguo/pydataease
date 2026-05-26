@@ -235,9 +235,9 @@ const initOptions = (item: PictureGroupThresholdItem) => {
 }
 const initFields = () => {
   let fields = []
-  if (props.chart.type === 'table-info') {
+  if (props.chart?.type === 'table-info') {
     fields = JSON.parse(JSON.stringify(props.chart.xAxis))
-  } else if (props.chart.type === 'table-pivot') {
+  } else if (props.chart?.type === 'table-pivot') {
     const xAxis = JSON.parse(JSON.stringify(props.chart.xAxis))
     const xAxisExt = JSON.parse(JSON.stringify(props.chart.xAxisExt))
     const yAxis = JSON.parse(JSON.stringify(props.chart.yAxis))
@@ -315,7 +315,7 @@ init()
                 :key="fieldOption.id"
                 :label="fieldOption.name"
                 :value="fieldOption.id"
-                :disabled="chart.type === 'table-info' && fieldOption.deType === 7"
+                :disabled="chart?.type === 'table-info' && fieldOption.deType === 7"
               >
                 <el-icon style="margin-right: 8px">
                   <Icon

@@ -161,7 +161,7 @@ watch(
 )
 
 const isIndicator = computed(() => {
-  return chart.value.type === 'indicator'
+  return chart.value?.type === 'indicator'
 })
 
 // 过滤xaxis，extStack所有日期字段
@@ -176,7 +176,7 @@ const initFieldList = () => {
     return ele.deType === 1
   })
 
-  if (chart.value.type === 'table-pivot') {
+  if (chart.value?.type === 'table-pivot') {
     let xAxisExt = null
     if (Object.prototype.toString.call(chart.value.xAxisExt) === '[object Array]') {
       xAxisExt = JSON.parse(JSON.stringify(chart.value.xAxisExt))

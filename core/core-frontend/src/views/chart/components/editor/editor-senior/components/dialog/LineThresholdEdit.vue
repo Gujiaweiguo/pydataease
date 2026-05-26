@@ -93,7 +93,7 @@ const filterExpressionListByValue = (list, values) => {
     .filter(group => group.options.length > 0)
 }
 const valueOptions = computed(() => {
-  if (props.chart.type === 'symbolic-map') {
+  if (props.chart?.type === 'symbolic-map') {
     return filterExpressionListByValue(expressionList, [
       'eq',
       'not_eq',
@@ -136,19 +136,19 @@ const initOptions = (item: LineThresholdItem, fieldObj?: ChartViewField) => {
 }
 
 const isSymbolicMap = computed(() => {
-  return props.chart.type === 'symbolic-map'
+  return props.chart?.type === 'symbolic-map'
 })
 
 const isProgressBar = computed(() => {
-  return props.chart.type === 'progress-bar'
+  return props.chart?.type === 'progress-bar'
 })
 
 const isBidirectionalBar = computed(() => {
-  return props.chart.type === 'bidirectional-bar'
+  return props.chart?.type === 'bidirectional-bar'
 })
 
 const isRangeBar = computed(() => {
-  return props.chart.type === 'bar-range'
+  return props.chart?.type === 'bar-range'
 })
 
 const isBarOrHorizontal = computed(() => {
@@ -159,7 +159,7 @@ const isBarOrHorizontal = computed(() => {
     'bar-horizontal',
     'bidirectional-bar',
     'progress-bar'
-  ].includes(props.chart.type)
+  ].includes(props.chart?.type)
 })
 
 const initFields = () => {
@@ -283,7 +283,7 @@ init()
                 :key="fieldOption.id"
                 :label="fieldOption.name"
                 :value="fieldOption.id"
-                :disabled="chart.type === 'table-info' && fieldOption.deType === 7"
+                :disabled="chart?.type === 'table-info' && fieldOption.deType === 7"
               >
                 <el-icon style="margin-right: 8px">
                   <Icon

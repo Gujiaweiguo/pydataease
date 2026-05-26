@@ -113,7 +113,7 @@ const changeDataset = () => {
       }
       mergeTooltipFormat(
         formatterItem,
-        props.chart.type,
+        props.chart?.type,
         dvMainStore.canvasStyleData.component.formatterItem
       )
       formatter.push(formatterItem)
@@ -126,7 +126,7 @@ const changeDataset = () => {
 
 const AXIS_PROP: AxisType[] = ['yAxis', 'yAxisExt', 'extBubble']
 const tooltipAxisProp = computed<AxisType[]>(() => {
-  return props.chart.type === 'multi-scatter' ? ['xAxis', ...AXIS_PROP] : AXIS_PROP
+  return props.chart?.type === 'multi-scatter' ? ['xAxis', ...AXIS_PROP] : AXIS_PROP
 })
 const quotaAxis = computed(() => {
   let result = []
@@ -152,7 +152,7 @@ const quotaAxisIds = computed(() => {
 })
 
 function showOption(item) {
-  if (props.chart.type.includes('chart-mix')) {
+  if (props.chart?.type.includes('chart-mix')) {
     return includes(quotaAxisIds.value, item.id)
   }
   return true
@@ -187,7 +187,7 @@ const formatterEditable = computed(() => {
   )
 })
 const chartViewInstance = computed(() => {
-  return chartViewManager.getChartView(props.chart.render, props.chart.type)
+  return chartViewManager.getChartView(props.chart?.render, props.chart?.type)
 })
 const AGGREGATION_TYPE = [
   { name: t('chart.sum'), value: 'sum' },
@@ -218,7 +218,7 @@ const aggregationList = computed(() => {
 })
 
 const isBarRangeTime = computed<boolean>(() => {
-  if (props.chart.type === 'bar-range') {
+  if (props.chart?.type === 'bar-range') {
     const tempYAxis = props.chart.yAxis[0]
     const tempYAxisExt = props.chart.yAxisExt[0]
     if (
@@ -298,7 +298,7 @@ const init = () => {
           }
           mergeTooltipFormat(
             formatterItem,
-            props.chart.type,
+            props.chart?.type,
             dvMainStore.canvasStyleData.component.formatterItem
           )
           formatter.push(formatterItem)
@@ -327,7 +327,7 @@ const init = () => {
 }
 
 const showProperty = prop => {
-  const instance = chartViewManager.getChartView(props.chart.render, props.chart.type)
+  const instance = chartViewManager.getChartView(props.chart?.render, props.chart?.type)
   if (instance) {
     return instance.propertyInner['tooltip-selector']?.includes(prop)
   }
@@ -496,7 +496,7 @@ watch(
   }
 )
 const showTotalPercent = computed(() => {
-  return props.chart.type === 'sankey'
+  return props.chart?.type === 'sankey'
 })
 onMounted(() => {
   init()

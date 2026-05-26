@@ -76,7 +76,7 @@ const alignConfig = reactive({
 })
 
 const showCustomAlign = computed(() => {
-  return ['table-info', 'table-normal'].includes(props.chart.type)
+  return ['table-info', 'table-normal'].includes(props.chart?.type)
 })
 
 const alignConfigOptions = reactive([])
@@ -121,7 +121,7 @@ const init = () => {
       )
     }
 
-    if (['table-info', 'table-normal'].includes(props.chart.type)) {
+    if (['table-info', 'table-normal'].includes(props.chart?.type)) {
       const axis = [...props.chart?.xAxis]
       if (props.chart?.type === 'table-normal') {
         axis.push(...props.chart?.yAxis)
