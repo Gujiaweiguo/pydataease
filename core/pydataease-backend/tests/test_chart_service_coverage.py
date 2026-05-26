@@ -314,6 +314,38 @@ def test_axis_merge_helpers_and_identifier_validation() -> None:
         service._quote_identifier("bad-name")
 
 
+def test_quote_identifier_unicode_and_sql_safety() -> None:
+    r"""Regression: [^\W\d]\w* regex accepts Unicode letters, rejects injection."""
+    service = _unit_service()
+
+    assert service._quote_identifier("orders") == '"orders"'
+    assert service._quote_identifier("_private") == '"_private"'
+    assert service._quote_identifier("table_1") == '"table_1"'
+    assert service._quote_identifier("数据1") == '"数据1"'
+    assert service._quote_identifier("营业收入") == '"营业收入"'
+    assert service._quote_identifier("بيانات") == '"بيانات"'
+    assert service._quote_identifier("データ") == '"データ"'
+    assert service._quote_identifier("데이터") == '"데이터"'
+    assert service._quote_identifier("_数据") == '"_数据"'
+    assert service._quote_identifier("public.orders") == '"public"."orders"'
+    assert service._quote_identifier("schema.数据1") == '"schema"."数据1"'
+    assert service._quote_identifier("  orders  ") == '"orders"'
+
+    for bad in [
+        "orders; DROP TABLE users--",
+        "1; DROP TABLE users",
+        '"); DROP TABLE users--',
+        "1table",
+        "bad-name",
+        "",
+        "   ",
+        "table name",
+        "table@col",
+    ]:
+        with pytest.raises(ValueError):
+            service._quote_identifier(bad)
+
+
 def test_build_base_sql_and_build_chart_sql_cover_key_paths() -> None:
     service = _unit_service()
 
