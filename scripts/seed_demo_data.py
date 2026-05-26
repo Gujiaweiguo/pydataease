@@ -65,13 +65,15 @@ def psql_file(sql: str) -> subprocess.CompletedProcess[str]:
 def mysql_exec(sql: str) -> subprocess.CompletedProcess[str]:
     return docker_exec("mysql8", [
         "mysql", f"-h{MYSQL_HOST}", f"-P{MYSQL_PORT}",
-        f"-u{MYSQL_USER}", f"-p{MYSQL_PASS}", "-e", sql
+        f"-u{MYSQL_USER}", f"-p{MYSQL_PASS}",
+        "--default-character-set=utf8mb4", "-e", sql
     ])
 
 def mysql_file(sql: str) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         ["docker", "exec", "-i", "mysql8",
-         "mysql", f"-u{MYSQL_USER}", f"-p{MYSQL_PASS}"],
+         "mysql", f"-u{MYSQL_USER}", f"-p{MYSQL_PASS}",
+         "--default-character-set=utf8mb4"],
         input=sql, capture_output=True, text=True, timeout=60
     )
 

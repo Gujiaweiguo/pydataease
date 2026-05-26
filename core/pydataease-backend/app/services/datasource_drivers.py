@@ -94,6 +94,7 @@ async def _connect_mysql(configuration: JSONDict) -> Any:
         user=str(user),
         password=password,
         db=str(database),
+        charset="utf8mb4",
     )
     return _AsyncmyConnectionWrapper(conn)
 
@@ -126,7 +127,13 @@ class _AsyncmyConnectionWrapper:
 
 
 def _mysql_query(query: str) -> str:
-    return re.sub(r"\$\d+", "%s", query)
+    # Replace PostgreSQL-style $N parameter placeholders with MySQL-style %s
+    result = re.sub(r"\$\d+", "%s", query)
+    # Replace PostgreSQL-style double-quoted identifiers with MySQL backticks.
+    # Generated SQL uses double quotes for identifiers and single quotes for
+    # string literals, so converting all double-quoted content is safe.
+    result = re.sub(r'"([^"]+)"', r'`\1`', result)
+    return result
 
 
 def _cfg(configuration: JSONDict, key: str, default: object | None = None) -> object:

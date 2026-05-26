@@ -396,15 +396,17 @@ class ChartService:
         select_parts: list[str] = []
         group_by_parts: list[str] = []
         for dimension in dimensions:
-            column = self._column_reference(self._field_key(dimension))
+            col_name = self._sql_column_name(dimension)
             alias = self._quote_identifier(self._field_key(dimension))
+            column = self._column_reference(col_name)
             select_parts.append(f"{column} AS {alias}")
             group_by_parts.append(column)
 
         for metric in metrics:
             field_key = self._field_key(metric)
-            column = self._column_reference(field_key)
-            alias = self._quote_identifier(field_key)
+            col_name = self._sql_column_name(metric)
+            column = self._column_reference(col_name)
+            alias = self._quote_identifier(field_key) if field_key != "*" else '"cnt"'
             summary = str(metric.get("summary") or "sum").lower()
             if summary == "none":
                 select_parts.append(f"{column} AS {alias}")
@@ -412,7 +414,7 @@ class ChartService:
                     group_by_parts.append(column)
                 continue
             aggregate = _SUMMARY_TO_AGGREGATE.get(summary, "SUM")
-            expression = "COUNT(*)" if aggregate == "COUNT" and field_key in {"*", ""} else f"{aggregate}({column})"
+            expression = "COUNT(*)" if aggregate == "COUNT" and col_name in {"*", ""} else f"{aggregate}({column})"
             select_parts.append(f"{expression} AS {alias}")
 
         sql = f'SELECT {", ".join(select_parts)} FROM ({base_sql}) AS chart_source'
@@ -432,7 +434,9 @@ class ChartService:
             return await self.sql_executor.execute_select(sql, limit=limit)
 
         datasource_service = DatasourceService(self.session, self.datasource_repo)
-        connection = await datasource_service._open_connection(_as_config_dict(datasource.configuration))
+        connection = await datasource_service._open_connection(
+            _as_config_dict(datasource.configuration), datasource.type
+        )
         try:
             records = await connection.fetch(sql)
         finally:
@@ -473,6 +477,26 @@ class ChartService:
         if identifier == "*":
             return identifier
         return f'chart_source.{self._quote_identifier(identifier)}'
+
+    @staticmethod
+    def _sql_column_name(field: dict[str, Any]) -> str:
+        """Return the actual database column name for a chart axis field.
+
+        - extField=0 (regular): use originName (actual DB column)
+        - extField=1 (record count): returns '*'
+        - extField=2 (computed): use name (pre-computed column in table)
+        """
+        ext_field = field.get("extField", 0)
+        if isinstance(ext_field, str):
+            try:
+                ext_field = int(ext_field)
+            except (ValueError, TypeError):
+                ext_field = 0
+        if ext_field == 1:
+            return "*"
+        if ext_field == 2:
+            return str(field.get("name") or field.get("originName") or field.get("dataeaseName") or "")
+        return str(field.get("originName") or field.get("name") or field.get("dataeaseName") or "")
 
     def _quote_identifier(self, identifier: str) -> str:
         if "." in identifier:

@@ -441,7 +441,7 @@ async def test_execute_chart_sql_uses_external_datasource_connection() -> None:
         def __init__(self, *_args: object, **_kwargs: object) -> None:
             pass
 
-        async def _open_connection(self, _config: dict[str, object]) -> FakeConnection:
+        async def _open_connection(self, _config: dict[str, object], _ds_type: str = "") -> FakeConnection:
             return connection
 
         @staticmethod
@@ -686,7 +686,7 @@ class TestChartServiceIntegration:
                 def __init__(self, *_args: object, **_kwargs: object) -> None:
                     pass
 
-                async def _open_connection(self, _config: dict[str, object]) -> FakeConnection:
+                async def _open_connection(self, _config: dict[str, object], _ds_type: str = "") -> FakeConnection:
                     return connection
 
                 @staticmethod
