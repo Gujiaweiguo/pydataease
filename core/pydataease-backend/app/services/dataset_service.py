@@ -683,7 +683,7 @@ class DatasetService:
                 records = await connection.fetch(sql_with_limit)
             finally:
                 await connection.close()
-            rows = [list(record) for record in records]
+            rows = [list(record.values()) if isinstance(record, dict) else list(record) for record in records]
             fields = self._build_external_fields(records, rows)
             return {"sql": sql_with_limit, "data": rows, "fields": fields, "total": len(rows)}
 
@@ -939,7 +939,7 @@ class DatasetService:
             records = await connection.fetch(sql)
         finally:
             await connection.close()
-        rows = [list(record) for record in records]
+        rows = [list(record.values()) if isinstance(record, dict) else list(record) for record in records]
         fields = self._build_external_fields(records, rows)
         return {"sql": sql, "fields": fields, "data": rows, "total": len(rows)}
 

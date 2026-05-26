@@ -150,7 +150,10 @@ async def get_schema(
     service: DatasourceService = Depends(get_datasource_service),
 ) -> object:
     tables = await service.get_tables(datasource_id)
-    return [{"name": table.name, "schema": table.schema_name, "type": table.type} for table in tables]
+    return [
+        {"name": table.name, "tableName": table.table_name, "schema": table.schema_name, "type": table.type}
+        for table in tables
+    ]
 
 
 @router.get("/getTableField/{datasource_id}/{table_name}")
@@ -259,7 +262,7 @@ async def get_tables(
     _: TokenUser = Depends(get_current_user),
     service: DatasourceService = Depends(get_datasource_service),
 ) -> object:
-    return await service.get_tables(payload.datasource_id)
+    return [t.model_dump(by_alias=True) for t in await service.get_tables(payload.datasource_id)]
 
 
 @router.post("/getTableStatus")

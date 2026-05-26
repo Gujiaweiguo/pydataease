@@ -344,7 +344,7 @@ class DatasourceService:
         tables = await self.get_tables(datasource_id)
         return [
             {
-                "tableName": table.name,
+                "tableName": table.table_name,
                 "lastUpdateTime": datasource.update_time,
                 "status": "Completed",
             }
