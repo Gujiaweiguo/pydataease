@@ -1,46 +1,18 @@
+"""E2E creation flow — datasource, dataset, dashboard, chart lifecycle."""
 from __future__ import annotations
 
-import base64
 import json
 import os
 from collections.abc import AsyncIterator
 
 import httpx
 import pytest
-from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric import padding, rsa
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-from cryptography.hazmat.primitives import padding as sym_padding
 
-
-BASE_URL = os.environ.get("E2E_BASE_URL", "http://localhost:8100")
-
-
-def _extract_public_key_pem(dekey: str) -> str:
-    separator = base64.urlsafe_b64encode(b"-pk_separator-").decode("utf-8")
-    k1, k2 = dekey.split(separator)
-    ct = base64.b64decode(k1)
-    cipher = Cipher(algorithms.AES(k2.encode("utf-8")), modes.CBC(b"0000000000000000"))
-    decryptor = cipher.decryptor()
-    padded = decryptor.update(ct) + decryptor.finalize()
-    unpadder = sym_padding.PKCS7(128).unpadder()
-    plaintext = (unpadder.update(padded) + unpadder.finalize()).decode("utf-8")
-    if plaintext.startswith("-----BEGIN PUBLIC KEY-----"):
-        return plaintext
-    der_bytes = base64.b64decode(plaintext)
-    pub = serialization.load_der_public_key(der_bytes)
-    return pub.public_bytes(
-        encoding=serialization.Encoding.PEM,
-        format=serialization.PublicFormat.SubjectPublicKeyInfo,
-    ).decode("utf-8")
-
-
-def _encrypt(value: str, dekey: str) -> str:
-    public_key_pem = _extract_public_key_pem(dekey)
-    public_key = serialization.load_pem_public_key(public_key_pem.encode("utf-8"))
-    assert isinstance(public_key, rsa.RSAPublicKey)
-    ciphertext = public_key.encrypt(value.encode("utf-8"), padding.PKCS1v15())
-    return base64.b64encode(ciphertext).decode("utf-8")
+from tests.fixtures.e2e_helpers import (  # pyright: ignore[reportImplicitRelativeImport]
+    BASE_URL,
+    E2E_GATE,
+    login,
+)
 
 
 @pytest.fixture
@@ -49,20 +21,14 @@ async def api_client() -> AsyncIterator[httpx.AsyncClient]:
         yield client
 
 
-@pytest.mark.skipif(os.getenv("DE_E2E") != "1", reason="Requires running server (set DE_E2E=1)")
+@E2E_GATE
 @pytest.mark.asyncio
 async def test_e2e_creation_flow(api_client: httpx.AsyncClient) -> None:
     ids: dict[str, int] = {}
     headers: dict[str, str] = {}
 
     try:
-        dekey = (await api_client.get("/de2api/dekey")).json()["data"]
-        login = await api_client.post(
-            "/de2api/login/localLogin",
-            json={"name": _encrypt("admin", dekey), "pwd": _encrypt("DataEase@123456", dekey), "origin": 0},
-        )
-        assert login.status_code == 200
-        headers = {"X-DE-TOKEN": login.json()["data"]["token"]}
+        headers = await login(api_client)
 
         datasource = await api_client.post(
             "/de2api/datasource/save",

@@ -1,3 +1,4 @@
+"""E2E full module coverage — datasource, dataset, dashboard, chart, org, role, user, template, system."""
 from __future__ import annotations
 
 import base64
@@ -8,13 +9,14 @@ from typing import Any, cast
 import asyncpg  # pyright: ignore[reportMissingImports]
 import httpx
 import pytest
-from cryptography.hazmat.primitives import padding as sym_padding
-from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric import padding, rsa
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
+from tests.fixtures.e2e_helpers import (  # pyright: ignore[reportImplicitRelativeImport]
+    BASE_URL,
+    E2E_GATE,
+    encrypt,
+    find_node_by_id,
+)
 
-BASE_URL = os.environ.get("E2E_BASE_URL", "http://localhost:8100")
 PG_DSN = os.environ.get(
     "E2E_PG_DSN",
     os.environ.get("DE_DATABASE_URL", "postgresql://dataease:dataease@127.0.0.1:5432/dataease")
@@ -22,33 +24,6 @@ PG_DSN = os.environ.get(
     .replace("postgresql+psycopg://", "postgresql://"),
 )
 MYSQL_PASSWORD = os.environ.get("E2E_MYSQL_PASSWORD", "")
-
-
-def _extract_public_key_pem(dekey: str) -> str:
-    separator = base64.urlsafe_b64encode(b"-pk_separator-").decode("utf-8")
-    k1, k2 = dekey.split(separator)
-    ct = base64.b64decode(k1)
-    cipher = Cipher(algorithms.AES(k2.encode("utf-8")), modes.CBC(b"0000000000000000"))
-    decryptor = cipher.decryptor()
-    padded = decryptor.update(ct) + decryptor.finalize()
-    unpadder = sym_padding.PKCS7(128).unpadder()
-    plaintext = (unpadder.update(padded) + unpadder.finalize()).decode("utf-8")
-    if plaintext.startswith("-----BEGIN PUBLIC KEY-----"):
-        return plaintext
-    der_bytes = base64.b64decode(plaintext)
-    pub = serialization.load_der_public_key(der_bytes)
-    return pub.public_bytes(
-        encoding=serialization.Encoding.PEM,
-        format=serialization.PublicFormat.SubjectPublicKeyInfo,
-    ).decode("utf-8")
-
-
-def _encrypt(value: str, dekey: str) -> str:
-    public_key_pem = _extract_public_key_pem(dekey)
-    public_key = serialization.load_pem_public_key(public_key_pem.encode("utf-8"))
-    assert isinstance(public_key, rsa.RSAPublicKey)
-    ciphertext = public_key.encrypt(value.encode("utf-8"), padding.PKCS1v15())
-    return base64.b64encode(ciphertext).decode("utf-8")
 
 
 def _assert_ok(response: httpx.Response, step: str) -> dict[str, Any]:
@@ -69,20 +44,6 @@ def _data_list(body: dict[str, Any], step: str) -> list[Any]:
     data = body["data"]
     assert isinstance(data, list), f"{step} expected list data: {body}"
     return cast(list[Any], data)
-
-
-def _find_node_by_id(nodes: object, target_id: int | str) -> dict[str, Any] | None:
-    if not isinstance(nodes, list):
-        return None
-    for node in nodes:
-        if not isinstance(node, dict):
-            continue
-        if str(node.get("id")) == str(target_id):
-            return cast(dict[str, Any], node)
-        found = _find_node_by_id(node.get("children"), target_id)
-        if found is not None:
-            return found
-    return None
 
 
 def _build_mysql_datasource_payload(name: str, pid: int, database: str, password: str) -> dict[str, Any]:
@@ -117,7 +78,7 @@ async def _pg_execute(query: str, *args: object) -> str:
         await conn.close()
 
 
-@pytest.mark.skipif(os.getenv("DE_E2E") != "1", reason="Requires running server (set DE_E2E=1)")
+@E2E_GATE
 @pytest.mark.asyncio
 async def test_e2e_modules_full() -> None:
     ids: dict[str, Any] = {}
@@ -155,7 +116,7 @@ async def test_e2e_modules_full() -> None:
             assert isinstance(dekey, str) and dekey, f"Step 1a failed: {dekey_body}"
             login_resp = await client.post(
                 "/de2api/login/localLogin",
-                json={"name": _encrypt("admin", dekey), "pwd": _encrypt("DataEase@123456", dekey), "origin": 0},
+                json={"name": encrypt("admin", dekey), "pwd": encrypt(os.environ.get("E2E_PASSWORD", "DataEase@123456"), dekey), "origin": 0},
             )
             login_body = _assert_ok(login_resp, "Step 1b")
             token = _data_dict(login_body, "Step 1b")["token"]
@@ -220,7 +181,7 @@ async def test_e2e_modules_full() -> None:
             print("Step 6: Datasource tree")
             ds_tree_resp = await client.post("/de2api/datasource/tree", headers=headers, json={})
             ds_tree_body = _assert_ok(ds_tree_resp, "Step 6")
-            assert _find_node_by_id(ds_tree_body["data"], ids["datasource"]) is not None, f"Step 6 failed: {ds_tree_body}"
+            assert find_node_by_id(ds_tree_body["data"], ids["datasource"]) is not None, f"Step 6 failed: {ds_tree_body}"
 
             print("Step 7: Datasource schema")
             schema_resp = await client.get(f"/de2api/datasource/getSchema/{ids['datasource']}", headers=headers)
@@ -311,7 +272,7 @@ async def test_e2e_modules_full() -> None:
             print("Step 16: Dataset tree")
             dataset_tree_resp = await client.post("/de2api/datasetTree/tree", headers=headers, json={"busiFlag": "dataset"})
             dataset_tree_body = _assert_ok(dataset_tree_resp, "Step 16")
-            assert _find_node_by_id(dataset_tree_body["data"], ids["dataset"]) is not None, f"Step 16 failed: {dataset_tree_body}"
+            assert find_node_by_id(dataset_tree_body["data"], ids["dataset"]) is not None, f"Step 16 failed: {dataset_tree_body}"
 
             print("Step 17: Dataset bar info")
             bar_resp = await client.get(f"/de2api/datasetTree/barInfo/{ids['dataset']}", headers=headers)
@@ -452,7 +413,7 @@ async def test_e2e_modules_full() -> None:
             print("Step 31: Org tree")
             org_tree_resp = await client.post("/de2api/org/page/tree", headers=headers, json={})
             org_tree_body = _assert_ok(org_tree_resp, "Step 31")
-            assert _find_node_by_id(org_tree_body["data"], ids["org"]) is not None, f"Step 31 failed: {org_tree_body}"
+            assert find_node_by_id(org_tree_body["data"], ids["org"]) is not None, f"Step 31 failed: {org_tree_body}"
 
             print("Step 32: Org edit")
             org_edit_resp = await client.post(
