@@ -1,14 +1,19 @@
 from __future__ import annotations
 
+import json
 import logging
+import os
 import re
 import time
+import uuid
 from collections.abc import Sequence
 from decimal import Decimal
+from pathlib import Path
 from typing import Any, cast
 from typing import final
 
 from fastapi import Depends, HTTPException, status
+from fastapi.responses import FileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.dependencies.database import get_db
@@ -16,6 +21,7 @@ from app.models.chart import CoreChartView
 from app.models.dataset import CoreDatasetTableField
 from app.models.datasource import CoreDatasource
 from app.repositories.chart_repo import ChartRepository
+from app.repositories.export_repo import ExportTaskRepository
 from app.repositories.dataset_repo import DatasetFieldRepository, DatasetGroupRepository, DatasetTableRepository
 from app.repositories.datasource_repo import DatasourceRepository
 from app.schemas.auth import TokenUser
@@ -35,6 +41,7 @@ from app.services.chart_data_builder import ChartDataBuilder
 from app.services.dataset_service import DatasetService
 from app.services.datasource_service import DatasourceService, _as_config_dict
 from app.services.sql_executor import SQLExecutor
+from app.tasks.file_generator import generate_export_file
 
 logger = logging.getLogger(__name__)
 
@@ -64,6 +71,7 @@ class ChartService:
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
         self.chart_repo = ChartRepository(session)
+        self.export_task_repo = ExportTaskRepository(session)
         self.field_repo = DatasetFieldRepository(session)
         self.group_repo = DatasetGroupRepository(session)
         self.table_repo = DatasetTableRepository(session)
@@ -261,6 +269,104 @@ class ChartService:
             **result,
             "fields": [DatasetService._field_to_dict(field) for field in fields],
         }
+
+    async def export_details(self, payload: dict[str, object], user: TokenUser) -> dict[str, object] | FileResponse:
+        file_name = self._export_file_name(payload.get("viewName") or payload.get("fileName"))
+        rows = self._build_export_rows(payload)
+
+        if bool(payload.get("dataEaseBi")):
+            export_dir = os.getenv("DE_EXPORT_DIR", "/tmp/de-exports")
+            file_path, _file_size = generate_export_file(
+                task_id=uuid.uuid4().hex,
+                file_name=file_name,
+                params={"data": rows},
+                export_dir=export_dir,
+            )
+            return FileResponse(
+                path=file_path,
+                filename=Path(file_path).name,
+                media_type="application/octet-stream",
+            )
+
+        raw_export_from = payload.get("viewId") or payload.get("chartId")
+        export_from: int | None = None
+        if raw_export_from is not None:
+            try:
+                export_from = int(str(raw_export_from))
+            except (TypeError, ValueError):
+                export_from = None
+
+        await self.export_task_repo.create({
+            "id": uuid.uuid4().hex,
+            "user_id": user.user_id,
+            "file_name": file_name,
+            "export_from": export_from,
+            "export_status": "INITIATED",
+            "export_from_type": "chart",
+            "export_time": _timestamp_ms(),
+            "export_progress": "0",
+            "params": {"data": rows},
+            "msg": None,
+        })
+        return {
+            "file": file_name,
+            "status": "SUCCESS",
+        }
+
+    @staticmethod
+    def _export_file_name(raw_name: object) -> str:
+        base_name = str(raw_name or "export").strip() or "export"
+        safe_name = Path(base_name).name
+        if not safe_name.lower().endswith(".xlsx"):
+            safe_name = f"{safe_name}.xlsx"
+        return safe_name
+
+    def _build_export_rows(self, payload: dict[str, object]) -> list[list[object]]:
+        multi_info = payload.get("multiInfo")
+        if isinstance(multi_info, list) and multi_info:
+            rows: list[list[object]] = []
+            for index, info in enumerate(multi_info):
+                if not isinstance(info, dict):
+                    continue
+                if index > 0:
+                    rows.append([])
+                rows.extend(self._build_export_rows_from_info(info))
+            return rows
+        return self._build_export_rows_from_info(payload)
+
+    def _build_export_rows_from_info(self, info: dict[str, object]) -> list[list[object]]:
+        rows: list[list[object]] = []
+        header = info.get("header")
+        if isinstance(header, list) and header:
+            rows.append([self._normalize_export_cell(cell) for cell in header])
+
+        details = info.get("details")
+        if isinstance(details, list):
+            for row in details:
+                if isinstance(row, (list, tuple)):
+                    rows.append([self._normalize_export_cell(cell) for cell in row])
+                else:
+                    rows.append([self._normalize_export_cell(row)])
+
+        fallback_data = info.get("data")
+        if not rows and isinstance(fallback_data, list):
+            for row in fallback_data:
+                if isinstance(row, (list, tuple)):
+                    rows.append([self._normalize_export_cell(cell) for cell in row])
+                elif isinstance(row, dict):
+                    rows.append([self._normalize_export_cell(cell) for cell in row.values()])
+                else:
+                    rows.append([self._normalize_export_cell(row)])
+
+        return rows
+
+    @staticmethod
+    def _normalize_export_cell(value: object) -> object:
+        if isinstance(value, Decimal):
+            return float(value)
+        if isinstance(value, (list, tuple, dict)):
+            return json.dumps(value, ensure_ascii=False)
+        return value
 
     async def list_fields_by_dq(self, dataset_group_id: int, chart_id: int) -> dict[str, list[dict[str, object]]]:
         await self.group_repo.get_by_id(dataset_group_id)

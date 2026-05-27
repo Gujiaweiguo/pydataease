@@ -90,7 +90,7 @@ async def export_chart_details(
     user: TokenUser = Depends(get_current_user),
     service: ChartService = Depends(get_chart_service),
 ) -> object:
-    return await service.export_details(payload)  # pyright: ignore[reportAttributeAccessIssue]
+    return await service.export_details(payload, user)  # pyright: ignore[reportAttributeAccessIssue]
 
 
 @router.post("/chart/viewDetailList")
