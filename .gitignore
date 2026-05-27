@@ -68,3 +68,7 @@ core/pydataease-backend/.coverage
 .project
 .settings/
 /.tmp-*.txt
+
+# Playwright browser test artifacts
+core/core-frontend/test-results/
+core/core-frontend/playwright-report/
