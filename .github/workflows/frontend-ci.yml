@@ -11,6 +11,16 @@ on:
       - '**'
     paths:
       - 'core/core-frontend/**'
+  workflow_dispatch:
+    inputs:
+      run_e2e:
+        description: 'Run Playwright e2e tests (requires full stack)'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
 
 jobs:
   lint-and-typecheck:
@@ -49,3 +59,113 @@ jobs:
       - name: Build check
         working-directory: core/core-frontend
         run: npm run build:base
+
+  # ── Playwright e2e (opt-in: workflow_dispatch or DE_E2E=1) ────
+  playwright-e2e:
+    if: github.event.inputs.run_e2e == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    env:
+      DE_ENV: test
+      DE_DATABASE_URL: postgresql+asyncpg://dataease:dataease@localhost:5432/dataease
+      DE_SECRET_KEY: ci-secret-key
+      DE_SHARE_SECRET_KEY: ci-share-secret-key
+
+    defaults:
+      run:
+        working-directory: core/core-frontend
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: dataease
+          POSTGRES_PASSWORD: dataease
+          POSTGRES_DB: dataease
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Install frontend dependencies
+        run: npm install --no-audit
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Install backend dependencies
+        working-directory: core/pydataease-backend
+        run: uv sync
+
+      - name: Run migrations
+        working-directory: core/pydataease-backend
+        run: uv run alembic upgrade head
+
+      - name: Start backend
+        working-directory: core/pydataease-backend
+        run: |
+          uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 &
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:8000/health > /dev/null 2>&1; then
+              echo "Backend is healthy"
+              break
+            fi
+            echo "  attempt $i/30..."
+            sleep 1
+          done
+          curl -sf http://localhost:8000/health || (echo "Backend failed to start" && exit 1)
+
+      - name: Start frontend dev server
+        run: |
+          npm run dev -- --host 0.0.0.0 --port 8080 &
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:8080 > /dev/null 2>&1; then
+              echo "Frontend is healthy"
+              break
+            fi
+            echo "  attempt $i/30..."
+            sleep 2
+          done
+          curl -sf http://localhost:8080 || (echo "Frontend failed to start" && exit 1)
+
+      - name: Run Playwright e2e tests
+        run: npx playwright test
+        env:
+          PLAYWRIGHT_BASE_URL: http://localhost:8080
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: core/core-frontend/playwright-report/
+          retention-days: 7
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: core/core-frontend/test-results/
+          retention-days: 7
