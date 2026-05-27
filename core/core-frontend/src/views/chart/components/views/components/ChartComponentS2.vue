@@ -217,13 +217,19 @@ const renderChart = (viewInfo: Chart, resetPageInfo: boolean) => {
   if (!viewInfo) {
     return
   }
-  handleDefaultVal(viewInfo)
   // view 为引用对象 需要存库 view.data 直接赋值会导致保存不必要的数据
-  actualChart = deepCopy({
+  // 与默认图表对象合并，方便增加配置项
+  // NOTE: defaultsDeep MUST be applied BEFORE handleDefaultVal so that
+  // customAttr / customStyle defaults are available.  The API response
+  // (ChartDataResponse) lacks these fields — applying defaults first
+  // prevents handleDefaultVal from crashing on undefined.
+  const merged = deepCopy({
     ...defaultsDeep(viewInfo, cloneDeep(BASE_VIEW_CONFIG)),
     data: chartData.value,
     fontFamily: props.fontFamily
   } as ChartObj)
+  handleDefaultVal(merged)
+  actualChart = merged
 
   recursionTransObj(customAttrTrans, actualChart.customAttr, scale.value, terminal.value)
   recursionTransObj(customStyleTrans, actualChart.customStyle, scale.value, terminal.value)
