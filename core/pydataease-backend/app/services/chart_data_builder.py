@@ -37,6 +37,9 @@ class ChartDataBuilder:
 
             for metric in metrics:
                 metric_key = ChartDataBuilder._field_key(metric)
+                # extField=1 (record count) uses "cnt" as the SQL alias, not "*"
+                if metric_key == "*":
+                    metric_key = "cnt"
                 raw_value = row.get(metric_key)
                 value = ChartDataBuilder._to_number(raw_value)
                 if value is None and raw_value is None:
