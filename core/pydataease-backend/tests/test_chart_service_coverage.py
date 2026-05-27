@@ -255,6 +255,9 @@ class FakeRecord:
     def keys(self):
         return self._data.keys()
 
+    def values(self):
+        return self._data.values()
+
     def __iter__(self):
         return iter(self._data.values())
 

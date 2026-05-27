@@ -442,7 +442,7 @@ class ChartService:
         finally:
             await connection.close()
 
-        rows = [list(record) for record in records]
+        rows = [list(record.values()) for record in records]
         fields = self._build_external_fields(records, rows)
         return {"sql": sql, "data": rows, "fields": fields, "total": len(rows)}
 
