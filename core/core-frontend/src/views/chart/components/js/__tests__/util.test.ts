@@ -1,13 +1,25 @@
 import { describe, it, expect, vi } from 'vitest'
 
+const chartApiMocks = vi.hoisted(() => ({
+  innerExportDataSetDetails: vi.fn(),
+  innerExportDetails: vi.fn()
+}))
+const linkStoreState = vi.hoisted(() => ({
+  getLinkToken: ''
+}))
+const appStoreState = vi.hoisted(() => ({
+  getIsDataEaseBi: false,
+  getIsIframe: false
+}))
+
 // Mock external modules that are imported at module level
 vi.mock('@/store/modules/map', () => ({
   useMapStoreWithOut: () => ({})
 }))
 vi.mock('@/api/map', () => ({ getGeoJson: vi.fn() }))
 vi.mock('@/api/chart', () => ({
-  innerExportDataSetDetails: vi.fn(),
-  innerExportDetails: vi.fn()
+  innerExportDataSetDetails: chartApiMocks.innerExportDataSetDetails,
+  innerExportDetails: chartApiMocks.innerExportDetails
 }))
 vi.mock('element-plus-secondary', () => ({
   ElMessage: { error: vi.fn() }
@@ -16,12 +28,10 @@ vi.mock('@/hooks/web/useI18n', () => ({
   useI18n: () => ({ t: (k: string) => k })
 }))
 vi.mock('@/store/modules/link', () => ({
-  useLinkStoreWithOut: () => ({})
+  useLinkStoreWithOut: () => linkStoreState
 }))
 vi.mock('@/store/modules/app', () => ({
-  useAppStoreWithOut: () => ({
-    getIsDataEaseBi: false
-  })
+  useAppStoreWithOut: () => appStoreState
 }))
 
 import {
@@ -34,7 +44,8 @@ import {
   isAlphaColor,
   convertToAlphaColor,
   getColorFormAlphaColor,
-  isTransparent
+  isTransparent,
+  exportExcelDownload
 } from '../util'
 
 // ---------------------------------------------------------------------------
@@ -289,5 +300,80 @@ describe('isTransparent', () => {
 
   it('returns false for rgba with non-zero alpha', () => {
     expect(isTransparent('rgba(255,0,0,0.5)')).toBe(false)
+  })
+})
+
+describe('exportExcelDownload', () => {
+  it('builds excel request from flat series data and opens export center callback in normal mode', async () => {
+    chartApiMocks.innerExportDetails.mockResolvedValue({ data: { code: 0 } })
+    linkStoreState.getLinkToken = ''
+    appStoreState.getIsDataEaseBi = false
+    appStoreState.getIsIframe = false
+    const callback = vi.fn()
+
+    await exportExcelDownload(
+      {
+        id: 'view-1',
+        sceneId: 'dv-1',
+        title: '销售额走势',
+        type: 'area',
+        xAxis: [{ name: '销售日期', dataeaseName: 'sale_date', deType: 1 }],
+        yAxis: [{ name: '销售金额', dataeaseName: 'amount', deType: 2 }],
+        data: [
+          {
+            field: '2024-03-10',
+            value: 956,
+            category: '销售金额',
+            dimensionList: [{ value: '2024-03-10' }]
+          }
+        ]
+      },
+      '看板',
+      callback
+    )
+
+    expect(chartApiMocks.innerExportDetails).toHaveBeenCalledOnce()
+    const request = chartApiMocks.innerExportDetails.mock.calls[0][0]
+    expect(request.header).toEqual(['销售日期', '销售金额'])
+    expect(request.details).toEqual([['2024-03-10', 956]])
+    expect(callback).toHaveBeenCalledWith({ data: { code: 0 } })
+  })
+
+  it('forces direct download mode for link-token users', async () => {
+    chartApiMocks.innerExportDetails.mockResolvedValue({ data: new Blob(['xlsx']) })
+    linkStoreState.getLinkToken = 'token-1'
+    appStoreState.getIsDataEaseBi = false
+    appStoreState.getIsIframe = false
+    const createObjectURL = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:url')
+    const revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined)
+
+    await exportExcelDownload(
+      {
+        id: 'view-2',
+        sceneId: 'dv-1',
+        title: '冷热占比',
+        type: 'pie-donut',
+        xAxis: [{ name: '冷热', dataeaseName: 'hot_cold', deType: 0 }],
+        yAxis: [{ name: '记录数*', dataeaseName: 'value', deType: 2 }],
+        data: [
+          {
+            field: '冷',
+            value: 82,
+            category: '记录数*',
+            dimensionList: [{ value: '冷' }]
+          }
+        ]
+      },
+      '看板'
+    )
+
+    const request = chartApiMocks.innerExportDetails.mock.calls.at(-1)?.[0]
+    expect(request.dataEaseBi).toBe(true)
+    expect(createObjectURL).toHaveBeenCalled()
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:url')
+
+    createObjectURL.mockRestore()
+    revokeObjectURL.mockRestore()
+    linkStoreState.getLinkToken = ''
   })
 })

@@ -515,13 +515,64 @@ export const getGeoJsonFile = async (
   return toRaw(geoJson)
 }
 
-const getExcelDownloadRequest = (data, type?) => {
-  let fields = JSON.parse(JSON.stringify(data.fields))
+const getExcelDownloadRequestFromSeries = (data, chart?) => {
+  const rows = Array.isArray(data) ? data : []
+  const dimensionHeaders = (chart?.xAxis || []).map(item => item.chartShowName ?? item.name)
+  const dimensionKeys = (chart?.xAxis || []).map(item => item.dataeaseName)
+  const quotaHeaders = (chart?.yAxis || []).map(item => item.chartShowName ?? item.name)
+  const quotaKeys = (chart?.yAxis || []).map(item => item.dataeaseName)
+  const categoryCount = new Set(rows.map(item => item?.category).filter(Boolean)).size
+  const hasMetricCategory = categoryCount > 1 || quotaHeaders.length > 1
+  const header = [...dimensionHeaders]
+  if (hasMetricCategory) {
+    header.push('category')
+  }
+  header.push(quotaHeaders[0] || 'value')
+
+  const details = rows.map(item => {
+    const dimensionList = Array.isArray(item?.dimensionList) ? item.dimensionList : []
+    const dimensionValues = (
+      dimensionHeaders.length ? dimensionHeaders : [item?.name || item?.field || '']
+    ).map((_name, index) => dimensionList[index]?.value ?? item?.field ?? item?.name ?? '')
+    const row = [...dimensionValues]
+    if (hasMetricCategory) {
+      row.push(item?.category ?? '')
+    }
+    row.push(item?.value ?? '')
+    return row
+  })
+
+  const excelTypes = [
+    ...(chart?.xAxis || []).map(item => item.deType),
+    ...(hasMetricCategory ? [0] : []),
+    chart?.yAxis?.[0]?.deType ?? 0
+  ]
+  const excelHeaderKeys = [
+    ...dimensionKeys,
+    ...(hasMetricCategory ? ['category'] : []),
+    quotaKeys[0] || 'value'
+  ]
+
+  return {
+    header,
+    details,
+    excelTypes,
+    excelHeaderKeys,
+    detailFields: []
+  }
+}
+
+const getExcelDownloadRequest = (data, type?, chart?) => {
+  if (Array.isArray(data)) {
+    return getExcelDownloadRequestFromSeries(data, chart)
+  }
+
+  let fields = JSON.parse(JSON.stringify(data?.fields || []))
   // liquid gauge 只需要导出一个字段
   if (['gauge', 'liquid'].includes(type) && fields.length > 1) {
     fields = fields.slice(1)
   }
-  const tableRow = JSON.parse(JSON.stringify(data.tableRow))
+  const tableRow = JSON.parse(JSON.stringify(data?.tableRow || []))
   const excelHeader = fields.map(item => item.chartShowName ?? item.name)
   const excelTypes = fields.map(item => item.deType)
   const excelHeaderKeys = fields.map(item => item.dataeaseName)
@@ -591,7 +642,7 @@ export const exportExcelDownload = (chart, preFix, callBack?) => {
       delete request.multiInfo
     }
   } else {
-    const req = getExcelDownloadRequest(chart.data, chart.type)
+    const req = getExcelDownloadRequest(chart.data, chart.type, chart)
     request = {
       ...request,
       ...req
@@ -604,7 +655,8 @@ export const exportExcelDownload = (chart, preFix, callBack?) => {
 
   const linkStore = useLinkStoreWithOut()
 
-  if (isDataEaseBi.value || appStore.getIsIframe) {
+  const directDownload = linkStore.getLinkToken || isDataEaseBi.value || appStore.getIsIframe
+  if (directDownload) {
     request.dataEaseBi = true
   }
   const method = request.downloadType === 'dataset' ? innerExportDataSetDetails : innerExportDetails
@@ -612,16 +664,34 @@ export const exportExcelDownload = (chart, preFix, callBack?) => {
     request.viewInfo.customAttr.basicStyle.tablePageMode = 'page'
   }
   method(request)
-    .then(res => {
-      if (linkStore.getLinkToken || isDataEaseBi.value || appStore.getIsIframe) {
-        const blob = new Blob([res.data], { type: 'application/vnd.ms-excel' })
+    .then(async res => {
+      if (directDownload) {
+        if (res?.data instanceof Blob && res.data.type?.includes('application/json')) {
+          const errorText = await res.data.text()
+          const errorInfo = parseJson<{ msg?: string } | string>(errorText)
+          const errorMessage =
+            typeof errorInfo === 'string'
+              ? errorInfo
+              : errorInfo?.msg || t('data_export.export_excel_failed')
+          ElMessage.error(errorMessage)
+          callBack && callBack('error')
+          return
+        }
+        const blob =
+          res?.data instanceof Blob
+            ? res.data
+            : new Blob([res?.data], {
+                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+              })
         const link = document.createElement('a')
         link.style.display = 'none'
-        link.href = URL.createObjectURL(blob)
+        const objectUrl = URL.createObjectURL(blob)
+        link.href = objectUrl
         link.download = excelName + '.xlsx' // 下载的文件名
         document.body.appendChild(link)
         link.click()
         document.body.removeChild(link)
+        URL.revokeObjectURL(objectUrl)
       } else {
         callBack && callBack(res)
       }
