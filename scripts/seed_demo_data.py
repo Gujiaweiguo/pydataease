@@ -12,6 +12,7 @@ Usage:
 Requires: docker containers `postgres16` and `mysql8` running.
 """
 
+import base64
 import json
 import subprocess
 import sys
@@ -416,6 +417,10 @@ def build_pg_sql() -> str:
         (fid, ds_id, dt_id, dg_id, chart_id, origin, name, desc,
          da_name, fs_name, gtype, ftype, size, de_type, de_ext,
          ext_field, checked) = f
+        # Frontend expects base64-encoded originName for computed fields (extField=2)
+        # See CalculateFields.ts: originNameHandleBack() decodes with Base64.decode()
+        if ext_field == 2:
+            origin = base64.b64encode(origin.encode("utf-8")).decode("utf-8")
         checked_str = "true" if checked else "false"
         lines.append(
             f"INSERT INTO core_dataset_table_field "

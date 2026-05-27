@@ -15,7 +15,7 @@ class ChartDataBuilder:
         chart_type: str,
     ) -> list[dict[str, Any]]:
         normalized_rows = [ChartDataBuilder._row_to_dict(row, fields) for row in rows]
-        if chart_type.lower() == "table":
+        if chart_type.lower().startswith("table"):
             return normalized_rows
 
         dimensions = [item for item in x_axis if isinstance(item, dict)]

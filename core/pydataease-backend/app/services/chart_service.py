@@ -4,6 +4,7 @@ import logging
 import re
 import time
 from collections.abc import Sequence
+from decimal import Decimal
 from typing import Any, cast
 from typing import final
 
@@ -122,18 +123,87 @@ class ChartService:
                 return response
 
             limit = self._result_limit(chart)
-            chart_sql = self._build_chart_sql(base_sql, x_axis, y_axis, limit)
+            all_dataset_fields: list[dict[str, Any]] = []
+            if chart and chart.table_id:
+                ds_fields = await self.field_repo.list_by_group(chart.table_id)
+                all_dataset_fields = [DatasetService._field_to_dict(f) for f in ds_fields]
+            chart_sql = self._build_chart_sql(base_sql, x_axis, y_axis, limit, all_dataset_fields)
             query_result = await self._execute_chart_sql(chart_sql, dataset_tables, dataset_group)
             result_fields = cast(list[dict[str, Any]], query_result.get("fields", []))
             rows = cast(list[list[Any]], query_result.get("data", []))
-            chart_type = str(chart.chart_type or chart.type or "") if chart else ""
+            chart_type = str(chart.type or chart.chart_type or "") if chart else ""
             chart_data = ChartDataBuilder.build_antv_data(rows, result_fields, x_axis, y_axis, chart_type)
+
+            # Build sourceFields from dataset table fields for rich-text placeholder replacement
+            source_fields: list[dict[str, Any]] = []
+            if chart and chart.table_id:
+                table_fields = await self.field_repo.list_by_group(chart.table_id)
+                source_fields = [DatasetService._field_to_dict(f) for f in table_fields]
+
+            # Enrich result_fields with dataeaseName and id from axis configs.
+            # SQL aliases use dataeaseName, so result_fields[n]["name"] == dataeaseName.
+            # Frontend initCurFields accesses fields[i]["dataeaseName"] and fields[i]["id"].
+            all_axis_fields = list(x_axis) + list(y_axis)
+            axis_by_key: dict[str, dict[str, Any]] = {}
+            for af in all_axis_fields:
+                axis_by_key[self._field_key(af)] = af
+            for rf in result_fields:
+                field_name = str(rf.get("name", ""))
+                matching_axis = axis_by_key.get(field_name)
+                if matching_axis:
+                    rf["dataeaseName"] = field_name
+                    rf["id"] = matching_axis.get("id", "")
+                    rf["name"] = matching_axis.get("name", field_name)
+
+            # Build tableRow as raw key-value rows (key = dataeaseName) for rich-text
+            table_row: list[dict[str, Any]] = []
+            for row in rows:
+                row_dict: dict[str, Any] = {}
+                for idx, fld in enumerate(result_fields):
+                    key = str(fld.get("dataeaseName") or fld.get("name") or f"col{idx + 1}")
+                    val = row[idx] if idx < len(row) else None
+                    if isinstance(val, Decimal):
+                        val = float(val)
+                    row_dict[key] = val
+                table_row.append(row_dict)
+
+            # S2 table charts and rich-text charts consume data differently from
+            # G2Plot charts.  The two Vue components split the API response:
+            #   • ChartComponentG2Plot.vue sets chartData = res (the full
+            #     ChartDataResponse), so chart.data.data = ChartDataResponse.data
+            #     must be the flat AntV array.
+            #   • ChartComponentS2.vue  sets chartData = res.data (the inner
+            #     payload), so ChartDataResponse.data must be an object with
+            #     fields / tableRow / sourceFields for S2 to read.
+            # We therefore return a structured object only for S2 / rich-text
+            # types; all other charts keep the flat AntV array.
+            chart_type_str = str(chart.type) if chart else ""
+            chart_render = str(chart.render) if chart and chart.render else None
+            needs_structured_data = chart_type_str == "rich-text" or chart_type_str.startswith("table")
+
+            if needs_structured_data:
+                data_payload: object = {
+                    "fields": result_fields,
+                    "sourceFields": source_fields,
+                    "tableRow": table_row,
+                }
+            else:
+                # G2Plot charts expect ChartDataResponse.data to be the AntV
+                # flat array directly.
+                data_payload = cast(list[object], chart_data)
+
             return ChartDataResponse(
                 fields=cast(list[object], normalized_fields if normalized_fields else cast(list[object], result_fields)),
-                data=cast(list[object], chart_data),
+                data=data_payload,
                 total=len(chart_data),
                 chart_id=response.chart_id,
                 scene_id=response.scene_id,
+                type=chart_type_str,
+                render=chart_render,
+                x_axis=cast(list[object], x_axis),
+                y_axis=cast(list[object], y_axis),
+                x_axis_ext=[],
+                y_axis_ext=[],
             )
         except Exception as exc:
             logger.exception("chart get_data execution failed", extra={"chart_id": payload.id, "table_id": table_id})
@@ -386,9 +456,11 @@ class ChartService:
         x_axis: list[dict[str, Any]],
         y_axis: list[dict[str, Any]],
         limit: int,
+        all_dataset_fields: list[dict[str, Any]] | None = None,
     ) -> str:
         dimensions = [item for item in x_axis if self._field_key(item)]
         metrics = [item for item in y_axis if self._field_key(item)]
+        all_fields = [*dimensions, *metrics]
 
         if not dimensions and not metrics:
             return base_sql
@@ -396,18 +468,17 @@ class ChartService:
         select_parts: list[str] = []
         group_by_parts: list[str] = []
         for dimension in dimensions:
-            col_name = self._sql_column_name(dimension)
             alias = self._quote_identifier(self._field_key(dimension))
-            column = self._column_reference(col_name)
+            column = self._select_expression(dimension, all_fields)
             select_parts.append(f"{column} AS {alias}")
             group_by_parts.append(column)
 
         for metric in metrics:
             field_key = self._field_key(metric)
-            col_name = self._sql_column_name(metric)
-            column = self._column_reference(col_name)
             alias = self._quote_identifier(field_key) if field_key != "*" else '"cnt"'
             summary = str(metric.get("summary") or "sum").lower()
+            col_name = self._sql_column_name(metric)
+            column = self._select_expression(metric, all_fields)
             if summary == "none":
                 select_parts.append(f"{column} AS {alias}")
                 if column not in group_by_parts:
@@ -479,23 +550,33 @@ class ChartService:
         return f'chart_source.{self._quote_identifier(identifier)}'
 
     @staticmethod
-    def _sql_column_name(field: dict[str, Any]) -> str:
-        """Return the actual database column name for a chart axis field.
-
-        - extField=0 (regular): use originName (actual DB column)
-        - extField=1 (record count): returns '*'
-        - extField=2 (computed): use name (pre-computed column in table)
-        """
+    def _field_ext_type(field: dict[str, Any]) -> int:
         ext_field = field.get("extField", 0)
         if isinstance(ext_field, str):
             try:
                 ext_field = int(ext_field)
             except (ValueError, TypeError):
                 ext_field = 0
+        if isinstance(ext_field, int):
+            return ext_field
+        return 0
+
+    def _select_expression(self, field: dict[str, Any], all_fields: list[dict[str, Any]]) -> str:
+        return self._column_reference(self._sql_column_name(field))
+
+    @staticmethod
+    def _sql_column_name(field: dict[str, Any]) -> str:
+        """Return the actual database column name for a chart axis field.
+
+        - extField=0 (regular): use originName (actual DB column)
+        - extField=1 (record count): returns '*'
+        - extField=2 (computed): resolved from decoded originName expression
+        """
+        ext_field = ChartService._field_ext_type(field)
         if ext_field == 1:
             return "*"
         if ext_field == 2:
-            return str(field.get("name") or field.get("originName") or field.get("dataeaseName") or "")
+            return str(field.get("name") or field.get("dataeaseName") or "")
         return str(field.get("originName") or field.get("name") or field.get("dataeaseName") or "")
 
     def _quote_identifier(self, identifier: str) -> str:

@@ -171,9 +171,17 @@ class ChartDetailResponse(BaseModel):
 
 
 class ChartDataResponse(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
     fields: list[object] = Field(default_factory=list)
-    data: list[object] = Field(default_factory=list)
+    data: object = Field(default_factory=list)
     total: int = 0
     chart_id: int | None = Field(default=None, serialization_alias="chartId")
     scene_id: int | None = Field(default=None, serialization_alias="sceneId")
     error: str | None = None
+    type: str | None = None
+    render: str | None = None
+    x_axis: JSONValue | None = Field(default=None, serialization_alias="xAxis")
+    y_axis: JSONValue | None = Field(default=None, serialization_alias="yAxis")
+    x_axis_ext: JSONValue | None = Field(default=None, serialization_alias="xAxisExt")
+    y_axis_ext: JSONValue | None = Field(default=None, serialization_alias="yAxisExt")
