@@ -54,7 +54,7 @@ class FakeChartService:
     async def get_data(self, payload): return {"fields": [], "data": [], "total": 0, "chartId": 1, "sceneId": 1}
     async def get_detail(self, chart_id): return {"chart": {"id": chart_id, "title": "detail"}, "fields": []}
     async def view_detail_list(self, scene_id): return [{"id": 1, "sceneId": scene_id}]
-    async def export_details(self, payload): return {"file": "export.xlsx", "status": "SUCCESS"}
+    async def export_details(self, payload, user): return {"file": "export.xlsx", "status": "SUCCESS"}
 
 
 class FakeDatasourceService:

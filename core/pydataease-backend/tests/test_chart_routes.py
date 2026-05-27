@@ -57,7 +57,8 @@ class FakeChartService:
             ],
         }
 
-    async def export_details(self, payload: object) -> dict:
+    async def export_details(self, payload: object, user: object) -> dict:
+        _ = user
         return {"file": "export.xlsx", "status": "SUCCESS"}
 
 
