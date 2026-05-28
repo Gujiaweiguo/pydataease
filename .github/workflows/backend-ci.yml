@@ -93,6 +93,7 @@ jobs:
           DE_E2E=1 uv run pytest
           tests/test_dataset_integration.py
           tests/test_dataset_datasource_integration.py
+          tests/test_big_screen_seed.py
           -v --tb=short
 
   # ── Job 2: E2E user-journey test ──────────────────────────────
@@ -160,7 +161,10 @@ jobs:
 
       - name: Run E2E tests
         run: >-
-          DE_E2E=1 uv run pytest tests/test_e2e_creation_flow.py -v --tb=short
+          DE_E2E=1 E2E_BASE_URL=http://localhost:8100 uv run pytest
+          tests/test_e2e_creation_flow.py
+          tests/test_e2e_big_screen_api.py
+          -v --tb=short
 
   # ── Job 3: Docker build verification ────────────────────────
   docker-build:
