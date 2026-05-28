@@ -825,8 +825,10 @@ def seed_postgresql():
 # ── Demo Big Screen (大屏) IDs ──────────────────────────────────────
 SCREEN_FOLDER = 995100000000000001  # data_visualization_info folder for screens
 SCREEN_DV = 995100000000000002      # data_visualization_info 大屏 leaf
+BANNER_H = 80
 # Screen chart view IDs — unique from dashboard charts
 SCREEN_CHART_IDS = [
+    995100000000000100,  # 连锁茶饮销售大屏 (rich-text title banner)
     995100000000000101,  # 总销售额  (indicator KPI)
     995100000000000102,  # 总订单数  (indicator KPI)
     995100000000000103,  # 平均客单价 (indicator KPI)
@@ -844,13 +846,6 @@ SCREEN_CHART_IDS = [
 
 def _build_screen_components() -> list[dict[str, object]]:
     """Build component_data for the big-screen layout (dark theme, 1920x1080)."""
-    # TODO: Add a dedicated top title banner component (e.g. "连锁茶饮销售大屏")
-    # once the screen layout reserves header space without shrinking chart readability.
-    # Layout: 4-row grid optimized for data presentation
-    # Row 1 (y=10..170): 4 KPI cards
-    # Row 2 (y=180..480): 2 wide trend charts
-    # Row 3 (y=490..790): 2 pie + 1 bar chart
-    # Row 4 (y=800..1060): 3 bar/rank charts
     dark_bg = {
         "backgroundColorSelect": True,
         "backdropFilterEnable": False,
@@ -868,37 +863,72 @@ def _build_screen_components() -> list[dict[str, object]]:
         "borderColor": "rgba(19,28,66,1)",
     }
 
-    positions = [
-        # Row 1: KPI cards (y=10, h=160)
-        (10,   10, 470, 160),   # 总销售额
-        (490,  10, 470, 160),   # 总订单数
-        (970,  10, 470, 160),   # 平均客单价
-        (1450, 10, 460, 160),   # 总原料支出
-        # Row 2: Trend charts (y=180, h=300)
-        (10,   180, 940, 300),  # 销售额趋势
-        (960,  180, 950, 300),  # 销量趋势
-        # Row 3: Pies + bar (y=490, h=300)
-        (10,   490, 470, 300),  # 品线销售占比
-        (490,  490, 470, 300),  # 冷热饮占比
-        (970,  490, 940, 300),  # 店铺销售额排名
-        # Row 4: Bottom charts (y=800, h=270)
-        (10,   800, 630, 270),  # 菜品销量排名
-        (650,  800, 630, 270),  # 原料支出趋势
-        (1290, 800, 620, 270),  # 规格销量对比
+    banner_id = SCREEN_CHART_IDS[0]
+    components: list[dict[str, object]] = [{
+        "component": "UserView",
+        "id": str(banner_id),
+        "innerType": "rich-text",
+        "isShow": True,
+        "propValue": {
+            "textValue": (
+                '<p style="text-align:center;font-size:36px;color:#ffffff;'
+                'font-family:PingFang,Microsoft YaHei;letter-spacing:8px;">'
+                '<strong>连锁茶饮销售大屏</strong></p>'
+            ),
+            "urlList": [],
+        },
+        "style": {
+            "left": 0, "top": 0, "width": 1920, "height": BANNER_H,
+            "borderWidth": 0, "borderRadius": 0,
+            "borderColor": "rgba(13,26,56,1)",
+            "rotate": 0, "opacity": 1,
+        },
+        "chart": str(banner_id),
+        "commonBackground": {
+            "backgroundColorSelect": True,
+            "backdropFilterEnable": False,
+            "backgroundImageEnable": False,
+            "backgroundType": "innerImage",
+            "innerImage": "board/board_1.svg",
+            "outerImage": None,
+            "innerPadding": {"mode": "uniform", "top": 8},
+            "borderRadius": {"mode": "uniform", "topLeft": 0},
+            "backdropFilter": 4,
+            "backgroundColor": "rgba(13,26,56,1)",
+            "innerImageColor": "#1094E5",
+            "borderWidth": 0,
+            "borderStyle": "solid",
+            "borderColor": "rgba(13,26,56,1)",
+        },
+    }]
+
+    chart_positions = [
+        (10,   10, 470, 160),
+        (490,  10, 470, 160),
+        (970,  10, 470, 160),
+        (1450, 10, 460, 160),
+        (10,   180, 940, 300),
+        (960,  180, 950, 300),
+        (10,   490, 470, 300),
+        (490,  490, 470, 300),
+        (970,  490, 940, 300),
+        (10,   800, 630, 270),
+        (650,  800, 630, 270),
+        (1290, 800, 620, 270),
     ]
 
-    components = []
-    for i, (x, y, w, h) in enumerate(positions):
-        if i >= len(SCREEN_CHART_IDS):
+    for i, (x, y, w, h) in enumerate(chart_positions):
+        chart_idx = i + 1
+        if chart_idx >= len(SCREEN_CHART_IDS):
             break
-        cid = SCREEN_CHART_IDS[i]
+        cid = SCREEN_CHART_IDS[chart_idx]
         components.append({
             "component": "UserView",
             "id": str(cid),
             "isShow": True,
             "propValue": {"textValue": ""},
             "style": {
-                "left": x, "top": y, "width": w, "height": h,
+                "left": x, "top": y + BANNER_H, "width": w, "height": h,
                 "borderWidth": 0, "borderRadius": 4,
                 "borderColor": "rgba(19,28,66,1)",
                 "rotate": 0, "opacity": 1,
@@ -972,56 +1002,59 @@ def _build_screen_chart_configs(now_ms: int) -> list[str]:
     DT_MAT = DS_TABLE_MAT
 
     cfgs: list[tuple[int, str, int, str, list[dict[str, Any]], list[dict[str, Any]]]] = [
-        (SCREEN_CHART_IDS[0], "总销售额", DG_ORDER, "indicator",
+        (SCREEN_CHART_IDS[0], "连锁茶饮销售大屏", DG_ORDER, "rich-text",
+         [],
+         []),
+        (SCREEN_CHART_IDS[1], "总销售额", DG_ORDER, "indicator",
          [],
          [_quota_field(7193537137675866112, "销售金额", "VARCHAR", 3, "f_ebd405e534ce8c6c",
                        ext_field=2, dg_id=DG_ORDER,
                        origin=base64.b64encode(b"[1715072798361]*[1715072798367]").decode())]),
-        (SCREEN_CHART_IDS[1], "总订单数", DG_ORDER, "indicator",
+        (SCREEN_CHART_IDS[2], "总订单数", DG_ORDER, "indicator",
          [],
          [_quota_field(1715072798366, "账单流水号", "LONGTEXT", 0, "f_252845fa1a250405",
                        summary="count", dg_id=DG_ORDER)]),
-        (SCREEN_CHART_IDS[2], "平均客单价", DG_ORDER, "indicator",
+        (SCREEN_CHART_IDS[3], "平均客单价", DG_ORDER, "indicator",
          [],
          [_quota_field(7193537244429291520, "客单价", "VARCHAR", 3, "f_39fd4542efb6a572",
                        ext_field=2, dg_id=DG_ORDER,
                        origin=base64.b64encode(b"round(sum([7193537137675866112])/count([1715072798366])/100,2)").decode())]),
-        (SCREEN_CHART_IDS[3], "总原料支出", DG_MAT, "indicator",
+        (SCREEN_CHART_IDS[4], "总原料支出", DG_MAT, "indicator",
          [],
          [_quota_field(1715053944937, "金额", "BIGINT", 2, "f_8cc276e515d2de6d",
                        dg_id=DG_MAT)]),
-        (SCREEN_CHART_IDS[4], "销售额趋势", DG_ORDER, "area",
+        (SCREEN_CHART_IDS[5], "销售额趋势", DG_ORDER, "area",
          [_dim_field(1715072798368, "销售日期", "DATETIME", 1, "f_852cde987322fd1d", DS, DG_ORDER, DT_ORDER, sort="asc")],
          [_quota_field(7193537137675866112, "销售金额", "VARCHAR", 3, "f_ebd405e534ce8c6c",
                        ext_field=2, dg_id=DG_ORDER,
                        origin=base64.b64encode(b"[1715072798361]*[1715072798367]").decode())]),
-        (SCREEN_CHART_IDS[5], "销量趋势", DG_ORDER, "line",
+        (SCREEN_CHART_IDS[6], "销量趋势", DG_ORDER, "line",
          [_dim_field(1715072798368, "销售日期", "DATETIME", 1, "f_852cde987322fd1d", DS, DG_ORDER, DT_ORDER, sort="asc")],
          [_quota_field(1715072798367, "销售数量", "BIGINT", 2, "f_59fcc2c2b0f47cde",
                        dg_id=DG_ORDER)]),
-        (SCREEN_CHART_IDS[6], "品线销售占比", DG_ORDER, "pie-donut",
+        (SCREEN_CHART_IDS[7], "品线销售占比", DG_ORDER, "pie-donut",
          [_dim_field(1715072798362, "品线", "LONGTEXT", 0, "f_f8fc4f728f1e6fa2", DS, DG_ORDER, DT_ORDER)],
          [_quota_field(7193537137675866112, "销售金额", "VARCHAR", 3, "f_ebd405e534ce8c6c",
                        ext_field=2, dg_id=DG_ORDER,
                        origin=base64.b64encode(b"[1715072798361]*[1715072798367]").decode())]),
-        (SCREEN_CHART_IDS[7], "冷热饮占比", DG_ORDER, "pie-donut",
+        (SCREEN_CHART_IDS[8], "冷热饮占比", DG_ORDER, "pie-donut",
          [_dim_field(1715072798360, "冷热", "LONGTEXT", 0, "f_68bd7361c951941a", DS, DG_ORDER, DT_ORDER)],
          [_quota_field(1715072798366, "账单流水号", "LONGTEXT", 0, "f_252845fa1a250405",
                        summary="count", dg_id=DG_ORDER)]),
-        (SCREEN_CHART_IDS[8], "店铺销售额排名", DG_ORDER, "bar-horizontal",
+        (SCREEN_CHART_IDS[9], "店铺销售额排名", DG_ORDER, "bar-horizontal",
          [_dim_field(1715072798363, "店铺", "LONGTEXT", 0, "f_4a4cd188441bb10a", DS, DG_ORDER, DT_ORDER)],
          [_quota_field(7193537137675866112, "销售金额", "VARCHAR", 3, "f_ebd405e534ce8c6c",
                        ext_field=2, sort="desc", dg_id=DG_ORDER,
                        origin=base64.b64encode(b"[1715072798361]*[1715072798367]").decode())]),
-        (SCREEN_CHART_IDS[9], "菜品销量排名", DG_ORDER, "bar",
+        (SCREEN_CHART_IDS[10], "菜品销量排名", DG_ORDER, "bar",
          [_dim_field(1715072798364, "菜品名称", "LONGTEXT", 0, "f_7c7894e776e3b8ec", DS, DG_ORDER, DT_ORDER)],
          [_quota_field(1715072798367, "销售数量", "BIGINT", 2, "f_59fcc2c2b0f47cde",
                        sort="desc", dg_id=DG_ORDER)]),
-        (SCREEN_CHART_IDS[10], "原料支出趋势", DG_MAT, "area",
+        (SCREEN_CHART_IDS[11], "原料支出趋势", DG_MAT, "area",
          [_dim_field(1715053944935, "日期", "DATETIME", 1, "f_7fedb6b454fd0ddb", DS, DG_MAT, DT_MAT, sort="asc")],
          [_quota_field(1715053944937, "金额", "BIGINT", 2, "f_8cc276e515d2de6d",
                        dg_id=DG_MAT)]),
-        (SCREEN_CHART_IDS[11], "规格销量对比", DG_ORDER, "bar",
+        (SCREEN_CHART_IDS[12], "规格销量对比", DG_ORDER, "bar",
          [_dim_field(1715072798365, "规格", "LONGTEXT", 0, "f_5c1a43f6150f3a56", DS, DG_ORDER, DT_ORDER)],
          [_quota_field(1715072798367, "销售数量", "BIGINT", 2, "f_59fcc2c2b0f47cde",
                        sort="desc", dg_id=DG_ORDER)]),
@@ -1290,8 +1323,8 @@ def build_screen_sql() -> str:
 
     # ── Screen leaf with dark-theme canvas style ──
     screen_style = json.dumps({
-        "width": 1920, "height": 1080,
-        "refreshViewEnable": False, "refreshViewLoading": False,
+        "width": 1920, "height": 1080 + BANNER_H,
+        "refreshViewEnable": True, "refreshViewLoading": True,
         "refreshUnit": "minute", "refreshTime": 5,
         "refreshBrowserEnable": False, "refreshBrowserUnit": "minute", "refreshBrowserTime": 5,
         "scale": 100, "scaleWidth": 100, "scaleHeight": 100,
