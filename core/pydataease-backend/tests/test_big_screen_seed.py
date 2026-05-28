@@ -234,3 +234,43 @@ async def test_big_screen_seed_screen_in_interactive_tree(db_session):
     assert folder.pid in (0, None), "Screen folder should be at root level"
     screen = rows[1]
     assert screen.pid == SCREEN_FOLDER, "Screen should be under the folder"
+
+
+@skip_no_db
+@pytest.mark.asyncio
+async def test_big_screen_seed_idempotent(db_session):
+    from sqlalchemy import text
+
+    expected_viz = 2
+    expected_charts = 13
+
+    result = await db_session.execute(
+        text(f"SELECT count(*) FROM data_visualization_info "
+             f"WHERE id IN ({SCREEN_FOLDER}, {SCREEN_DV})")
+    )
+    assert result.scalar() == expected_viz
+
+    result = await db_session.execute(
+        text(f"SELECT count(*) FROM core_chart_view WHERE scene_id = {SCREEN_DV}")
+    )
+    assert result.scalar() == expected_charts
+
+    import pathlib
+    import subprocess
+    script = pathlib.Path(__file__).resolve().parents[3] / "scripts" / "seed_demo_data.py"
+    r = subprocess.run(
+        ["python3", str(script), "--screen-only"],
+        capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"Second seed run failed: {r.stderr[:500]}"
+
+    result = await db_session.execute(
+        text(f"SELECT count(*) FROM data_visualization_info "
+             f"WHERE id IN ({SCREEN_FOLDER}, {SCREEN_DV})")
+    )
+    assert result.scalar() == expected_viz
+
+    result = await db_session.execute(
+        text(f"SELECT count(*) FROM core_chart_view WHERE scene_id = {SCREEN_DV}")
+    )
+    assert result.scalar() == expected_charts
