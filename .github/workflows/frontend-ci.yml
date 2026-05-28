@@ -90,6 +90,17 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: Admin168
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -pAdmin168"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
 
     steps:
       - name: Checkout repository
@@ -121,6 +132,20 @@ jobs:
       - name: Run migrations
         working-directory: core/pydataease-backend
         run: uv run alembic upgrade head
+
+      - name: Seed demo data
+        run: python3 scripts/seed_demo_data.py
+        env:
+          PGPASSWORD: dataease
+          SEED_PG_HOST: 127.0.0.1
+          SEED_PG_PORT: '5432'
+          SEED_PG_USER: dataease
+          SEED_PG_PASS: dataease
+          SEED_PG_DB: dataease
+          SEED_MYSQL_HOST: 127.0.0.1
+          SEED_MYSQL_PORT: '3306'
+          SEED_MYSQL_USER: root
+          SEED_MYSQL_PASS: Admin168
 
       - name: Start backend
         working-directory: core/pydataease-backend

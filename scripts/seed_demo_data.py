@@ -14,6 +14,7 @@ Requires: docker containers `postgres16` and `mysql8` running.
 
 import base64
 import json
+import os
 import subprocess
 import sys
 import time
@@ -37,11 +38,19 @@ CHART_IDS = [
     985192540267483136, 985192540288454656, 985192540313620480,
 ]
 
-# ── MySQL connection ────────────────────────────────────────────────
-MYSQL_HOST = "127.0.0.1"
-MYSQL_PORT = "3306"
-MYSQL_USER = "root"
-MYSQL_PASS = "Admin168"
+# ── Connection / mode config ───────────────────────────────────────
+PG_HOST = os.getenv("SEED_PG_HOST")
+PG_PORT = os.getenv("SEED_PG_PORT", "5432")
+PG_USER = os.getenv("SEED_PG_USER", "dataease")
+PG_PASS = os.getenv("SEED_PG_PASS", "dataease")
+PG_DB = os.getenv("SEED_PG_DB", "dataease")
+
+MYSQL_HOST = os.getenv("SEED_MYSQL_HOST", "127.0.0.1")
+MYSQL_PORT = os.getenv("SEED_MYSQL_PORT", "3306")
+MYSQL_USER = os.getenv("SEED_MYSQL_USER", "root")
+MYSQL_PASS = os.getenv("SEED_MYSQL_PASS", "Admin168")
+
+USE_DIRECT_TCP = bool(PG_HOST)
 
 # ── Helpers ─────────────────────────────────────────────────────────
 
@@ -52,11 +61,28 @@ def docker_exec(container: str, cmd: list[str]) -> subprocess.CompletedProcess[s
     )
 
 def psql(sql: str) -> subprocess.CompletedProcess[str]:
+    if USE_DIRECT_TCP:
+        return subprocess.run(
+            ["psql", f"-h{PG_HOST}", f"-p{PG_PORT}", f"-U{PG_USER}", "-d", PG_DB, "-c", sql],
+            capture_output=True,
+            text=True,
+            timeout=60,
+            env={**os.environ, "PGPASSWORD": PG_PASS},
+        )
     return docker_exec("postgres16", [
         "psql", "-U", "dataease", "-d", "dataease", "-c", sql
     ])
 
 def psql_file(sql: str) -> subprocess.CompletedProcess[str]:
+    if USE_DIRECT_TCP:
+        return subprocess.run(
+            ["psql", f"-h{PG_HOST}", f"-p{PG_PORT}", f"-U{PG_USER}", "-d", PG_DB, "-v", "ON_ERROR_STOP=1"],
+            input=sql,
+            capture_output=True,
+            text=True,
+            timeout=120,
+            env={**os.environ, "PGPASSWORD": PG_PASS},
+        )
     return subprocess.run(
         ["docker", "exec", "-i", "postgres16",
          "psql", "-U", "dataease", "-d", "dataease", "-v", "ON_ERROR_STOP=1"],
@@ -64,6 +90,14 @@ def psql_file(sql: str) -> subprocess.CompletedProcess[str]:
     )
 
 def mysql_exec(sql: str) -> subprocess.CompletedProcess[str]:
+    if USE_DIRECT_TCP:
+        return subprocess.run(
+            ["mysql", f"-h{MYSQL_HOST}", f"-P{MYSQL_PORT}", f"-u{MYSQL_USER}", f"-p{MYSQL_PASS}",
+             "--default-character-set=utf8mb4", "-e", sql],
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
     return docker_exec("mysql8", [
         "mysql", f"-h{MYSQL_HOST}", f"-P{MYSQL_PORT}",
         f"-u{MYSQL_USER}", f"-p{MYSQL_PASS}",
@@ -71,6 +105,15 @@ def mysql_exec(sql: str) -> subprocess.CompletedProcess[str]:
     ])
 
 def mysql_file(sql: str) -> subprocess.CompletedProcess[str]:
+    if USE_DIRECT_TCP:
+        return subprocess.run(
+            ["mysql", f"-h{MYSQL_HOST}", f"-P{MYSQL_PORT}", f"-u{MYSQL_USER}", f"-p{MYSQL_PASS}",
+             "--default-character-set=utf8mb4"],
+            input=sql,
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
     return subprocess.run(
         ["docker", "exec", "-i", "mysql8",
          "mysql", f"-u{MYSQL_USER}", f"-p{MYSQL_PASS}",
@@ -250,9 +293,9 @@ def build_pg_sql() -> str:
         "dataBase": "demo",
         "connectionType": "jdbc",
         "extraParams": "characterEncoding=UTF-8&connectTimeout=5000&useSSL=false",
-        "host": "127.0.0.1",
+        "host": MYSQL_HOST,
         "password": MYSQL_PASS,
-        "port": "3306",
+        "port": MYSQL_PORT,
         "username": MYSQL_USER
     }, ensure_ascii=False)
     lines.append(
@@ -782,13 +825,17 @@ if __name__ == "__main__":
     print("PyDataEase Official Demo Data Seeder")
     print("=" * 60)
 
-    # Check containers are running
-    for container in ["postgres16", "mysql8"]:
-        r = subprocess.run(["docker", "inspect", "-f", "{{.State.Running}}", container],
-                          capture_output=True, text=True)
-        if r.stdout.strip() != "true":
-            print(f"ERROR: Container '{container}' is not running!", file=sys.stderr)
-            sys.exit(1)
+    if USE_DIRECT_TCP:
+        print(f"Mode: direct TCP (PostgreSQL {PG_HOST}:{PG_PORT}, MySQL {MYSQL_HOST}:{MYSQL_PORT})")
+    else:
+        print("Mode: docker exec (postgres16/mysql8)")
+        # Check containers are running
+        for container in ["postgres16", "mysql8"]:
+            r = subprocess.run(["docker", "inspect", "-f", "{{.State.Running}}", container],
+                              capture_output=True, text=True)
+            if r.stdout.strip() != "true":
+                print(f"ERROR: Container '{container}' is not running!", file=sys.stderr)
+                sys.exit(1)
 
     seed_mysql()
     seed_postgresql()
