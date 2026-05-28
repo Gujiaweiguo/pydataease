@@ -871,6 +871,7 @@ def _build_screen_components() -> list[dict[str, object]]:
         "id": str(banner_id),
         "innerType": "rich-text",
         "isShow": True,
+        "isLock": True,
         "propValue": {
             "textValue": (
                 '<p style="text-align:center;font-size:36px;color:#ffffff;'

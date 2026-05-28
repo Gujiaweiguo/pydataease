@@ -274,3 +274,38 @@ async def test_big_screen_seed_idempotent(db_session):
         text(f"SELECT count(*) FROM core_chart_view WHERE scene_id = {SCREEN_DV}")
     )
     assert result.scalar() == expected_charts
+
+
+@skip_no_db
+@pytest.mark.asyncio
+async def test_big_screen_seed_banner_is_locked(db_session):
+    """Banner component must be locked in the editor (isLock=True)."""
+    from sqlalchemy import text
+
+    result = await db_session.execute(
+        text(f"SELECT component_data FROM data_visualization_info WHERE id = {SCREEN_DV}")
+    )
+    row = result.scalar()
+    components = _parse_jsonb(row)
+    banner = next(c for c in components if c["id"] == str(BANNER_ID))
+    assert banner.get("isLock") is True, (
+        "Banner component should have isLock=True to prevent drag/resize/delete"
+    )
+
+
+@skip_no_db
+@pytest.mark.asyncio
+async def test_big_screen_seed_charts_are_unlocked(db_session):
+    """Non-banner chart components should NOT be locked."""
+    from sqlalchemy import text
+
+    result = await db_session.execute(
+        text(f"SELECT component_data FROM data_visualization_info WHERE id = {SCREEN_DV}")
+    )
+    row = result.scalar()
+    components = _parse_jsonb(row)
+    charts = [c for c in components if c["id"] != str(BANNER_ID)]
+    for chart in charts:
+        assert chart.get("isLock") is not True, (
+            f"Chart {chart['id']} should not be locked"
+        )
