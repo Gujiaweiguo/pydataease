@@ -18,6 +18,7 @@ import os
 import subprocess
 import sys
 import time
+from typing import Any
 
 # ── IDs (matching Java V2.6 migration) ──────────────────────────────
 DS_ID = 985188400292302848            # datasource
@@ -185,7 +186,7 @@ CREATE TABLE demo_tea_order (
   `店铺` longtext,
   `品线` longtext,
   `菜品名称` longtext,
-  `冷/热` longtext,
+  `冷热` longtext,
   `规格` longtext,
   `销售数量` bigint DEFAULT NULL,
   `单价` bigint DEFAULT NULL,
@@ -193,7 +194,7 @@ CREATE TABLE demo_tea_order (
   `销售日期` datetime DEFAULT NULL
 );
 
-INSERT INTO demo_tea_order (`店铺`, `品线`, `菜品名称`, `冷/热`, `规格`, `销售数量`, `单价`, `账单流水号`, `销售日期`) VALUES
+INSERT INTO demo_tea_order (`店铺`, `品线`, `菜品名称`, `冷热`, `规格`, `销售数量`, `单价`, `账单流水号`, `销售日期`) VALUES
 ('香橙店', '浓郁椰奶', '超大酷柠', '冷', '50塑', 165, 16, '131696143796', '2024-03-13 01:39:25'),
 ('果元店', '果粒果汁', '爆粒鲜橙', '热', '40塑', 228, 10, '600033642270', '2024-03-20 16:43:33'),
 ('蓝墨店', '浓郁椰奶', '爆粒鲜橙', '冷', '1000ml', 154, 16, '884244813757', '2024-03-17 20:13:47'),
@@ -360,7 +361,7 @@ def build_pg_sql() -> str:
             "info": json.dumps({"table": "demo_tea_order", "sql": ""})
         },
         "currentDsFields": [
-            {"id": "1715072798360", "originName": "冷/热", "name": "冷/热",
+            {"id": "1715072798360", "originName": "冷热", "name": "冷热",
              "dataeaseName": "f_68bd7361c951941a", "groupType": "d",
              "type": "LONGTEXT", "deType": 0, "extField": 0, "checked": True},
             {"id": "1715072798361", "originName": "单价", "name": "单价",
@@ -426,7 +427,7 @@ def build_pg_sql() -> str:
         (1715053944937, DS_ID, DS_TABLE_MAT, DG_MAT, "NULL", "金额", "金额", "NULL",
          "f_8cc276e515d2de6d", "f_8cc276e515d2de6d", "q", "BIGINT", "NULL", 2, 2, 0, True),
         # demo_tea_order fields
-        (1715072798360, DS_ID, DS_TABLE_ORDER, DG_ORDER, "NULL", "冷/热", "冷/热", "NULL",
+        (1715072798360, DS_ID, DS_TABLE_ORDER, DG_ORDER, "NULL", "冷热", "冷热", "NULL",
          "f_68bd7361c951941a", "f_68bd7361c951941a", "d", "LONGTEXT", "NULL", 0, 0, 0, True),
         (1715072798361, DS_ID, DS_TABLE_ORDER, DG_ORDER, "NULL", "单价", "单价", "NULL",
          "f_878cf3320c82724f", "f_878cf3320c82724f", "q", "BIGINT", "NULL", 2, 2, 0, True),
@@ -628,6 +629,7 @@ def _build_dashboard_components() -> list[dict[str, object]]:
         components.append({
             "component": "UserView",
             "id": str(cid),
+            "isShow": True,
             "propValue": {"textValue": ""},
             "style": {
                 "x": x, "y": y, "width": w, "height": h,
@@ -820,7 +822,558 @@ def seed_postgresql():
     print("\n==> Done! Demo data seeded successfully.")
 
 
+# ── Demo Big Screen (大屏) IDs ──────────────────────────────────────
+SCREEN_FOLDER = 995100000000000001  # data_visualization_info folder for screens
+SCREEN_DV = 995100000000000002      # data_visualization_info 大屏 leaf
+# Screen chart view IDs — unique from dashboard charts
+SCREEN_CHART_IDS = [
+    995100000000000101,  # 总销售额  (indicator KPI)
+    995100000000000102,  # 总订单数  (indicator KPI)
+    995100000000000103,  # 平均客单价 (indicator KPI)
+    995100000000000104,  # 总原料支出 (indicator KPI)
+    995100000000000105,  # 销售额趋势 (area)
+    995100000000000106,  # 销量趋势   (line)
+    995100000000000107,  # 品线销售占比 (pie-donut)
+    995100000000000108,  # 冷热饮占比  (pie-donut)
+    995100000000000109,  # 店铺销售额排名 (bar-horizontal)
+    995100000000000110,  # 菜品销量排名   (bar)
+    995100000000000111,  # 原料支出趋势   (area)
+    995100000000000112,  # 规格销量对比   (bar-group)
+]
+
+
+def _build_screen_components() -> list[dict[str, object]]:
+    """Build component_data for the big-screen layout (dark theme, 1920x1080)."""
+    # TODO: Add a dedicated top title banner component (e.g. "连锁茶饮销售大屏")
+    # once the screen layout reserves header space without shrinking chart readability.
+    # Layout: 4-row grid optimized for data presentation
+    # Row 1 (y=10..170): 4 KPI cards
+    # Row 2 (y=180..480): 2 wide trend charts
+    # Row 3 (y=490..790): 2 pie + 1 bar chart
+    # Row 4 (y=800..1060): 3 bar/rank charts
+    dark_bg = {
+        "backgroundColorSelect": True,
+        "backdropFilterEnable": False,
+        "backgroundImageEnable": False,
+        "backgroundType": "innerImage",
+        "innerImage": "board/board_1.svg",
+        "outerImage": None,
+        "innerPadding": {"mode": "uniform", "top": 8},
+        "borderRadius": {"mode": "uniform", "topLeft": 4},
+        "backdropFilter": 4,
+        "backgroundColor": "rgba(19,28,66,1)",
+        "innerImageColor": "#1094E5",
+        "borderWidth": 0,
+        "borderStyle": "solid",
+        "borderColor": "rgba(19,28,66,1)",
+    }
+
+    positions = [
+        # Row 1: KPI cards (y=10, h=160)
+        (10,   10, 470, 160),   # 总销售额
+        (490,  10, 470, 160),   # 总订单数
+        (970,  10, 470, 160),   # 平均客单价
+        (1450, 10, 460, 160),   # 总原料支出
+        # Row 2: Trend charts (y=180, h=300)
+        (10,   180, 940, 300),  # 销售额趋势
+        (960,  180, 950, 300),  # 销量趋势
+        # Row 3: Pies + bar (y=490, h=300)
+        (10,   490, 470, 300),  # 品线销售占比
+        (490,  490, 470, 300),  # 冷热饮占比
+        (970,  490, 940, 300),  # 店铺销售额排名
+        # Row 4: Bottom charts (y=800, h=270)
+        (10,   800, 630, 270),  # 菜品销量排名
+        (650,  800, 630, 270),  # 原料支出趋势
+        (1290, 800, 620, 270),  # 规格销量对比
+    ]
+
+    components = []
+    for i, (x, y, w, h) in enumerate(positions):
+        if i >= len(SCREEN_CHART_IDS):
+            break
+        cid = SCREEN_CHART_IDS[i]
+        components.append({
+            "component": "UserView",
+            "id": str(cid),
+            "isShow": True,
+            "propValue": {"textValue": ""},
+            "style": {
+                "left": x, "top": y, "width": w, "height": h,
+                "borderWidth": 0, "borderRadius": 4,
+                "borderColor": "rgba(19,28,66,1)",
+                "rotate": 0, "opacity": 1,
+            },
+            "chart": str(cid),
+            "commonBackground": dark_bg,
+        })
+    return components
+
+
+_COMPARE_CALC = {"type": "none", "field": None, "custom": None, "resultData": "percent"}
+_FMT_CFG = {"type": "auto", "unit": 1, "suffix": "", "decimalCount": 2, "thousandSeparator": True}
+
+
+def _dim_field(fid: int, name: str, dtype: str, de_type: int, da_name: str,
+               ds_id: int | str, dg_id: int, dt_id: int | str, sort: str = "none") -> dict[str, Any]:
+    return {
+        "id": str(fid), "agg": False, "name": name, "sort": sort,
+        "type": dtype, "index": None, "logic": None, "scale": None,
+        "deType": de_type, "filter": [], "chartId": None, "checked": True,
+        "summary": "count", "busiType": None, "extField": 0, "chartType": "bar",
+        "dateStyle": "y_M_d", "groupType": "d", "precision": None,
+        "customSort": [] if sort == "asc" else None,
+        "dateFormat": None, "filterType": None, "originName": name,
+        "columnIndex": None, "compareCalc": _COMPARE_CALC,
+        "datePattern": "date_sub", "dbFieldName": None, "description": None,
+        "dataeaseName": da_name, "datasourceId": str(ds_id),
+        "desensitized": None, "formatterCfg": _FMT_CFG,
+        "lastSyncTime": None, "chartShowName": None,
+        "deExtractType": de_type, "datasetGroupId": dg_id,
+        "datasetTableId": str(dt_id), "dateFormatType": None,
+        "fieldShortName": da_name,
+    }
+
+
+def _quota_field(fid: int | str, name: str, dtype: str, de_type: int, da_name: str,
+                   summary: str = "sum", ext_field: int = 0, sort: str = "none",
+                  dg_id: int = DG_ORDER, origin: str | None = None) -> dict[str, Any]:
+    return {
+        "id": str(fid), "agg": False, "name": name, "sort": sort,
+        "type": dtype, "index": None, "logic": None, "scale": None,
+        "deType": de_type, "filter": [], "chartId": None, "checked": True,
+        "summary": summary, "busiType": None, "extField": ext_field, "chartType": "bar",
+        "dateStyle": "y_M_d", "groupType": "q", "precision": None,
+        "customSort": [] if sort else None,
+        "dateFormat": "" if ext_field == 2 else None,
+        "filterType": None, "originName": origin or name,
+        "columnIndex": None, "compareCalc": _COMPARE_CALC,
+        "datePattern": "date_sub", "dbFieldName": None, "description": None,
+        "dataeaseName": da_name, "datasourceId": None,
+        "desensitized": None, "formatterCfg": _FMT_CFG,
+        "lastSyncTime": None, "chartShowName": None,
+        "deExtractType": de_type if ext_field == 0 else 3,
+        "datasetGroupId": dg_id,
+        "datasetTableId": None if ext_field == 2 else str(DS_TABLE_ORDER),
+        "dateFormatType": "" if ext_field == 2 else None,
+        "fieldShortName": da_name if ext_field == 0 else None,
+    }
+
+
+_COUNT_FIELD = _quota_field(
+    -1, "记录数*", "INT", 2, "*", summary="count", ext_field=1, sort="none",
+    origin="*",
+)
+_COUNT_FIELD["columnIndex"] = 999
+
+
+def _build_screen_chart_configs(now_ms: int) -> list[str]:
+    DS = DS_ID
+    DT_ORDER = DS_TABLE_ORDER
+    DT_MAT = DS_TABLE_MAT
+
+    cfgs: list[tuple[int, str, int, str, list[dict[str, Any]], list[dict[str, Any]]]] = [
+        (SCREEN_CHART_IDS[0], "总销售额", DG_ORDER, "indicator",
+         [],
+         [_quota_field(7193537137675866112, "销售金额", "VARCHAR", 3, "f_ebd405e534ce8c6c",
+                       ext_field=2, dg_id=DG_ORDER,
+                       origin=base64.b64encode(b"[1715072798361]*[1715072798367]").decode())]),
+        (SCREEN_CHART_IDS[1], "总订单数", DG_ORDER, "indicator",
+         [],
+         [_quota_field(1715072798366, "账单流水号", "LONGTEXT", 0, "f_252845fa1a250405",
+                       summary="count", dg_id=DG_ORDER)]),
+        (SCREEN_CHART_IDS[2], "平均客单价", DG_ORDER, "indicator",
+         [],
+         [_quota_field(7193537244429291520, "客单价", "VARCHAR", 3, "f_39fd4542efb6a572",
+                       ext_field=2, dg_id=DG_ORDER,
+                       origin=base64.b64encode(b"round(sum([7193537137675866112])/count([1715072798366])/100,2)").decode())]),
+        (SCREEN_CHART_IDS[3], "总原料支出", DG_MAT, "indicator",
+         [],
+         [_quota_field(1715053944937, "金额", "BIGINT", 2, "f_8cc276e515d2de6d",
+                       dg_id=DG_MAT)]),
+        (SCREEN_CHART_IDS[4], "销售额趋势", DG_ORDER, "area",
+         [_dim_field(1715072798368, "销售日期", "DATETIME", 1, "f_852cde987322fd1d", DS, DG_ORDER, DT_ORDER, sort="asc")],
+         [_quota_field(7193537137675866112, "销售金额", "VARCHAR", 3, "f_ebd405e534ce8c6c",
+                       ext_field=2, dg_id=DG_ORDER,
+                       origin=base64.b64encode(b"[1715072798361]*[1715072798367]").decode())]),
+        (SCREEN_CHART_IDS[5], "销量趋势", DG_ORDER, "line",
+         [_dim_field(1715072798368, "销售日期", "DATETIME", 1, "f_852cde987322fd1d", DS, DG_ORDER, DT_ORDER, sort="asc")],
+         [_quota_field(1715072798367, "销售数量", "BIGINT", 2, "f_59fcc2c2b0f47cde",
+                       dg_id=DG_ORDER)]),
+        (SCREEN_CHART_IDS[6], "品线销售占比", DG_ORDER, "pie-donut",
+         [_dim_field(1715072798362, "品线", "LONGTEXT", 0, "f_f8fc4f728f1e6fa2", DS, DG_ORDER, DT_ORDER)],
+         [_quota_field(7193537137675866112, "销售金额", "VARCHAR", 3, "f_ebd405e534ce8c6c",
+                       ext_field=2, dg_id=DG_ORDER,
+                       origin=base64.b64encode(b"[1715072798361]*[1715072798367]").decode())]),
+        (SCREEN_CHART_IDS[7], "冷热饮占比", DG_ORDER, "pie-donut",
+         [_dim_field(1715072798360, "冷热", "LONGTEXT", 0, "f_68bd7361c951941a", DS, DG_ORDER, DT_ORDER)],
+         [_quota_field(1715072798366, "账单流水号", "LONGTEXT", 0, "f_252845fa1a250405",
+                       summary="count", dg_id=DG_ORDER)]),
+        (SCREEN_CHART_IDS[8], "店铺销售额排名", DG_ORDER, "bar-horizontal",
+         [_dim_field(1715072798363, "店铺", "LONGTEXT", 0, "f_4a4cd188441bb10a", DS, DG_ORDER, DT_ORDER)],
+         [_quota_field(7193537137675866112, "销售金额", "VARCHAR", 3, "f_ebd405e534ce8c6c",
+                       ext_field=2, sort="desc", dg_id=DG_ORDER,
+                       origin=base64.b64encode(b"[1715072798361]*[1715072798367]").decode())]),
+        (SCREEN_CHART_IDS[9], "菜品销量排名", DG_ORDER, "bar",
+         [_dim_field(1715072798364, "菜品名称", "LONGTEXT", 0, "f_7c7894e776e3b8ec", DS, DG_ORDER, DT_ORDER)],
+         [_quota_field(1715072798367, "销售数量", "BIGINT", 2, "f_59fcc2c2b0f47cde",
+                       sort="desc", dg_id=DG_ORDER)]),
+        (SCREEN_CHART_IDS[10], "原料支出趋势", DG_MAT, "area",
+         [_dim_field(1715053944935, "日期", "DATETIME", 1, "f_7fedb6b454fd0ddb", DS, DG_MAT, DT_MAT, sort="asc")],
+         [_quota_field(1715053944937, "金额", "BIGINT", 2, "f_8cc276e515d2de6d",
+                       dg_id=DG_MAT)]),
+        (SCREEN_CHART_IDS[11], "规格销量对比", DG_ORDER, "bar",
+         [_dim_field(1715072798365, "规格", "LONGTEXT", 0, "f_5c1a43f6150f3a56", DS, DG_ORDER, DT_ORDER)],
+         [_quota_field(1715072798367, "销售数量", "BIGINT", 2, "f_59fcc2c2b0f47cde",
+                       sort="desc", dg_id=DG_ORDER)]),
+    ]
+
+    _DARK_COLORS = ["#5B8FF9", "#5AD8A6", "#F6BD16", "#E86452", "#6DC8EC",
+                     "#945FB9", "#FF9845", "#1E9493", "#FF99C3"]
+
+    _DARK_AXIS = {
+        "name": "", "show": True, "color": "#cccccc",
+        "axisLine": {"show": True, "lineStyle": {"color": "#666666", "style": "solid", "width": 1}},
+        "axisTick": {"show": False, "length": 5, "lineStyle": {"color": "#555555", "type": "solid", "width": 1}},
+        "axisLabel": {"show": True, "color": "#cccccc", "rotate": 0, "fontSize": 12,
+                      "formatter": "{value}", "lengthLimit": 10},
+        "axisValue": {"max": 100, "min": 10, "auto": True, "split": 10, "splitCount": 10},
+        "splitArea": {"show": False},
+        "splitLine": {"show": True, "lineStyle": {"color": "#333333", "type": "dashed", "width": 1}},
+        "splitNumber": 5,
+    }
+
+    _DARK_TEXT = {
+        "show": True, "color": "#ffffff", "remark": "", "fontSize": 18,
+        "isBolder": False, "isItalic": False, "hPosition": "left", "vPosition": "top",
+        "fontFamily": "Microsoft YaHei", "fontShadow": False, "remarkShow": False,
+        "letterSpace": "0", "remarkBackgroundColor": "#1a1a2e",
+    }
+
+    _DARK_LEGEND = {
+        "icon": "circle", "show": True, "size": 4, "sort": "none",
+        "color": "#cccccc", "orient": "horizontal", "fontSize": 12,
+        "hPosition": "center", "showRange": True, "vPosition": "bottom", "customSort": [],
+    }
+
+    _DARK_MISC_STYLE = {
+        "color": "#cccccc", "axisLine": {"show": True, "lineStyle": {"color": "#555555", "type": "solid", "width": 1}},
+        "axisTick": {"show": False, "length": 5, "lineStyle": {"color": "#555555", "type": "solid", "width": 1}},
+        "axisLabel": {"show": False, "color": "#cccccc", "margin": 8, "rotate": 0,
+                      "fontSize": "12", "formatter": "{value}"},
+        "axisValue": {"max": 100, "min": 10, "auto": True, "split": 10, "splitCount": 10},
+        "splitArea": {"show": False},
+        "splitLine": {"show": True, "lineStyle": {"color": "#333333", "type": "dashed", "width": 1}},
+        "splitNumber": 5,
+    }
+
+    def _chart_style(ctype: str) -> dict[str, Any]:
+        if ctype in ("rich-text", "indicator"):
+            return {}
+        base = {
+            "text": dict(_DARK_TEXT),
+            "legend": dict(_DARK_LEGEND),
+            "misc": dict(_DARK_MISC_STYLE),
+            "xAxis": dict(_DARK_AXIS),
+            "yAxis": dict(_DARK_AXIS),
+            "yAxisExt": dict(_DARK_AXIS),
+        }
+        if ctype == "pie-donut":
+            base.pop("xAxis", None)
+            base.pop("yAxis", None)
+            base.pop("yAxisExt", None)
+        return base
+
+    def _chart_attr(ctype: str) -> dict[str, Any]:
+        base_colors = {"colors": _DARK_COLORS, "alpha": 100, "gradient": True}
+        if ctype == "indicator":
+            return {
+                "basicStyle": {**base_colors, "barGap": 0.4, "barWidth": 40, "lineWidth": 2,
+                               "lineType": "solid", "lineSmooth": True, "lineSymbol": "circle",
+                               "lineSymbolSize": 4, "radius": 100, "innerRadius": 60,
+                               "barDefault": True, "gaugeStyle": "default", "mapStyle": "normal",
+                               "mapSymbol": "circle", "mapVendor": "amap", "suspension": True,
+                               "colorScheme": "default", "areaBaseColor": "#FFFFFF",
+                               "areaBorderColor": "#303133", "mapSymbolSize": 20,
+                               "mapSymbolOpacity": 0.7, "mapSymbolStrokeWidth": 2,
+                               "scatterSymbol": "circle", "scatterSymbolSize": 8,
+                               "tablePageMode": "page", "tablePageSize": 20,
+                               "tableColumnMode": "adapt", "tableColumnWidth": 100,
+                               "tableBorderColor": "#E6E7E4", "tableScrollBarColor": "#00000024",
+                               "radiusColumnBar": "rightAngle", "columnWidthRatio": 60,
+                               "columnBarRightAngleRadius": 20},
+                "misc": {
+                    "gaugeMax": 100, "gaugeMin": 0, "mapPitch": 0, "showName": True,
+                    "hPosition": "center", "liquidMax": 100, "radarSize": 80,
+                    "vPosition": "center", "liquidSize": 80, "radarShape": "polygon",
+                    "liquidShape": "circle", "mapLineType": "arc", "gaugeMaxType": "fix",
+                    "gaugeMinType": "fix", "mapLineWidth": 1, "nameFontSize": 14,
+                    "treemapWidth": 80, "gaugeEndAngle": -45,
+                    "gaugeMaxField": {"id": "", "summary": ""},
+                    "gaugeMinField": {"id": "", "summary": ""},
+                    "liquidMaxType": "fix", "nameFontColor": "#ffffff",
+                    "treemapHeight": 80, "valueFontSize": 48,
+                    "liquidMaxField": {"id": "", "summary": ""},
+                    "nameFontFamily": "Microsoft YaHei", "nameFontShadow": False,
+                    "nameValueSpace": 10, "pieInnerRadius": 0, "pieOuterRadius": 80,
+                    "valueFontColor": "#5B8FF9", "gaugeStartAngle": 225,
+                    "mapLineGradient": False, "nameLetterSpace": "0",
+                    "valueFontFamily": "Microsoft YaHei", "valueFontShadow": False,
+                    "nameFontIsBolder": False, "nameFontIsItalic": False,
+                    "valueLetterSpace": 0, "valueFontIsBolder": True,
+                    "valueFontIsItalic": False,
+                    "mapLineSourceColor": "#146C94", "mapLineTargetColor": "#576CBC",
+                    "mapLineAnimateDuration": 3,
+                },
+                "label": {"show": False, "color": "#cccccc", "fontSize": 10, "position": "top",
+                          "formatter": "", "labelLine": {"show": True}, "showQuota": False,
+                          "labelShadow": False, "labelBgColor": "", "showDimension": True,
+                          "labelFormatter": dict(_FMT_CFG), "showProportion": True,
+                          "labelShadowColor": "", "quotaLabelFormatter": dict(_FMT_CFG),
+                          "reserveDecimalCount": 2, "seriesLabelFormatter": []},
+                "tooltip": {"show": True, "color": "#cccccc", "confine": True, "trigger": "item",
+                            "fontSize": 12, "backgroundColor": "#1a1a2e",
+                            "tooltipFormatter": dict(_FMT_CFG), "seriesTooltipFormatter": []},
+                "tableCell": {"tableFontColor": "#cccccc", "tableItemAlign": "right",
+                              "tableItemHeight": 36, "tableItemBgColor": "#1a1a2e",
+                              "tableItemFontSize": 12},
+                "tableHeader": {"showIndex": False, "indexLabel": "序号", "tableHeaderAlign": "left",
+                                "tableTitleHeight": 36, "tableHeaderBgColor": "#2d2d5e",
+                                "tableTitleFontSize": 12, "tableHeaderFontColor": "#ffffff"},
+                "tableTotal": {"col": {"label": "总计", "subLabel": "小计", "totalSort": "none",
+                               "calcTotals": {"aggregation": "SUM"},
+                               "calcSubTotals": {"aggregation": "SUM"},
+                               "reverseLayout": False, "showSubTotals": True,
+                               "totalSortField": "", "showGrandTotals": True,
+                               "reverseSubLayout": False, "subTotalsDimensions": []},
+                               "row": {"label": "总计", "subLabel": "小计", "totalSort": "none",
+                               "calcTotals": {"aggregation": "SUM"},
+                               "calcSubTotals": {"aggregation": "SUM"},
+                               "reverseLayout": False, "showSubTotals": True,
+                               "totalSortField": "", "showGrandTotals": True,
+                               "reverseSubLayout": False, "subTotalsDimensions": []}},
+                "map": {"id": "", "level": "world"},
+                "modifyName": "gradient",
+            }
+        return {
+            "basicStyle": {**base_colors, "barGap": 0.4, "barWidth": 40, "lineWidth": 2,
+                           "lineType": "solid", "lineSmooth": True, "lineSymbol": "circle",
+                           "lineSymbolSize": 4, "radius": 100, "innerRadius": 60,
+                           "barDefault": True, "gaugeStyle": "default", "mapStyle": "normal",
+                           "mapSymbol": "circle", "mapVendor": "amap", "suspension": True,
+                           "colorScheme": "default", "areaBaseColor": "#FFFFFF",
+                           "areaBorderColor": "#303133", "mapSymbolSize": 20,
+                           "mapSymbolOpacity": 0.7, "mapSymbolStrokeWidth": 2,
+                           "scatterSymbol": "circle", "scatterSymbolSize": 8,
+                           "tablePageMode": "page", "tablePageSize": 20,
+                           "tableColumnMode": "adapt", "tableColumnWidth": 100,
+                           "tableBorderColor": "#E6E7E4", "tableScrollBarColor": "#00000024",
+                           "radiusColumnBar": "rightAngle", "columnWidthRatio": 60,
+                           "columnBarRightAngleRadius": 20},
+            "misc": {
+                "gaugeMax": 100, "gaugeMin": 0, "mapPitch": 0, "showName": True,
+                "hPosition": "center", "liquidMax": 100, "radarSize": 80,
+                "vPosition": "center", "liquidSize": 80, "radarShape": "polygon",
+                "liquidShape": "circle", "mapLineType": "arc", "gaugeMaxType": "fix",
+                "gaugeMinType": "fix", "mapLineWidth": 1, "nameFontSize": 14,
+                "treemapWidth": 80, "gaugeEndAngle": -45,
+                "gaugeMaxField": {"id": "", "summary": ""},
+                "gaugeMinField": {"id": "", "summary": ""},
+                "liquidMaxType": "fix", "nameFontColor": "#cccccc",
+                "treemapHeight": 80, "valueFontSize": 18,
+                "liquidMaxField": {"id": "", "summary": ""},
+                "nameFontFamily": "Microsoft YaHei", "nameFontShadow": False,
+                "nameValueSpace": 10, "pieInnerRadius": 0, "pieOuterRadius": 80,
+                "valueFontColor": "#5B8FF9", "gaugeStartAngle": 225,
+                "mapLineGradient": False, "nameLetterSpace": "0",
+                "valueFontFamily": "Microsoft YaHei", "valueFontShadow": False,
+                "nameFontIsBolder": False, "nameFontIsItalic": False,
+                "valueLetterSpace": 0, "valueFontIsBolder": True,
+                "valueFontIsItalic": False,
+                "mapLineSourceColor": "#146C94", "mapLineTargetColor": "#576CBC",
+                "mapLineAnimateDuration": 3,
+            },
+            "indicator": {"show": True, "color": "#5B8FF9ff", "suffix": "", "fontSize": 24,
+                          "isBolder": True, "isItalic": False, "hPosition": "center",
+                          "vPosition": "center", "fontFamily": "Microsoft YaHei",
+                          "fontShadow": False, "letterSpace": 0, "suffixColor": "#5B8FF9ff",
+                          "suffixEnable": True, "suffixFontSize": 14, "suffixIsBolder": True,
+                          "suffixIsItalic": False, "backgroundColor": "",
+                          "suffixFontFamily": "Microsoft YaHei", "suffixFontShadow": False,
+                          "suffixLetterSpace": 0},
+            "indicatorName": {"show": True, "color": "#ffffffff", "fontSize": 14,
+                              "isBolder": True, "isItalic": False,
+                              "fontFamily": "Microsoft YaHei", "fontShadow": False,
+                              "letterSpace": 0, "namePosition": "bottom", "nameValueSpacing": 0},
+            "label": {"show": False, "color": "#cccccc", "fontSize": 10, "position": "top",
+                      "formatter": "", "labelLine": {"show": True}, "showQuota": False,
+                      "labelShadow": False, "labelBgColor": "", "showDimension": True,
+                      "labelFormatter": dict(_FMT_CFG), "showProportion": True,
+                      "labelShadowColor": "", "quotaLabelFormatter": dict(_FMT_CFG),
+                      "reserveDecimalCount": 2, "seriesLabelFormatter": []},
+            "tooltip": {"show": True, "color": "#cccccc", "confine": True, "trigger": "item",
+                        "fontSize": 12, "backgroundColor": "#1a1a2e",
+                        "tooltipFormatter": dict(_FMT_CFG), "seriesTooltipFormatter": []},
+            "tableCell": {"tableFontColor": "#cccccc", "tableItemAlign": "right",
+                          "tableItemHeight": 36, "tableItemBgColor": "#1a1a2e",
+                          "tableItemFontSize": 12},
+            "tableHeader": {"showIndex": False, "indexLabel": "序号", "tableHeaderAlign": "left",
+                            "tableTitleHeight": 36, "tableHeaderBgColor": "#2d2d5e",
+                            "tableTitleFontSize": 12, "tableHeaderFontColor": "#ffffff"},
+            "tableTotal": {"col": {"label": "总计", "subLabel": "小计", "totalSort": "none",
+                           "calcTotals": {"aggregation": "SUM"},
+                           "calcSubTotals": {"aggregation": "SUM"},
+                           "reverseLayout": False, "showSubTotals": True,
+                           "totalSortField": "", "showGrandTotals": True,
+                           "reverseSubLayout": False, "subTotalsDimensions": []},
+                           "row": {"label": "总计", "subLabel": "小计", "totalSort": "none",
+                           "calcTotals": {"aggregation": "SUM"},
+                           "calcSubTotals": {"aggregation": "SUM"},
+                           "reverseLayout": False, "showSubTotals": True,
+                           "totalSortField": "", "showGrandTotals": True,
+                           "reverseSubLayout": False, "subTotalsDimensions": []}},
+            "map": {"id": "", "level": "world"},
+            "modifyName": "gradient",
+        }
+
+    lines: list[str] = []
+    for cid, title, table_id, ctype, x_fields, y_fields in cfgs:
+        render = "custom" if ctype in ("rich-text", "indicator") else "antv"
+        x_json = json.dumps(x_fields, ensure_ascii=False).replace("'", "''")
+        y_json = json.dumps(y_fields, ensure_ascii=False).replace("'", "''")
+        attr_json = json.dumps(_chart_attr(ctype), ensure_ascii=False).replace("'", "''")
+        style_json = json.dumps(_chart_style(ctype), ensure_ascii=False).replace("'", "''")
+        lines.append(
+            f"INSERT INTO core_chart_view "
+            f"(id, title, scene_id, table_id, type, render, result_count, result_mode, "
+            f"x_axis, x_axis_ext, y_axis, y_axis_ext, ext_stack, ext_bubble, "
+            f"ext_label, ext_tooltip, custom_attr, custom_style, custom_filter, "
+            f"drill_fields, senior, create_by, create_time, update_time, snapshot, "
+            f"style_priority, chart_type, is_plugin, data_from, view_fields, "
+            f"refresh_view_enable, refresh_unit, refresh_time, linkage_active, jump_active, "
+            f"copy_from, copy_id) VALUES ("
+            f"{cid}, '{title}', {SCREEN_DV}, {table_id}, '{ctype}', "
+            f"'{render}', "
+            f"1000, 'all', '{x_json}'::jsonb, '[]'::jsonb, '{y_json}'::jsonb, '[]'::jsonb, "
+            f"'[]'::jsonb, '[]'::jsonb, "
+            f"'[]'::jsonb, '[]'::jsonb, "
+            f"'{attr_json}'::jsonb, '{style_json}'::jsonb, '{{}}'::jsonb, "
+            f"'[]'::jsonb, '{{}}'::jsonb, '1', {now_ms}, {now_ms}, NULL, "
+            f"'panel', 'private', false, 'dataset', '[]'::jsonb, "
+            f"false, 'minute', 5, false, false, NULL, NULL);"
+        )
+    return lines
+
+
+def build_screen_sql() -> str:
+    """Build PostgreSQL INSERT SQL for the demo big-screen (大屏)."""
+    now_ms = int(time.time() * 1000)
+    lines = []
+    lines.append("-- Demo big screen (大屏) seed for PyDataEase")
+    lines.append("BEGIN;")
+
+    # ── Cleanup existing screen demo data ──
+    lines.append("-- Cleanup existing screen demo data")
+    lines.append(f"DELETE FROM core_chart_view WHERE scene_id = {SCREEN_DV};")
+    lines.append(f"DELETE FROM data_visualization_info WHERE id IN ({SCREEN_FOLDER}, {SCREEN_DV});")
+
+    # ── Screen folder ──
+    lines.append("-- Screen folder")
+    lines.append(
+        f"INSERT INTO data_visualization_info (id, name, pid, org_id, level, node_type, "
+        f"type, canvas_style_data, component_data, mobile_layout, status, "
+        f"self_watermark_status, sort, create_time, create_by, update_time, update_by, "
+        f"remark, source, delete_flag, delete_time, delete_by, version) VALUES ("
+        f"{SCREEN_FOLDER}, '【官方示例】', NULL, 1720255172903497728, NULL, 'folder', "
+        f"'screen', NULL, NULL, false, 1, 0, 0, {now_ms}, '1', {now_ms}, '1', "
+        f"NULL, NULL, false, NULL, NULL, 3);"
+    )
+
+    # ── Screen leaf with dark-theme canvas style ──
+    screen_style = json.dumps({
+        "width": 1920, "height": 1080,
+        "refreshViewEnable": False, "refreshViewLoading": False,
+        "refreshUnit": "minute", "refreshTime": 5,
+        "refreshBrowserEnable": False, "refreshBrowserUnit": "minute", "refreshBrowserTime": 5,
+        "scale": 100, "scaleWidth": 100, "scaleHeight": 100,
+        "backgroundColorSelect": True, "backgroundImageEnable": False,
+        "backgroundType": "backgroundColor",
+        "openCommonStyle": True, "opacity": 1, "fontSize": 14,
+        "fontFamily": "PingFang",
+        "themeId": "10001",
+        "screenAdaptor": "widthFirst",
+        "color": "#ffffff",
+        "backgroundColor": "rgba(13,26,56,1)",
+    }, ensure_ascii=False)
+
+    components = _build_screen_components()
+    component_data = json.dumps(components, ensure_ascii=False)
+
+    lines.append("-- Screen leaf")
+    lines.append(
+        f"INSERT INTO data_visualization_info (id, name, pid, org_id, level, node_type, "
+        f"type, canvas_style_data, component_data, mobile_layout, status, "
+        f"self_watermark_status, sort, create_time, create_by, update_time, update_by, "
+        f"remark, source, delete_flag, delete_time, delete_by, version) VALUES ("
+        f"{SCREEN_DV}, '连锁茶饮销售大屏', {SCREEN_FOLDER}, 1720255172903497728, NULL, 'leaf', "
+        f"'screen', "
+        f"'{screen_style}'::jsonb, "
+        f"'{component_data}'::jsonb, "
+        f"false, 1, 0, 0, {now_ms}, '1', {now_ms}, '1', "
+        f"NULL, NULL, false, NULL, NULL, 3);"
+    )
+
+    # ── Screen chart views with full axis configs ──
+    lines.append("-- Screen chart views")
+    chart_configs = _build_screen_chart_configs(now_ms)
+    for sql_line in chart_configs:
+        lines.append(sql_line)
+
+    # ── Update sequences ──
+    lines.append("-- Update sequences above max screen ID")
+    max_screen_id = max(SCREEN_FOLDER, SCREEN_DV, max(SCREEN_CHART_IDS))
+    for seq, table in [
+        ("data_visualization_info_id_seq", "data_visualization_info"),
+        ("core_chart_view_id_seq", "core_chart_view"),
+    ]:
+        lines.append(
+            f"SELECT setval('{seq}', GREATEST((SELECT COALESCE(MAX(id), 0) FROM {table}) + 1, {max_screen_id} + 1));"
+        )
+
+    lines.append("COMMIT;")
+    return "\n".join(lines)
+
+
+def seed_screen():
+    """Seed the demo big-screen (大屏) into PostgreSQL."""
+    print("==> Seeding demo big-screen (大屏) ...")
+    screen_sql = build_screen_sql()
+    r = psql_file(screen_sql)
+    check_ok(r, "pg screen seed")
+
+    # Verify
+    queries = {
+        "data_visualization_info": f"id IN ({SCREEN_FOLDER}, {SCREEN_DV})",
+        "core_chart_view": f"scene_id = {SCREEN_DV}",
+    }
+    for table, where in queries.items():
+        r = psql(f"SELECT count(*) FROM {table} WHERE {where};")
+        out_lines = [ln.strip() for ln in r.stdout.strip().splitlines() if ln.strip() and ln.strip().isdigit()]
+        count = out_lines[-1] if out_lines else "?"
+        print(f"    {table}: {count} screen demo rows")
+
+    print("    Demo big-screen seeded successfully.")
+
+
 if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(description="PyDataEase Official Demo Data Seeder")
+    parser.add_argument("--screen-only", action="store_true",
+                        help="Only seed the demo big-screen (大屏), skip dashboard + MySQL")
+    parser.add_argument("--with-screen", action="store_true",
+                        help="Seed both dashboard and big-screen demo data")
+    args = parser.parse_args()
+
     print("=" * 60)
     print("PyDataEase Official Demo Data Seeder")
     print("=" * 60)
@@ -837,5 +1390,12 @@ if __name__ == "__main__":
                 print(f"ERROR: Container '{container}' is not running!", file=sys.stderr)
                 sys.exit(1)
 
-    seed_mysql()
-    seed_postgresql()
+    if args.screen_only:
+        # Only seed the big-screen, assumes dashboard data already exists
+        seed_screen()
+    else:
+        # Default: seed dashboard + MySQL
+        seed_mysql()
+        seed_postgresql()
+        if args.with_screen:
+            seed_screen()
