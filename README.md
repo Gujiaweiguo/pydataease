@@ -100,6 +100,49 @@ docker compose -f docker-compose.prod.yml up -d
 
 默认管理员账号：admin / DataEase@123456
 
+## Demo 数据
+
+项目提供种子脚本，一键生成演示看板和大屏数据，方便快速体验功能。
+
+### 前置条件
+
+1. PostgreSQL 已启动并完成迁移（`uv run alembic upgrade head`）
+2. MySQL 容器已启动（`docker start mysql8`），用于 demo 数据源
+
+### 使用方式
+
+```bash
+# 从项目根目录执行
+
+# 仅生成 demo 看板（仪表板 + MySQL 数据源 + 数据集）
+python3 scripts/seed_demo_data.py
+
+# 仅生成 demo 大屏（连锁茶饮销售大屏，深色主题，13 个组件）
+python3 scripts/seed_demo_data.py --screen-only
+
+# 同时生成看板和大屏
+python3 scripts/seed_demo_data.py --with-screen
+```
+
+脚本幂等，重复执行不会产生重复数据。
+
+### Demo 大屏预览
+
+连锁茶饮销售大屏（1920×1190，深色主题，自动刷新 5 分钟）：
+
+<p align="center">
+  <img src="big-screen-visual-polish.png" alt="Demo 大屏预览" width="800" />
+</p>
+
+组件包括：标题横幅（锁定不可拖拽）、4 个 KPI 指标卡、柱状图、折线图、饼图、环形图等。
+
+### 预览地址
+
+启动前后端服务后访问：
+
+- **看板**：`http://localhost:8080/#/panel/proxy?dvId=985192741891870720`
+- **大屏**：`http://localhost:8080/#/previewShow?dvId=995100000000000002`
+
 ## 项目结构
 
 ```
