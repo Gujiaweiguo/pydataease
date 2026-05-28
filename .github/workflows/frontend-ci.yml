@@ -42,7 +42,6 @@ jobs:
       - name: Run TypeScript checks
         working-directory: core/core-frontend
         run: npm run ts:check
-        continue-on-error: true  # pre-existing type errors; don't block PR
 
       - name: Run ESLint
         working-directory: core/core-frontend
