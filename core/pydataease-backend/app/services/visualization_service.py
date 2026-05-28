@@ -627,9 +627,16 @@ class VisualizationService:
         self.store_repo = StoreRepository(session)
         self.chart_repo = ChartRepository(session)
 
-    async def tree(self, _: VisualizationTreeRequest) -> object:
+    async def tree(self, payload: VisualizationTreeRequest) -> object:
         items = await self.visualization_repo.list_all_ordered()
         visible = [item for item in items if not item.delete_flag]
+
+        type_filter = self._busi_flag_to_type_filter(
+            payload.busi_flag if hasattr(payload, "busi_flag") else None
+        )
+        if type_filter:
+            visible = [item for item in visible if item.type in type_filter]
+
         nodes = _build_tree(visible)
 
         def _node_to_dict(node: VisualizationTreeNodeResponse) -> dict[str, object]:
@@ -1312,6 +1319,17 @@ class VisualizationService:
         return payload
 
     @classmethod
+    def _busi_flag_to_type_filter(cls, busi_flag: str | None) -> tuple[str, ...] | None:
+        if not busi_flag:
+            return None
+        normalized = busi_flag.lower()
+        if normalized in {"dashboard", "dashboard-copy", "panel"}:
+            return ("panel",)
+        if normalized in {"datav", "datav-copy", "screen"}:
+            return ("screen",)
+        return None
+
+    @classmethod
     def _interactive_tree_key(cls, busi_flag: str) -> str | None:
         normalized = busi_flag.lower()
         if normalized in {"dashboard", "dashboard-copy", "panel"}:
@@ -1377,6 +1395,12 @@ class VisualizationService:
         payload = VisualizationResponse.model_validate(item).model_dump(by_alias=True)
         payload["id"] = _sid(payload.get("id"))
         payload["pid"] = _sid(payload.get("pid"))
+        # Frontend expects 'dashboard'/'dataV' but DB stores 'panel'/'screen'
+        viz_type = payload.get("type")
+        if viz_type == "panel":
+            payload["type"] = "dashboard"
+        elif viz_type == "screen":
+            payload["type"] = "dataV"
         component_data = payload.get("componentData")
         if isinstance(component_data, dict):
             payload["componentData"] = []

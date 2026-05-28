@@ -2,6 +2,7 @@
 import { dvMainStoreWithOut } from '@/store/modules/data-visualization/dvMain'
 import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import DePreview from '@/components/data-visualization/canvas/DePreview.vue'
+import DvPreview from '@/views/data-visualization/DvPreview.vue'
 import router from '@/router'
 import { useEmitt } from '@/hooks/web/useEmitt'
 import { initCanvasData, onInitReady } from '@/utils/canvasUtils'

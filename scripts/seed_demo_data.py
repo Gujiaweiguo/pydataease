@@ -486,7 +486,7 @@ def build_pg_sql() -> str:
         f"self_watermark_status, sort, create_time, create_by, update_time, update_by, "
         f"remark, source, delete_flag, delete_time, delete_by, version) VALUES ("
         f"{VIS_FOLDER}, '【官方示例】', NULL, 1720255172903497728, NULL, 'folder', "
-        f"'dashboard', NULL, NULL, false, 1, 0, 0, {now_ms}, '1', {now_ms}, '1', "
+        f"'panel', NULL, NULL, false, 1, 0, 0, {now_ms}, '1', {now_ms}, '1', "
         f"NULL, NULL, false, NULL, NULL, 3);"
     )
 
@@ -516,7 +516,7 @@ def build_pg_sql() -> str:
         f"self_watermark_status, sort, create_time, create_by, update_time, update_by, "
         f"remark, source, delete_flag, delete_time, delete_by, version) VALUES ("
         f"{VIS_DASH}, '连锁茶饮销售看板', {VIS_FOLDER}, 1720255172903497728, NULL, 'leaf', "
-        f"'dashboard', "
+        f"'panel', "
         f"'{dashboard_style}'::jsonb, "
         f"'{component_data}'::jsonb, "
         f"false, 1, 0, 0, {now_ms}, '1', {now_ms}, '1', "
