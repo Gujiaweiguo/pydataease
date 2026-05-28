@@ -825,6 +825,8 @@ def seed_postgresql():
 # ── Demo Big Screen (大屏) IDs ──────────────────────────────────────
 SCREEN_FOLDER = 995100000000000001  # data_visualization_info folder for screens
 SCREEN_DV = 995100000000000002      # data_visualization_info 大屏 leaf
+TEMPLATE_ID = "995200000000000001"
+TEMPLATE_CATEGORY_ID = "995200000000000010"
 BANNER_H = 80
 # Screen chart view IDs — unique from dashboard charts
 SCREEN_CHART_IDS = [
@@ -996,7 +998,7 @@ _COUNT_FIELD = _quota_field(
 _COUNT_FIELD["columnIndex"] = 999
 
 
-def _build_screen_chart_configs(now_ms: int) -> list[str]:
+def _build_screen_chart_configs(now_ms: int) -> tuple[list[str], str]:
     DS = DS_ID
     DT_ORDER = DS_TABLE_ORDER
     DT_MAT = DS_TABLE_MAT
@@ -1269,6 +1271,7 @@ def _build_screen_chart_configs(now_ms: int) -> list[str]:
         }
 
     lines: list[str] = []
+    dynamic_entries: list[str] = []
     for cid, title, table_id, ctype, x_fields, y_fields in cfgs:
         render = "custom" if ctype in ("rich-text", "indicator") else "antv"
         x_json = json.dumps(x_fields, ensure_ascii=False).replace("'", "''")
@@ -1294,7 +1297,25 @@ def _build_screen_chart_configs(now_ms: int) -> list[str]:
             f"'panel', 'private', false, 'dataset', '[]'::jsonb, "
             f"false, 'minute', 5, false, false, NULL, NULL);"
         )
-    return lines
+
+        dynamic_entries.append(
+            f'"{cid}": {{'
+            f'"id": "{cid}", "title": "{title}", "sceneId": "{SCREEN_DV}", '
+            f'"tableId": "{table_id}", "type": "{ctype}", "render": "{render}", '
+            f'"resultCount": 1000, "resultMode": "all", '
+            f'"xAxis": {x_json}, "xAxisExt": [], "yAxis": {y_json}, "yAxisExt": [], '
+            f'"extStack": [], "extBubble": [], "extLabel": [], "extTooltip": [], '
+            f'"customAttr": {attr_json}, "customStyle": {style_json}, '
+            f'"customFilter": {{}}, "drillFields": [], "senior": {{}}, '
+            f'"createBy": "1", "createTime": {now_ms}, "updateTime": {now_ms}, '
+            f'"snapshot": null, "stylePriority": "panel", "chartType": "private", '
+            f'"isPlugin": false, "dataFrom": "dataset", "viewFields": [], '
+            f'"refreshViewEnable": false, "refreshUnit": "minute", "refreshTime": 5, '
+            f'"linkageActive": false, "jumpActive": false'
+            f'}}'
+        )
+
+    return lines, '{' + ','.join(dynamic_entries) + '}'
 
 
 def build_screen_sql() -> str:
@@ -1357,9 +1378,35 @@ def build_screen_sql() -> str:
 
     # ── Screen chart views with full axis configs ──
     lines.append("-- Screen chart views")
-    chart_configs = _build_screen_chart_configs(now_ms)
+    chart_configs, template_dynamic_data = _build_screen_chart_configs(now_ms)
     for sql_line in chart_configs:
         lines.append(sql_line)
+
+    # ── Seed template ──
+    lines.append("-- Seed big-screen template into visualization_template")
+    lines.append(f"DELETE FROM visualization_template_category_map WHERE template_id = '{TEMPLATE_ID}';")
+    lines.append(f"DELETE FROM visualization_template WHERE id = '{TEMPLATE_ID}';")
+    lines.append(f"DELETE FROM visualization_template_category WHERE id = '{TEMPLATE_CATEGORY_ID}';")
+
+    lines.append(f"INSERT INTO visualization_template_category "
+                 f"(id, name, pid, level, dv_type, node_type, create_by, create_time, snapshot, template_type) "
+                 f"VALUES ('{TEMPLATE_CATEGORY_ID}', '大屏模板', '0', 0, 'dataV', 'folder', '1', {now_ms}, '', 'system');")
+
+    lines.append(
+        f"INSERT INTO visualization_template "
+        f"(id, name, pid, level, dv_type, node_type, create_by, create_time, "
+        f"snapshot, template_type, template_style, template_data, dynamic_data) VALUES ("
+        f"'{TEMPLATE_ID}', '连锁茶饮销售大屏', '{TEMPLATE_CATEGORY_ID}', 0, 'dataV', 'template', "
+        f"'1', {now_ms}, '', 'self', "
+        f"'{screen_style}'::jsonb, "
+        f"'{component_data}'::jsonb, "
+        f"'{template_dynamic_data}'::jsonb);"
+    )
+
+    lines.append(
+        f"INSERT INTO visualization_template_category_map (id, category_id, template_id) "
+        f"VALUES ('{TEMPLATE_ID}', '{TEMPLATE_CATEGORY_ID}', '{TEMPLATE_ID}');"
+    )
 
     # ── Update sequences ──
     lines.append("-- Update sequences above max screen ID")
