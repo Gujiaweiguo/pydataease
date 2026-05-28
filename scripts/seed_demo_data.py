@@ -782,6 +782,33 @@ def _import_v26_chart_views_and_dashboard():
         return
     component_data = values_str[pos:cd_end + 1]
 
+    # Clean up outerImage references to missing static resources
+    try:
+        cd_obj = json.loads(component_data)
+        cleaned = 0
+        for comp in cd_obj:
+            bg = comp.get("commonBackground")
+            if isinstance(bg, dict) and "/static-resource/" in str(bg.get("outerImage", "")):
+                del bg["outerImage"]
+                bg["backgroundType"] = "innerImage"
+                cleaned += 1
+        if cleaned:
+            component_data = json.dumps(cd_obj, ensure_ascii=False)
+            print(f"    Cleaned {cleaned} missing outerImage refs from dashboard components")
+    except (json.JSONDecodeError, Exception) as e:
+        print(f"    WARNING: Could not clean outerImage refs: {e}")
+
+    try:
+        csd_obj = json.loads(canvas_style_data)
+        bg = csd_obj.get("background", "")
+        if "/static-resource/" in str(bg):
+            del csd_obj["background"]
+            csd_obj["backgroundType"] = "color"
+            canvas_style_data = json.dumps(csd_obj, ensure_ascii=False)
+            print("    Cleaned missing canvas background image ref")
+    except (json.JSONDecodeError, Exception) as e:
+        print(f"    WARNING: Could not clean canvas background ref: {e}")
+
     update_sql = (
         "BEGIN;\n"
         "UPDATE data_visualization_info\n"
