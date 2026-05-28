@@ -6,9 +6,11 @@ vi.mock('@/config/axios', () => ({}))
 vi.mock('@/views/chart/components/editor/util/chart', () => ({
   COLOR_PANEL: ['#000', '#fff', '#ff0000', '#00ff00'],
   DEFAULT_COLOR_CASE: {
-    value: 'default',
-    colors: ['#3370ff', '#04b49c', '#5470c6'],
-    alpha: 100
+    color: {
+      value: 'default',
+      colors: ['#3370ff', '#04b49c', '#5470c6'],
+      alpha: 100
+    }
   },
   COLOR_CASES: [
     { name: 'Default', value: 'default', colors: ['#3370ff', '#04b49c', '#5470c6'] },

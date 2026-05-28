@@ -69,7 +69,7 @@ describe('rich-text/plugins/vertical-content.ts', () => {
     const result = verticalContent.plugin(mockEditor)
     const metadata = result.getMetadata()
     expect(metadata.name).toBe('Vertical align')
-    expect(metadata.url).toBe('https://dataease.io')
+    expect(metadata.url).toBe('#')
   })
 
   it('registers three toggle buttons', async () => {

@@ -17,7 +17,7 @@ export default defineConfig({
     environment: 'happy-dom',
     css: false,
     include: ['src/**/*.{test,spec}.{ts,tsx}', 'tests/**/*.{test,spec}.{ts,tsx}'],
-    exclude: ['**/DvToolbar.test.ts'],
+    exclude: ['**/DvToolbar.test.ts', 'tests/e2e/**'],
     setupFiles: ['src/test-setup.ts'],
     coverage: {
       provider: 'v8',

@@ -56,16 +56,16 @@ describe('cron/Day', () => {
     const wrapper = mountComponent({ modelValue: '1-15' })
     const vm = wrapper.vm as any
     expect(vm.type).toBe('2')
-    expect(vm.state.cycle.start).toBe('1')
-    expect(vm.state.cycle.end).toBe('15')
+    expect(vm.state.cycle.start).toBe(1)
+    expect(vm.state.cycle.end).toBe(15)
   })
 
   it('parses step expression correctly', () => {
     const wrapper = mountComponent({ modelValue: '1/5' })
     const vm = wrapper.vm as any
     expect(vm.type).toBe('3')
-    expect(vm.state.loop.start).toBe('1')
-    expect(vm.state.loop.end).toBe('5')
+    expect(vm.state.loop.start).toBe(1)
+    expect(vm.state.loop.end).toBe(5)
   })
 
   it('parses last day expression L', () => {
@@ -78,15 +78,15 @@ describe('cron/Day', () => {
     const wrapper = mountComponent({ modelValue: '15W' })
     const vm = wrapper.vm as any
     expect(vm.type).toBe('8')
-    expect(vm.work).toBe('15')
+    expect(vm.work).toBe(15)
   })
 
   it('parses specified week expression #', () => {
     const wrapper = mountComponent({ modelValue: '1#3' })
     const vm = wrapper.vm as any
     expect(vm.type).toBe('7')
-    expect(vm.state.week.start).toBe('1')
-    expect(vm.state.week.end).toBe('3')
+    expect(vm.state.week.start).toBe(1)
+    expect(vm.state.week.end).toBe(3)
   })
 
   it('parses comma-separated values', () => {

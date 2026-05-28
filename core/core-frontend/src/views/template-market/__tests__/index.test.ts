@@ -62,6 +62,10 @@ vi.mock('element-resize-detector', () => ({
   default: () => ({ listenTo: vi.fn() })
 }))
 
+vi.mock('@/utils/imgUtils', () => ({
+  imgUrlTrans: (url: string) => url
+}))
+
 vi.mock('@/components/plugin', () => ({
   XpackComponent: { template: '<div />' }
 }))
@@ -89,7 +93,10 @@ describe('template-market index', () => {
     ElSelect: { template: '<div><slot /></div>', props: ['modelValue'] },
     ElOption: { template: '<div />' },
     ElScrollbar: { template: '<div><slot /></div>' },
-    ElTree: { template: '<div><slot /></div>' },
+    ElTree: {
+      template: '<div />',
+      props: ['data', 'props', 'nodeKey', 'defaultExpandAll', 'highlightCurrent', 'currentNodeKey']
+    },
     ElIcon: { template: '<i><slot /></i>' }
   }
 

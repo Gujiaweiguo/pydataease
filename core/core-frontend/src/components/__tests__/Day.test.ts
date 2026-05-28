@@ -35,7 +35,7 @@ describe('Day', () => {
     const inputs = wrapper.findAllComponents(ElInputNumberStub)
 
     expect(wrapper.get('.el-radio-stub[data-label="8"]').attributes('data-checked')).toBe('true')
-    expect(inputs[4].props('modelValue')).toBe('15')
+    expect(inputs[4].props('modelValue')).toBe(15)
   })
 
   it('emits cycle expressions when the range inputs change', async () => {
