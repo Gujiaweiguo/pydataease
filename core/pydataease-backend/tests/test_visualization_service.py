@@ -191,3 +191,27 @@ async def test_tree_returns_empty_root_when_no_visualizations_exist() -> None:
         "extraFlag1": 1,
         "children": [],
     }]
+
+
+def test_enrich_component_data_screen_type_uses_dark_background() -> None:
+    enriched = _enrich_component_data(
+        [{"id": "sc-1", "component": "UserView", "innerType": "bar"}],
+        "screen",
+    )
+    component = enriched[0]
+    assert component["commonBackground"]["backgroundColor"] == "rgba(19,28,66,1)"
+
+
+def test_interactive_tree_key_classifies_screen_aliases() -> None:
+    assert VisualizationService._interactive_tree_key("screen") == "dataV"
+    assert VisualizationService._interactive_tree_key("datav") == "dataV"
+    assert VisualizationService._interactive_tree_key("datav-copy") == "dataV"
+    assert VisualizationService._interactive_tree_key("dashboard") == "dashboard"
+    assert VisualizationService._interactive_tree_key("panel") == "dashboard"
+    assert VisualizationService._interactive_tree_key("unknown") is None
+
+
+def test_normalize_store_resource_type_screen() -> None:
+    assert VisualizationService._normalize_store_resource_type(None, "datav") == 2
+    assert VisualizationService._normalize_store_resource_type(None, "screen") == 2
+    assert VisualizationService._normalize_store_resource_type(None, "dashboard") == 1
