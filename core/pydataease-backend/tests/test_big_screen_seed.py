@@ -132,7 +132,7 @@ async def test_big_screen_seed_dark_theme_canvas(db_session):
     style = _parse_jsonb(result.scalar())
 
     assert style["width"] == 1920
-    assert style["height"] == 1160
+    assert style["height"] == 1190
     assert style["backgroundColor"] == "rgba(13,26,56,1)"
     assert style["backgroundColorSelect"] is True
     assert style["screenAdaptor"] == "widthFirst"
@@ -181,6 +181,22 @@ async def test_big_screen_seed_banner_is_rich_text(db_session):
     assert row is not None, "Banner chart view should exist"
     assert row.type == "rich-text"
     assert row.render == "custom"
+
+
+@skip_no_db
+@pytest.mark.asyncio
+async def test_big_screen_seed_banner_has_board_decoration(db_session):
+    from sqlalchemy import text
+
+    result = await db_session.execute(
+        text(f"SELECT component_data FROM data_visualization_info WHERE id = {SCREEN_DV}")
+    )
+    components = _parse_jsonb(result.scalar())
+    banner = components[0]
+    bg = banner["commonBackground"]
+    assert bg["backgroundImageEnable"] is True, "Banner board decoration should be enabled"
+    assert bg["backgroundType"] == "innerImage"
+    assert "board_" in bg["innerImage"], f"Banner should use board SVG, got {bg['innerImage']}"
 
 
 @skip_no_db

@@ -887,15 +887,15 @@ def _build_screen_components() -> list[dict[str, object]]:
         "commonBackground": {
             "backgroundColorSelect": True,
             "backdropFilterEnable": False,
-            "backgroundImageEnable": False,
+            "backgroundImageEnable": True,
             "backgroundType": "innerImage",
-            "innerImage": "board/board_1.svg",
+            "innerImage": "board/board_3.svg",
             "outerImage": None,
             "innerPadding": {"mode": "uniform", "top": 8},
             "borderRadius": {"mode": "uniform", "topLeft": 0},
             "backdropFilter": 4,
             "backgroundColor": "rgba(13,26,56,1)",
-            "innerImageColor": "#1094E5",
+            "innerImageColor": "rgba(16,148,229,0.6)",
             "borderWidth": 0,
             "borderStyle": "solid",
             "borderColor": "rgba(13,26,56,1)",
@@ -912,9 +912,9 @@ def _build_screen_components() -> list[dict[str, object]]:
         (10,   490, 470, 300),
         (490,  490, 470, 300),
         (970,  490, 940, 300),
-        (10,   800, 630, 270),
-        (650,  800, 630, 270),
-        (1290, 800, 620, 270),
+        (10,   800, 630, 300),
+        (650,  800, 630, 300),
+        (1290, 800, 620, 300),
     ]
 
     for i, (x, y, w, h) in enumerate(chart_positions):
@@ -1323,7 +1323,7 @@ def build_screen_sql() -> str:
 
     # ── Screen leaf with dark-theme canvas style ──
     screen_style = json.dumps({
-        "width": 1920, "height": 1080 + BANNER_H,
+        "width": 1920, "height": 1080 + BANNER_H + 30,
         "refreshViewEnable": True, "refreshViewLoading": True,
         "refreshUnit": "minute", "refreshTime": 5,
         "refreshBrowserEnable": False, "refreshBrowserUnit": "minute", "refreshBrowserTime": 5,
