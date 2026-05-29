@@ -358,25 +358,25 @@ import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'elem
 import { computed, onMounted, reactive, ref } from 'vue'
 
 interface DatasetOption {
-  id: number
+  id: string
   name: string
 }
 
 interface TargetOption {
-  id: number
+  id: string
   name: string
 }
 
 interface FieldOption {
-  id: number
+  id: string
   label: string
 }
 
 interface RowRule {
-  id: number
-  datasetId: number
+  id: string
+  datasetId: string
   targetType: string
-  targetId: number
+  targetId: string
   filterSql: string
   enabled: boolean
   createTime?: number
@@ -384,11 +384,11 @@ interface RowRule {
 }
 
 interface ColumnRule {
-  id: number
-  datasetId: number
-  fieldId: number
+  id: string
+  datasetId: string
+  fieldId: string
   targetType: string
-  targetId: number
+  targetId: string
   action: string
   enabled: boolean
   createTime?: number
@@ -396,9 +396,9 @@ interface ColumnRule {
 }
 
 interface WhitelistEntry {
-  id: number
-  userId: number
-  datasetId: number
+  id: string
+  userId: string
+  datasetId: string
   scope: string
   createTime?: number
 }
@@ -443,7 +443,7 @@ const whitelistScopeLabelMap = {
 
 const pageLoading = ref(false)
 const dialogLoading = ref(false)
-const selectedDatasetId = ref<number>()
+const selectedDatasetId = ref<string>()
 const datasetOptions = ref<DatasetOption[]>([])
 const rowRules = ref<RowRule[]>([])
 const columnRules = ref<ColumnRule[]>([])
@@ -463,24 +463,24 @@ const columnFormRef = ref<FormInstance>()
 const whitelistFormRef = ref<FormInstance>()
 
 const rowForm = reactive({
-  id: undefined as number | undefined,
+  id: undefined as string | undefined,
   targetType: 'user',
-  targetId: undefined as number | undefined,
+  targetId: undefined as string | undefined,
   filterSql: '',
   enabled: true
 })
 
 const columnForm = reactive({
-  id: undefined as number | undefined,
-  fieldId: undefined as number | undefined,
+  id: undefined as string | undefined,
+  fieldId: undefined as string | undefined,
   targetType: 'user',
-  targetId: undefined as number | undefined,
+  targetId: undefined as string | undefined,
   action: 'disable',
   enabled: true
 })
 
 const whitelistForm = reactive({
-  userId: undefined as number | undefined,
+  userId: undefined as string | undefined,
   scope: 'both'
 })
 
@@ -522,8 +522,8 @@ const getTargetOptions = (targetType: string): TargetOption[] => {
     return roleOptions.value
   }
   if (targetType === 'org') {
-    const oid = Number(userStore.getOid)
-    return oid ? [{ id: oid, name: `当前组织 #${oid}` }] : []
+    const oid = userStore.getOid
+    return oid ? [{ id: String(oid), name: `当前组织 #${oid}` }] : []
   }
   return userOptions.value
 }
@@ -534,7 +534,7 @@ const flattenDatasetTree = (tree: Array<Record<string, any>>): DatasetOption[] =
     nodes.forEach(node => {
       const children = Array.isArray(node.children) ? node.children : []
       if (node.nodeType === 'dataset' || node.leaf) {
-        result.push({ id: Number(node.id), name: String(node.name || node.id) })
+        result.push({ id: String(node.id), name: String(node.name || node.id) })
       }
       if (children.length) {
         walk(children)
@@ -558,15 +558,15 @@ const loadAllData = async () => {
     datasetOptions.value = flattenDatasetTree(
       (datasetRes as unknown as Array<Record<string, any>>) || []
     )
-    roleOptions.value = (roleRes.data || []).map(item => ({ id: Number(item.id), name: item.name }))
+    roleOptions.value = (roleRes.data || []).map(item => ({ id: String(item.id), name: item.name }))
     userOptions.value = (userRes.data || []).map(item => ({
-      id: Number(item.id),
+      id: String(item.id),
       name: item.name || item.account || `用户 #${item.id}`
     }))
     whitelistEntries.value = (whitelistRes.data || []).map(item => ({
-      id: Number(item.id),
-      userId: Number(item.user_id ?? item.userId),
-      datasetId: Number(item.dataset_id ?? item.datasetId),
+      id: String(item.id),
+      userId: String(item.user_id ?? item.userId),
+      datasetId: String(item.dataset_id ?? item.datasetId),
       scope: item.scope,
       createTime: item.create_time ?? item.createTime
     }))
@@ -583,7 +583,7 @@ const loadAllData = async () => {
   }
 }
 
-const loadDatasetPermissionData = async (datasetId: number) => {
+const loadDatasetPermissionData = async (datasetId: string | number) => {
   const [rowRes, columnRes, fieldRes] = await Promise.all([
     listRowPermissionApi({ datasetId }),
     listColumnPermissionApi({ datasetId }),
@@ -591,10 +591,10 @@ const loadDatasetPermissionData = async (datasetId: number) => {
   ])
 
   rowRules.value = (rowRes.data || []).map(item => ({
-    id: Number(item.id),
-    datasetId: Number(item.dataset_id ?? item.datasetId),
+    id: String(item.id),
+    datasetId: String(item.dataset_id ?? item.datasetId),
     targetType: item.target_type ?? item.targetType,
-    targetId: Number(item.target_id ?? item.targetId),
+    targetId: String(item.target_id ?? item.targetId),
     filterSql: item.filter_sql ?? item.filterSql,
     enabled: Boolean(item.enabled),
     createTime: item.create_time ?? item.createTime,
@@ -602,11 +602,11 @@ const loadDatasetPermissionData = async (datasetId: number) => {
   }))
 
   columnRules.value = (columnRes.data || []).map(item => ({
-    id: Number(item.id),
-    datasetId: Number(item.dataset_id ?? item.datasetId),
-    fieldId: Number(item.field_id ?? item.fieldId),
+    id: String(item.id),
+    datasetId: String(item.dataset_id ?? item.datasetId),
+    fieldId: String(item.field_id ?? item.fieldId),
     targetType: item.target_type ?? item.targetType,
-    targetId: Number(item.target_id ?? item.targetId),
+    targetId: String(item.target_id ?? item.targetId),
     action: item.action,
     enabled: Boolean(item.enabled),
     createTime: item.create_time ?? item.createTime,
@@ -614,18 +614,18 @@ const loadDatasetPermissionData = async (datasetId: number) => {
   }))
 
   fieldOptions.value = ((fieldRes?.data || []) as Array<Record<string, any>>).map(field => ({
-    id: Number(field.id),
+    id: String(field.id),
     label: String(
-      field.dataeaseName ||
-        field.dataease_name ||
-        field.name ||
+      field.name ||
         field.originName ||
-        field.origin_name
+        field.origin_name ||
+        field.dataeaseName ||
+        field.dataease_name
     )
   }))
 }
 
-const handleDatasetChange = async (datasetId: number) => {
+const handleDatasetChange = async (datasetId: string | number) => {
   if (!datasetId) {
     rowRules.value = []
     columnRules.value = []
@@ -712,7 +712,7 @@ const submitRowRule = async () => {
       await createRowPermissionApi({
         datasetId: selectedDatasetId.value,
         targetType: rowForm.targetType,
-        targetId: Number(rowForm.targetId),
+        targetId: rowForm.targetId as string,
         filterSql: rowForm.filterSql.trim(),
         enabled: rowForm.enabled
       })
@@ -740,9 +740,9 @@ const submitColumnRule = async () => {
     } else {
       await createColumnPermissionApi({
         datasetId: selectedDatasetId.value,
-        fieldId: Number(columnForm.fieldId),
+        fieldId: columnForm.fieldId as string,
         targetType: columnForm.targetType,
-        targetId: Number(columnForm.targetId),
+        targetId: columnForm.targetId as string,
         action: columnForm.action,
         enabled: columnForm.enabled
       })
@@ -761,7 +761,7 @@ const submitWhitelist = async () => {
   dialogLoading.value = true
   try {
     await createPermissionWhitelistApi({
-      userId: Number(whitelistForm.userId),
+      userId: whitelistForm.userId as string,
       datasetId: selectedDatasetId.value,
       scope: whitelistForm.scope
     })
@@ -769,9 +769,9 @@ const submitWhitelist = async () => {
     ElMessage.success('白名单保存成功')
     const whitelistRes = await listPermissionWhitelistApi()
     whitelistEntries.value = (whitelistRes.data || []).map(item => ({
-      id: Number(item.id),
-      userId: Number(item.user_id ?? item.userId),
-      datasetId: Number(item.dataset_id ?? item.datasetId),
+      id: String(item.id),
+      userId: String(item.user_id ?? item.userId),
+      datasetId: String(item.dataset_id ?? item.datasetId),
       scope: item.scope,
       createTime: item.create_time ?? item.createTime
     }))
@@ -827,8 +827,8 @@ const handleDeleteWhitelist = async (entry: WhitelistEntry) => {
   ElMessage.success('白名单已删除')
 }
 
-const resolveTargetName = (targetType: string, targetId: number) => {
-  const option = getTargetOptions(targetType).find(item => item.id === Number(targetId))
+const resolveTargetName = (targetType: string, targetId: string | number) => {
+  const option = getTargetOptions(targetType).find(item => item.id === String(targetId))
   if (option) {
     return option.name
   }
@@ -841,12 +841,12 @@ const resolveTargetName = (targetType: string, targetId: number) => {
   return `用户 #${targetId}`
 }
 
-const resolveFieldName = (fieldId: number) => {
-  return fieldOptions.value.find(item => item.id === Number(fieldId))?.label || `字段 #${fieldId}`
+const resolveFieldName = (fieldId: string | number) => {
+  return fieldOptions.value.find(item => item.id === String(fieldId))?.label || `字段 #${fieldId}`
 }
 
-const resolveUserName = (userId: number) => {
-  return userOptions.value.find(item => item.id === Number(userId))?.name || `用户 #${userId}`
+const resolveUserName = (userId: string | number) => {
+  return userOptions.value.find(item => item.id === String(userId))?.name || `用户 #${userId}`
 }
 
 const formatTimestamp = (value?: number) => {

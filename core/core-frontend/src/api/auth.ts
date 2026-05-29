@@ -1,37 +1,37 @@
 import request from '@/config/axios'
 
 export interface RowPermissionRulePayload {
-  datasetId: number
+  datasetId: number | string
   targetType: string
-  targetId: number
+  targetId: number | string
   filterSql: string
   enabled?: boolean
 }
 
 export interface RowPermissionRuleUpdatePayload {
-  id: number
+  id: number | string
   filterSql?: string
   enabled?: boolean
 }
 
 export interface ColumnPermissionRulePayload {
-  datasetId: number
-  fieldId: number
+  datasetId: number | string
+  fieldId: number | string
   targetType: string
-  targetId: number
+  targetId: number | string
   action: string
   enabled?: boolean
 }
 
 export interface ColumnPermissionRuleUpdatePayload {
-  id: number
+  id: number | string
   action?: string
   enabled?: boolean
 }
 
 export interface PermissionWhitelistPayload {
-  userId: number
-  datasetId: number
+  userId: number | string
+  datasetId: number | string
   scope: string
 }
 
@@ -58,7 +58,7 @@ export const menuTargetPerApi = data => request.post({ url: '/auth/menuTargetPer
 export const busiTargetPerSaveApi = data => request.post({ url: '/auth/saveBusiTargetPer', data })
 export const menuTargetPerSaveApi = data => request.post({ url: '/auth/saveMenuTargetPer', data })
 
-export const listRowPermissionApi = (data: { datasetId: number }) =>
+export const listRowPermissionApi = (data: { datasetId: number | string }) =>
   request.post({ url: '/rowPermission/list', data: { dataset_id: data.datasetId } })
 
 export const createRowPermissionApi = (data: RowPermissionRulePayload) =>
@@ -79,10 +79,10 @@ export const editRowPermissionApi = (data: RowPermissionRuleUpdatePayload) =>
     data: { id: data.id, filter_sql: data.filterSql, enabled: data.enabled }
   })
 
-export const deleteRowPermissionApi = (ruleId: number) =>
+export const deleteRowPermissionApi = (ruleId: number | string) =>
   request.post({ url: `/rowPermission/delete/${ruleId}`, data: {} })
 
-export const listColumnPermissionApi = (data: { datasetId: number }) =>
+export const listColumnPermissionApi = (data: { datasetId: number | string }) =>
   request.post({ url: '/columnPermission/list', data: { dataset_id: data.datasetId } })
 
 export const createColumnPermissionApi = (data: ColumnPermissionRulePayload) =>
@@ -104,7 +104,7 @@ export const editColumnPermissionApi = (data: ColumnPermissionRuleUpdatePayload)
     data: { id: data.id, action: data.action, enabled: data.enabled }
   })
 
-export const deleteColumnPermissionApi = (ruleId: number) =>
+export const deleteColumnPermissionApi = (ruleId: number | string) =>
   request.post({ url: `/columnPermission/delete/${ruleId}`, data: {} })
 
 export const listPermissionWhitelistApi = () =>
@@ -116,5 +116,5 @@ export const createPermissionWhitelistApi = (data: PermissionWhitelistPayload) =
     data: { user_id: data.userId, dataset_id: data.datasetId, scope: data.scope }
   })
 
-export const deletePermissionWhitelistApi = (whitelistId: number) =>
+export const deletePermissionWhitelistApi = (whitelistId: number | string) =>
   request.post({ url: `/permissionWhitelist/delete/${whitelistId}`, data: {} })

@@ -270,7 +270,7 @@ export const columnPermissionList = (page: number, limit: number, datasetId: num
 export const rowPermissionTargetObjList = (datasetId: number, type: string) =>
   request.get({ url: '/dataset/rowPermissions/authObjs/' + datasetId + '/' + type })
 
-export const listFieldByDatasetGroup = (datasetId: number) => {
+export const listFieldByDatasetGroup = (datasetId: number | string) => {
   return request.post({ url: '/datasetField/listByDatasetGroup/' + datasetId }).then(res => {
     originNameHandleBack(res?.data)
     return res
