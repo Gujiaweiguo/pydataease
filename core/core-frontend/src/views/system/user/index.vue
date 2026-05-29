@@ -175,7 +175,7 @@ interface UserItem {
   phone?: string
   enable: boolean
   roleIds: number[]
-  oid?: number
+  oid?: string | number
   orgName?: string
 }
 
@@ -186,14 +186,14 @@ interface OrgTreeNode {
 }
 
 interface OrgFlatItem {
-  id: number
+  id: string
   label: string
 }
 
 const loading = ref(false)
 const keyword = ref('')
 const enableFilter = ref<boolean | undefined>()
-const orgFilter = ref<number | undefined>()
+const orgFilter = ref<string | undefined>()
 const page = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
@@ -204,7 +204,7 @@ const dialogVisible = ref(false)
 const dialogMode = ref<'create' | 'edit'>('create')
 const formRef = ref<FormInstance>()
 const defaultPassword = ref('')
-const orgNameMap = ref<Record<number, string>>({})
+const orgNameMap = ref<Record<string, string>>({})
 const orgTreeData = ref<OrgTreeNode[]>([])
 
 const form = reactive({
@@ -214,7 +214,7 @@ const form = reactive({
   email: '',
   phone: '',
   roleIds: [] as number[],
-  oid: undefined as number | undefined,
+  oid: undefined as string | number | undefined,
   enable: true
 })
 
@@ -229,8 +229,8 @@ const orgFlatList = computed<OrgFlatItem[]>(() => {
   const items: OrgFlatItem[] = []
   const walk = (nodes: OrgTreeNode[], prefix = '') => {
     nodes.forEach(node => {
-      const nodeId = Number(node.id)
-      if (!Number.isNaN(nodeId) && nodeId !== 0) {
+      const nodeId = String(node.id)
+      if (nodeId && nodeId !== '0') {
         items.push({ id: nodeId, label: `${prefix}${node.name}` })
       }
       if (node.children?.length) {
@@ -243,11 +243,11 @@ const orgFlatList = computed<OrgFlatItem[]>(() => {
 })
 
 const buildOrgNameMap = (nodes: OrgTreeNode[]) => {
-  const map: Record<number, string> = {}
+  const map: Record<string, string> = {}
   const walk = (items: OrgTreeNode[]) => {
     items.forEach(node => {
-      const nodeId = Number(node.id)
-      if (!Number.isNaN(nodeId) && nodeId !== 0) {
+      const nodeId = String(node.id)
+      if (nodeId && nodeId !== '0') {
         map[nodeId] = node.name
       }
       if (node.children?.length) {
@@ -285,7 +285,7 @@ const loadUsers = async () => {
     })
     users.value = (res.data?.items || []).map(item => ({
       ...item,
-      orgName: item.oid ? orgNameMap.value[item.oid] || item.orgName || '-' : '-'
+      orgName: item.oid ? orgNameMap.value[String(item.oid)] || item.orgName || '-' : '-'
     }))
     total.value = res.data?.total || 0
   } finally {

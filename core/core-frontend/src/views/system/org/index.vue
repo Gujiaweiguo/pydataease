@@ -134,7 +134,7 @@ interface OrgTreeNode {
 
 interface OrgOptionItem {
   id: string
-  value: number
+  value: string
   label: string
 }
 
@@ -167,7 +167,7 @@ const treeProps = { label: 'name', children: 'children' }
 
 const createForm = reactive({
   name: '',
-  pid: 0
+  pid: '0'
 })
 
 const editForm = reactive({
@@ -211,7 +211,7 @@ const orgOptions = computed<OrgOptionItem[]>(() => {
       if (node.id !== ROOT_ORG_ID) {
         options.push({
           id: node.id,
-          value: Number(node.id),
+          value: String(node.id),
           label: `${prefix}${node.name}`
         })
       }
@@ -312,7 +312,7 @@ const loadTree = async () => {
 
 const resetCreateForm = () => {
   createForm.name = ''
-  createForm.pid = 0
+  createForm.pid = '0'
 }
 
 const closeCreateDialog = () => {
@@ -330,7 +330,7 @@ const closeEditDialog = () => {
 
 const openCreateDialog = (parent?: OrgTreeNode) => {
   resetCreateForm()
-  createForm.pid = parent && parent.id !== ROOT_ORG_ID ? Number(parent.id) : 0
+  createForm.pid = parent && parent.id !== ROOT_ORG_ID ? String(parent.id) : '0'
   createDialogVisible.value = true
 }
 
@@ -347,10 +347,10 @@ const submitCreate = async () => {
   await createFormRef.value?.validate()
   await saveApi({
     name: createForm.name.trim(),
-    pid: createForm.pid || 0
+    pid: createForm.pid || '0'
   })
   ElMessage.success('新增成功')
-  selectedOrgId.value = createForm.pid ? String(createForm.pid) : ROOT_ORG_ID
+  selectedOrgId.value = createForm.pid ? createForm.pid : ROOT_ORG_ID
   closeCreateDialog()
   await loadTree()
 }
@@ -358,7 +358,7 @@ const submitCreate = async () => {
 const submitEdit = async () => {
   await editFormRef.value?.validate()
   await updateApi({
-    id: Number(editForm.id),
+    id: editForm.id,
     name: editForm.name.trim()
   })
   ElMessage.success('编辑成功')
@@ -371,7 +371,7 @@ const handleDelete = async (data: OrgTreeNode) => {
     return
   }
 
-  const oid = Number(data.id)
+  const oid = data.id
   const hasChildren = await resourceExistApi(oid)
   if (hasChildren.data) {
     ElMessage.warning('当前组织存在下级组织，无法删除')

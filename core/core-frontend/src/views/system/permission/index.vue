@@ -285,7 +285,7 @@ interface PermissionResponse {
 }
 
 interface ResourceRow {
-  id: number
+  id: string
   name: string
   depth: number
   leaf: boolean
@@ -376,7 +376,7 @@ const resourceTrees = reactive<Record<ResourceFlag, ResourceNode[]>>({
   dataset: [],
   datasource: []
 })
-const resourceSelections = reactive<Record<ResourceFlag, Record<number, number | undefined>>>({
+const resourceSelections = reactive<Record<ResourceFlag, Record<string, number | undefined>>>({
   dashboard: {},
   screen: {},
   dataset: {},
@@ -523,10 +523,10 @@ const loadResourcePermissions = async (roleId: number) => {
 }
 
 const applyResourceSelections = (flag: ResourceFlag, response: PermissionResponse) => {
-  const nextSelections: Record<number, number | undefined> = {}
+  const nextSelections: Record<string, number | undefined> = {}
   ;(response.permissions || []).forEach(item => {
-    const resourceId = Number(item.id)
-    if (!Number.isNaN(resourceId) && Number(item.weight) > 0) {
+    const resourceId = String(item.id)
+    if (resourceId && Number(item.weight) > 0) {
       nextSelections[resourceId] = Number(item.weight)
     }
   })
@@ -552,7 +552,7 @@ const handleMenuSave = async () => {
     await menuPerSaveApi({
       id: menuCurrentRole.value.id,
       permissions: menuPermissionIds.map(id => ({
-        id: Number(id),
+        id: String(id),
         weight: 1,
         ext: 0
       }))
@@ -587,7 +587,7 @@ const handleResourceSave = async () => {
           permissions: Object.entries(resourceSelections[flag])
             .filter(([, weight]) => weight !== undefined && weight !== null)
             .map(([id, weight]) => ({
-              id: Number(id),
+              id: String(id),
               weight: Number(weight),
               ext: 0
             }))
@@ -619,7 +619,7 @@ const flattenResourceRows = (nodes: ResourceNode[], depth = 0): ResourceRow[] =>
     }
 
     rows.push({
-      id: Number(node.id),
+      id: String(node.id),
       name: node.name,
       depth,
       leaf: Boolean(node.leaf ?? !node.children?.length)
