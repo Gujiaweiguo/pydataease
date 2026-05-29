@@ -1,0 +1,74 @@
+Total messages: 201 (Errors: 36, Warnings: 101)
+Returning 36 messages for level "error"
+
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:8080/api/org/resourceExist/1780026824935377700:0
+[ERROR] Failed to load resource: the server responded with a status of 422 (Unprocessable Entity) @ http://localhost:8080/api/rowPermission/list:0
+[ERROR] Failed to load resource: the server responded with a status of 422 (Unprocessable Entity) @ http://localhost:8080/api/columnPermission/list:0
+[ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:8080/api/auth/busiPermission:0
+[ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:8080/api/auth/busiPermission:0
+[ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:8080/api/auth/busiPermission:0
+[ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:8080/api/auth/busiPermission:0
+[ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:8080/api/auth/busiPermission:0
+[ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:8080/api/auth/busiPermission:0
+[ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:8080/api/auth/busiPermission:0
+[ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:8080/api/auth/busiPermission:0
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:8080/api/org/page/edit:0
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:8080/api/org/resourceExist/1780027493676914200:0
+[ERROR] Failed to load resource: the server responded with a status of 422 (Unprocessable Entity) @ http://localhost:8080/api/rowPermission/list:0
+[ERROR] Failed to load resource: the server responded with a status of 422 (Unprocessable Entity) @ http://localhost:8080/api/columnPermission/list:0
+[ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:8080/api/auth/busiPermission:0
+[ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:8080/api/auth/busiPermission:0
+[ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:8080/api/auth/busiPermission:0
+[ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:8080/api/auth/busiPermission:0
+[ERROR] Failed to load resource: the server responded with a status of 422 (Unprocessable Entity) @ http://localhost:8080/api/rowPermission/list:0
+[ERROR] Failed to load resource: the server responded with a status of 422 (Unprocessable Entity) @ http://localhost:8080/api/columnPermission/list:0
+[ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:8080/api/auth/busiPermission:0
+[ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:8080/api/auth/busiPermission:0
+[ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:8080/api/auth/busiPermission:0
+[ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:8080/api/auth/busiPermission:0
+TypeError: Cannot read properties of undefined (reading 'data')
+    at http://localhost:8080/src/views/system/parameter/basic/BasicInfo.vue:123:36
+TypeError: Cannot read properties of undefined (reading 'data')
+    at handleDelete (http://localhost:8080/src/views/system/org/index.vue:126:23)
+TypeError: Cannot read properties of undefined (reading 'data')
+    at handleDelete (http://localhost:8080/src/views/system/org/index.vue:126:23)
+TypeError: Cannot read properties of undefined (reading 'data')
+    at loadDatasetPermissionData (http://localhost:8080/src/views/system/permission/RowColumnPermission.vue:202:32)
+    at async loadAllData (http://localhost:8080/src/views/system/permission/RowColumnPermission.vue:190:11)
+    at async http://localhost:8080/src/views/system/permission/RowColumnPermission.vue:446:7
+TypeError: Cannot read properties of undefined (reading 'data')
+    at http://localhost:8080/src/views/system/permission/index.vue:162:60
+    at Array.forEach (<anonymous>)
+    at loadRolePermissions (http://localhost:8080/src/views/system/permission/index.vue:161:24)
+    at async handleRoleSelect (http://localhost:8080/src/views/system/permission/index.vue:148:7)
+    at async loadRoles (http://localhost:8080/src/views/system/permission/index.vue:122:11)
+    at async http://localhost:8080/src/views/system/permission/index.vue:261:7
+TypeError: Cannot read properties of undefined (reading 'data')
+    at http://localhost:8080/src/views/system/permission/index.vue:162:60
+    at Array.forEach (<anonymous>)
+    at loadRolePermissions (http://localhost:8080/src/views/system/permission/index.vue:161:24)
+    at async handleRoleSelect (http://localhost:8080/src/views/system/permission/index.vue:148:7)
+TypeError: Cannot read properties of undefined (reading 'data')
+    at handleDelete (http://localhost:8080/src/views/system/org/index.vue:126:23)
+TypeError: Cannot read properties of undefined (reading 'data')
+    at loadDatasetPermissionData (http://localhost:8080/src/views/system/permission/RowColumnPermission.vue:202:32)
+    at async loadAllData (http://localhost:8080/src/views/system/permission/RowColumnPermission.vue:190:11)
+    at async http://localhost:8080/src/views/system/permission/RowColumnPermission.vue:446:7
+TypeError: Cannot read properties of undefined (reading 'data')
+    at http://localhost:8080/src/views/system/permission/index.vue:162:60
+    at Array.forEach (<anonymous>)
+    at loadRolePermissions (http://localhost:8080/src/views/system/permission/index.vue:161:24)
+    at async handleRoleSelect (http://localhost:8080/src/views/system/permission/index.vue:148:7)
+    at async loadRoles (http://localhost:8080/src/views/system/permission/index.vue:122:11)
+    at async http://localhost:8080/src/views/system/permission/index.vue:261:7
+TypeError: Cannot read properties of undefined (reading 'data')
+    at loadDatasetPermissionData (http://localhost:8080/src/views/system/permission/RowColumnPermission.vue:202:32)
+    at async loadAllData (http://localhost:8080/src/views/system/permission/RowColumnPermission.vue:190:11)
+    at async http://localhost:8080/src/views/system/permission/RowColumnPermission.vue:446:7
+TypeError: Cannot read properties of undefined (reading 'data')
+    at http://localhost:8080/src/views/system/permission/index.vue:162:60
+    at Array.forEach (<anonymous>)
+    at loadRolePermissions (http://localhost:8080/src/views/system/permission/index.vue:161:24)
+    at async handleRoleSelect (http://localhost:8080/src/views/system/permission/index.vue:148:7)
+    at async loadRoles (http://localhost:8080/src/views/system/permission/index.vue:122:11)
+    at async http://localhost:8080/src/views/system/permission/index.vue:261:7

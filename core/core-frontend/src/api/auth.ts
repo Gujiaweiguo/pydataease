@@ -59,7 +59,7 @@ export const busiTargetPerSaveApi = data => request.post({ url: '/auth/saveBusiT
 export const menuTargetPerSaveApi = data => request.post({ url: '/auth/saveMenuTargetPer', data })
 
 export const listRowPermissionApi = (data: { datasetId: number }) =>
-  request.post({ url: '/rowPermission/list', data })
+  request.post({ url: '/rowPermission/list', data: { dataset_id: data.datasetId } })
 
 export const createRowPermissionApi = (data: RowPermissionRulePayload) =>
   request.post({ url: '/rowPermission/create', data })
@@ -71,7 +71,7 @@ export const deleteRowPermissionApi = (ruleId: number) =>
   request.post({ url: `/rowPermission/delete/${ruleId}`, data: {} })
 
 export const listColumnPermissionApi = (data: { datasetId: number }) =>
-  request.post({ url: '/columnPermission/list', data })
+  request.post({ url: '/columnPermission/list', data: { dataset_id: data.datasetId } })
 
 export const createColumnPermissionApi = (data: ColumnPermissionRulePayload) =>
   request.post({ url: '/columnPermission/create', data })
