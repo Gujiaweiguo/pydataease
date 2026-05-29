@@ -1,5 +1,4 @@
 import base64
-import os
 
 from fastapi import APIRouter, Depends, UploadFile
 
@@ -45,7 +44,12 @@ async def get_default_login(service=Depends(get_sys_setting_service)):
 
 @router.get("/setting/authentication/status")
 async def get_authentication_status():
-    return False
+    """Return list of authentication methods and their enabled status.
+
+    The frontend iterates this to determine which login options to show.
+    Return empty list when no external auth is configured.
+    """
+    return []
 
 
 @router.get("/sysParameter/shareBase")
@@ -136,7 +140,14 @@ async def find_ai_target_url():
 
 @router.get("/sysParameter/sqlbot")
 async def get_sqlbot_settings():
-    return {"enable": False, "url": ""}
+    return {"id": None, "domain": "", "enabled": False, "valid": False}
+
+
+@router.post("/sysParameter/sqlbot")
+async def save_sqlbot_settings(payload: dict):
+    """Accept SQLBot settings. Stub — community edition does not persist SQLBot config."""
+    # Return the payload as-is so the frontend can use it in the current session.
+    return payload
 
 
 @router.post("/msg-center/count")
@@ -156,13 +167,13 @@ async def export_limit(_: TokenUser = Depends(get_current_user)) -> str:
 
 @router.get("/symmetricKey")
 async def symmetric_key() -> str:
-    """Generate and return a Base64-encoded 128-bit AES key for symmetric encryption.
+    """Return the fixed symmetric key used for engine config encryption/decryption.
 
     The frontend uses this key with AES-128-CBC (IV='0000000000000000') to decrypt
-    sensitive configuration fields in datasource responses.
+    sensitive configuration fields (e.g., engine configuration in /engine/getEngine).
     """
-    key = base64.b64encode(os.urandom(16)).decode("ascii")
-    return key
+    # Fixed key must match _SYMMETRIC_KEY in system_service.py
+    return base64.b64encode(b"DataEase@SymKey!").decode("ascii")
 
 
 @router.get("/engine/supportSetKey")

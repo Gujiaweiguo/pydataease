@@ -11,6 +11,9 @@ from app.services.system_service import SystemService, get_system_service
 router = APIRouter(tags=["system"])
 
 
+# ── Online Map ───────────────────────────────────────────────────────────────
+
+
 @router.get("/sysParameter/queryOnlineMap")
 async def query_online_map(
     _: TokenUser = Depends(get_current_user),
@@ -37,6 +40,77 @@ async def save_online_map(
     return await service.save_online_map(payload.key, payload.map_type, payload.security_code)
 
 
+# ── Basic Settings ───────────────────────────────────────────────────────────
+
+
+@router.get("/sysParameter/basic/query")
+async def query_basic_settings(
+    _: TokenUser = Depends(get_current_user),
+    service: SystemService = Depends(get_system_service),
+) -> list[dict[str, str]]:
+    return await service.query_basic_settings()
+
+
+@router.post("/sysParameter/basic/save")
+async def save_basic_settings(
+    items: list[dict[str, str]],
+    _: TokenUser = Depends(get_current_user),
+    service: SystemService = Depends(get_system_service),
+) -> None:
+    await service.save_basic_settings(items)
+
+
+# ── Engine ───────────────────────────────────────────────────────────────────
+
+
+@router.get("/engine/getEngine")
+async def get_engine(
+    _: TokenUser = Depends(get_current_user),
+    service: SystemService = Depends(get_system_service),
+) -> dict[str, object]:
+    return await service.get_engine()
+
+
+@router.post("/engine/save")
+async def save_engine(
+    payload: dict,
+    _: TokenUser = Depends(get_current_user),
+    service: SystemService = Depends(get_system_service),
+) -> None:
+    await service.save_engine(payload)
+
+
+@router.post("/engine/validate")
+async def validate_engine(
+    payload: dict,
+    _: TokenUser = Depends(get_current_user),
+    service: SystemService = Depends(get_system_service),
+) -> None:
+    await service.validate_engine(payload)
+
+
+@router.post("/engine/validate/{engine_id}")
+async def validate_engine_by_id(
+    engine_id: str,
+    _: TokenUser = Depends(get_current_user),
+    service: SystemService = Depends(get_system_service),
+) -> None:
+    await service.validate_engine_by_id(engine_id)
+
+
+# ── Map / Geo ────────────────────────────────────────────────────────────────
+
+
+@router.get("/map/worldTree")
+async def get_world_tree(
+    service: SystemService = Depends(get_system_service),
+) -> list[dict[str, object]]:
+    return await service.get_world_tree()
+
+
+# ── Misc ─────────────────────────────────────────────────────────────────────
+
+
 @router.get("/sysParameter/requestTimeOut")
 async def request_timeout(
     service: SystemService = Depends(get_system_service),
@@ -53,6 +127,14 @@ async def query_menus(
     return [vo.model_dump() for vo in tree]
 
 
+@router.get("/map/areaEntitys/{pcode}")
+async def get_area_entities(
+    pcode: str,
+    service: SystemService = Depends(get_system_service),
+) -> object:
+    return await service.get_area_entities(pcode)
+
+
 @router.get("/font/listFont")
 async def list_fonts(
     _: TokenUser = Depends(get_current_user),
@@ -67,34 +149,3 @@ async def default_font(
     service: SystemService = Depends(get_system_service),
 ) -> object:
     return await service.default_font()
-
-
-@router.get("/map/areaEntitys/{pcode}")
-async def get_area_entities(
-    pcode: str,
-    service: SystemService = Depends(get_system_service),
-) -> object:
-    return await service.get_area_entities(pcode)
-
-
-@router.get("/sysParameter/basic/query")
-async def query_basic_settings(
-    _: TokenUser = Depends(get_current_user),
-    service: SystemService = Depends(get_system_service),
-) -> list[dict[str, str]]:
-    return await service.query_basic_settings()
-
-
-@router.get("/engine/getEngine")
-async def get_engine(
-    _: TokenUser = Depends(get_current_user),
-    service: SystemService = Depends(get_system_service),
-) -> dict[str, object]:
-    return await service.get_engine()
-
-
-@router.get("/map/worldTree")
-async def get_world_tree(
-    service: SystemService = Depends(get_system_service),
-) -> list[dict[str, object]]:
-    return await service.get_world_tree()
