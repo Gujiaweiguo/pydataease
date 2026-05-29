@@ -3,9 +3,13 @@ from __future__ import annotations
 from typing import final
 
 from fastapi import Depends
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.dependencies.database import get_db
+from app.models.engine import CoreDeEngine
+from app.models.geo import MapGeo
+from app.models.sys_setting import CoreSysSetting
 from app.models.system import CoreMenu
 from app.repositories.system_repo import MenuRepository
 from app.schemas.system import MenuTreeNodeResponse, OnlineMapResponse
@@ -76,6 +80,48 @@ class SystemService:
 
     async def get_area_entities(self, pcode: str) -> list[object]:
         return []
+
+    async def query_basic_settings(self) -> list[dict[str, str]]:
+        """Return system settings as [{pkey, pval}, ...] for the frontend basic settings page."""
+        stmt = select(CoreSysSetting).order_by(CoreSysSetting.id.asc())
+        result = await self.session.execute(stmt)
+        rows = result.scalars().all()
+        return [
+            {"pkey": row.setting_key, "pval": row.setting_value or ""}
+            for row in rows
+        ]
+
+    async def get_engine(self) -> dict[str, object]:
+        """Return engine info for the frontend engine settings page."""
+        result = await self.session.execute(select(CoreDeEngine).limit(1))
+        engine = result.scalars().first()
+        if engine is None:
+            return {
+                "id": None,
+                "type": "engine_doris",
+                "configuration": "{}",
+                "enableDataFill": False,
+            }
+        return {
+            "id": engine.id,
+            "type": engine.type,
+            "configuration": engine.configuration,
+            "enableDataFill": bool(engine.enable_data_fill),
+        }
+
+    async def get_world_tree(self) -> list[dict[str, object]]:
+        """Return top-level map geo entries as a tree for the frontend map settings page."""
+        result = await self.session.execute(
+            select(MapGeo).order_by(MapGeo.id.asc())
+        )
+        geos = result.scalars().all()
+        return [
+            {
+                "code": geo.id,
+                "name": geo.name or geo.id,
+            }
+            for geo in geos
+        ]
 
 
 async def get_system_service(

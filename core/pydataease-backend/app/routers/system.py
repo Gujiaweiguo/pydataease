@@ -75,3 +75,26 @@ async def get_area_entities(
     service: SystemService = Depends(get_system_service),
 ) -> object:
     return await service.get_area_entities(pcode)
+
+
+@router.get("/sysParameter/basic/query")
+async def query_basic_settings(
+    _: TokenUser = Depends(get_current_user),
+    service: SystemService = Depends(get_system_service),
+) -> list[dict[str, str]]:
+    return await service.query_basic_settings()
+
+
+@router.get("/engine/getEngine")
+async def get_engine(
+    _: TokenUser = Depends(get_current_user),
+    service: SystemService = Depends(get_system_service),
+) -> dict[str, object]:
+    return await service.get_engine()
+
+
+@router.get("/map/worldTree")
+async def get_world_tree(
+    service: SystemService = Depends(get_system_service),
+) -> list[dict[str, object]]:
+    return await service.get_world_tree()
