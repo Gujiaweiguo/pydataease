@@ -9,73 +9,80 @@
           placeholder="搜索角色名称"
           style="width: 240px"
           @keyup.enter="loadRoles"
+          @clear="loadRoles"
         />
         <el-button @click="loadRoles">查询</el-button>
-        <el-button
-          v-if="activeTab === 'role'"
-          type="primary"
-          :loading="saveLoading"
-          :disabled="!currentRole || permissionReadonly"
-          @click="handleSave"
-        >
-          保存权限
-        </el-button>
       </div>
     </div>
 
     <el-tabs v-model="activeTab" class="permission-tabs">
-      <el-tab-pane label="角色资源权限" name="role">
-        <div class="page-layout">
-          <div class="page-body role-list-panel" v-loading="roleLoading">
-            <div class="panel-title">角色列表</div>
-            <el-table
-              :data="roles"
-              border
-              highlight-current-row
-              row-key="id"
-              @current-change="handleRoleSelect"
-            >
-              <el-table-column prop="name" label="角色名称" min-width="140" />
-              <el-table-column label="类型" width="110">
-                <template #default="scope">
-                  <el-tag :type="scope.row.type === 0 ? 'info' : 'success'">
-                    {{ scope.row.type === 0 ? '内置角色' : '自定义角色' }}
-                  </el-tag>
-                </template>
-              </el-table-column>
-              <el-table-column
-                prop="description"
-                label="描述"
-                min-width="180"
-                show-overflow-tooltip
-              />
-            </el-table>
-          </div>
-
-          <div class="page-body permission-panel" v-loading="treeLoading || permissionLoading">
-            <template v-if="currentRole">
-              <div class="detail-header">
-                <div>
-                  <div class="detail-title">
-                    <h3>{{ currentRole.name }}</h3>
-                    <el-tag :type="currentRole.type === 0 ? 'info' : 'success'">
-                      {{ currentRole.type === 0 ? '内置角色' : '自定义角色' }}
+      <el-tab-pane label="菜单权限" name="menu">
+        <div class="page-body page-layout" v-loading="roleLoading">
+          <aside class="role-sidebar">
+            <div class="sidebar-caption">角色列表</div>
+            <div class="sidebar-table-wrap">
+              <el-table
+                class="role-table"
+                :data="roles"
+                border
+                row-key="id"
+                highlight-current-row
+                :current-row-key="menuRoleId"
+                height="100%"
+                @current-change="handleMenuRoleSelect"
+              >
+                <el-table-column prop="name" label="角色名称" min-width="140" />
+                <el-table-column label="类型" width="110">
+                  <template #default="scope">
+                    <el-tag :type="scope.row.type === 0 ? 'info' : 'success'">
+                      {{ scope.row.type === 0 ? '内置角色' : '自定义角色' }}
                     </el-tag>
-                    <el-tag v-if="permissionReadonly" type="warning">只读模式</el-tag>
-                    <el-tag v-if="permissionRoot" type="success">超级管理员</el-tag>
+                  </template>
+                </el-table-column>
+                <el-table-column
+                  prop="description"
+                  label="描述"
+                  min-width="180"
+                  show-overflow-tooltip
+                />
+              </el-table>
+            </div>
+          </aside>
+
+          <section class="table-panel" v-loading="treeLoading || menuPermissionLoading">
+            <template v-if="menuCurrentRole">
+              <div class="table-panel-header">
+                <div class="panel-copy">
+                  <div class="panel-title-row">
+                    <h3>{{ menuCurrentRole.name }}</h3>
+                    <el-tag :type="menuCurrentRole.type === 0 ? 'info' : 'success'">
+                      {{ menuCurrentRole.type === 0 ? '内置角色' : '自定义角色' }}
+                    </el-tag>
+                    <el-tag v-if="menuPermissionReadonly" type="warning">只读模式</el-tag>
+                    <el-tag v-if="menuPermissionRoot" type="success">超级管理员</el-tag>
                   </div>
-                  <p>{{ currentRole.description || '为当前角色配置菜单可见性与资源权限级别。' }}</p>
+                  <p>{{ menuCurrentRole.description || '为当前角色配置菜单可见性。' }}</p>
                 </div>
-                <div class="status-tip">
-                  <span>{{
-                    permissionReadonly
-                      ? '当前账号仅可查看授权结果'
-                      : '勾选菜单并选择资源权限后保存生效'
-                  }}</span>
+                <div class="panel-header-actions">
+                  <div class="selected-summary">
+                    {{
+                      menuPermissionReadonly
+                        ? '当前账号仅可查看菜单授权结果'
+                        : '勾选菜单并保存后立即生效'
+                    }}
+                  </div>
+                  <el-button
+                    type="primary"
+                    :loading="menuSaveLoading"
+                    :disabled="!menuCurrentRole || menuPermissionReadonly"
+                    @click="handleMenuSave"
+                  >
+                    保存权限
+                  </el-button>
                 </div>
               </div>
 
-              <div class="permission-section">
+              <div class="permission-section menu-section">
                 <div class="section-header">
                   <div>
                     <h4>菜单权限</h4>
@@ -94,6 +101,78 @@
                     :check-on-click-node="false"
                     empty-text="暂无菜单数据"
                   />
+                </div>
+              </div>
+            </template>
+
+            <el-empty v-else description="请选择左侧角色配置菜单权限" />
+          </section>
+        </div>
+      </el-tab-pane>
+
+      <el-tab-pane label="资源权限" name="resource">
+        <div class="page-body page-layout" v-loading="roleLoading">
+          <aside class="role-sidebar">
+            <div class="sidebar-caption">角色列表</div>
+            <div class="sidebar-table-wrap">
+              <el-table
+                class="role-table"
+                :data="roles"
+                border
+                row-key="id"
+                highlight-current-row
+                :current-row-key="resourceRoleId"
+                height="100%"
+                @current-change="handleResourceRoleSelect"
+              >
+                <el-table-column prop="name" label="角色名称" min-width="140" />
+                <el-table-column label="类型" width="110">
+                  <template #default="scope">
+                    <el-tag :type="scope.row.type === 0 ? 'info' : 'success'">
+                      {{ scope.row.type === 0 ? '内置角色' : '自定义角色' }}
+                    </el-tag>
+                  </template>
+                </el-table-column>
+                <el-table-column
+                  prop="description"
+                  label="描述"
+                  min-width="180"
+                  show-overflow-tooltip
+                />
+              </el-table>
+            </div>
+          </aside>
+
+          <section class="table-panel" v-loading="treeLoading || resourcePermissionLoading">
+            <template v-if="resourceCurrentRole">
+              <div class="table-panel-header">
+                <div class="panel-copy">
+                  <div class="panel-title-row">
+                    <h3>{{ resourceCurrentRole.name }}</h3>
+                    <el-tag :type="resourceCurrentRole.type === 0 ? 'info' : 'success'">
+                      {{ resourceCurrentRole.type === 0 ? '内置角色' : '自定义角色' }}
+                    </el-tag>
+                    <el-tag v-if="resourcePermissionReadonly" type="warning">只读模式</el-tag>
+                    <el-tag v-if="resourcePermissionRoot" type="success">超级管理员</el-tag>
+                  </div>
+                  <p>{{ resourceCurrentRole.description || '为当前角色配置资源权限级别。' }}</p>
+                </div>
+                <div class="panel-header-actions">
+                  <div class="selected-summary">
+                    {{
+                      resourcePermissionReadonly
+                        ? '当前账号仅可查看资源授权结果'
+                        : '选择资源权限级别后保存生效'
+                    }}
+                  </div>
+                  <el-button
+                    type="primary"
+                    :loading="resourceSaveLoading"
+                    :disabled="!resourceCurrentRole || resourcePermissionReadonly"
+                    @click="handleResourceSave"
+                  >
+                    保存权限
+                  </el-button>
                 </div>
               </div>
 
@@ -133,7 +212,7 @@
                           clearable
                           placeholder="未授权"
                           style="width: 100%"
-                          :disabled="permissionReadonly"
+                          :disabled="resourcePermissionReadonly"
                         >
                           <el-option
                             v-for="option in permissionOptions[section.flag]"
@@ -149,10 +228,11 @@
               </div>
             </template>
 
-            <el-empty v-else description="请选择左侧角色配置权限" />
-          </div>
+            <el-empty v-else description="请选择左侧角色配置资源权限" />
+          </section>
         </div>
       </el-tab-pane>
+
       <el-tab-pane label="行列权限" name="row-column">
         <RowColumnPermission />
       </el-tab-pane>
@@ -161,7 +241,7 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, nextTick, onMounted, reactive, ref } from 'vue'
+import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus-secondary'
 import {
   busiPerSaveApi,
@@ -174,6 +254,7 @@ import {
 } from '@/api/auth'
 import RowColumnPermission from './RowColumnPermission.vue'
 
+type TabName = 'menu' | 'resource' | 'row-column'
 type ResourceFlag = 'dashboard' | 'screen' | 'dataset' | 'datasource'
 
 interface RoleItem {
@@ -215,6 +296,12 @@ interface ResourceSection {
   label: string
   description: string
   rows: ResourceRow[]
+}
+
+interface MenuTreeInstance {
+  setCheckedKeys: (keys: Array<string | number>) => void
+  getCheckedKeys: (leafOnly?: boolean) => Array<string | number>
+  getHalfCheckedKeys: () => Array<string | number>
 }
 
 const RESOURCE_FLAGS: ResourceFlag[] = ['dashboard', 'screen', 'dataset', 'datasource']
@@ -266,16 +353,21 @@ const permissionOptions: Record<ResourceFlag, Array<{ label: string; value: numb
 
 const treeProps = { label: 'name', children: 'children', disabled: 'disabled' }
 
-const activeTab = ref('role')
+const activeTab = ref<TabName>('menu')
 const keyword = ref('')
 const roleLoading = ref(false)
 const treeLoading = ref(false)
-const permissionLoading = ref(false)
-const saveLoading = ref(false)
+const menuPermissionLoading = ref(false)
+const resourcePermissionLoading = ref(false)
+const menuSaveLoading = ref(false)
+const resourceSaveLoading = ref(false)
 const roles = ref<RoleItem[]>([])
-const currentRole = ref<RoleItem | null>(null)
-const permissionReadonly = ref(false)
-const permissionRoot = ref(false)
+const menuRoleId = ref<number>()
+const resourceRoleId = ref<number>()
+const menuPermissionReadonly = ref(false)
+const menuPermissionRoot = ref(false)
+const resourcePermissionReadonly = ref(false)
+const resourcePermissionRoot = ref(false)
 const menuTree = ref<ResourceNode[]>([])
 const menuCheckedKeys = ref<Array<string | number>>([])
 const resourceTrees = reactive<Record<ResourceFlag, ResourceNode[]>>({
@@ -290,9 +382,17 @@ const resourceSelections = reactive<Record<ResourceFlag, Record<number, number |
   dataset: {},
   datasource: {}
 })
-const menuTreeRef = ref<any>()
+const menuTreeRef = ref<MenuTreeInstance>()
 
-const menuTreeDisplay = computed(() => decorateTree(menuTree.value, permissionReadonly.value))
+const menuCurrentRole = computed(
+  () => roles.value.find(role => role.id === menuRoleId.value) || null
+)
+
+const resourceCurrentRole = computed(
+  () => roles.value.find(role => role.id === resourceRoleId.value) || null
+)
+
+const menuTreeDisplay = computed(() => decorateTree(menuTree.value, menuPermissionReadonly.value))
 
 const resourceSections = computed<ResourceSection[]>(() =>
   RESOURCE_FLAGS.map(flag => ({
@@ -303,23 +403,50 @@ const resourceSections = computed<ResourceSection[]>(() =>
   }))
 )
 
+const getNextRoleId = (roleId: number | undefined) =>
+  roles.value.find(role => role.id === roleId)?.id || roles.value[0]?.id
+
+const syncMenuTreeCheckedKeys = async () => {
+  await nextTick()
+  menuTreeRef.value?.setCheckedKeys(menuCheckedKeys.value)
+}
+
+const resetMenuPermissionState = () => {
+  menuPermissionReadonly.value = false
+  menuPermissionRoot.value = false
+  menuCheckedKeys.value = []
+  void syncMenuTreeCheckedKeys()
+}
+
+const resetResourcePermissionState = () => {
+  resourcePermissionReadonly.value = false
+  resourcePermissionRoot.value = false
+  RESOURCE_FLAGS.forEach(flag => {
+    resourceSelections[flag] = {}
+  })
+}
+
 const loadRoles = async () => {
   roleLoading.value = true
   try {
     const res = await queryRoleApi({ keyword: keyword.value.trim() || undefined })
     roles.value = res.data || []
+
     if (!roles.value.length) {
-      currentRole.value = null
-      resetPermissionState()
+      menuRoleId.value = undefined
+      resourceRoleId.value = undefined
+      resetMenuPermissionState()
+      resetResourcePermissionState()
       return
     }
 
-    const nextRole =
-      roles.value.find(role => role.id === currentRole.value?.id) || roles.value[0] || null
+    menuRoleId.value = getNextRoleId(menuRoleId.value)
+    resourceRoleId.value = getNextRoleId(resourceRoleId.value)
 
-    if (nextRole) {
-      await handleRoleSelect(nextRole)
-    }
+    await Promise.all([
+      menuRoleId.value ? loadMenuPermissions(menuRoleId.value) : Promise.resolve(),
+      resourceRoleId.value ? loadResourcePermissions(resourceRoleId.value) : Promise.resolve()
+    ])
   } finally {
     roleLoading.value = false
   }
@@ -342,37 +469,56 @@ const loadBaseTrees = async () => {
   }
 }
 
-const handleRoleSelect = async (role: RoleItem | undefined | null) => {
+const handleMenuRoleSelect = async (role: RoleItem | undefined | null) => {
   if (!role) {
     return
   }
-  currentRole.value = role
-  await loadRolePermissions(role)
+  menuRoleId.value = role.id
+  await loadMenuPermissions(role.id)
 }
 
-const loadRolePermissions = async (role: RoleItem) => {
-  permissionLoading.value = true
-  try {
-    const [menuRes, ...resourceRes] = await Promise.all([
-      menuPerApi({ id: role.id }),
-      ...RESOURCE_FLAGS.map(flag => resourcePerApi({ id: role.id, type: 1, flag }))
-    ])
+const handleResourceRoleSelect = async (role: RoleItem | undefined | null) => {
+  if (!role) {
+    return
+  }
+  resourceRoleId.value = role.id
+  await loadResourcePermissions(role.id)
+}
 
+const loadMenuPermissions = async (roleId: number) => {
+  menuPermissionLoading.value = true
+  try {
+    const menuRes = await menuPerApi({ id: roleId })
     const menuData = (menuRes.data || {}) as PermissionResponse
-    permissionReadonly.value = Boolean(menuData.readonly)
-    permissionRoot.value = Boolean(menuData.root)
+    menuPermissionReadonly.value = Boolean(menuData.readonly)
+    menuPermissionRoot.value = Boolean(menuData.root)
     menuCheckedKeys.value = (menuData.permissions || [])
       .filter(item => Number(item.weight) > 0)
       .map(item => String(item.id))
 
+    await syncMenuTreeCheckedKeys()
+  } finally {
+    menuPermissionLoading.value = false
+  }
+}
+
+const loadResourcePermissions = async (roleId: number) => {
+  resourcePermissionLoading.value = true
+  try {
+    const [menuRes, ...resourceRes] = await Promise.all([
+      menuPerApi({ id: roleId }),
+      ...RESOURCE_FLAGS.map(flag => resourcePerApi({ id: roleId, type: 1, flag }))
+    ])
+
+    const menuData = (menuRes.data || {}) as PermissionResponse
+    resourcePermissionReadonly.value = Boolean(menuData.readonly)
+    resourcePermissionRoot.value = Boolean(menuData.root)
+
     RESOURCE_FLAGS.forEach((flag, index) => {
       applyResourceSelections(flag, (resourceRes[index].data || {}) as PermissionResponse)
     })
-
-    await nextTick()
-    menuTreeRef.value?.setCheckedKeys(menuCheckedKeys.value)
   } finally {
-    permissionLoading.value = false
+    resourcePermissionLoading.value = false
   }
 }
 
@@ -387,34 +533,55 @@ const applyResourceSelections = (flag: ResourceFlag, response: PermissionRespons
   resourceSelections[flag] = nextSelections
 }
 
-const handleSave = async () => {
-  if (!currentRole.value) {
+const handleMenuSave = async () => {
+  if (!menuCurrentRole.value) {
     ElMessage.warning('请先选择角色')
     return
   }
-  if (permissionReadonly.value) {
+  if (menuPermissionReadonly.value) {
     ElMessage.warning('当前账号无权修改授权配置')
     return
   }
 
   const checkedKeys = (menuTreeRef.value?.getCheckedKeys(false) || []).map(key => String(key))
-  const halfCheckedKeys = (menuTreeRef.value?.getHalfCheckedKeys?.() || []).map(key => String(key))
+  const halfCheckedKeys = (menuTreeRef.value?.getHalfCheckedKeys() || []).map(key => String(key))
   const menuPermissionIds = Array.from(new Set([...checkedKeys, ...halfCheckedKeys]))
 
-  saveLoading.value = true
+  menuSaveLoading.value = true
   try {
-    await Promise.all([
-      menuPerSaveApi({
-        id: currentRole.value.id,
-        permissions: menuPermissionIds.map(id => ({
-          id: Number(id),
-          weight: 1,
-          ext: 0
-        }))
-      }),
-      ...RESOURCE_FLAGS.map(flag =>
+    await menuPerSaveApi({
+      id: menuCurrentRole.value.id,
+      permissions: menuPermissionIds.map(id => ({
+        id: Number(id),
+        weight: 1,
+        ext: 0
+      }))
+    })
+
+    ElMessage.success('菜单权限保存成功')
+    await loadMenuPermissions(menuCurrentRole.value.id)
+  } finally {
+    menuSaveLoading.value = false
+  }
+}
+
+const handleResourceSave = async () => {
+  if (!resourceCurrentRole.value) {
+    ElMessage.warning('请先选择角色')
+    return
+  }
+  if (resourcePermissionReadonly.value) {
+    ElMessage.warning('当前账号无权修改授权配置')
+    return
+  }
+
+  const roleId = resourceCurrentRole.value.id
+  resourceSaveLoading.value = true
+  try {
+    await Promise.all(
+      RESOURCE_FLAGS.map(flag =>
         busiPerSaveApi({
-          id: currentRole.value!.id,
+          id: roleId,
           type: 1,
           flag,
           permissions: Object.entries(resourceSelections[flag])
@@ -426,25 +593,13 @@ const handleSave = async () => {
             }))
         })
       )
-    ])
+    )
 
-    ElMessage.success('权限保存成功')
-    await loadRolePermissions(currentRole.value)
+    ElMessage.success('资源权限保存成功')
+    await loadResourcePermissions(resourceCurrentRole.value.id)
   } finally {
-    saveLoading.value = false
+    resourceSaveLoading.value = false
   }
-}
-
-const resetPermissionState = () => {
-  permissionReadonly.value = false
-  permissionRoot.value = false
-  menuCheckedKeys.value = []
-  RESOURCE_FLAGS.forEach(flag => {
-    resourceSelections[flag] = {}
-  })
-  nextTick(() => {
-    menuTreeRef.value?.setCheckedKeys([])
-  })
 }
 
 const decorateTree = (nodes: ResourceNode[], disabled: boolean): ResourceNode[] => {
@@ -477,6 +632,12 @@ const flattenResourceRows = (nodes: ResourceNode[], depth = 0): ResourceRow[] =>
   return rows
 }
 
+watch(activeTab, async tab => {
+  if (tab === 'menu') {
+    await syncMenuTreeCheckedKeys()
+  }
+})
+
 onMounted(async () => {
   await loadBaseTrees()
   await loadRoles()
@@ -505,51 +666,74 @@ onMounted(async () => {
   .toolbar {
     display: flex;
     align-items: center;
+    justify-content: flex-end;
     gap: 12px;
     flex-wrap: wrap;
   }
 
-  .page-layout {
-    display: grid;
-    grid-template-columns: minmax(340px, 32%) minmax(0, 1fr);
-    gap: 16px;
-    min-height: calc(100vh - 176px);
-  }
-
   .page-body {
-    padding: 16px;
     background: var(--ContentBG, #ffffff);
     border-radius: 12px;
+  }
+
+  .page-layout {
+    display: grid;
+    grid-template-columns: 300px minmax(0, 1fr);
+    min-height: calc(100vh - 224px);
+    padding: 0;
     overflow: hidden;
   }
 
-  .panel-title {
+  .role-sidebar {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    padding: 16px 12px 16px 16px;
+    background: var(--ContentBG, #ffffff);
+    border-right: 1px solid #ebedf0;
+    overflow: hidden;
+  }
+
+  .sidebar-caption {
     margin-bottom: 12px;
-    color: #1f2329;
-    font-size: 16px;
-    font-weight: 500;
-    line-height: 24px;
+    color: #646a73;
+    font-size: 13px;
+    line-height: 20px;
   }
 
-  .permission-panel {
-    overflow-y: auto;
+  .sidebar-table-wrap {
+    flex: 1;
+    min-height: 0;
   }
 
-  .detail-header {
+  .table-panel {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    padding: 16px;
+    overflow: hidden;
+  }
+
+  .table-panel-header {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
     gap: 16px;
     margin-bottom: 16px;
+  }
+
+  .panel-copy {
+    min-width: 0;
 
     p {
-      margin: 8px 0 0;
+      margin: 6px 0 0;
       color: #646a73;
-      line-height: 22px;
+      font-size: 13px;
+      line-height: 20px;
     }
   }
 
-  .detail-title {
+  .panel-title-row {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -559,23 +743,32 @@ onMounted(async () => {
       margin: 0;
       color: #1f2329;
       font-size: 18px;
+      font-weight: 500;
       line-height: 26px;
     }
   }
 
-  .status-tip {
+  .panel-header-actions {
     display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .selected-summary {
+    display: inline-flex;
     align-items: center;
     min-height: 32px;
     padding: 0 12px;
     color: #3f4854;
+    font-size: 13px;
     background: #f5f7fa;
-    border-radius: 8px;
+    border-radius: 999px;
     white-space: nowrap;
   }
 
   .permission-section {
-    margin-bottom: 16px;
     border: 1px solid #ebedf0;
     border-radius: 12px;
     background: linear-gradient(
@@ -583,6 +776,12 @@ onMounted(async () => {
       rgba(245, 247, 250, 0.72) 0%,
       rgba(255, 255, 255, 0.96) 100%
     );
+  }
+
+  .menu-section {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
   }
 
   .section-header {
@@ -609,7 +808,8 @@ onMounted(async () => {
   }
 
   .tree-shell {
-    max-height: 360px;
+    height: calc(100% - 68px);
+    min-height: 420px;
     padding: 0 16px 16px;
     overflow: auto;
   }
@@ -618,6 +818,7 @@ onMounted(async () => {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 16px;
+    overflow: auto;
   }
 
   .resource-card {
@@ -647,6 +848,18 @@ onMounted(async () => {
   .resource-bullet-folder {
     background: #3370ff;
     box-shadow: 0 0 0 4px rgba(51, 112, 255, 0.14);
+  }
+
+  :deep(.permission-tabs .el-tabs__content) {
+    overflow: visible;
+  }
+
+  :deep(.role-table .el-table__row.current-row > td.el-table__cell) {
+    background: rgba(51, 112, 255, 0.08);
+  }
+
+  :deep(.role-table .el-table__body tr:hover > td.el-table__cell) {
+    background: rgba(51, 112, 255, 0.04);
   }
 }
 </style>
