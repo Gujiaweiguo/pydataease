@@ -49,8 +49,8 @@ const handleSQLBotClick = () => {
 const sqlbotEnabled = ref(false)
 const desktop = isDesktop()
 const activeIndex = computed(() => {
-  if (route.path.includes('system')) {
-    return '/system/user'
+  if (route.path.includes('sys-setting')) {
+    return '/sys-setting/parameter'
   }
   return route.path
 })
@@ -74,7 +74,7 @@ const handleSelect = (index: string) => {
   }
 }
 const initShowSystem = () => {
-  showSystem.value = permissionStore.getRouters.some(route => route.path === '/system')
+  showSystem.value = permissionStore.getRouters.some(route => route.path === '/sys-setting')
 }
 const initShowMsg = () => {
   showMsg.value = permissionStore.getRouters.some(route => route.path === '/msg')

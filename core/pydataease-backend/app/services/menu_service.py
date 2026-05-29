@@ -22,6 +22,10 @@ TITLE_MAP: dict[str, str] = {
     "datasource": "数据源",
     "sys-setting": "系统设置",
     "parameter": "系统参数",
+    "org-management": "组织管理",
+    "user-management": "用户管理",
+    "role-management": "角色管理",
+    "permission-management": "权限管理",
 }
 
 

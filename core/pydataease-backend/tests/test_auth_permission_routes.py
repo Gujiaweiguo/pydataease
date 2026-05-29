@@ -291,7 +291,16 @@ class TestServiceRepositoryBehavior:
         async def _get_menu_point_grants() -> dict[int, bool]:
             return {5: True, 8: False}
 
+        async def _assert_target_in_scope(_self, target_type: str, target_id: int, user: TokenUser) -> None:
+            del target_type, target_id, user
+
+        async def _can_manage_auth(_self, user: TokenUser, target_type: str | None = None, target_id: int | None = None) -> bool:
+            del user, target_type, target_id
+            return False
+
         service._infer_target_type = MethodType(_infer_target_type, service)
+        service._assert_target_in_scope = MethodType(_assert_target_in_scope, service)
+        service._can_manage_auth = MethodType(_can_manage_auth, service)
         service.repo.get_menu_point_grants = MethodType(
             lambda self, target_type, target_id, oid: _get_menu_point_grants(),
             service.repo,

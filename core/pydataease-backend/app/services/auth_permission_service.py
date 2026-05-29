@@ -13,9 +13,11 @@ from app.models.org import CoreOrg
 from app.models.org_permission import CoreOrgPermission
 from app.models.resource_acl import CoreResourceAcl
 from app.models.role import CoreRole
+from app.models.role_user import CoreRoleUser
 from app.models.role_permission import CoreRolePermission
 from app.models.system import CoreMenu
 from app.models.user import CoreUser
+from app.models.user_org import CoreUserOrg
 from app.models.user_permission import CoreUserPermission
 from app.repositories.auth_permission_repo import AuthPermissionRepository
 from app.schemas.auth import TokenUser
@@ -36,6 +38,7 @@ from app.utils.id_utils import _sid
 
 _SUPPORTED_BUSI_FLAGS = {"dashboard", "screen", "dataset", "datasource"}
 _VISUALIZATION_TYPE_MAP = {"dashboard": "panel", "screen": "screen"}
+_ORG_ADMIN_ROLE_ID = 2
 
 
 def _build_resource_tree(nodes: list[dict[str, Any]], pid: str = "0") -> list[dict[str, Any]]:
@@ -116,28 +119,32 @@ class AuthPermissionService:
         return [root]
 
     async def get_busi_permission(self, request: BusiPermissionRequest, user: TokenUser) -> PermissionVO:
-        if self._is_root_access(user):
-            return PermissionVO(root=True, readonly=False)
-
         target_type = self._target_type_from_int(request.type)
         self._validate_busi_flag(request.flag)
+        await self._assert_target_in_scope(target_type, request.id, user)
         entries = await self.repo.get_resource_acl(target_type, request.id, request.flag)
         permissions = [self._permission_item_from_acl(entry) for entry in entries]
-        return PermissionVO(root=False, readonly=not self._can_manage_auth(user), permissions=permissions)
+        return PermissionVO(
+            root=self._is_root_access(user),
+            readonly=not await self._can_manage_auth(user, target_type, request.id),
+            permissions=permissions,
+        )
 
     async def get_menu_permission(self, request: MenuPermissionRequest, user: TokenUser) -> PermissionVO:
-        if self._is_root_access(user):
-            return PermissionVO(root=True, readonly=False)
-
         target_type = await self._infer_target_type(request.id, user.oid)
+        await self._assert_target_in_scope(target_type, request.id, user)
         grants = await self.repo.get_menu_point_grants(target_type, request.id, self._menu_grant_oid(target_type, user, request.id))
         permissions = [PermissionItem(id=menu_id, weight=1 if granted else 0) for menu_id, granted in grants.items()]
-        return PermissionVO(root=False, readonly=not self._can_manage_auth(user), permissions=permissions)
+        return PermissionVO(
+            root=self._is_root_access(user),
+            readonly=not await self._can_manage_auth(user, target_type, request.id),
+            permissions=permissions,
+        )
 
     async def save_busi_per(self, editor: BusiPerEditor, user: TokenUser) -> None:
-        self._require_auth_manage_permission(user)
         self._validate_busi_flag(editor.flag)
         target_type = self._target_type_from_int(editor.type)
+        await self._require_auth_manage_permission(user, target_type, editor.id)
         entries = [
             CoreResourceAcl(
                 id=time.time_ns() + index,
@@ -156,8 +163,8 @@ class AuthPermissionService:
             await self.repo.delete_resource_acl(target_type, editor.id, editor.flag)
 
     async def save_menu_per(self, editor: MenuPerEditor, user: TokenUser) -> None:
-        self._require_auth_manage_permission(user)
         target_type = await self._infer_target_type(editor.id, user.oid)
+        await self._require_auth_manage_permission(user, target_type, editor.id)
         oid = self._menu_grant_oid(target_type, user, editor.id)
         grants = [(int(item.id), True) for item in editor.permissions]
         await self.repo.save_menu_point_grants(target_type, editor.id, oid, grants)
@@ -183,7 +190,12 @@ class AuthPermissionService:
         origins = await self._build_target_origins(
             [(row.target_type, row.target_id, self._permission_item_from_target_acl(row)) for row in rows]
         )
-        return PermissionVO(root=False, readonly=not self._can_manage_auth(user), permissions=permissions, permission_origins=origins)
+        return PermissionVO(
+            root=False,
+            readonly=not await self._can_manage_auth(user),
+            permissions=permissions,
+            permission_origins=origins,
+        )
 
     async def get_menu_target_permission(self, request: MenuPermissionRequest, user: TokenUser) -> PermissionVO:
         if self._is_root_access(user):
@@ -191,17 +203,27 @@ class AuthPermissionService:
 
         point_ids = [point.id for point in await self.repo.get_permission_points_by_menu(request.id)]
         if not point_ids:
-            return PermissionVO(root=False, readonly=not self._can_manage_auth(user), permissions=[], permission_origins=[])
+            return PermissionVO(
+                root=False,
+                readonly=not await self._can_manage_auth(user),
+                permissions=[],
+                permission_origins=[],
+            )
 
         rows = await self._get_menu_target_rows(point_ids)
         permissions = [PermissionItem(id=row[1], weight=1 if row[2] else 0) for row in rows]
         origins = await self._build_target_origins(
             [(row[0], row[1], PermissionItem(id=row[1], weight=1 if row[2] else 0)) for row in rows]
         )
-        return PermissionVO(root=False, readonly=not self._can_manage_auth(user), permissions=permissions, permission_origins=origins)
+        return PermissionVO(
+            root=False,
+            readonly=not await self._can_manage_auth(user),
+            permissions=permissions,
+            permission_origins=origins,
+        )
 
     async def save_busi_target_per(self, creator: BusiTargetPerCreator, user: TokenUser) -> None:
-        self._require_auth_manage_permission(user)
+        await self._require_auth_manage_permission(user)
         self._validate_busi_flag(creator.flag)
         target_type = self._target_type_from_int(creator.type)
 
@@ -224,7 +246,7 @@ class AuthPermissionService:
                 await self.repo.delete_resource_acl(target_type, target_id, creator.flag)
 
     async def save_menu_target_per(self, creator: MenuTargetPerCreator, user: TokenUser) -> None:
-        self._require_auth_manage_permission(user)
+        await self._require_auth_manage_permission(user)
 
         for target_id in creator.ids:
             target_type = await self._infer_target_type(target_id, user.oid)
@@ -232,8 +254,13 @@ class AuthPermissionService:
             grants = [(int(item.id), True) for item in creator.permissions]
             await self.repo.save_menu_point_grants(target_type, target_id, oid, grants)
 
-    def _require_auth_manage_permission(self, user: TokenUser) -> None:
-        if self._is_root_access(user):
+    async def _require_auth_manage_permission(
+        self,
+        user: TokenUser,
+        target_type: str | None = None,
+        target_id: int | None = None,
+    ) -> None:
+        if await self._can_manage_auth(user, target_type, target_id):
             return
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
 
@@ -249,16 +276,27 @@ class AuthPermissionService:
         if role_exists is not None:
             matches.append("role")
 
-        user_exists = (await self.session.execute(select(CoreUser.id).where(CoreUser.id == target_id).limit(1))).scalar_one_or_none()
+        user_exists = (
+            await self.session.execute(
+                select(CoreUser.id)
+                .join(CoreUserOrg, CoreUserOrg.user_id == CoreUser.id)
+                .where(CoreUser.id == target_id, CoreUserOrg.org_id == oid)
+                .limit(1)
+            )
+        ).scalar_one_or_none()
         if user_exists is not None:
             matches.append("user")
 
-        org_exists = (await self.session.execute(select(CoreOrg.id).where(CoreOrg.id == target_id).limit(1))).scalar_one_or_none()
+        org_exists = (
+            await self.session.execute(select(CoreOrg.id).where(CoreOrg.id == target_id, CoreOrg.id == oid).limit(1))
+        ).scalar_one_or_none()
         if org_exists is not None:
             matches.append("org")
 
         if len(matches) == 1:
             return matches[0]
+        if role_exists is not None:
+            return "role"
         if not matches:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Target not found")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Ambiguous target type")
@@ -365,8 +403,76 @@ class AuthPermissionService:
     def _is_root_access(self, user: TokenUser) -> bool:
         return user.user_id == 1 or not get_settings().permission_enforcement_enabled
 
-    def _can_manage_auth(self, user: TokenUser) -> bool:
-        return self._is_root_access(user)
+    async def _can_manage_auth(
+        self,
+        user: TokenUser,
+        target_type: str | None = None,
+        target_id: int | None = None,
+    ) -> bool:
+        if self._is_root_access(user):
+            return True
+
+        is_org_admin = (
+            await self.session.execute(
+                select(CoreRoleUser.id).where(
+                    CoreRoleUser.user_id == user.user_id,
+                    CoreRoleUser.role_id == _ORG_ADMIN_ROLE_ID,
+                    CoreRoleUser.oid == user.oid,
+                ).limit(1)
+            )
+        ).scalar_one_or_none()
+        if is_org_admin is None:
+            return False
+
+        if target_type is None or target_id is None:
+            return True
+
+        return await self._is_target_manageable(target_type, target_id, user)
+
+    async def _assert_target_in_scope(self, target_type: str, target_id: int, user: TokenUser) -> None:
+        if self._is_root_access(user):
+            return
+        if not await self._is_target_in_scope(target_type, target_id, user):
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Target not found")
+
+    async def _is_target_in_scope(self, target_type: str, target_id: int, user: TokenUser) -> bool:
+        if target_type == "role":
+            return (
+                await self.session.execute(
+                    select(CoreRole.id).where(CoreRole.id == target_id, CoreRole.oid.in_([0, user.oid])).limit(1)
+                )
+            ).scalar_one_or_none() is not None
+
+        if target_type == "user":
+            return (
+                await self.session.execute(
+                    select(CoreUserOrg.id).where(CoreUserOrg.user_id == target_id, CoreUserOrg.org_id == user.oid).limit(1)
+                )
+            ).scalar_one_or_none() is not None
+
+        if target_type == "org":
+            return target_id == user.oid
+
+        return False
+
+    async def _is_target_manageable(self, target_type: str, target_id: int, user: TokenUser) -> bool:
+        if target_type == "role":
+            role_oid = (
+                await self.session.execute(select(CoreRole.oid).where(CoreRole.id == target_id).limit(1))
+            ).scalar_one_or_none()
+            return role_oid == user.oid
+
+        if target_type == "user":
+            return (
+                await self.session.execute(
+                    select(CoreUserOrg.id).where(CoreUserOrg.user_id == target_id, CoreUserOrg.org_id == user.oid).limit(1)
+                )
+            ).scalar_one_or_none() is not None
+
+        if target_type == "org":
+            return target_id == user.oid
+
+        return False
 
     def _menu_grant_oid(self, target_type: str, user: TokenUser, target_id: int) -> int:
         del target_id

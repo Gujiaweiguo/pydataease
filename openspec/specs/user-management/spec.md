@@ -1,34 +1,51 @@
 ## ADDED Requirements
 
-### Requirement: Community users SHALL be persisted for authentication
-The FastAPI backend SHALL persist authentication users in a `core_user` table with bigint identifiers, account identity fields, credential material, enabled state, organization context, origin, and audit timestamps.
+### Requirement: User CRUD SHALL be org-scoped
+All user management operations SHALL operate within the current organization context.
 
-#### Scenario: Default admin bootstrap exists after migration
-- **WHEN** the authentication schema migration is applied to a new environment
-- **THEN** the database SHALL contain an enabled `admin` community user record with the product's default bootstrap password stored using the backend's password utility
+#### Scenario: Admin creates a user in current org
+- **WHEN** an admin creates a user while operating in org X
+- **THEN** the user SHALL be created with membership in org X and assigned the specified roles within org X
 
-#### Scenario: Community user record is loaded for login
-- **WHEN** the auth service looks up a user by login account
-- **THEN** it SHALL receive the persisted `id`, `account`, `name`, `email`, `password_hash`, `enable`, `oid`, and `origin` values needed for verification and token issuance
+#### Scenario: Admin lists users in current org
+- **WHEN** an admin requests the user list
+- **THEN** only users with membership in the current org SHALL be returned
 
-### Requirement: Password operations SHALL separate storage from token-secret derivation
-The backend SHALL store verifiable password hashes for login and SHALL provide a deterministic per-user secret derivation function for JWT compatibility without requiring plaintext password storage.
+### Requirement: User account SHALL be immutable after creation
+The account field SHALL NOT be editable after the user is created.
 
-#### Scenario: Password verification succeeds for a valid login
-- **WHEN** a login attempt supplies credentials matching the stored password hash
-- **THEN** the password utility SHALL report the credential as valid without exposing the original password value
+#### Scenario: Admin edits user but cannot change account
+- **WHEN** an admin edits a user's profile
+- **THEN** the account field SHALL NOT be modifiable
 
-#### Scenario: JWT secret derivation is requested for a persisted user
-- **WHEN** token issuance or token validation needs that user's signing secret
-- **THEN** the password utility SHALL derive the same compatibility secret for that user from persisted credential material every time
-
-### Requirement: Disabled community users SHALL be blocked from authentication
-The backend SHALL reject login and token refresh for community users whose persisted record is disabled.
+### Requirement: Disabled users SHALL NOT be able to log in
+When a user is disabled, login SHALL be rejected even with valid credentials.
 
 #### Scenario: Disabled user attempts login
-- **WHEN** a disabled user submits otherwise valid credentials
-- **THEN** the backend SHALL reject the login attempt with a compatible authentication failure response
+- **WHEN** a disabled user submits valid credentials
+- **THEN** the system SHALL reject the login with an appropriate error
 
-#### Scenario: Disabled user attempts refresh
-- **WHEN** a valid token belongs to a user whose record has been disabled since issuance
-- **THEN** the refresh flow SHALL reject reissuance rather than minting a new token
+### Requirement: Role CRUD SHALL distinguish built-in and custom roles
+Built-in roles (system-admin, org-admin, normal-user) SHALL NOT be editable or deletable. Custom roles SHALL inherit from a built-in org role.
+
+#### Scenario: Admin creates a custom role
+- **WHEN** an admin creates a custom role inheriting from org-admin
+- **THEN** the custom role SHALL have permissions that do not exceed the parent built-in role
+
+#### Scenario: Admin attempts to delete a built-in role
+- **WHEN** an admin attempts to delete a built-in role
+- **THEN** the system SHALL reject the operation
+
+### Requirement: Removing a user's last role across all orgs SHALL delete the user
+If unmounting a user from a role results in the user having zero roles across all organizations, the user SHALL be removed from the system.
+
+#### Scenario: User loses last role
+- **WHEN** a user is unmounted from their only remaining role across all orgs
+- **THEN** the user SHALL be deleted from the system
+
+### Requirement: Password reset SHALL use system default password
+Admins SHALL be able to reset a user's password to the system-configured default.
+
+#### Scenario: Admin resets user password
+- **WHEN** an admin resets a user's password
+- **THEN** the user's password SHALL be set to the system default password and the user SHALL be required to change it on next login

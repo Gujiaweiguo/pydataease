@@ -9,7 +9,7 @@ const navigateBg = computed(() => appearanceStore.getNavigateBg)
 const showDoc = computed(() => appearanceStore.getShowDoc)
 const { push, resolve } = useRouter()
 const redirectUser = () => {
-  const sysMenu = resolve('/system')
+  const sysMenu = resolve('/sys-setting')
   const kidPath = sysMenu.matched[0].children[0].path
   push(`${sysMenu.path}/${kidPath}`)
 }

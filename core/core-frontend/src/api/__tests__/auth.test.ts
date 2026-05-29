@@ -12,6 +12,15 @@ vi.mock('@/config/axios', () => ({
 }))
 
 import {
+  createColumnPermissionApi,
+  createPermissionWhitelistApi,
+  createRowPermissionApi,
+  deleteColumnPermissionApi,
+  deletePermissionWhitelistApi,
+  deleteRowPermissionApi,
+  listColumnPermissionApi,
+  listPermissionWhitelistApi,
+  listRowPermissionApi,
   busiTargetPerSaveApi,
   menuTargetPerApi,
   queryUserApi,
@@ -75,6 +84,82 @@ describe('API: auth', () => {
     expect(mockRequest.post).toHaveBeenCalledWith({
       url: '/auth/saveBusiTargetPer',
       data: payload
+    })
+  })
+
+  it('row permission apis post the expected payloads', async () => {
+    const createPayload = {
+      datasetId: 9,
+      targetType: 'user',
+      targetId: 3,
+      filterSql: "region = 'east'",
+      enabled: true
+    }
+
+    await listRowPermissionApi({ datasetId: 9 })
+    await createRowPermissionApi(createPayload)
+    await deleteRowPermissionApi(15)
+
+    expect(mockRequest.post).toHaveBeenNthCalledWith(1, {
+      url: '/rowPermission/list',
+      data: { datasetId: 9 }
+    })
+    expect(mockRequest.post).toHaveBeenNthCalledWith(2, {
+      url: '/rowPermission/create',
+      data: createPayload
+    })
+    expect(mockRequest.post).toHaveBeenNthCalledWith(3, {
+      url: '/rowPermission/delete/15',
+      data: {}
+    })
+  })
+
+  it('column permission apis post the expected payloads', async () => {
+    const createPayload = {
+      datasetId: 9,
+      fieldId: 11,
+      targetType: 'role',
+      targetId: 5,
+      action: 'mask',
+      enabled: false
+    }
+
+    await listColumnPermissionApi({ datasetId: 9 })
+    await createColumnPermissionApi(createPayload)
+    await deleteColumnPermissionApi(16)
+
+    expect(mockRequest.post).toHaveBeenNthCalledWith(1, {
+      url: '/columnPermission/list',
+      data: { datasetId: 9 }
+    })
+    expect(mockRequest.post).toHaveBeenNthCalledWith(2, {
+      url: '/columnPermission/create',
+      data: createPayload
+    })
+    expect(mockRequest.post).toHaveBeenNthCalledWith(3, {
+      url: '/columnPermission/delete/16',
+      data: {}
+    })
+  })
+
+  it('permission whitelist apis post the expected payloads', async () => {
+    const payload = { userId: 8, datasetId: 9, scope: 'both' }
+
+    await listPermissionWhitelistApi()
+    await createPermissionWhitelistApi(payload)
+    await deletePermissionWhitelistApi(22)
+
+    expect(mockRequest.post).toHaveBeenNthCalledWith(1, {
+      url: '/permissionWhitelist/list',
+      data: {}
+    })
+    expect(mockRequest.post).toHaveBeenNthCalledWith(2, {
+      url: '/permissionWhitelist/create',
+      data: payload
+    })
+    expect(mockRequest.post).toHaveBeenNthCalledWith(3, {
+      url: '/permissionWhitelist/delete/22',
+      data: {}
     })
   })
 })
