@@ -8,6 +8,7 @@ class UserPagerRequest(BaseModel):
 
     keyword: str | None = None
     enable: bool | None = None
+    oid: int | None = None
 
 
 class UserCreateRequest(BaseModel):

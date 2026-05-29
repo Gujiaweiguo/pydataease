@@ -51,10 +51,15 @@ class UserService:
     async def pager(self, page: int, limit: int, payload: UserPagerRequest | None, user: TokenUser) -> UserPagerResponse:
         normalized_page = max(page, 1)
         normalized_limit = max(limit, 1)
+        # Admin can filter by any org; non-admin is restricted to their own org
+        if user.user_id == 1:
+            oid_filter = payload.oid if payload else None
+        else:
+            oid_filter = user.oid
         users, total = await self.user_repo.search(
             keyword=payload.keyword if payload else None,
             enable=payload.enable if payload else None,
-            oid=None if user.user_id == 1 else user.oid,
+            oid=oid_filter,
             offset=(normalized_page - 1) * normalized_limit,
             limit=normalized_limit,
         )
