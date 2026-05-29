@@ -9,103 +9,119 @@
           placeholder="搜索角色名称"
           style="width: 240px"
           @keyup.enter="loadRoles"
+          @clear="loadRoles"
         />
         <el-button @click="loadRoles">查询</el-button>
         <el-button type="primary" @click="openCreateDialog">新增角色</el-button>
       </div>
     </div>
 
-    <div class="page-layout" v-loading="loading">
-      <div class="page-body role-list-panel">
-        <el-table :data="roles" border highlight-current-row @current-change="handleRoleSelect">
-          <el-table-column prop="name" label="角色名称" min-width="140" />
-          <el-table-column prop="description" label="描述" min-width="220" show-overflow-tooltip />
-          <el-table-column label="类型" width="120">
-            <template #default="scope">
-              <el-tag :type="scope.row.type === 0 ? 'info' : 'success'">
-                {{ scope.row.type === 0 ? '内置角色' : '自定义角色' }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column prop="memberCount" label="成员数" width="100" />
-          <el-table-column label="操作" fixed="right" width="220">
-            <template #default="scope">
-              <el-button
-                link
-                type="primary"
-                :disabled="scope.row.type === 0"
-                @click="openEditDialog(scope.row)"
-              >
-                编辑
-              </el-button>
-              <el-button
-                link
-                type="danger"
-                :disabled="scope.row.type === 0"
-                @click="handleDelete(scope.row)"
-              >
-                删除
-              </el-button>
-              <el-button link @click="openMemberPanel(scope.row)">成员管理</el-button>
-            </template>
-          </el-table-column>
-        </el-table>
-      </div>
+    <div class="page-body page-layout" v-loading="loading">
+      <aside class="tree-sidebar role-sidebar" role="complementary">
+        <div class="sidebar-caption">角色列表</div>
+        <div class="sidebar-table-wrap">
+          <el-table
+            class="role-table"
+            :data="roles"
+            border
+            row-key="id"
+            highlight-current-row
+            :current-row-key="currentRole?.id"
+            height="100%"
+            @current-change="handleRoleSelect"
+          >
+            <el-table-column prop="name" label="角色名称" min-width="124" show-overflow-tooltip />
+            <el-table-column label="类型" width="104">
+              <template #default="scope">
+                <el-tag :type="scope.row.type === 0 ? 'info' : 'success'">
+                  {{ scope.row.type === 0 ? '内置' : '自定义' }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="memberCount" label="成员数" width="76" />
+          </el-table>
+        </div>
+      </aside>
 
-      <div class="page-body role-detail-panel">
+      <section class="table-panel" aria-label="角色成员管理">
         <template v-if="currentRole">
-          <div class="detail-header">
-            <div>
-              <div class="detail-title">
+          <div class="table-panel-header">
+            <div class="panel-copy">
+              <div class="panel-title-row">
                 <h3>{{ currentRole.name }}</h3>
                 <el-tag :type="currentRole.type === 0 ? 'info' : 'success'">
                   {{ currentRole.type === 0 ? '内置角色' : '自定义角色' }}
                 </el-tag>
+                <div class="selected-summary">成员 {{ currentRole.memberCount }}</div>
               </div>
-              <p>{{ currentRole.description || '暂无描述' }}</p>
+              <p>{{ currentRole.description || '当前角色暂无描述，可通过编辑角色补充说明。' }}</p>
             </div>
-            <div class="member-toolbar">
+            <div class="panel-header-actions">
+              <el-button :disabled="currentRole.type === 0" @click="openEditDialog(currentRole)">
+                编辑角色
+              </el-button>
+              <el-button
+                type="danger"
+                plain
+                :disabled="currentRole.type === 0"
+                @click="handleDelete(currentRole)"
+              >
+                删除角色
+              </el-button>
               <el-button @click="openMemberDialog">挂载组织内用户</el-button>
               <el-button @click="openExternalDialog">挂载外部用户</el-button>
-              <el-button :disabled="selectedMemberIds.length === 0" @click="handleBatchUnMountUser"
-                >批量卸载</el-button
-              >
+              <el-button :disabled="selectedMemberIds.length === 0" @click="handleBatchUnMountUser">
+                批量卸载
+              </el-button>
             </div>
           </div>
 
-          <el-table :data="members" border @selection-change="handleMemberSelectionChange">
-            <el-table-column type="selection" width="48" />
-            <el-table-column prop="account" label="账号" min-width="140" />
-            <el-table-column prop="name" label="姓名" min-width="120" />
-            <el-table-column prop="email" label="邮箱" min-width="180" />
-            <el-table-column prop="phone" label="手机号" min-width="140" />
-            <el-table-column label="状态" width="100">
-              <template #default="scope">
-                {{ scope.row.enable ? '启用' : '停用' }}
-              </template>
-            </el-table-column>
-            <el-table-column label="操作" width="100" fixed="right">
-              <template #default="scope">
-                <el-button link type="danger" @click="handleUnMountUser(scope.row)">卸载</el-button>
-              </template>
-            </el-table-column>
-          </el-table>
+          <div class="table-panel-body">
+            <div class="table-wrap">
+              <el-table
+                :data="members"
+                border
+                height="100%"
+                @selection-change="handleMemberSelectionChange"
+              >
+                <el-table-column type="selection" width="48" />
+                <el-table-column prop="account" label="账号" min-width="140" />
+                <el-table-column prop="name" label="姓名" min-width="120" />
+                <el-table-column prop="email" label="邮箱" min-width="180" />
+                <el-table-column prop="phone" label="手机号" min-width="140" />
+                <el-table-column label="状态" width="100">
+                  <template #default="scope">
+                    {{ scope.row.enable ? '启用' : '停用' }}
+                  </template>
+                </el-table-column>
+                <el-table-column label="操作" width="100" fixed="right">
+                  <template #default="scope">
+                    <el-button link type="danger" @click="handleUnMountUser(scope.row)"
+                      >卸载</el-button
+                    >
+                  </template>
+                </el-table-column>
+              </el-table>
+            </div>
 
-          <div class="pagination-wrap">
-            <el-pagination
-              v-model:current-page="memberPage"
-              v-model:page-size="memberPageSize"
-              background
-              layout="total, prev, pager, next, sizes"
-              :page-sizes="[10, 20, 50, 100]"
-              :total="memberTotal"
-              @current-change="loadMembers"
-              @size-change="handleMemberSizeChange"
-            />
+            <div class="pagination-wrap">
+              <el-pagination
+                v-model:current-page="memberPage"
+                v-model:page-size="memberPageSize"
+                background
+                layout="total, prev, pager, next, sizes"
+                :page-sizes="[10, 20, 50, 100]"
+                :total="memberTotal"
+                @current-change="loadMembers"
+                @size-change="handleMemberSizeChange"
+              />
+            </div>
           </div>
         </template>
-        <el-empty v-else description="请选择角色查看成员详情" />
-      </div>
+        <div v-else class="empty-panel">
+          <el-empty description="请选择角色查看成员详情" />
+        </div>
+      </section>
     </div>
 
     <el-dialog
@@ -402,13 +418,6 @@ const handleRoleSelect = async (row: RoleItem | undefined) => {
   await loadMembers()
 }
 
-const openMemberPanel = async (row: RoleItem) => {
-  currentRole.value = row
-  selectedMemberIds.value = []
-  memberPage.value = 1
-  await loadMembers()
-}
-
 const handleMemberSizeChange = async (size: number) => {
   memberPageSize.value = size
   memberPage.value = 1
@@ -553,13 +562,13 @@ onMounted(() => {
   .router-title {
     margin: 0;
     color: #1f2329;
+    font-family: var(--de-custom_font, 'PingFang');
     font-size: 20px;
     font-weight: 500;
     line-height: 28px;
   }
 
   .toolbar,
-  .member-toolbar,
   .member-dialog-toolbar {
     display: flex;
     gap: 12px;
@@ -567,37 +576,77 @@ onMounted(() => {
     flex-wrap: wrap;
   }
 
-  .page-layout {
-    display: grid;
-    grid-template-columns: minmax(360px, 42%) minmax(0, 1fr);
-    gap: 16px;
-    min-height: calc(100vh - 176px);
-  }
-
   .page-body {
-    padding: 16px;
     background: var(--ContentBG, #ffffff);
     border-radius: 12px;
+  }
+
+  .page-layout {
+    display: grid;
+    grid-template-columns: 300px minmax(0, 1fr);
+    min-height: calc(100vh - 176px);
+    padding: 0;
     overflow: hidden;
   }
 
-  .detail-header {
+  .tree-sidebar {
+    padding: 16px 12px 16px 16px;
+    background: var(--ContentBG, #ffffff);
+    border-right: 1px solid #ebedf0;
+    overflow-y: auto;
+  }
+
+  .role-sidebar {
     display: flex;
-    justify-content: space-between;
+    flex-direction: column;
+    min-width: 0;
+    overflow-y: auto;
+  }
+
+  .sidebar-caption {
+    margin-bottom: 12px;
+    color: #646a73;
+    font-size: 13px;
+    line-height: 20px;
+  }
+
+  .sidebar-table-wrap {
+    flex: 1;
+    min-height: 0;
+  }
+
+  .table-panel {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    padding: 16px;
+    overflow: hidden;
+  }
+
+  .table-panel-header {
+    display: flex;
     align-items: flex-start;
+    justify-content: space-between;
     gap: 16px;
     margin-bottom: 16px;
+  }
+
+  .panel-copy {
+    min-width: 0;
 
     p {
+      margin: 6px 0 0;
       color: #646a73;
-      margin: 8px 0 0;
+      font-size: 13px;
+      line-height: 20px;
     }
   }
 
-  .detail-title {
+  .panel-title-row {
     display: flex;
     align-items: center;
     gap: 8px;
+    flex-wrap: wrap;
 
     h3 {
       margin: 0;
@@ -607,10 +656,49 @@ onMounted(() => {
     }
   }
 
+  .panel-header-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .selected-summary {
+    display: inline-flex;
+    align-items: center;
+    min-height: 32px;
+    padding: 0 12px;
+    color: #3f4854;
+    font-size: 13px;
+    background: #f5f7fa;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+
+  .table-panel-body {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-height: 0;
+    gap: 16px;
+  }
+
+  .table-wrap {
+    flex: 1;
+    min-height: 0;
+  }
+
   .pagination-wrap {
     display: flex;
     justify-content: flex-end;
-    margin-top: 16px;
+  }
+
+  .empty-panel {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
   }
 
   .dialog-tip {
@@ -621,6 +709,19 @@ onMounted(() => {
 
   .member-dialog-toolbar {
     margin-bottom: 12px;
+  }
+
+  :deep(.role-table .el-table__row.current-row > td.el-table__cell) {
+    background: rgba(51, 112, 255, 0.08);
+  }
+
+  :deep(.role-table .el-table__body tr:hover > td.el-table__cell) {
+    background: rgba(51, 112, 255, 0.04);
+  }
+
+  :deep(.role-table .el-table__body td.el-table__cell) {
+    padding-top: 10px;
+    padding-bottom: 10px;
   }
 }
 </style>
