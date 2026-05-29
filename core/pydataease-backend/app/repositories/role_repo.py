@@ -3,7 +3,7 @@ from __future__ import annotations
 import time
 from typing import final
 
-from sqlalchemy import delete, or_, select
+from sqlalchemy import delete, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..models.role import CoreRole
@@ -79,3 +79,14 @@ class RoleRepository:
         )
         await self.session.execute(stmt)
         await self.session.commit()
+
+    async def count_members_batch(self, role_ids: list[int]) -> dict[int, int]:
+        if not role_ids:
+            return {}
+        stmt = (
+            select(CoreRoleUser.role_id, func.count(CoreRoleUser.id))
+            .where(CoreRoleUser.role_id.in_(role_ids))
+            .group_by(CoreRoleUser.role_id)
+        )
+        result = await self.session.execute(stmt)
+        return {row[0]: row[1] for row in result.all()}

@@ -236,7 +236,6 @@ import {
   mountUserApi,
   roleCreateApi,
   roleDelApi,
-  roleDetailApi,
   roleEditApi,
   searchExternalUserApi,
   searchRoleApi,
@@ -301,11 +300,9 @@ const loadRoles = async () => {
   loading.value = true
   try {
     const res = await searchRoleApi(keyword.value.trim())
-    const baseRoles = res.data || []
-    const detailList = await Promise.all(baseRoles.map(role => roleDetailApi(role.id)))
-    roles.value = baseRoles.map((role, index) => ({
+    roles.value = (res.data || []).map(role => ({
       ...role,
-      memberCount: detailList[index].data?.memberCount || 0
+      memberCount: role.memberCount || 0
     }))
     if (currentRole.value) {
       currentRole.value = roles.value.find(role => role.id === currentRole.value?.id) || null

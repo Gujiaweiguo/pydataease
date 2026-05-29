@@ -27,7 +27,7 @@ async def query_roles(
     payload: RoleQueryRequest | None = None,
     user: TokenUser = Depends(get_current_user),
     service: RoleService = Depends(get_role_service),
-) -> list[RoleResponse]:
+) -> list[RoleDetailResponse]:
     return await service.query(payload, user)
 
 

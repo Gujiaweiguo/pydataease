@@ -39,13 +39,28 @@ class RoleService:
         self.org_repo = OrgRepository(session)
         self.user_repo = UserRepository(session)
 
-    async def query(self, payload: RoleQueryRequest | None, user: TokenUser) -> list[RoleResponse]:
+    async def query(self, payload: RoleQueryRequest | None, user: TokenUser) -> list[RoleDetailResponse]:
         roles = await self.role_repo.list_by_org(user.oid)
         keyword = payload.keyword.strip() if payload and payload.keyword else ""
         if keyword:
             lowered = keyword.lower()
             roles = [role for role in roles if lowered in role.name.lower()]
-        return [RoleResponse.model_validate(role) for role in roles]
+        # Batch compute member counts to avoid N+1 queries
+        role_ids = [role.id for role in roles]
+        count_map = await self.role_repo.count_members_batch(role_ids)
+        return [
+            RoleDetailResponse.model_validate({
+                "id": role.id,
+                "name": role.name,
+                "description": role.description,
+                "oid": role.oid,
+                "type": role.type,
+                "create_time": role.create_time,
+                "update_time": role.update_time,
+                "member_count": count_map.get(role.id, 0),
+            })
+            for role in roles
+        ]
 
     async def create(self, payload: RoleCreateRequest, user: TokenUser) -> RoleResponse:
         self._require_current_org(user)
