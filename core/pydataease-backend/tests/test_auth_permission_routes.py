@@ -75,12 +75,16 @@ class FakeAuthPermissionService:
         del user
         return PermissionVO(root=False, readonly=False, permissions=self.saved_menu_per.get(request.id, []))
 
+    def _require_admin(self, user) -> None:
+        if user.user_id != 1:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
+
     async def save_busi_per(self, editor, user) -> None:
-        del user
+        self._require_admin(user)
         self.saved_busi_per[(editor.type, editor.id, editor.flag)] = list(editor.permissions)
 
     async def save_menu_per(self, editor, user) -> None:
-        del user
+        self._require_admin(user)
         self.saved_menu_per[editor.id] = list(editor.permissions)
 
     async def get_busi_target_permission(self, request, user) -> PermissionVO:
@@ -93,12 +97,12 @@ class FakeAuthPermissionService:
         return PermissionVO(root=False, readonly=True, permissions=self.saved_menu_target_per.get(request.id, []))
 
     async def save_busi_target_per(self, creator, user) -> None:
-        del user
+        self._require_admin(user)
         for target_id in creator.ids:
             self.saved_busi_target_per[(creator.type, creator.flag, target_id)] = list(creator.permissions)
 
     async def save_menu_target_per(self, creator, user) -> None:
-        del user
+        self._require_admin(user)
         for target_id in creator.ids:
             self.saved_menu_target_per[target_id] = list(creator.permissions)
 
@@ -232,6 +236,7 @@ class TestSaveReadRoundTrip:
         assert body["data"]["permissions"] == [{"id": 5, "weight": 1, "columnPermissions": None, "rowPermissions": None, "ext": 0}]
 
 
+@pytest.mark.usefixtures("fake_service")
 class TestAuthorization:
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
