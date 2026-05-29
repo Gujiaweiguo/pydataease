@@ -3,30 +3,48 @@
     <div class="page-header">
       <p class="router-title">组织管理</p>
       <div class="actions">
-        <el-button type="primary" @click="openCreateDialog">新增组织</el-button>
-        <el-button :disabled="!selectedOrg || selectedOrg.id === '0'" @click="openEditDialog"
-          >编辑</el-button
-        >
-        <el-button
-          :disabled="!selectedOrg || selectedOrg.id === '0'"
-          type="danger"
-          @click="handleDelete"
-        >
-          删除
-        </el-button>
+        <el-input
+          v-model="searchKeyword"
+          clearable
+          placeholder="搜索组织名称"
+          style="width: 220px"
+          @keyup.enter="handleSearch"
+          @clear="handleSearch"
+        />
+        <el-button @click="handleSearch">查询</el-button>
+        <el-button type="primary" @click="openCreateDialog(undefined)">新增组织</el-button>
       </div>
     </div>
 
     <div class="page-body">
       <el-tree
+        ref="treeRef"
         :data="treeNodes"
+        :filter-node-method="filterNode"
         node-key="id"
         default-expand-all
         highlight-current
         :expand-on-click-node="false"
         :props="treeProps"
         @node-click="handleNodeClick"
-      />
+      >
+        <template #default="{ data }">
+          <div class="tree-node" :class="{ 'is-root': data.id === '0' }">
+            <span class="tree-node-label">{{ data.name }}</span>
+            <span v-if="data.id !== '0'" class="tree-node-actions">
+              <el-button link type="primary" size="small" @click.stop="openCreateDialog(data)"
+                >新建子组织</el-button
+              >
+              <el-button link type="primary" size="small" @click.stop="openEditDialog(data)"
+                >编辑</el-button
+              >
+              <el-button link type="danger" size="small" @click.stop="handleDelete(data)"
+                >删除</el-button
+              >
+            </span>
+          </div>
+        </template>
+      </el-tree>
     </div>
 
     <el-dialog v-model="createDialogVisible" title="新增组织" width="480px" append-to-body>
@@ -67,7 +85,7 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, nextTick, onMounted, reactive, ref } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus-secondary'
 import { ElMessage, ElMessageBox } from 'element-plus-secondary'
 import { deleteApi, resourceExistApi, saveApi, searchApi, updateApi } from '@/api/org'
@@ -87,6 +105,8 @@ const createDialogVisible = ref(false)
 const editDialogVisible = ref(false)
 const createFormRef = ref<FormInstance>()
 const editFormRef = ref<FormInstance>()
+const treeRef = ref<any>()
+const searchKeyword = ref('')
 const treeProps = { label: 'name', children: 'children' }
 
 const createForm = reactive({
@@ -125,6 +145,15 @@ const orgOptions = computed(() => {
   return options
 })
 
+const filterNode = (value: string, data: OrgTreeNode) => {
+  if (!value) return true
+  return data.name.includes(value)
+}
+
+const handleSearch = () => {
+  treeRef.value?.filter(searchKeyword.value.trim())
+}
+
 const loadTree = async () => {
   loading.value = true
   try {
@@ -157,19 +186,18 @@ const handleNodeClick = (data: OrgTreeNode) => {
   selectedOrg.value = data
 }
 
-const openCreateDialog = () => {
+const openCreateDialog = (parent?: OrgTreeNode | undefined) => {
   createForm.name = ''
-  createForm.pid =
-    selectedOrg.value && selectedOrg.value.id !== '0' ? Number(selectedOrg.value.id) : 0
+  createForm.pid = parent && parent.id !== '0' ? Number(parent.id) : 0
   createDialogVisible.value = true
 }
 
-const openEditDialog = () => {
-  if (!selectedOrg.value || selectedOrg.value.id === '0') {
+const openEditDialog = (data: OrgTreeNode) => {
+  if (data.id === '0') {
     return
   }
-  editForm.id = selectedOrg.value.id
-  editForm.name = selectedOrg.value.name
+  editForm.id = data.id
+  editForm.name = data.name
   editDialogVisible.value = true
 }
 
@@ -182,6 +210,8 @@ const submitCreate = async () => {
   ElMessage.success('新增成功')
   createDialogVisible.value = false
   await loadTree()
+  await nextTick()
+  handleSearch()
 }
 
 const submitEdit = async () => {
@@ -195,26 +225,34 @@ const submitEdit = async () => {
   await loadTree()
 }
 
-const handleDelete = async () => {
-  if (!selectedOrg.value || selectedOrg.value.id === '0') {
+const handleDelete = async (data: OrgTreeNode) => {
+  if (data.id === '0') {
     return
   }
-  const oid = Number(selectedOrg.value.id)
+  const oid = Number(data.id)
   const hasChildren = await resourceExistApi(oid)
   if (hasChildren.data) {
     ElMessage.warning('当前组织存在下级组织，无法删除')
     return
   }
-  await ElMessageBox.confirm(`确认删除组织“${selectedOrg.value.name}”吗？`, '删除组织', {
-    type: 'warning',
-    confirmButtonType: 'danger',
-    autofocus: false,
-    showClose: false
-  })
+  await ElMessageBox.confirm(
+    `确认删除组织"${data.name}"吗？删除后该组织下所有资源将一并删除。`,
+    '删除组织',
+    {
+      type: 'warning',
+      confirmButtonType: 'danger',
+      autofocus: false,
+      showClose: false
+    }
+  )
   await deleteApi(oid)
   ElMessage.success('删除成功')
-  selectedOrg.value = null
+  if (selectedOrg.value?.id === data.id) {
+    selectedOrg.value = null
+  }
   await loadTree()
+  await nextTick()
+  handleSearch()
 }
 
 onMounted(() => {
@@ -250,6 +288,33 @@ onMounted(() => {
     background: var(--ContentBG, #ffffff);
     border-radius: 12px;
     overflow: auto;
+  }
+
+  .tree-node {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex: 1;
+    padding-right: 8px;
+
+    &.is-root .tree-node-label {
+      font-weight: 500;
+    }
+
+    .tree-node-label {
+      font-size: 14px;
+      color: #1f2329;
+    }
+
+    .tree-node-actions {
+      display: none;
+      gap: 4px;
+      margin-left: 8px;
+    }
+
+    &:hover .tree-node-actions {
+      display: flex;
+    }
   }
 }
 </style>

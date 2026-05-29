@@ -222,11 +222,11 @@ const RESOURCE_FLAGS: ResourceFlag[] = ['dashboard', 'screen', 'dataset', 'datas
 const RESOURCE_META: Record<ResourceFlag, { label: string; description: string }> = {
   dashboard: {
     label: '仪表板权限',
-    description: '为仪表板配置查看、导出、管理或授权级别。'
+    description: '控制仪表板的查看、导出（图片/PDF/模板/图表Excel/明细）、管理与授权能力。'
   },
   screen: {
     label: '大屏权限',
-    description: '控制大屏资源的浏览、导出、管理与再次授权能力。'
+    description: '控制数据大屏的查看、导出、管理与授权能力。'
   },
   dataset: {
     label: '数据集权限',
@@ -234,7 +234,7 @@ const RESOURCE_META: Record<ResourceFlag, { label: string; description: string }
   },
   datasource: {
     label: '数据源权限',
-    description: '控制数据源的使用、管理与授权能力。'
+    description: '控制数据源的查看（基本信息/表结构）、使用、管理与授权能力。'
   }
 }
 
@@ -257,6 +257,7 @@ const permissionOptions: Record<ResourceFlag, Array<{ label: string; value: numb
     { label: '授权', value: 9 }
   ],
   datasource: [
+    { label: '查看', value: 1 },
     { label: '使用', value: 2 },
     { label: '管理', value: 7 },
     { label: '授权', value: 9 }
