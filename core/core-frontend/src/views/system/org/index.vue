@@ -1,50 +1,84 @@
 <template>
-  <div class="system-page" v-loading="loading">
+  <div class="org-management-page" v-loading="loading">
     <div class="page-header">
       <p class="router-title">组织管理</p>
-      <div class="actions">
+      <div class="toolbar">
         <el-input
           v-model="searchKeyword"
           clearable
           placeholder="搜索组织名称"
-          style="width: 220px"
+          style="width: 240px"
           @keyup.enter="handleSearch"
           @clear="handleSearch"
         />
         <el-button @click="handleSearch">查询</el-button>
-        <el-button type="primary" @click="openCreateDialog(undefined)">新增组织</el-button>
+        <el-button type="primary" @click="openCreateDialog()">新增组织</el-button>
       </div>
     </div>
 
-    <div class="page-body">
-      <el-tree
-        ref="treeRef"
-        :data="treeNodes"
-        :filter-node-method="filterNode"
-        node-key="id"
-        default-expand-all
-        highlight-current
-        :expand-on-click-node="false"
-        :props="treeProps"
-        @node-click="handleNodeClick"
-      >
-        <template #default="{ data }">
-          <div class="tree-node" :class="{ 'is-root': data.id === '0' }">
-            <span class="tree-node-label">{{ data.name }}</span>
-            <span v-if="data.id !== '0'" class="tree-node-actions">
-              <el-button link type="primary" size="small" @click.stop="openCreateDialog(data)"
-                >新建子组织</el-button
-              >
-              <el-button link type="primary" size="small" @click.stop="openEditDialog(data)"
-                >编辑</el-button
-              >
-              <el-button link type="danger" size="small" @click.stop="handleDelete(data)"
-                >删除</el-button
-              >
-            </span>
+    <div class="page-body page-layout">
+      <aside class="tree-sidebar">
+        <div class="sidebar-caption">组织架构</div>
+        <el-tree
+          ref="treeRef"
+          :data="treeData"
+          node-key="id"
+          default-expand-all
+          highlight-current
+          :expand-on-click-node="false"
+          :filter-node-method="filterNode"
+          :props="treeProps"
+          class="org-tree"
+          @node-click="handleNodeClick"
+        >
+          <template #default="{ data }">
+            <div class="tree-node" :class="{ 'is-root': data.id === ROOT_ORG_ID }">
+              <span class="tree-node-label">{{ data.name }}</span>
+            </div>
+          </template>
+        </el-tree>
+      </aside>
+
+      <section class="table-panel">
+        <div class="table-panel-header">
+          <div class="panel-copy">
+            <h3>{{ selectedOrg?.name || '根组织' }}</h3>
+            <p>{{ tableDescription }}</p>
           </div>
-        </template>
-      </el-tree>
+          <div class="selected-summary">
+            直属下级 {{ filteredChildCount }} / {{ totalChildCount }}
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <el-table :data="tableRows" border row-key="id" height="100%">
+            <el-table-column label="组织名称" min-width="220" show-overflow-tooltip>
+              <template #default="scope">
+                <span>{{ scope.row.name }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="上级组织" min-width="160" show-overflow-tooltip>
+              <template #default="scope">
+                <span>{{ scope.row.parentName }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="创建时间" width="140">
+              <template #default="scope">
+                <span>{{ scope.row.createTimeDisplay }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" fixed="right" width="260">
+              <template #default="scope">
+                <el-button link type="primary" @click="openCreateDialog(scope.row)"
+                  >新建子组织</el-button
+                >
+                <el-button link type="primary" @click="openEditDialog(scope.row)">编辑</el-button>
+                <el-button link type="danger" @click="handleDelete(scope.row)">删除</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
+      </section>
     </div>
 
     <el-dialog v-model="createDialogVisible" title="新增组织" width="480px" append-to-body>
@@ -65,7 +99,7 @@
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="createDialogVisible = false">取消</el-button>
+        <el-button @click="closeCreateDialog">取消</el-button>
         <el-button type="primary" @click="submitCreate">确定</el-button>
       </template>
     </el-dialog>
@@ -77,7 +111,7 @@
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="editDialogVisible = false">取消</el-button>
+        <el-button @click="closeEditDialog">取消</el-button>
         <el-button type="primary" @click="submitEdit">确定</el-button>
       </template>
     </el-dialog>
@@ -98,20 +132,42 @@ interface OrgTreeNode {
   children?: OrgTreeNode[]
 }
 
+interface OrgOptionItem {
+  id: string
+  value: number
+  label: string
+}
+
+interface OrgTableRow extends OrgTreeNode {
+  parentName: string
+  createTimeDisplay: string
+}
+
+interface TreeViewInstance {
+  filter: (value: string) => void
+  setCurrentKey: (key: string | number) => void
+}
+
+const ROOT_ORG_ID = '0'
+const ROOT_ORG_NAME = '根组织'
+
 const loading = ref(false)
 const treeData = ref<OrgTreeNode[]>([])
-const selectedOrg = ref<OrgTreeNode | null>(null)
+const selectedOrgId = ref(ROOT_ORG_ID)
+const searchKeyword = ref('')
+const activeKeyword = ref('')
 const createDialogVisible = ref(false)
 const editDialogVisible = ref(false)
 const createFormRef = ref<FormInstance>()
 const editFormRef = ref<FormInstance>()
-const treeRef = ref<any>()
-const searchKeyword = ref('')
+const treeRef = ref<TreeViewInstance>()
+const nodeMap = ref<Record<string, OrgTreeNode>>({})
+const parentNameMap = ref<Record<string, string>>({})
 const treeProps = { label: 'name', children: 'children' }
 
 const createForm = reactive({
   name: '',
-  pid: 0 as number
+  pid: 0
 })
 
 const editForm = reactive({
@@ -123,13 +179,36 @@ const nameRules: FormRules = {
   name: [{ required: true, message: '请输入组织名称', trigger: 'blur' }]
 }
 
-const treeNodes = computed(() => treeData.value[0]?.children || [])
+const selectedOrg = computed(() => nodeMap.value[selectedOrgId.value])
 
-const orgOptions = computed(() => {
-  const options: Array<{ id: string; value: number; label: string }> = []
+const totalChildCount = computed(() => selectedOrg.value?.children?.length || 0)
+
+const filteredChildCount = computed(() => tableRows.value.length)
+
+const tableDescription = computed(() => {
+  if (selectedOrgId.value === ROOT_ORG_ID) {
+    return '展示全部一级组织，点击左侧组织可查看其直属下级。'
+  }
+  return `展示“${selectedOrg.value?.name || ''}”的直属下级组织。`
+})
+
+const tableRows = computed<OrgTableRow[]>(() => {
+  const keyword = activeKeyword.value
+  const children = selectedOrg.value?.children || []
+  return children
+    .filter(item => !keyword || item.name.includes(keyword))
+    .map(item => ({
+      ...item,
+      parentName: parentNameMap.value[item.id] || ROOT_ORG_NAME,
+      createTimeDisplay: '-'
+    }))
+})
+
+const orgOptions = computed<OrgOptionItem[]>(() => {
+  const options: OrgOptionItem[] = []
   const walk = (nodes: OrgTreeNode[], prefix = '') => {
     nodes.forEach(node => {
-      if (node.id !== '0') {
+      if (node.id !== ROOT_ORG_ID) {
         options.push({
           id: node.id,
           value: Number(node.id),
@@ -141,59 +220,122 @@ const orgOptions = computed(() => {
       }
     })
   }
-  walk(treeNodes.value)
+  walk(treeData.value)
   return options
 })
 
+const cloneOrgNode = (node: OrgTreeNode): OrgTreeNode => ({
+  id: String(node.id),
+  pid: node.pid,
+  name: node.name,
+  leaf: Boolean(node.leaf),
+  children: (node.children || []).map(child => cloneOrgNode(child))
+})
+
+const normalizeTree = (nodes: OrgTreeNode[]): OrgTreeNode[] => {
+  const sourceNodes = (nodes || []).map(item => cloneOrgNode(item))
+  const rootNode = sourceNodes.find(item => item.id === ROOT_ORG_ID)
+  const rootChildren = rootNode?.children?.length
+    ? rootNode.children
+    : sourceNodes.filter(item => item.id !== ROOT_ORG_ID)
+
+  return [
+    {
+      id: ROOT_ORG_ID,
+      pid: ROOT_ORG_ID,
+      name: ROOT_ORG_NAME,
+      leaf: rootChildren.length === 0,
+      children: rootChildren
+    }
+  ]
+}
+
+const rebuildTreeMeta = (nodes: OrgTreeNode[]) => {
+  const nextNodeMap: Record<string, OrgTreeNode> = {}
+  const nextParentNameMap: Record<string, string> = {}
+
+  const walk = (items: OrgTreeNode[], parentName = '') => {
+    items.forEach(node => {
+      nextNodeMap[node.id] = node
+      nextParentNameMap[node.id] = parentName || ROOT_ORG_NAME
+      if (node.children?.length) {
+        walk(node.children, node.name)
+      }
+    })
+  }
+
+  walk(nodes)
+  nodeMap.value = nextNodeMap
+  parentNameMap.value = nextParentNameMap
+}
+
+const syncCurrentTreeNode = async () => {
+  await nextTick()
+  treeRef.value?.setCurrentKey(selectedOrgId.value)
+}
+
 const filterNode = (value: string, data: OrgTreeNode) => {
-  if (!value) return true
+  if (!value) {
+    return true
+  }
+  if (data.id === ROOT_ORG_ID) {
+    return true
+  }
   return data.name.includes(value)
 }
 
 const handleSearch = () => {
-  treeRef.value?.filter(searchKeyword.value.trim())
+  activeKeyword.value = searchKeyword.value.trim()
+  treeRef.value?.filter(activeKeyword.value)
+}
+
+const handleNodeClick = (data: OrgTreeNode) => {
+  selectedOrgId.value = data.id
 }
 
 const loadTree = async () => {
   loading.value = true
   try {
     const res = await searchApi({})
-    treeData.value = res.data || []
-    const currentId = selectedOrg.value?.id
-    selectedOrg.value = currentId
-      ? findNode(treeData.value, currentId) || null
-      : treeData.value[0]?.children?.[0] || null
+    const normalizedTree = normalizeTree(res.data || [])
+    treeData.value = normalizedTree
+    rebuildTreeMeta(normalizedTree)
+    if (!nodeMap.value[selectedOrgId.value]) {
+      selectedOrgId.value = ROOT_ORG_ID
+    }
+    await syncCurrentTreeNode()
+    handleSearch()
   } finally {
     loading.value = false
   }
 }
 
-const findNode = (nodes: OrgTreeNode[], id: string): OrgTreeNode | undefined => {
-  for (const node of nodes) {
-    if (node.id === id) {
-      return node
-    }
-    if (node.children?.length) {
-      const found = findNode(node.children, id)
-      if (found) {
-        return found
-      }
-    }
-  }
-}
-
-const handleNodeClick = (data: OrgTreeNode) => {
-  selectedOrg.value = data
-}
-
-const openCreateDialog = (parent?: OrgTreeNode | undefined) => {
+const resetCreateForm = () => {
   createForm.name = ''
-  createForm.pid = parent && parent.id !== '0' ? Number(parent.id) : 0
+  createForm.pid = 0
+}
+
+const closeCreateDialog = () => {
+  createFormRef.value?.clearValidate()
+  createDialogVisible.value = false
+  resetCreateForm()
+}
+
+const closeEditDialog = () => {
+  editFormRef.value?.clearValidate()
+  editDialogVisible.value = false
+  editForm.id = ''
+  editForm.name = ''
+}
+
+const openCreateDialog = (parent?: OrgTreeNode) => {
+  resetCreateForm()
+  createForm.pid = parent && parent.id !== ROOT_ORG_ID ? Number(parent.id) : 0
   createDialogVisible.value = true
 }
 
 const openEditDialog = (data: OrgTreeNode) => {
-  if (data.id === '0') {
+  if (data.id === ROOT_ORG_ID) {
     return
   }
   editForm.id = data.id
@@ -208,10 +350,9 @@ const submitCreate = async () => {
     pid: createForm.pid || 0
   })
   ElMessage.success('新增成功')
-  createDialogVisible.value = false
+  selectedOrgId.value = createForm.pid ? String(createForm.pid) : ROOT_ORG_ID
+  closeCreateDialog()
   await loadTree()
-  await nextTick()
-  handleSearch()
 }
 
 const submitEdit = async () => {
@@ -221,22 +362,24 @@ const submitEdit = async () => {
     name: editForm.name.trim()
   })
   ElMessage.success('编辑成功')
-  editDialogVisible.value = false
+  closeEditDialog()
   await loadTree()
 }
 
 const handleDelete = async (data: OrgTreeNode) => {
-  if (data.id === '0') {
+  if (data.id === ROOT_ORG_ID) {
     return
   }
+
   const oid = Number(data.id)
   const hasChildren = await resourceExistApi(oid)
   if (hasChildren.data) {
     ElMessage.warning('当前组织存在下级组织，无法删除')
     return
   }
+
   await ElMessageBox.confirm(
-    `确认删除组织"${data.name}"吗？删除后该组织下所有资源将一并删除。`,
+    `确认删除组织“${data.name}”吗？删除后该组织下所有资源将一并删除。`,
     '删除组织',
     {
       type: 'warning',
@@ -245,76 +388,160 @@ const handleDelete = async (data: OrgTreeNode) => {
       showClose: false
     }
   )
+
   await deleteApi(oid)
   ElMessage.success('删除成功')
-  if (selectedOrg.value?.id === data.id) {
-    selectedOrg.value = null
+  if (selectedOrgId.value === data.id) {
+    selectedOrgId.value = String(data.pid || ROOT_ORG_ID)
   }
   await loadTree()
-  await nextTick()
-  handleSearch()
 }
 
-onMounted(() => {
-  loadTree()
+onMounted(async () => {
+  await loadTree()
 })
 </script>
 
 <style scoped lang="less">
-.system-page {
+.org-management-page {
   .page-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     margin-bottom: 16px;
+    gap: 16px;
   }
 
   .router-title {
     margin: 0;
     color: #1f2329;
+    font-family: var(--de-custom_font, 'PingFang');
     font-size: 20px;
     font-weight: 500;
     line-height: 28px;
   }
 
-  .actions {
+  .toolbar {
     display: flex;
+    align-items: center;
+    justify-content: flex-end;
     gap: 12px;
+    flex-wrap: wrap;
   }
 
   .page-body {
-    min-height: calc(100vh - 176px);
-    padding: 16px;
     background: var(--ContentBG, #ffffff);
     border-radius: 12px;
-    overflow: auto;
+  }
+
+  .page-layout {
+    display: grid;
+    grid-template-columns: 280px minmax(0, 1fr);
+    min-height: calc(100vh - 176px);
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .tree-sidebar {
+    padding: 16px 12px 16px 16px;
+    background: var(--ContentBG, #ffffff);
+    border-right: 1px solid #ebedf0;
+    overflow-y: auto;
+  }
+
+  .sidebar-caption {
+    margin-bottom: 12px;
+    color: #646a73;
+    font-size: 13px;
+    line-height: 20px;
+  }
+
+  .org-tree {
+    min-width: 0;
   }
 
   .tree-node {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    flex: 1;
-    padding-right: 8px;
+    min-width: 0;
+    gap: 8px;
 
-    &.is-root .tree-node-label {
+    &.is-root {
       font-weight: 500;
     }
+  }
 
-    .tree-node-label {
-      font-size: 14px;
+  .tree-node-label {
+    overflow: hidden;
+    color: inherit;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .table-panel {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    padding: 16px;
+    overflow: hidden;
+  }
+
+  .table-panel-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .panel-copy {
+    h3 {
+      margin: 0;
       color: #1f2329;
+      font-size: 18px;
+      font-weight: 500;
+      line-height: 26px;
     }
 
-    .tree-node-actions {
-      display: none;
-      gap: 4px;
-      margin-left: 8px;
+    p {
+      margin: 6px 0 0;
+      color: #646a73;
+      font-size: 13px;
+      line-height: 20px;
     }
+  }
 
-    &:hover .tree-node-actions {
-      display: flex;
-    }
+  .selected-summary {
+    display: inline-flex;
+    align-items: center;
+    min-height: 32px;
+    padding: 0 12px;
+    color: #3f4854;
+    font-size: 13px;
+    background: #f5f7fa;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+
+  .table-wrap {
+    flex: 1;
+    min-height: 0;
+  }
+
+  :deep(.org-tree .el-tree-node__content) {
+    height: 40px;
+    margin-bottom: 4px;
+    border-radius: 8px;
+  }
+
+  :deep(.org-tree .el-tree-node.is-current > .el-tree-node__content) {
+    color: #3370ff;
+    background: rgba(51, 112, 255, 0.08);
+  }
+
+  :deep(.org-tree .el-tree-node__label) {
+    width: 100%;
+    font-size: 14px;
   }
 }
 </style>
