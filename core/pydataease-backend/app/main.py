@@ -21,6 +21,7 @@ from app.middleware.response_wrapper import ResultMessageMiddleware  # pyright: 
 from app.routers.chart import router as chart_router  # pyright: ignore[reportImplicitRelativeImport]
 from app.routers.column_permission import router as column_permission_router  # pyright: ignore[reportImplicitRelativeImport]
 from app.routers.custom_geo import router as custom_geo_router  # pyright: ignore[reportImplicitRelativeImport]
+from app.routers.data_filing import router as data_filing_router  # pyright: ignore[reportImplicitRelativeImport]
 from app.routers.dataset_sql_log import router as dataset_sql_log_router  # pyright: ignore[reportImplicitRelativeImport]
 from app.routers.datasource import router as datasource_router  # pyright: ignore[reportImplicitRelativeImport]
 from app.routers.dataset import router as dataset_router  # pyright: ignore[reportImplicitRelativeImport]
@@ -116,6 +117,7 @@ api_router.include_router(bootstrap_router)
 api_router.include_router(visualization_bg_router)
 api_router.include_router(visualization_subject_router)
 api_router.include_router(custom_geo_router)
+api_router.include_router(data_filing_router)
 api_router.include_router(dataset_sql_log_router)
 api_router.include_router(geo_router)
 api_router.include_router(auth_router)

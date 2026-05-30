@@ -1,6 +1,7 @@
 from app.models.api_key import XpackApiKey
 from app.models.auth_provider import AuthProvider
 from app.models.base import Base
+from app.models.data_filing import FilingAudit, FilingConfig, FilingSubmission
 from app.models.embed_config import EmbedConfig
 from app.models.chart import CoreChartView
 from app.models.custom_geo import CustomGeoArea, CustomGeoSubArea
@@ -51,6 +52,9 @@ __all__ = [
     "AuthProvider",
     "Base",
     "EmbedConfig",
+    "FilingAudit",
+    "FilingConfig",
+    "FilingSubmission",
     "CoreChartView",
     "CoreDatasetGroup",
     "CoreDatasetTable",
