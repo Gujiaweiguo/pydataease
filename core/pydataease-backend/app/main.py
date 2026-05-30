@@ -54,6 +54,7 @@ from app.routers.watermark import router as watermark_router  # pyright: ignore[
 from app.routers.websocket import router as websocket_router  # pyright: ignore[reportImplicitRelativeImport]
 from app.schemas.response import ResultMessage  # pyright: ignore[reportImplicitRelativeImport]
 from app.settings.config import get_settings  # pyright: ignore[reportImplicitRelativeImport]
+from app.settings.seed import seed_defaults  # pyright: ignore[reportImplicitRelativeImport]
 from app.tasks import configure_scheduler, shutdown_scheduler  # pyright: ignore[reportImplicitRelativeImport]
 
 settings = get_settings()
@@ -72,6 +73,7 @@ if settings.rsa_private_key_path and not os.environ.get("DE_RSA_PRIVATE_KEY_PATH
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     setup_logging()
+    await seed_defaults()
     scheduler, worker = configure_scheduler()
     app.state.task_scheduler = scheduler
     app.state.task_worker = worker
