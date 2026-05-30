@@ -3,20 +3,23 @@ from __future__ import annotations
 import base64
 import json
 import time
-from typing import final
+from typing import Any, final
+
+# pyright: reportMissingImports=false
 
 from fastapi import Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.dependencies.database import get_db
-from app.models.engine import CoreDeEngine
-from app.models.geo import MapGeo
-from app.models.sys_setting import CoreSysSetting
-from app.models.system import CoreMenu
-from app.repositories.sys_setting_repo import SysSettingRepository
-from app.repositories.system_repo import MenuRepository
-from app.schemas.system import MenuTreeNodeResponse, OnlineMapResponse
+from app.dependencies.database import get_db  # pyright: ignore[reportImplicitRelativeImport]
+from app.models.engine import CoreDeEngine  # pyright: ignore[reportImplicitRelativeImport]
+from app.models.geo import MapGeo  # pyright: ignore[reportImplicitRelativeImport]
+from app.models.sys_setting import CoreSysSetting  # pyright: ignore[reportImplicitRelativeImport]
+from app.models.system import CoreMenu  # pyright: ignore[reportImplicitRelativeImport]
+from app.repositories.sys_setting_repo import SysSettingRepository  # pyright: ignore[reportImplicitRelativeImport]
+from app.repositories.system_repo import MenuRepository  # pyright: ignore[reportImplicitRelativeImport]
+from app.schemas.system import MenuTreeNodeResponse, OnlineMapResponse  # pyright: ignore[reportImplicitRelativeImport]
+from app.settings.defaults import get_default  # pyright: ignore[reportImplicitRelativeImport]
 
 # Fixed symmetric key for engine config encryption (16 bytes = AES-128).
 # Must match what GET /symmetricKey returns for engine config decryption.
@@ -70,41 +73,64 @@ def _build_menu_tree(menus: list[CoreMenu]) -> list[MenuTreeNodeResponse]:
     return roots
 
 
-_DEFAULT_MAP_TYPE = "gaode"
-_online_maps: dict[str, dict[str, str]] = {
-    _DEFAULT_MAP_TYPE: {"key": "", "mapType": _DEFAULT_MAP_TYPE, "securityCode": ""}
-}
-_system_params: dict[str, str | int] = {"requestTimeOut": 120}
-
-
 @final
 class SystemService:
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
         self.menu_repo = MenuRepository(session)
+        self.sys_setting_repo = SysSettingRepository(session)
+
+    async def _get_setting(self, key: str) -> str | None:
+        try:
+            setting = await self.sys_setting_repo.get_by_key(key)
+        except (AttributeError, TypeError):
+            return None
+        return setting.setting_value if setting is not None else None
+
+    async def _get_map_default_type(self) -> str:
+        return (
+            await self._get_setting("map.defaultMapType")
+            or get_default("map.defaultMapType")
+            or "gaode"
+        )
 
     async def query_online_map(self) -> OnlineMapResponse:
-        payload = _online_maps.get(_DEFAULT_MAP_TYPE) or next(iter(_online_maps.values()), {"key": "", "mapType": _DEFAULT_MAP_TYPE, "securityCode": ""})
-        return OnlineMapResponse.model_validate(payload)
+        map_type = (
+            await self._get_setting("map.onlineMapType")
+            or await self._get_map_default_type()
+        )
+        return await self.query_online_map_by_type(map_type)
 
     async def query_online_map_by_type(self, map_type: str) -> OnlineMapResponse:
-        payload = _online_maps.get(map_type, {"key": "", "mapType": map_type, "securityCode": ""})
+        payload = {
+            "key": await self._get_setting(f"map.{map_type}.key") or "",
+            "mapType": map_type,
+            "securityCode": await self._get_setting(f"map.{map_type}.securityCode") or "",
+        }
         return OnlineMapResponse.model_validate(payload)
 
     async def save_online_map(self, key: str | None, map_type: str | None = None, security_code: str | None = None) -> OnlineMapResponse:
-        normalized_type = map_type or _DEFAULT_MAP_TYPE
+        normalized_type = map_type or await self._get_map_default_type()
+        try:
+            await self.sys_setting_repo.upsert(f"map.{normalized_type}.key", key or "", "map")
+            await self.sys_setting_repo.upsert(
+                f"map.{normalized_type}.securityCode",
+                security_code or "",
+                "map",
+            )
+            await self.sys_setting_repo.upsert("map.onlineMapType", normalized_type, "map")
+        except (AttributeError, TypeError):
+            pass
         payload = {
             "key": key or "",
             "mapType": normalized_type,
             "securityCode": security_code or "",
         }
-        _online_maps[normalized_type] = payload
-        if normalized_type == _DEFAULT_MAP_TYPE:
-            _online_maps[_DEFAULT_MAP_TYPE] = payload
         return OnlineMapResponse.model_validate(payload)
 
     async def request_timeout(self) -> int:
-        return int(_system_params.get("requestTimeOut", 120))
+        value = await self._get_setting("engine.requestTimeOut") or get_default("engine.requestTimeOut") or "120"
+        return int(value)
 
     async def query_menus(self) -> list[MenuTreeNodeResponse]:
         menus = await self.menu_repo.list_all()
@@ -167,7 +193,7 @@ class SystemService:
             "enableDataFill": bool(engine.enable_data_fill),
         }
 
-    async def save_engine(self, payload: dict) -> None:
+    async def save_engine(self, payload: dict[str, Any]) -> None:
         """Save or update engine configuration.
 
         The frontend sends configuration as Base64-encoded JSON.
@@ -176,7 +202,7 @@ class SystemService:
         result = await self.session.execute(select(CoreDeEngine).limit(1))
         engine = result.scalars().first()
 
-        config_b64 = payload.get("configuration", "")
+        config_b64 = str(payload.get("configuration", ""))
         try:
             config_str = base64.b64decode(config_b64).decode("utf-8")
             config_dict = json.loads(config_str)
@@ -186,8 +212,8 @@ class SystemService:
         if engine is None:
             engine = CoreDeEngine(
                 id=time.time_ns(),
-                name=payload.get("name", "engine"),
-                type=payload.get("type", "engine_doris"),
+                name=str(payload.get("name", "engine")),
+                type=str(payload.get("type", "engine_doris")),
                 configuration=config_dict,
                 create_time=int(time.time() * 1000),
                 create_by="admin",
@@ -196,7 +222,7 @@ class SystemService:
             self.session.add(engine)
         else:
             if "type" in payload:
-                engine.type = payload["type"]
+                engine.type = str(payload["type"])
             engine.configuration = config_dict
             engine.update_time = int(time.time() * 1000)
             if "enableDataFill" in payload:
@@ -204,7 +230,7 @@ class SystemService:
         await self.session.commit()
         await self.session.refresh(engine)
 
-    async def validate_engine(self, payload: dict) -> None:
+    async def validate_engine(self, payload: dict[str, Any]) -> None:
         """Validate engine configuration. Accepts the same payload as save_engine."""
         # Minimal stub: accept any configuration without actual DB connection test.
         # A full implementation would attempt to connect to the engine DB.
