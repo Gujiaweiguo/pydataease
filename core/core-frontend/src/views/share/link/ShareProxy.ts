@@ -71,7 +71,8 @@ class ShareProxy {
     const url = '/share/proxyInfo'
     const inIframe = isInIframe()
     const ticket = this.getTicket()
-    const param = { uuid, ciphertext: null, inIframe, ticket }
+    const domain = this._extractDomain()
+    const param = { uuid, ciphertext: null, inIframe, ticket, domain }
     const ciphertext = wsCache.get(`link-${uuid}`)
     if (ciphertext) {
       param['ciphertext'] = ciphertext
@@ -85,6 +86,20 @@ class ShareProxy {
       }
     }
     return proxyInfo
+  }
+
+  _extractDomain(): string | null {
+    try {
+      if (document.referrer) {
+        return new URL(document.referrer).hostname
+      }
+      if (window.location !== window.parent.location && window.parent.location.hostname) {
+        return window.parent.location.hostname
+      }
+    } catch {
+      // cross-origin iframe — can't access parent
+    }
+    return window.location.hostname
   }
 }
 

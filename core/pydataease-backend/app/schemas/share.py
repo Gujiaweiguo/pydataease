@@ -33,6 +33,7 @@ class ShareProxyInfoRequest(BaseModel):
         validation_alias=AliasChoices("inIframe", "in_iframe"),
     )
     ticket: str | None = None
+    domain: str | None = None
 
 
 class ShareDetailRequest(BaseModel):

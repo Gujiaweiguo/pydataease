@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.dependencies.database import get_db
 from app.models.share import XpackShare
 from app.repositories.share_repo import ShareRepository, ShareTicketRepository
+from app.repositories.embed_config_repo import EmbedConfigRepository
 from app.schemas.share import (
     ProxyInfoResponse,
     ShareCreateRequest,
@@ -100,6 +101,19 @@ class ShareService:
         # Resource type
         resource_type = "dashboard" if share.type == 0 else "dataV"
 
+        # Embed control enforcement
+        share_disable = False
+        embed_type = self._map_share_type_to_embed_type(share.type)
+        if embed_type:
+            embed_repo = EmbedConfigRepository(self.session)
+            embed_config = await embed_repo.get_by_resource_type(embed_type)
+            if embed_config is not None:
+                if not embed_config.embed_enabled:
+                    share_disable = True
+                elif payload.domain and embed_config.allowed_domains:
+                    if payload.domain not in embed_config.allowed_domains:
+                        share_disable = True
+
         # Iframe error flag
         in_iframe_error = bool(payload.in_iframe)
 
@@ -116,7 +130,7 @@ class ShareService:
             pwd_valid=pwd_valid,
             type=resource_type,
             in_iframe_error=in_iframe_error,
-            share_disable=False,
+            share_disable=share_disable,
             pe_require_valid=True,
             ticket_valid_vo=ticket_vo,
             uuid=share.uuid,
@@ -144,6 +158,7 @@ class ShareService:
         return jose_jwt.encode(claims, settings.share_secret_key, algorithm=settings.jwt_algorithm)
 
     async def save(self, payload: ShareCreateRequest, user: TokenUser) -> ShareResponse:
+        clamped_exp = await self._clamp_expiry(payload.type, payload.exp)
         existing = await self.share_repo.get_by_resource_id(payload.resource_id)
         if existing is not None:
             update_data: dict[str, object] = {
@@ -151,7 +166,7 @@ class ShareService:
                 "time": _new_share_id(),
             }
             if payload.exp is not None:
-                update_data["exp"] = payload.exp
+                update_data["exp"] = clamped_exp
             if payload.pwd is not None:
                 update_data["pwd"] = payload.pwd
             if payload.auto_pwd is not None:
@@ -176,7 +191,7 @@ class ShareService:
             "id": _new_share_id(),
             "creator": user.user_id,
             "time": _new_share_id(),
-            "exp": payload.exp,
+            "exp": clamped_exp,
             "uuid": share_uuid,
             "pwd": payload.pwd,
             "resource_id": payload.resource_id,
@@ -366,6 +381,16 @@ class ShareService:
                 status_code=status.HTTP_400_BAD_REQUEST, detail="Share has expired"
             )
 
+        embed_type = self._map_share_type_to_embed_type(share.type)
+        if embed_type:
+            embed_repo = EmbedConfigRepository(self.session)
+            embed_config = await embed_repo.get_by_resource_type(embed_type)
+            if embed_config is not None and not embed_config.embed_enabled:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Embedding is disabled for this resource type",
+                )
+
         from app.settings.config import get_settings
         settings = get_settings()
 
@@ -411,7 +436,8 @@ class ShareService:
         share = await self.share_repo.get_by_resource_id(resource_id)
         if share is None:
             return None
-        updated = await self.share_repo.update(share, {"exp": exp if exp > 0 else None})
+        clamped = await self._clamp_expiry(share.type, exp if exp > 0 else None)
+        updated = await self.share_repo.update(share, {"exp": clamped})
         return ShareResponse.model_validate(updated)
 
     async def edit_pwd(
@@ -460,6 +486,24 @@ class ShareService:
         import string
 
         return "".join(secrets.choice(string.ascii_letters + string.digits) for _ in range(8))
+
+    @staticmethod
+    def _map_share_type_to_embed_type(share_type: int) -> str | None:
+        mapping = {0: "dashboard", 1: "datav"}
+        return mapping.get(share_type)
+
+    async def _clamp_expiry(self, share_type: int | None, exp: int | None) -> int | None:
+        if exp is None or exp <= 0:
+            return exp
+        embed_type = self._map_share_type_to_embed_type(share_type) if share_type is not None else None
+        if not embed_type:
+            return exp
+        embed_repo = EmbedConfigRepository(self.session)
+        embed_config = await embed_repo.get_by_resource_type(embed_type)
+        if embed_config is None or embed_config.max_expiry_hours is None:
+            return exp
+        max_ms = embed_config.max_expiry_hours * 3600 * 1000
+        return min(exp, max_ms)
 
 
 async def get_share_service(session: AsyncSession = Depends(get_db)) -> ShareService:
