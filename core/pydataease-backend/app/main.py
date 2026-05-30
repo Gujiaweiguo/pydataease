@@ -37,6 +37,7 @@ from app.routers.log import router as log_router  # pyright: ignore[reportImplic
 from app.routers.api_key import router as api_key_router  # pyright: ignore[reportImplicitRelativeImport]
 from app.routers.auth import router as auth_router  # pyright: ignore[reportImplicitRelativeImport]
 from app.routers.auth_provider import router as auth_provider_router  # pyright: ignore[reportImplicitRelativeImport]
+from app.routers.embed_control import router as embed_control_router  # pyright: ignore[reportImplicitRelativeImport]
 from app.routers.org import router as org_router  # pyright: ignore[reportImplicitRelativeImport]
 from app.routers.role import router as role_router  # pyright: ignore[reportImplicitRelativeImport]
 from app.routers.relation import router as relation_router  # pyright: ignore[reportImplicitRelativeImport]
@@ -119,6 +120,7 @@ api_router.include_router(dataset_sql_log_router)
 api_router.include_router(geo_router)
 api_router.include_router(auth_router)
 api_router.include_router(auth_provider_router)
+api_router.include_router(embed_control_router)
 api_router.include_router(static_resource_router)
 api_router.include_router(sys_variable_router)
 api_router.include_router(sync_router)

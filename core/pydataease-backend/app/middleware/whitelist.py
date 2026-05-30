@@ -65,6 +65,7 @@ WHITE_PREFIXES = (
     "/typeface/defaultFont",
     "/typeface/listFont",
     "/auth-provider/",  # SSO callback paths (public)
+    "/embed-control/",  # public check endpoint only
 
     "/i18n/",
     "/communicate/image/",
