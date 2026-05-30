@@ -14,7 +14,9 @@ import { useAppearanceStoreWithOut } from '@/store/modules/appearance'
 import { useEmbedded } from '@/store/modules/embedded'
 import { useLoading } from '@/hooks/web/useLoading'
 import { ElMessageBox } from 'element-plus-secondary'
+import { useFeatureFlagStoreWithOut } from '@/store/modules/feature-flag'
 const appearanceStore = useAppearanceStoreWithOut()
+const featureFlagStore = useFeatureFlagStoreWithOut()
 const { wsCache } = useCache()
 const permissionStore = usePermissionStoreWithOut()
 const interactiveStore = interactiveStoreWithOut()
@@ -82,6 +84,7 @@ router.beforeEach(async (to, from, next) => {
   }
   await appearanceStore.setAppearance()
   await appearanceStore.setFontList()
+  await featureFlagStore.loadFlags()
   const defaultSort = await getDefaultSettings()
   wsCache.set('TreeSort-backend', defaultSort['basic.defaultSort'] ?? '1')
   wsCache.set('open-backend', defaultSort['basic.defaultOpen'] ?? '0')
@@ -125,6 +128,7 @@ router.beforeEach(async (to, from, next) => {
       if (isDesktop) {
         roleRouters = roleRouters.filter(item => item.name !== 'system')
       }
+      roleRouters = filterDisabledFeatures(roleRouters)
       const routers: any[] = roleRouters as AppCustomRouteRecordRaw[]
       routers.forEach(item => (item['top'] = true))
       await permissionStore.generateRoutes(routers as AppCustomRouteRecordRaw[])
@@ -176,6 +180,30 @@ router.beforeEach(async (to, from, next) => {
     }
   }
 })
+const FEATURE_ROUTE_MAP: Record<string, () => boolean> = {
+  'system/auth-provider': () => featureFlagStore.isIdentificationEnabled,
+  'data-filing': () => featureFlagStore.isDataFilingEnabled
+}
+
+const filterDisabledFeatures = (routers: any[]): any[] => {
+  return routers
+    .map(router => {
+      if (router.children) {
+        return { ...router, children: filterDisabledFeatures(router.children) }
+      }
+      return router
+    })
+    .filter(router => {
+      const component = router.component || ''
+      for (const [prefix, check] of Object.entries(FEATURE_ROUTE_MAP)) {
+        if (component.startsWith(prefix) && !check()) {
+          return false
+        }
+      }
+      return true
+    })
+}
+
 const noAdminPermission = async () => {
   const promise = new Promise<void>((resolve, reject) => {
     ElMessageBox.confirm('当前页面仅对 admin 开放, 即将跳转首页', {

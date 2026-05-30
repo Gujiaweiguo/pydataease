@@ -34,21 +34,33 @@ import FeatureFlags from './feature/index.vue'
 import EngineInfo from '@/views/system/parameter/engine/EngineInfo.vue'
 import { XpackComponent } from '@/components/plugin'
 import { isDesktop } from '@/utils/ModelUtil'
+import { useFeatureFlagStoreWithOut } from '@/store/modules/feature-flag'
 /* import EmailInfo from './email/EmailInfo.vue' */
 const { t } = useI18n()
+const featureFlagStore = useFeatureFlagStoreWithOut()
 
 const desktop = isDesktop()
-const tabArray = ref([
+
+interface TabItem {
+  label: string
+  name: string
+  feature?: string
+}
+
+const allTabs: TabItem[] = [
   { label: t('system.basic_settings'), name: 'basic' },
   { label: t('system.map_settings'), name: 'map' },
   { label: t('system.engine_settings'), name: 'engine' },
   {
     label: t('common.third_party_embed'),
-    name: 'third_party'
+    name: 'third_party',
+    feature: 'platformIntegration' as const
   },
-  { label: t('embed_control.title'), name: 'embed' },
+  { label: t('embed_control.title'), name: 'embed', feature: 'embedding' as const },
   { label: t('feature_flag.title'), name: 'feature' }
-])
+]
+
+const tabArray = ref(allTabs.slice())
 
 const activeName = ref('basic')
 
@@ -68,6 +80,18 @@ onMounted(() => {
       }
     }
   }
+  tabArray.value = allTabs.filter(tab => {
+    if (tab.feature === 'platformIntegration') {
+      return featureFlagStore.isPlatformIntegrationEnabled
+    }
+    if (tab.feature === 'embedding') {
+      return featureFlagStore.isEmbeddingEnabled
+    }
+    if (desktop && tab.name === 'third_party') {
+      return false
+    }
+    return true
+  })
 })
 </script>
 <style lang="less">

@@ -64,6 +64,8 @@ async def save_basic_settings(
     _: TokenUser = Depends(get_current_user),
     service: SystemService = Depends(get_system_service),
 ) -> None:
+    if not await is_feature_enabled(service.session, "feature.adminConfig.enabled"):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Feature disabled: admin config")
     await service.save_basic_settings(items)
 
 

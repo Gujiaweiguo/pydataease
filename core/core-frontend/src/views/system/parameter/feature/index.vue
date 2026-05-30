@@ -12,19 +12,22 @@ import { onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus-secondary'
 import { useI18n } from '@/hooks/web/useI18n'
 import { featureStatus, featureToggle } from '@/api/feature-flag'
+import { useFeatureFlagStoreWithOut, FEATURE_KEYS } from '@/store/modules/feature-flag'
+import type { FeatureKey } from '@/store/modules/feature-flag'
 
 const { t } = useI18n()
+const featureFlagStore = useFeatureFlagStoreWithOut()
 const loading = ref(false)
 
-const flagItems = [
-  { key: 'feature.adminConfig.enabled', label: t('feature_flag.admin_config') },
-  { key: 'feature.appearance.enabled', label: t('feature_flag.appearance') },
-  { key: 'feature.watermark.enabled', label: t('feature_flag.watermark') },
-  { key: 'feature.sysVariableContract.enabled', label: t('feature_flag.sys_variable_contract') },
-  { key: 'feature.embedding.enabled', label: t('feature_flag.embedding') },
-  { key: 'feature.platformIntegration.enabled', label: t('feature_flag.platform_integration') },
-  { key: 'feature.identification.enabled', label: t('feature_flag.identification') },
-  { key: 'feature.dataFiling.enabled', label: t('feature_flag.data_filing') }
+const flagItems: { key: FeatureKey; label: string }[] = [
+  { key: FEATURE_KEYS.adminConfig, label: t('feature_flag.admin_config') },
+  { key: FEATURE_KEYS.appearance, label: t('feature_flag.appearance') },
+  { key: FEATURE_KEYS.watermark, label: t('feature_flag.watermark') },
+  { key: FEATURE_KEYS.sysVariable, label: t('feature_flag.sys_variable_contract') },
+  { key: FEATURE_KEYS.embedding, label: t('feature_flag.embedding') },
+  { key: FEATURE_KEYS.platformIntegration, label: t('feature_flag.platform_integration') },
+  { key: FEATURE_KEYS.identification, label: t('feature_flag.identification') },
+  { key: FEATURE_KEYS.dataFiling, label: t('feature_flag.data_filing') }
 ]
 
 const flags = reactive<Record<string, boolean>>(
@@ -48,6 +51,7 @@ const loadData = async () => {
 
 const handleToggle = async (key: string) => {
   await featureToggle({ key, enabled: flags[key] })
+  featureFlagStore.setFlag(key as FeatureKey, flags[key])
   ElMessage.success(t('feature_flag.toggle_success'))
 }
 
