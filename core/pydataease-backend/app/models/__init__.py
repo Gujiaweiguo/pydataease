@@ -1,4 +1,5 @@
 from app.models.api_key import XpackApiKey
+from app.models.auth_provider import AuthProvider
 from app.models.base import Base
 from app.models.chart import CoreChartView
 from app.models.custom_geo import CustomGeoArea, CustomGeoSubArea
@@ -46,6 +47,7 @@ from app.models.visualization_subject import VisualizationSubject
 from app.models.watermark import VisualizationWatermark
 
 __all__ = [
+    "AuthProvider",
     "Base",
     "CoreChartView",
     "CoreDatasetGroup",

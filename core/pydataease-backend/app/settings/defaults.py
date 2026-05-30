@@ -52,6 +52,7 @@ SETTINGS_DEFAULTS: SettingsDefaults = SettingsDefaults({
     "feature.embedding.enabled": "true",
     "feature.platformIntegration.enabled": "true",
     "feature.dataFiling.enabled": "false",
+    "feature.identification.enabled": "false",
 })
 
 
