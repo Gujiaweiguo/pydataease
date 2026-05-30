@@ -12,12 +12,17 @@ from tests.test_watermark import FakeWatermarkService
 
 
 @pytest.fixture
-def fake_service(install_override) -> FakeVisualizationService:
+def fake_service(install_override, monkeypatch) -> FakeVisualizationService:
     service = FakeVisualizationService()
     install_override(get_visualization_service, service)
     install_override(get_outer_params_service, FakeOuterParamsService())
     install_override(get_linkage_service, FakeLinkageService())
     install_override(get_watermark_service, FakeWatermarkService())
+    import app.routers.watermark as _wm
+    async def _always_enabled(session, key):
+        return True
+
+    monkeypatch.setattr(_wm, "is_feature_enabled", _always_enabled)
     return service
 
 
