@@ -1,13 +1,21 @@
 import base64
+import json
+
+# pyright: reportMissingImports=false
 
 from fastapi import APIRouter, Depends, UploadFile
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.dependencies.auth import get_current_user
-from app.schemas.auth import TokenUser
-from app.services.font_service import FontPayload, get_font_service
-from app.services.sys_setting_service import get_sys_setting_service
-from app.services.template_market_service import get_template_market_service
-from app.utils.rsa_utils import get_dekey_response
+from app.dependencies.auth import get_current_user  # pyright: ignore[reportImplicitRelativeImport]
+from app.dependencies.database import get_db  # pyright: ignore[reportImplicitRelativeImport]
+from app.schemas.auth import TokenUser  # pyright: ignore[reportImplicitRelativeImport]
+from app.services.font_service import FontPayload, get_font_service  # pyright: ignore[reportImplicitRelativeImport]
+from app.services.sys_setting_service import SysSettingService, get_sys_setting_service  # pyright: ignore[reportImplicitRelativeImport]
+from app.services.template_market_service import get_template_market_service  # pyright: ignore[reportImplicitRelativeImport]
+from app.services.watermark_service import WatermarkService, get_watermark_service  # pyright: ignore[reportImplicitRelativeImport]
+from app.utils.rsa_utils import get_dekey_response  # pyright: ignore[reportImplicitRelativeImport]
+
+from app.settings.defaults import SETTINGS_DEFAULTS, is_feature_enabled  # pyright: ignore[reportImplicitRelativeImport]
 
 router = APIRouter()
 
@@ -37,24 +45,62 @@ async def get_sys_parameter_ui(service=Depends(get_sys_setting_service)):
     return await service.get_ui_settings()
 
 
+@router.get("/sysParameter/appearance")
+async def get_appearance_settings(
+    service: SysSettingService = Depends(get_sys_setting_service),
+) -> dict[str, str]:
+    keys = [key for key in SETTINGS_DEFAULTS if key.startswith("ui.")]
+    keys.append("basic.siteName")
+    values: dict[str, str] = {}
+    for key in keys:
+        values[key] = await service.get_setting(key) or SETTINGS_DEFAULTS[key]
+    return values
+
+
+@router.get("/sysParameter/feature/status")
+async def get_feature_status(
+    service: SysSettingService = Depends(get_sys_setting_service),
+) -> dict[str, bool]:
+    feature_keys = [key for key in SETTINGS_DEFAULTS if key.startswith("feature.")]
+    status_map: dict[str, bool] = {}
+    for key in feature_keys:
+        value = await service.get_setting(key)
+        if value is None:
+            value = SETTINGS_DEFAULTS[key]
+        status_map[key] = value == "true"
+    return status_map
+
+
 @router.get("/sysParameter/defaultLogin")
 async def get_default_login(service=Depends(get_sys_setting_service)):
     return await service.get_default_login()
 
 
 @router.get("/setting/authentication/status")
-async def get_authentication_status():
-    """Return list of authentication methods and their enabled status.
-
-    The frontend iterates this to determine which login options to show.
-    Return empty list when no external auth is configured.
-    """
-    return []
+async def get_authentication_status(service: SysSettingService = Depends(get_sys_setting_service)):
+    value = await service.get_setting("login.authProviders")
+    if not value:
+        return []
+    try:
+        parsed = json.loads(value)
+    except json.JSONDecodeError:
+        return []
+    return parsed if isinstance(parsed, list) else []
 
 
 @router.get("/sysParameter/shareBase")
 async def get_share_base(service=Depends(get_sys_setting_service)):
     return await service.get_share_base()
+
+
+@router.get("/watermark/public")
+async def get_public_watermark(
+    session: AsyncSession = Depends(get_db),
+    service: WatermarkService = Depends(get_watermark_service),
+) -> dict[str, object]:
+    feature_enabled = await is_feature_enabled(session, "feature.watermark.enabled")
+    watermark = await service.get_watermark_info(feature_enabled=feature_enabled)
+    return WatermarkService.build_public_payload(watermark)
 
 
 @router.get("/typeface/defaultFont")
@@ -139,15 +185,17 @@ async def find_ai_target_url():
 
 
 @router.get("/sysParameter/sqlbot")
-async def get_sqlbot_settings():
-    return {"id": None, "domain": "", "enabled": False, "valid": False}
+async def get_sqlbot_settings(service: SysSettingService = Depends(get_sys_setting_service)):
+    return await service.get_sqlbot_settings()
 
 
 @router.post("/sysParameter/sqlbot")
-async def save_sqlbot_settings(payload: dict):
-    """Accept SQLBot settings. Stub — community edition does not persist SQLBot config."""
-    # Return the payload as-is so the frontend can use it in the current session.
-    return payload
+async def save_sqlbot_settings(
+    payload: dict[str, object],
+    _: TokenUser = Depends(get_current_user),
+    service: SysSettingService = Depends(get_sys_setting_service),
+):
+    return await service.save_sqlbot_settings(payload)
 
 
 @router.post("/msg-center/count")
@@ -186,7 +234,7 @@ async def support_set_key(_: TokenUser = Depends(get_current_user)) -> bool:
 async def get_sqlbot_datasource_list(
     dsId: int | None = None,  # noqa: N803 — match Java query-param name
     tableId: int | None = None,  # noqa: N803
-) -> list:
+) -> list[object]:
     """Return available data sources for the SQL Bot assistant.
 
     Stub — requires external AI service (SQLBot) which is not bundled in
@@ -196,7 +244,7 @@ async def get_sqlbot_datasource_list(
 
 
 @router.get("/sqlbot/dataset/{dv_info}")
-async def get_sqlbot_dataset_list(dv_info: str) -> list:
+async def get_sqlbot_dataset_list(dv_info: str) -> list[object]:
     """Return available datasets for the SQL Bot assistant.
 
     Stub — requires external AI service (SQLBot) which is not bundled in

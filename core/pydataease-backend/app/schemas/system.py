@@ -20,9 +20,19 @@ class OnlineMapSaveRequest(BaseModel):
 
 
 class OnlineMapResponse(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
     key: str | None = None
-    map_type: str | None = Field(default=None, serialization_alias="mapType")
-    security_code: str | None = Field(default=None, serialization_alias="securityCode")
+    map_type: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("mapType", "map_type"),
+        serialization_alias="mapType",
+    )
+    security_code: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("securityCode", "security_code"),
+        serialization_alias="securityCode",
+    )
 
 
 class MenuResponse(BaseModel):
