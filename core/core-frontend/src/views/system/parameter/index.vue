@@ -16,6 +16,8 @@
         v-if="activeName === 'email'"
       />
       <third-party v-if="activeName === 'third_party'" />
+      <embed-control v-if="activeName === 'embed'" />
+      <feature-flags v-if="activeName === 'feature'" />
     </div>
   </div>
   <xpack-component jsname="L2NvbXBvbmVudC9tZW51LWhhbmRsZXIvRW1haWxIYW5kbGVy" @loaded="addTable" />
@@ -27,6 +29,8 @@ import { useI18n } from '@/hooks/web/useI18n'
 import MapSetting from './map/MapSetting.vue'
 import BasicInfo from './basic/BasicInfo.vue'
 import ThirdParty from './third-party/index.vue'
+import EmbedControl from './embed/index.vue'
+import FeatureFlags from './feature/index.vue'
 import EngineInfo from '@/views/system/parameter/engine/EngineInfo.vue'
 import { XpackComponent } from '@/components/plugin'
 import { isDesktop } from '@/utils/ModelUtil'
@@ -41,7 +45,9 @@ const tabArray = ref([
   {
     label: t('common.third_party_embed'),
     name: 'third_party'
-  }
+  },
+  { label: t('embed_control.title'), name: 'embed' },
+  { label: t('feature_flag.title'), name: 'feature' }
 ])
 
 const activeName = ref('basic')
