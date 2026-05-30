@@ -6,6 +6,7 @@ import pytest
 from httpx import AsyncClient
 
 from app.main import app  # pyright: ignore[reportImplicitRelativeImport]
+from app.routers import watermark as watermark_router  # pyright: ignore[reportImplicitRelativeImport]
 from app.services.watermark_service import get_watermark_service  # pyright: ignore[reportImplicitRelativeImport]
 from tests.fixtures.auth_fixtures import _build_token  # pyright: ignore[reportImplicitRelativeImport]
 
@@ -24,7 +25,9 @@ class FakeWatermarkService:
     def __init__(self) -> None:
         self._watermark: dict | None = None
 
-    async def get_watermark_info(self) -> dict | None:
+    async def get_watermark_info(self, feature_enabled: bool = True) -> dict | None:
+        if not feature_enabled:
+            return None
         return self._watermark
 
     async def save_watermark_info(self, payload) -> None:
@@ -48,8 +51,12 @@ def fake_watermark_service():
 
 
 @pytest.fixture(autouse=True)
-def override_services(fake_watermark_service):
+def override_services(fake_watermark_service, monkeypatch: pytest.MonkeyPatch):
     app.dependency_overrides[get_watermark_service] = lambda: fake_watermark_service
+    async def _feature_enabled(*_args, **_kwargs) -> bool:
+        return True
+
+    monkeypatch.setattr(watermark_router, "is_feature_enabled", _feature_enabled)
     yield
     app.dependency_overrides.pop(get_watermark_service, None)
 
@@ -74,6 +81,7 @@ async def test_save_and_get_watermark(
     client: AsyncClient, fake_watermark_service: FakeWatermarkService
 ) -> None:
     """POST /watermark/save persists, then GET returns the saved data."""
+    _ = fake_watermark_service
     save_resp = await client.post(
         "/de2api/watermark/save",
         json={"version": "1.0", "settingContent": '{"opacity": 0.3}'},
