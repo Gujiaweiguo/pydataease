@@ -1,5 +1,4 @@
 import base64
-import json
 
 # pyright: reportMissingImports=false
 
@@ -10,6 +9,7 @@ from app.dependencies.auth import get_current_user  # pyright: ignore[reportImpl
 from app.dependencies.database import get_db  # pyright: ignore[reportImplicitRelativeImport]
 from app.schemas.auth import TokenUser  # pyright: ignore[reportImplicitRelativeImport]
 from app.services.font_service import FontPayload, get_font_service  # pyright: ignore[reportImplicitRelativeImport]
+from app.services.auth_provider_service import AuthProviderService, get_auth_provider_service  # pyright: ignore[reportImplicitRelativeImport]
 from app.services.sys_setting_service import SysSettingService, get_sys_setting_service  # pyright: ignore[reportImplicitRelativeImport]
 from app.services.template_market_service import get_template_market_service  # pyright: ignore[reportImplicitRelativeImport]
 from app.services.watermark_service import WatermarkService, get_watermark_service  # pyright: ignore[reportImplicitRelativeImport]
@@ -77,15 +77,8 @@ async def get_default_login(service=Depends(get_sys_setting_service)):
 
 
 @router.get("/setting/authentication/status")
-async def get_authentication_status(service: SysSettingService = Depends(get_sys_setting_service)):
-    value = await service.get_setting("login.authProviders")
-    if not value:
-        return []
-    try:
-        parsed = json.loads(value)
-    except json.JSONDecodeError:
-        return []
-    return parsed if isinstance(parsed, list) else []
+async def get_authentication_status(service: AuthProviderService = Depends(get_auth_provider_service)):
+    return await service.get_auth_status()
 
 
 @router.get("/sysParameter/shareBase")

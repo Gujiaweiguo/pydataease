@@ -64,6 +64,7 @@ WHITE_PREFIXES = (
     "/typeface/download",
     "/typeface/defaultFont",
     "/typeface/listFont",
+    "/auth-provider/",  # SSO callback paths (public)
 
     "/i18n/",
     "/communicate/image/",
