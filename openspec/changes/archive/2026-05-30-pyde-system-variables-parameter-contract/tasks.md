@@ -21,6 +21,6 @@
 
 ## 3. Verification
 
-- [ ] V1. `cd core/pydataease-backend && uv run ruff check .`
-- [ ] V2. `cd core/pydataease-backend && uv run pytest tests/ -v --ignore=tests/test_e2e_creation_flow.py`
-- [ ] V3. `cd core/pydataease-backend && uv run python -c "from app.main import app; print(app.title)"`
+- [x] V1. `cd core/pydataease-backend && uv run ruff check .`
+- [x] V2. `cd core/pydataease-backend && uv run pytest tests/ -v --ignore=tests/test_e2e_creation_flow.py`
+- [x] V3. `cd core/pydataease-backend && uv run python -c "from app.main import app; print(app.title)"`
