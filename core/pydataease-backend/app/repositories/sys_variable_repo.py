@@ -23,6 +23,11 @@ class SysVariableRepository:
     async def get_by_id(self, variable_id: int) -> CoreSysVariable | None:
         return await self._base.get_by_id(variable_id)
 
+    async def get_by_name(self, name: str) -> CoreSysVariable | None:
+        stmt = select(CoreSysVariable).where(CoreSysVariable.name == name).limit(1)
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()
+
     async def create(self, payload: dict[str, object]) -> CoreSysVariable:
         return await self._base.create(payload)
 
