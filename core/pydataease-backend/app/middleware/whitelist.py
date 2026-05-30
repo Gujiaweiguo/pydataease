@@ -64,9 +64,6 @@ WHITE_PREFIXES = (
     "/typeface/download",
     "/typeface/defaultFont",
     "/typeface/listFont",
-    "/auth-provider/",  # SSO callback paths (public)
-    "/embed-control/",  # public check endpoint only
-
     "/i18n/",
     "/communicate/image/",
     "/saml/",
@@ -105,6 +102,12 @@ def normalize_path(path: str) -> str:
     return normalized
 
 
+PUBLIC_SUFFIXES = (
+    "/callback",
+    "/check",
+)
+
+
 def is_invalid_path(path: str) -> bool:
     lowered = path.lower()
     return "./" in path or ".%" in path or "%2e" in lowered or (";" in path and "?" not in path)
@@ -118,4 +121,10 @@ def is_whitelisted_path(path: str) -> bool:
         return True
     if normalized.endswith(STATIC_SUFFIXES):
         return True
-    return any(normalized.startswith(prefix) for prefix in WHITE_PREFIXES)
+    if any(normalized.startswith(prefix) for prefix in WHITE_PREFIXES):
+        return True
+    if any(normalized.endswith(suffix) for suffix in PUBLIC_SUFFIXES):
+        stripped = normalized.rsplit("/", 1)[0]
+        if stripped.startswith("/auth-provider/") or stripped.startswith("/embed-control/"):
+            return True
+    return False
