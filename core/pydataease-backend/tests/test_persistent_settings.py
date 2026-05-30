@@ -229,18 +229,25 @@ async def test_sqlbot_post_requires_auth(client: AsyncClient) -> None:
 async def test_auth_status_persistence(
     client: AsyncClient,
     fake_sys_setting_service: FakePersistentSysSettingService,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     fake_sys_setting_service.values["login.authProviders"] = json.dumps([
         {"type": "ldap", "enabled": True},
         {"type": "oidc", "enabled": False},
     ])
 
+    import app.services.auth_provider_service as _aps
+
+    async def _fake_is_feature_enabled(session, key):
+        return False
+
+    monkeypatch.setattr(_aps, "is_feature_enabled", _fake_is_feature_enabled)
+
     response = await client.get("/de2api/setting/authentication/status")
     assert response.status_code == 200
-    assert response.json()["data"] == [
-        {"type": "ldap", "enabled": True},
-        {"type": "oidc", "enabled": False},
-    ]
+    data = response.json()["data"]
+    # When feature.identification.enabled is False, only local is returned as default
+    assert data == [{"type": "local", "name": "本地登录", "enabled": True, "isDefault": True}]
 
 
 @pytest.mark.asyncio

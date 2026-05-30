@@ -171,6 +171,7 @@ async def test_feature_status_endpoint_returns_all_flags(
         "feature.sysVariableContract.enabled": True,
         "feature.embedding.enabled": True,
         "feature.platformIntegration.enabled": True,
+        "feature.identification.enabled": False,
         "feature.dataFiling.enabled": True,
     }
 
