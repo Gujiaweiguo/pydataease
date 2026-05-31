@@ -24,17 +24,10 @@ class PermissionService:
     async def get_effective_menu_ids(self, user_id: int, oid: int) -> set[int]:
         """Compute the effective set of menu IDs a user can see.
 
-        Logic:
-        1. Get all role_ids for user in current org from core_role_user
-        2. Get menu_id permission points from core_role_permission JOIN core_permission_point
-           WHERE role_id IN (user's roles) AND oid IN (0, user.oid) AND granted=True
-        3. Add user-direct grants from core_user_permission JOIN core_permission_point
-           WHERE user_id=user_id AND granted=True
-        4. Remove user-direct denials from core_user_permission
-           WHERE user_id=user_id AND granted=False
-        5. Add org-level grants from core_org_permission JOIN core_permission_point
-           WHERE org_id=user.oid AND granted=True
-        6. Return the final set of menu_ids
+        Menu permissions are role-only per product documentation:
+        only role-based grants (via core_role_permission) determine
+        menu visibility.  User-direct and org-level grant/deny records
+        are intentionally ignored for menu resolution.
         """
         # 1. Get role IDs
         role_stmt = select(CoreRoleUser.role_id).where(
@@ -61,44 +54,9 @@ class PermissionService:
             result = await self.session.execute(role_perm_stmt)
             menu_ids.update(row[0] for row in result.all() if row[0] is not None)
 
-        # 3. User-direct grants
-        user_grant_stmt = (
-            select(CorePermissionPoint.menu_id)
-            .join(CoreUserPermission, CoreUserPermission.permission_point_id == CorePermissionPoint.id)
-            .where(
-                CoreUserPermission.user_id == user_id,
-                CoreUserPermission.granted.is_(True),
-                CorePermissionPoint.menu_id.isnot(None),
-            )
-        )
-        result = await self.session.execute(user_grant_stmt)
-        menu_ids.update(row[0] for row in result.all() if row[0] is not None)
-
-        # 4. User-direct denials
-        user_deny_stmt = (
-            select(CorePermissionPoint.menu_id)
-            .join(CoreUserPermission, CoreUserPermission.permission_point_id == CorePermissionPoint.id)
-            .where(
-                CoreUserPermission.user_id == user_id,
-                CoreUserPermission.granted.is_(False),
-                CorePermissionPoint.menu_id.isnot(None),
-            )
-        )
-        result = await self.session.execute(user_deny_stmt)
-        menu_ids.difference_update(row[0] for row in result.all() if row[0] is not None)
-
-        # 5. Org-level grants
-        org_grant_stmt = (
-            select(CorePermissionPoint.menu_id)
-            .join(CoreOrgPermission, CoreOrgPermission.permission_point_id == CorePermissionPoint.id)
-            .where(
-                CoreOrgPermission.org_id == oid,
-                CoreOrgPermission.granted.is_(True),
-                CorePermissionPoint.menu_id.isnot(None),
-            )
-        )
-        result = await self.session.execute(org_grant_stmt)
-        menu_ids.update(row[0] for row in result.all() if row[0] is not None)
+        # Menu permissions are role-only per product documentation.
+        # Steps 3 (user-direct grants), 4 (user-direct denials), and
+        # 5 (org-level grants) are intentionally skipped for menu resolution.
 
         return menu_ids
 
