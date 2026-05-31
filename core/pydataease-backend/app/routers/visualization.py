@@ -3,10 +3,8 @@ from __future__ import annotations
 import inspect
 
 from fastapi import APIRouter, Depends
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.dependencies.auth import get_current_user
-from app.dependencies.database import get_db
 from app.schemas.auth import TokenUser
 from app.schemas.visualization import (
     JumpRequest,
@@ -672,29 +670,6 @@ async def get_outer_params_info(
     service: VisualizationService = Depends(get_visualization_service),
 ) -> object:
     return await service.get_outer_params_info(dv_id)
-
-
-@router.post("/watermark/save")
-async def save_watermark(
-    payload: dict[str, object],
-    user: TokenUser = Depends(get_current_user),
-    service: VisualizationService = Depends(get_visualization_service),
-) -> object:
-    return await service.save_watermark(payload)
-
-
-@router.get("/watermark/find")
-async def find_watermark(
-    _: TokenUser = Depends(get_current_user),
-    session: AsyncSession = Depends(get_db),
-) -> object:
-    from app.services.sys_setting_service import SysSettingService
-
-    setting_svc = SysSettingService(session)
-    value = await setting_svc.get_setting("watermarkInfo")
-    if value:
-        return {"settingContent": value}
-    return {"settingContent": '{"type":"nick_name","content":"","enable":false}'}
 
 
 @router.get("/outerParams/queryDsWithVisualizationId/{dv_id}")
