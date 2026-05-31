@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { ElMessage } from 'element-plus-secondary'
 import { useI18n } from '@/hooks/web/useI18n'
 import type { FormInstance, FormRules } from 'element-plus-secondary'
@@ -10,6 +10,16 @@ import type {
   FilingConfigCreateRequest,
   FilingConfigUpdateRequest
 } from '@/api/data-filing'
+import FormBuilder from './FormBuilder.vue'
+import FormPreview from './FormPreview.vue'
+
+interface FormSchemaField {
+  fieldKey?: string
+}
+
+interface FormSchemaModel {
+  fields: FormSchemaField[]
+}
 
 interface DatasourceOption {
   id: number
@@ -19,6 +29,7 @@ interface DatasourceOption {
 const { t } = useI18n()
 const emits = defineEmits(['saved'])
 const drawerVisible = ref(false)
+const previewVisible = ref(false)
 const mode = ref<'create' | 'edit'>('create')
 const editingId = ref<number | null>(null)
 const formRef = ref<FormInstance>()
@@ -27,20 +38,45 @@ const defaultForm = (): FilingConfigCreateRequest => ({
   name: '',
   targetDatasourceId: null,
   targetTable: null,
-  formSchema: {},
+  formSchema: { fields: [] },
   fieldMapping: {},
   idempotencyWindowSeconds: 300
 })
 
 const form = ref<FilingConfigCreateRequest>(defaultForm())
-const formSchemaText = ref('{}')
 const fieldMappingText = ref('{}')
+const fieldMappingDraft = ref<Record<string, string>>({})
 const datasourceLoading = ref(false)
 const datasourceOptions = ref<DatasourceOption[]>([])
 
 const formRules = ref<FormRules>({
   name: [{ required: true, message: t('common.please_input'), trigger: 'blur' }]
 })
+
+const normalizeFormSchema = (schema?: Record<string, unknown> | null): FormSchemaModel => {
+  return {
+    fields: Array.isArray(schema?.fields) ? (schema.fields as FormSchemaField[]) : []
+  }
+}
+
+const buildFieldMapping = (
+  schema: Record<string, unknown> | null | undefined,
+  source: Record<string, string>
+) => {
+  const nextMapping: Record<string, string> = {}
+  normalizeFormSchema(schema).fields.forEach(field => {
+    const fieldKey = typeof field.fieldKey === 'string' ? field.fieldKey.trim() : ''
+    if (!fieldKey) {
+      return
+    }
+    nextMapping[fieldKey] = source[fieldKey]?.trim() || fieldKey
+  })
+  return nextMapping
+}
+
+const syncFieldMappingText = () => {
+  fieldMappingText.value = JSON.stringify(fieldMappingDraft.value, null, 2)
+}
 
 const open = (m: 'create' | 'edit', row?: FilingConfig) => {
   mode.value = m
@@ -51,16 +87,19 @@ const open = (m: 'create' | 'edit', row?: FilingConfig) => {
       name: row.name,
       targetDatasourceId: row.targetDatasourceId,
       targetTable: row.targetTable,
-      formSchema: row.formSchema,
+      formSchema: normalizeFormSchema(row.formSchema),
       fieldMapping: row.fieldMapping,
       idempotencyWindowSeconds: row.idempotencyWindowSeconds
     }
-    formSchemaText.value = JSON.stringify(row.formSchema || {}, null, 2)
-    fieldMappingText.value = JSON.stringify(row.fieldMapping || {}, null, 2)
+    fieldMappingDraft.value = buildFieldMapping(
+      row.formSchema,
+      (row.fieldMapping || {}) as Record<string, string>
+    )
+    syncFieldMappingText()
   } else {
     form.value = defaultForm()
-    formSchemaText.value = '{}'
-    fieldMappingText.value = '{}'
+    fieldMappingDraft.value = buildFieldMapping(form.value.formSchema, {})
+    syncFieldMappingText()
   }
   void loadDatasources()
   drawerVisible.value = true
@@ -83,10 +122,9 @@ const submitForm = async () => {
   if (!formRef.value) return
   await formRef.value.validate()
   try {
-    form.value.formSchema = JSON.parse(formSchemaText.value)
     form.value.fieldMapping = JSON.parse(fieldMappingText.value)
   } catch {
-    ElMessage.error('Invalid JSON in form schema or field mapping')
+    ElMessage.error(t('data_filing.form_builder.invalid_field_mapping'))
     return
   }
   if (mode.value === 'create') {
@@ -109,8 +147,29 @@ const submitForm = async () => {
 
 const closeDrawer = () => {
   formRef.value?.resetFields()
+  previewVisible.value = false
   drawerVisible.value = false
 }
+
+watch(
+  () => form.value.formSchema,
+  schema => {
+    fieldMappingDraft.value = buildFieldMapping(schema, fieldMappingDraft.value)
+    syncFieldMappingText()
+  },
+  { deep: true }
+)
+
+watch(fieldMappingText, value => {
+  try {
+    const parsed = JSON.parse(value)
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      fieldMappingDraft.value = parsed as Record<string, string>
+    }
+  } catch {
+    return
+  }
+})
 
 defineExpose({ open })
 </script>
@@ -119,10 +178,16 @@ defineExpose({ open })
   <el-drawer
     :title="mode === 'create' ? t('data_filing.create_config') : t('data_filing.edit_config')"
     v-model="drawerVisible"
-    size="600px"
+    size="1000px"
     direction="rtl"
   >
-    <el-form ref="formRef" :model="form" :rules="formRules" label-position="top">
+    <el-form
+      ref="formRef"
+      :model="form"
+      :rules="formRules"
+      class="filing-config-form"
+      label-position="top"
+    >
       <el-form-item :label="t('data_filing.config_name')" prop="name">
         <el-input v-model="form.name" :placeholder="t('common.please_input')" />
       </el-form-item>
@@ -147,10 +212,22 @@ defineExpose({ open })
         </div>
       </el-form-item>
       <el-form-item :label="t('data_filing.config_form_schema')">
-        <el-input v-model="formSchemaText" type="textarea" :rows="6" placeholder="JSON" />
+        <div class="schema-toolbar">
+          <span class="schema-toolbar__title">{{ t('data_filing.form_builder.title') }}</span>
+          <el-button link type="primary" @click="previewVisible = true">
+            {{ t('data_filing.form_builder.preview') }}
+          </el-button>
+        </div>
+        <FormBuilder v-model="form.formSchema" />
       </el-form-item>
       <el-form-item :label="t('data_filing.config_field_mapping')">
-        <el-input v-model="fieldMappingText" type="textarea" :rows="6" placeholder="JSON" />
+        <el-input
+          v-model="fieldMappingText"
+          class="field-mapping-textarea"
+          type="textarea"
+          :rows="6"
+          placeholder="JSON"
+        />
       </el-form-item>
       <el-form-item :label="t('data_filing.config_idempotency')">
         <el-input-number v-model="form.idempotencyWindowSeconds" :min="0" :step="60" />
@@ -162,4 +239,37 @@ defineExpose({ open })
       <el-button type="primary" @click="submitForm">{{ t('common.sure') }}</el-button>
     </template>
   </el-drawer>
+  <FormPreview v-model="previewVisible" :schema="form.formSchema" />
 </template>
+
+<style lang="less" scoped>
+.filing-config-form {
+  --filing-space-1: 4px;
+  --filing-space-2: 8px;
+  --filing-space-3: 12px;
+  --filing-space-4: 16px;
+  --filing-space-5: 20px;
+  font-family: var(--de-custom_font, 'PingFang');
+}
+
+.schema-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--filing-space-3);
+}
+
+.schema-toolbar__title {
+  color: var(--ed-text-color-primary, #1f2329);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 22px;
+}
+
+.field-mapping-textarea {
+  :deep(.ed-textarea__inner) {
+    min-height: 144px;
+    font-family: Monaco, Consolas, 'Courier New', monospace;
+  }
+}
+</style>
