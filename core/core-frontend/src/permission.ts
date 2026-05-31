@@ -170,7 +170,8 @@ router.beforeEach(async (to, from, next) => {
     } else if (
       (!platform && embeddedWindowWhiteList.includes(to.path)) ||
       whiteList.includes(to.path) ||
-      to.path.startsWith('/de-link/')
+      to.path.startsWith('/de-link/') ||
+      to.path.startsWith('/auth/callback/')
     ) {
       await appearanceStore.setFontList()
       permissionStore.setCurrentPath(to.path)

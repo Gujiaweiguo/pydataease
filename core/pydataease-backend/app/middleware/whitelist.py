@@ -105,6 +105,8 @@ def normalize_path(path: str) -> str:
 PUBLIC_SUFFIXES = (
     "/callback",
     "/check",
+    "/authorize",
+    "/login",
 )
 
 
