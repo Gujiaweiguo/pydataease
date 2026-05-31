@@ -76,6 +76,21 @@ async def _resource_type_from_visualization(
     return "dashboard"
 
 
+async def _require_visualization_permission(
+    user: TokenUser,
+    service: VisualizationService,
+    perm: PermissionService,
+    permission_type: str,
+    visualization_id: int | None = None,
+    fallback: str | None = None,
+) -> None:
+    await perm.require_resource_access(
+        user,
+        await _resource_type_from_visualization(service, visualization_id, fallback),
+        permission_type,
+    )
+
+
 @router.post("/dataVisualization/tree")
 async def visualization_tree(
     payload: VisualizationTreeRequest,
@@ -84,7 +99,7 @@ async def visualization_tree(
     perm: PermissionService = Depends(get_permission_service),
 ) -> object:
     resource_type = _visualization_resource_type(payload.busi_flag)
-    if not await perm.has_resource_permission(user, resource_type, "use"):
+    if not await perm.has_resource_permission(user, resource_type, "view"):
         return _empty_interactive_branch()
     return await service.tree(payload)
 
@@ -92,9 +107,11 @@ async def visualization_tree(
 @router.post("/dataVisualization/findById")
 async def find_visualization_by_id(
     payload: VisualizationFindByIdRequest,
-    _: TokenUser = Depends(get_current_user),
+    user: TokenUser = Depends(get_current_user),
     service: VisualizationService = Depends(get_visualization_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> object:
+    await _require_visualization_permission(user, service, perm, "view", payload.id, payload.busi_flag)
     return await service.find_by_id(payload)
 
 
@@ -105,11 +122,7 @@ async def save_visualization(
     service: VisualizationService = Depends(get_visualization_service),
     perm: PermissionService = Depends(get_permission_service),
 ) -> object:
-    await perm.require_resource_access(
-        user,
-        await _resource_type_from_visualization(service, payload.id, payload.type),
-        "manage",
-    )
+    await _require_visualization_permission(user, service, perm, "manage", payload.id, payload.type)
     return await service.save(payload, user)
 
 
@@ -120,11 +133,7 @@ async def save_canvas(
     service: VisualizationService = Depends(get_visualization_service),
     perm: PermissionService = Depends(get_permission_service),
 ) -> object:
-    await perm.require_resource_access(
-        user,
-        await _resource_type_from_visualization(service, payload.id, payload.type),
-        "manage",
-    )
+    await _require_visualization_permission(user, service, perm, "manage", payload.id, payload.type)
     return await service.save_canvas(payload, user)
 
 
@@ -135,11 +144,7 @@ async def update_visualization(
     service: VisualizationService = Depends(get_visualization_service),
     perm: PermissionService = Depends(get_permission_service),
 ) -> object:
-    await perm.require_resource_access(
-        user,
-        await _resource_type_from_visualization(service, payload.id, payload.type),
-        "manage",
-    )
+    await _require_visualization_permission(user, service, perm, "manage", payload.id, payload.type)
     return await service.update(payload, user)
 
 
@@ -150,11 +155,7 @@ async def update_canvas(
     service: VisualizationService = Depends(get_visualization_service),
     perm: PermissionService = Depends(get_permission_service),
 ) -> object:
-    await perm.require_resource_access(
-        user,
-        await _resource_type_from_visualization(service, payload.id, payload.type),
-        "manage",
-    )
+    await _require_visualization_permission(user, service, perm, "manage", payload.id, payload.type)
     return await service.update_canvas(payload, user)
 
 
@@ -163,7 +164,9 @@ async def update_base(
     payload: VisualizationUpdateBaseRequest,
     user: TokenUser = Depends(get_current_user),
     service: VisualizationService = Depends(get_visualization_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> object:
+    await _require_visualization_permission(user, service, perm, "manage", payload.id, payload.type)
     return await service.update_base(payload, user)
 
 
@@ -172,34 +175,42 @@ async def update_publish_status(
     payload: VisualizationPublishStatusRequest,
     user: TokenUser = Depends(get_current_user),
     service: VisualizationService = Depends(get_visualization_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> object:
+    await _require_visualization_permission(user, service, perm, "manage", payload.id)
     return await service.update_publish_status(payload, user)
 
 
 @router.post("/dataVisualization/nameCheck")
 async def name_check(
     payload: VisualizationNameCheckRequest,
-    _: TokenUser = Depends(get_current_user),
+    user: TokenUser = Depends(get_current_user),
     service: VisualizationService = Depends(get_visualization_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> object:
+    await _require_visualization_permission(user, service, perm, "manage", payload.id, payload.type)
     return await service.name_check(payload)
 
 
 @router.post("/dataVisualization/checkCanvasChange")
 async def check_canvas_change(
     payload: VisualizationCanvasChangeRequest,
-    _: TokenUser = Depends(get_current_user),
+    user: TokenUser = Depends(get_current_user),
     service: VisualizationService = Depends(get_visualization_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> object:
+    await _require_visualization_permission(user, service, perm, "view", payload.id)
     return await service.check_canvas_change(payload)
 
 
 @router.post("/dataVisualization/recoverToPublished")
 async def recover_to_published(
     payload: VisualizationFindByIdRequest,
-    _: TokenUser = Depends(get_current_user),
+    user: TokenUser = Depends(get_current_user),
     service: VisualizationService = Depends(get_visualization_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> object:
+    await _require_visualization_permission(user, service, perm, "manage", payload.id, payload.busi_flag)
     return await service.recover_to_published(payload)
 
 
@@ -214,14 +225,13 @@ async def delete_visualization(
     raw_id = payload.get("id")
     if not isinstance(raw_id, int | str):
         raise ValueError("Visualization id is required")
-    await perm.require_resource_access(
+    await _require_visualization_permission(
         user,
-        await _resource_type_from_visualization(
-            service,
-            int(raw_id),
-            raw_busi_flag if isinstance(raw_busi_flag, str) else None,
-        ),
+        service,
+        perm,
         "manage",
+        int(raw_id),
+        raw_busi_flag if isinstance(raw_busi_flag, str) else None,
     )
     return await service.delete(int(raw_id), user)
 
@@ -234,11 +244,7 @@ async def delete_logic(
     service: VisualizationService = Depends(get_visualization_service),
     perm: PermissionService = Depends(get_permission_service),
 ) -> object:
-    await perm.require_resource_access(
-        user,
-        await _resource_type_from_visualization(service, dv_id, busi_flag),
-        "manage",
-    )
+    await _require_visualization_permission(user, service, perm, "manage", dv_id, busi_flag)
     return await service.delete_logic(VisualizationDeleteLogicRequest(dv_id=dv_id, busi_flag=busi_flag), user)
 
 
@@ -247,7 +253,9 @@ async def move_visualization(
     payload: VisualizationMoveRequest,
     user: TokenUser = Depends(get_current_user),
     service: VisualizationService = Depends(get_visualization_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> object:
+    await _require_visualization_permission(user, service, perm, "manage", payload.id)
     return await service.move(payload, user)
 
 
@@ -256,16 +264,20 @@ async def rename_visualization(
     payload: VisualizationRenameRequest,
     user: TokenUser = Depends(get_current_user),
     service: VisualizationService = Depends(get_visualization_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> object:
+    await _require_visualization_permission(user, service, perm, "manage", payload.id)
     return await service.rename(payload, user)
 
 
 @router.post("/dataVisualization/findRecent")
 async def find_recent_visualizations(
     payload: VisualizationRecentRequest,
-    _: TokenUser = Depends(get_current_user),
+    user: TokenUser = Depends(get_current_user),
     service: VisualizationService = Depends(get_visualization_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> object:
+    await _require_visualization_permission(user, service, perm, "view", fallback=payload.busi_flag or payload.type)
     return await service.find_recent(payload)
 
 
@@ -273,9 +285,11 @@ async def find_recent_visualizations(
 async def find_copy_resource(
     dv_id: int,
     busi_flag: str,
-    _: TokenUser = Depends(get_current_user),
+    user: TokenUser = Depends(get_current_user),
     service: VisualizationService = Depends(get_visualization_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> object:
+    await _require_visualization_permission(user, service, perm, "view", dv_id, busi_flag)
     return await service.find_copy_resource(dv_id, busi_flag)
 
 
@@ -286,11 +300,7 @@ async def copy_visualization(
     service: VisualizationService = Depends(get_visualization_service),
     perm: PermissionService = Depends(get_permission_service),
 ) -> object:
-    await perm.require_resource_access(
-        user,
-        await _resource_type_from_visualization(service, payload.id, payload.busi_flag or payload.type),
-        "manage",
-    )
+    await _require_visualization_permission(user, service, perm, "manage", payload.id, payload.busi_flag or payload.type)
     return await service.copy(payload, user)
 
 
@@ -316,7 +326,7 @@ async def interactive_tree(
         if not isinstance(raw_flag, str):
             return []
         resource_type = permission_map.get(raw_flag.lower())
-        if resource_type and not await perm.has_resource_permission(user, resource_type, "use"):
+        if resource_type and not await perm.has_resource_permission(user, resource_type, "view"):
             return _empty_interactive_branch()
         return await service.interactive_tree(payload, user)
 
@@ -328,7 +338,7 @@ async def interactive_tree(
         if not isinstance(busi_flag, str):
             continue
         resource_type = permission_map.get(busi_flag.lower())
-        if resource_type and await perm.has_resource_permission(user, resource_type, "use"):
+        if resource_type and await perm.has_resource_permission(user, resource_type, "view"):
             filtered_payload[key] = value
         elif resource_type:
             denied_keys.add(key)
@@ -345,9 +355,11 @@ async def interactive_tree(
 @router.post("/dataVisualization/appCanvasNameCheck")
 async def app_canvas_name_check(
     payload: VisualizationAppCanvasNameCheckRequest,
-    _: TokenUser = Depends(get_current_user),
+    user: TokenUser = Depends(get_current_user),
     service: VisualizationService = Depends(get_visualization_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> object:
+    await _require_visualization_permission(user, service, perm, "manage", fallback="screen")
     return await service.app_canvas_name_check(payload)
 
 
@@ -363,90 +375,121 @@ async def decompression(
 @router.get("/dataVisualization/findDvType/{dv_id}")
 async def find_dv_type(
     dv_id: int,
-    _: TokenUser = Depends(get_current_user),
+    user: TokenUser = Depends(get_current_user),
     service: VisualizationService = Depends(get_visualization_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> object:
+    await _require_visualization_permission(user, service, perm, "view", dv_id)
     return await service.find_dv_type(dv_id)
 
 
 @router.get("/dataVisualization/updateCheckVersion/{dv_id}")
 async def update_check_version(
     dv_id: int,
-    _: TokenUser = Depends(get_current_user),
+    user: TokenUser = Depends(get_current_user),
     service: VisualizationService = Depends(get_visualization_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> object:
+    await _require_visualization_permission(user, service, perm, "view", dv_id)
     return await service.update_check_version(dv_id)
 
 
 @router.post("/dataVisualization/exportLogApp")
 async def export_log_app(
     payload: dict[str, object],
-    _: TokenUser = Depends(get_current_user),
+    user: TokenUser = Depends(get_current_user),
     service: VisualizationService = Depends(get_visualization_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> object:
+    dv_id = int(str(payload.get("id", "0")))
+    await _require_visualization_permission(user, service, perm, "export", dv_id if dv_id > 0 else None)
     return await service.export_log_stub(payload)
 
 
 @router.post("/dataVisualization/exportLogTemplate")
 async def export_log_template(
     payload: dict[str, object],
-    _: TokenUser = Depends(get_current_user),
+    user: TokenUser = Depends(get_current_user),
     service: VisualizationService = Depends(get_visualization_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> object:
+    dv_id = int(str(payload.get("id", "0")))
+    await _require_visualization_permission(user, service, perm, "export", dv_id if dv_id > 0 else None)
     return await service.export_log_stub(payload)
 
 
 @router.post("/dataVisualization/exportLogPDF")
 async def export_log_pdf(
     payload: dict[str, object],
-    _: TokenUser = Depends(get_current_user),
+    user: TokenUser = Depends(get_current_user),
     service: VisualizationService = Depends(get_visualization_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> object:
+    dv_id = int(str(payload.get("id", "0")))
+    await _require_visualization_permission(user, service, perm, "export", dv_id if dv_id > 0 else None)
     return await service.export_log_stub(payload)
 
 
 @router.post("/dataVisualization/exportLogImg")
 async def export_log_img(
     payload: dict[str, object],
-    _: TokenUser = Depends(get_current_user),
+    user: TokenUser = Depends(get_current_user),
     service: VisualizationService = Depends(get_visualization_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> object:
+    dv_id = int(str(payload.get("id", "0")))
+    await _require_visualization_permission(user, service, perm, "export", dv_id if dv_id > 0 else None)
     return await service.export_log_stub(payload)
 
 
 @router.get("/panel/view/getComponentInfo/{dv_id}")
 async def get_component_info(
     dv_id: int,
-    _: TokenUser = Depends(get_current_user),
+    user: TokenUser = Depends(get_current_user),
     service: VisualizationService = Depends(get_visualization_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> object:
+    await _require_visualization_permission(user, service, perm, "view", dv_id)
     return await service.get_component_info(dv_id)
 
 
 @router.post("/dataVisualization/export2AppCheck")
 async def export_to_app_check(
     payload: dict[str, object],
-    _: TokenUser = Depends(get_current_user),
+    user: TokenUser = Depends(get_current_user),
     service: VisualizationService = Depends(get_visualization_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> object:
+    dv_id = payload.get("dvId") or payload.get("dv_id") or payload.get("id")
+    await _require_visualization_permission(
+        user,
+        service,
+        perm,
+        "export",
+        int(str(dv_id)) if dv_id is not None else None,
+    )
     return await service.export_to_app_check(payload)
 
 
 @router.get("/dataVisualization/perResource/{visualization_id}")
 async def get_visualization_per_resource(
     visualization_id: int,
-    _: TokenUser = Depends(get_current_user),
+    user: TokenUser = Depends(get_current_user),
     service: VisualizationService = Depends(get_visualization_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> object:
+    await _require_visualization_permission(user, service, perm, "view", visualization_id)
     return await service.per_resource(visualization_id)
 
 
 @router.get("/dataVisualization/viewDetailList/{visualization_id}")
 async def view_detail_list(
     visualization_id: int,
-    _: TokenUser = Depends(get_current_user),
+    user: TokenUser = Depends(get_current_user),
     service: VisualizationService = Depends(get_visualization_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> object:
+    await _require_visualization_permission(user, service, perm, "view", visualization_id)
     return await service.view_detail_list(visualization_id)
 
 
@@ -517,27 +560,34 @@ async def remove_store(
 @router.post("/linkage/getViewLinkageGather")
 async def get_view_linkage_gather(
     payload: LinkageRequest,
-    _: TokenUser = Depends(get_current_user),
+    user: TokenUser = Depends(get_current_user),
     service: VisualizationService = Depends(get_visualization_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> object:
+    await _require_visualization_permission(user, service, perm, "view", payload.dv_id)
     return await service.get_view_linkage_gather(payload)
 
 
 @router.post("/linkage/getViewLinkageGatherArray")
 async def get_view_linkage_gather_array(
     payload: LinkageRequest,
-    _: TokenUser = Depends(get_current_user),
+    user: TokenUser = Depends(get_current_user),
     service: VisualizationService = Depends(get_visualization_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> object:
+    await _require_visualization_permission(user, service, perm, "view", payload.dv_id)
     return await service.get_view_linkage_gather_array(payload)
 
 
 @router.post("/linkage/saveLinkage")
 async def save_linkage(
     payload: LinkageSaveRequest,
-    _: TokenUser = Depends(get_current_user),
+    user: TokenUser = Depends(get_current_user),
+    visualization_service: VisualizationService = Depends(get_visualization_service),
     linkage_svc: LinkageService = Depends(get_linkage_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> object:
+    await _require_visualization_permission(user, visualization_service, perm, "manage", payload.dv_id)
     await linkage_svc.save_linkage(payload)
     return None
 
@@ -546,27 +596,36 @@ async def save_linkage(
 async def get_visualization_all_linkage_info(
     dv_id: int,
     resource_table: str,
-    _: TokenUser = Depends(get_current_user),
+    user: TokenUser = Depends(get_current_user),
+    visualization_service: VisualizationService = Depends(get_visualization_service),
     linkage_svc: LinkageService = Depends(get_linkage_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> object:
+    await _require_visualization_permission(user, visualization_service, perm, "view", dv_id)
     return await linkage_svc.get_visualization_all_linkage_info(dv_id, resource_table)
 
 
 @router.post("/linkage/updateLinkageActive")
 async def update_linkage_active(
     payload: LinkageUpdateActiveRequest,
-    _: TokenUser = Depends(get_current_user),
+    user: TokenUser = Depends(get_current_user),
+    visualization_service: VisualizationService = Depends(get_visualization_service),
     linkage_svc: LinkageService = Depends(get_linkage_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> object:
+    await _require_visualization_permission(user, visualization_service, perm, "manage", payload.dv_id)
     return await linkage_svc.update_linkage_active(payload)
 
 
 @router.post("/linkage/removeLinkage")
 async def remove_linkage(
     payload: LinkageRemoveRequest,
-    _: TokenUser = Depends(get_current_user),
+    user: TokenUser = Depends(get_current_user),
+    visualization_service: VisualizationService = Depends(get_visualization_service),
     linkage_svc: LinkageService = Depends(get_linkage_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> object:
+    await _require_visualization_permission(user, visualization_service, perm, "manage", payload.dv_id)
     await linkage_svc.remove_linkage(payload)
     return None
 
@@ -574,9 +633,11 @@ async def remove_linkage(
 @router.get("/linkJump/getTableFieldWithViewId/{view_id}")
 async def get_table_field_with_view_id(
     view_id: int,
-    _: TokenUser = Depends(get_current_user),
+    user: TokenUser = Depends(get_current_user),
     service: VisualizationService = Depends(get_visualization_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> object:
+    await perm.require_resource_access(user, "dashboard", "view")
     return await service.get_table_field_with_view_id(view_id)
 
 
@@ -584,27 +645,33 @@ async def get_table_field_with_view_id(
 async def query_jump_with_view_id(
     dv_id: int,
     view_id: int,
-    _: TokenUser = Depends(get_current_user),
+    user: TokenUser = Depends(get_current_user),
     service: VisualizationService = Depends(get_visualization_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> object:
+    await _require_visualization_permission(user, service, perm, "view", dv_id)
     return await service.query_with_view_id(dv_id, view_id)
 
 
 @router.post("/linkJump/updateJumpSet")
 async def update_jump_set(
     payload: JumpRequest,
-    _: TokenUser = Depends(get_current_user),
+    user: TokenUser = Depends(get_current_user),
     service: VisualizationService = Depends(get_visualization_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> object:
+    await _require_visualization_permission(user, service, perm, "manage", payload.dv_id)
     return await service.update_jump_set(payload)
 
 
 @router.post("/linkJump/queryTargetVisualizationJumpInfo")
 async def query_target_visualization_jump_info(
     payload: JumpRequest,
-    _: TokenUser = Depends(get_current_user),
+    user: TokenUser = Depends(get_current_user),
     service: VisualizationService = Depends(get_visualization_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> object:
+    await _require_visualization_permission(user, service, perm, "view", payload.dv_id)
     return await service.query_target_visualization_jump_info(payload)
 
 
@@ -612,70 +679,86 @@ async def query_target_visualization_jump_info(
 async def query_visualization_jump_info(
     dv_id: int,
     resource_table: str,
-    _: TokenUser = Depends(get_current_user),
+    user: TokenUser = Depends(get_current_user),
     service: VisualizationService = Depends(get_visualization_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> object:
+    await _require_visualization_permission(user, service, perm, "view", dv_id)
     return await service.query_visualization_jump_info(dv_id, resource_table)
 
 
 @router.get("/linkJump/viewTableDetailList/{dv_id}")
 async def view_table_detail_list(
     dv_id: int,
-    _: TokenUser = Depends(get_current_user),
+    user: TokenUser = Depends(get_current_user),
     service: VisualizationService = Depends(get_visualization_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> object:
+    await _require_visualization_permission(user, service, perm, "view", dv_id)
     return await service.view_detail_list(dv_id)
 
 
 @router.post("/linkJump/updateJumpSetActive")
 async def update_jump_set_active(
     payload: JumpRequest,
-    _: TokenUser = Depends(get_current_user),
+    user: TokenUser = Depends(get_current_user),
     service: VisualizationService = Depends(get_visualization_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> object:
+    await _require_visualization_permission(user, service, perm, "manage", payload.dv_id)
     return await service.update_jump_set_active(payload)
 
 
 @router.post("/linkJump/removeJumpSet")
 async def remove_jump_set(
     payload: JumpRequest,
-    _: TokenUser = Depends(get_current_user),
+    user: TokenUser = Depends(get_current_user),
     service: VisualizationService = Depends(get_visualization_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> object:
+    await _require_visualization_permission(user, service, perm, "manage", payload.dv_id)
     return await service.remove_jump_set(payload)
 
 
 @router.get("/outerParams/queryWithVisualizationId/{dv_id}")
 async def query_with_visualization_id(
     dv_id: int,
-    _: TokenUser = Depends(get_current_user),
+    user: TokenUser = Depends(get_current_user),
     service: VisualizationService = Depends(get_visualization_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> object:
+    await _require_visualization_permission(user, service, perm, "view", dv_id)
     return await service.query_with_visualization_id(dv_id)
 
 
 @router.post("/outerParams/updateOuterParamsSet")
 async def update_outer_params_set(
     payload: OuterParamsRequest,
-    _: TokenUser = Depends(get_current_user),
+    user: TokenUser = Depends(get_current_user),
     service: VisualizationService = Depends(get_visualization_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> object:
+    await _require_visualization_permission(user, service, perm, "manage", payload.dv_id)
     return await service.update_outer_params_set(payload)
 
 
 @router.get("/outerParams/getOuterParamsInfo/{dv_id}")
 async def get_outer_params_info(
     dv_id: int,
-    _: TokenUser = Depends(get_current_user),
+    user: TokenUser = Depends(get_current_user),
     service: VisualizationService = Depends(get_visualization_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> object:
+    await _require_visualization_permission(user, service, perm, "view", dv_id)
     return await service.get_outer_params_info(dv_id)
 
 
 @router.get("/outerParams/queryDsWithVisualizationId/{dv_id}")
 async def query_ds_with_visualization_id(
     dv_id: int,
-    _: TokenUser = Depends(get_current_user),
+    user: TokenUser = Depends(get_current_user),
     service: VisualizationService = Depends(get_visualization_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> object:
+    await _require_visualization_permission(user, service, perm, "view", dv_id)
     return await service.query_ds_with_visualization_id(dv_id)
