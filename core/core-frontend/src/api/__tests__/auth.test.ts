@@ -121,6 +121,8 @@ describe('API: auth', () => {
       targetType: 'role',
       targetId: 5,
       action: 'mask',
+      maskStart: 3,
+      maskEnd: 7,
       enabled: false
     }
 

@@ -118,6 +118,14 @@
               }}</el-tag>
             </template>
           </el-table-column>
+          <el-table-column label="掩码范围" min-width="180">
+            <template #default="scope">
+              <span v-if="scope.row.action === 'mask'">
+                {{ formatMaskRange(scope.row.maskStart, scope.row.maskEnd) }}
+              </span>
+              <span v-else>-</span>
+            </template>
+          </el-table-column>
           <el-table-column label="状态" width="120">
             <template #default="scope">
               <el-switch
@@ -279,7 +287,11 @@
           </div>
         </el-form-item>
         <el-form-item label="动作" prop="action">
-          <el-select v-model="columnForm.action" placeholder="请选择动作">
+          <el-select
+            v-model="columnForm.action"
+            placeholder="请选择动作"
+            @change="handleColumnActionChange"
+          >
             <el-option
               v-for="option in actionOptions"
               :key="option.value"
@@ -288,6 +300,17 @@
             />
           </el-select>
         </el-form-item>
+        <template v-if="columnForm.action === 'mask'">
+          <el-form-item label="掩码起始" prop="maskStart">
+            <el-input-number v-model="columnForm.maskStart" :min="0" :step="1" step-strictly />
+          </el-form-item>
+          <el-form-item label="掩码结束" prop="maskEnd">
+            <el-input-number v-model="columnForm.maskEnd" :min="0" :step="1" step-strictly />
+          </el-form-item>
+          <el-form-item>
+            <div class="mask-range-tip">支持按 0 开始的区间掩码；留空时沿用默认首尾保留规则。</div>
+          </el-form-item>
+        </template>
         <el-form-item label="启用状态" prop="enabled">
           <el-switch v-model="columnForm.enabled" />
         </el-form-item>
@@ -390,6 +413,8 @@ interface ColumnRule {
   targetType: string
   targetId: string
   action: string
+  maskStart?: number | null
+  maskEnd?: number | null
   enabled: boolean
   createTime?: number
   updateTime?: number
@@ -476,6 +501,8 @@ const columnForm = reactive({
   targetType: 'user',
   targetId: undefined as string | undefined,
   action: 'disable',
+  maskStart: undefined as number | undefined,
+  maskEnd: undefined as number | undefined,
   enabled: true
 })
 
@@ -494,7 +521,47 @@ const columnFormRules: FormRules = {
   fieldId: [{ required: true, message: '请选择字段', trigger: 'change' }],
   targetType: [{ required: true, message: '请选择目标类型', trigger: 'change' }],
   targetId: [{ required: true, message: '请选择目标对象', trigger: 'change' }],
-  action: [{ required: true, message: '请选择动作', trigger: 'change' }]
+  action: [{ required: true, message: '请选择动作', trigger: 'change' }],
+  maskStart: [
+    {
+      validator: (_rule, value, callback) => {
+        if (columnForm.action !== 'mask' || value == null || value === '') {
+          callback()
+          return
+        }
+        if (!Number.isInteger(Number(value)) || Number(value) < 0) {
+          callback(new Error('掩码起始位置必须为大于等于 0 的整数'))
+          return
+        }
+        if (columnForm.maskEnd != null && Number(value) > Number(columnForm.maskEnd)) {
+          callback(new Error('掩码起始位置不能大于结束位置'))
+          return
+        }
+        callback()
+      },
+      trigger: 'change'
+    }
+  ],
+  maskEnd: [
+    {
+      validator: (_rule, value, callback) => {
+        if (columnForm.action !== 'mask' || value == null || value === '') {
+          callback()
+          return
+        }
+        if (!Number.isInteger(Number(value)) || Number(value) < 0) {
+          callback(new Error('掩码结束位置必须为大于等于 0 的整数'))
+          return
+        }
+        if (columnForm.maskStart != null && Number(value) < Number(columnForm.maskStart)) {
+          callback(new Error('掩码结束位置不能小于起始位置'))
+          return
+        }
+        callback()
+      },
+      trigger: 'change'
+    }
+  ]
 }
 
 const whitelistFormRules: FormRules = {
@@ -608,6 +675,8 @@ const loadDatasetPermissionData = async (datasetId: string | number) => {
     targetType: item.target_type ?? item.targetType,
     targetId: String(item.target_id ?? item.targetId),
     action: item.action,
+    maskStart: item.mask_start ?? item.maskStart,
+    maskEnd: item.mask_end ?? item.maskEnd,
     enabled: Boolean(item.enabled),
     createTime: item.create_time ?? item.createTime,
     updateTime: item.update_time ?? item.updateTime
@@ -667,6 +736,8 @@ const openCreateColumnDialog = () => {
   columnForm.targetType = 'user'
   columnForm.targetId = undefined
   columnForm.action = 'disable'
+  columnForm.maskStart = undefined
+  columnForm.maskEnd = undefined
   columnForm.enabled = true
   columnDialogVisible.value = true
 }
@@ -678,6 +749,8 @@ const openEditColumnDialog = (rule: ColumnRule) => {
   columnForm.targetType = rule.targetType
   columnForm.targetId = rule.targetId
   columnForm.action = rule.action
+  columnForm.maskStart = rule.maskStart ?? undefined
+  columnForm.maskEnd = rule.maskEnd ?? undefined
   columnForm.enabled = rule.enabled
   columnDialogVisible.value = true
 }
@@ -694,6 +767,13 @@ const handleRowTargetTypeChange = () => {
 
 const handleColumnTargetTypeChange = () => {
   columnForm.targetId = undefined
+}
+
+const handleColumnActionChange = () => {
+  if (columnForm.action !== 'mask') {
+    columnForm.maskStart = undefined
+    columnForm.maskEnd = undefined
+  }
 }
 
 const submitRowRule = async () => {
@@ -734,6 +814,8 @@ const submitColumnRule = async () => {
       await editColumnPermissionApi({
         id: columnForm.id,
         action: columnForm.action,
+        maskStart: columnForm.action === 'mask' ? columnForm.maskStart ?? null : null,
+        maskEnd: columnForm.action === 'mask' ? columnForm.maskEnd ?? null : null,
         enabled: columnForm.enabled
       })
       ElMessage.success('列权限规则更新成功')
@@ -744,6 +826,8 @@ const submitColumnRule = async () => {
         targetType: columnForm.targetType,
         targetId: columnForm.targetId as string,
         action: columnForm.action,
+        maskStart: columnForm.action === 'mask' ? columnForm.maskStart ?? null : null,
+        maskEnd: columnForm.action === 'mask' ? columnForm.maskEnd ?? null : null,
         enabled: columnForm.enabled
       })
       ElMessage.success('列权限规则创建成功')
@@ -849,6 +933,13 @@ const resolveUserName = (userId: string | number) => {
   return userOptions.value.find(item => item.id === String(userId))?.name || `用户 #${userId}`
 }
 
+const formatMaskRange = (maskStart?: number | null, maskEnd?: number | null) => {
+  if (maskStart == null && maskEnd == null) {
+    return '默认首尾保留'
+  }
+  return `${maskStart ?? 0} - ${maskEnd ?? '末尾'}`
+}
+
 const formatTimestamp = (value?: number) => {
   if (!value) return '-'
   const date = new Date(Number(value))
@@ -924,6 +1015,12 @@ onMounted(async () => {
     background: #f5f7fa;
     border-radius: 8px;
     line-height: 20px;
+  }
+
+  .mask-range-tip {
+    color: #646a73;
+    font-size: 12px;
+    line-height: 18px;
   }
 
   .section-header {

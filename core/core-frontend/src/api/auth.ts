@@ -20,12 +20,16 @@ export interface ColumnPermissionRulePayload {
   targetType: string
   targetId: number | string
   action: string
+  maskStart?: number | null
+  maskEnd?: number | null
   enabled?: boolean
 }
 
 export interface ColumnPermissionRuleUpdatePayload {
   id: number | string
   action?: string
+  maskStart?: number | null
+  maskEnd?: number | null
   enabled?: boolean
 }
 
@@ -94,6 +98,8 @@ export const createColumnPermissionApi = (data: ColumnPermissionRulePayload) =>
       target_type: data.targetType,
       target_id: data.targetId,
       action: data.action,
+      mask_start: data.maskStart,
+      mask_end: data.maskEnd,
       enabled: data.enabled
     }
   })
@@ -101,7 +107,13 @@ export const createColumnPermissionApi = (data: ColumnPermissionRulePayload) =>
 export const editColumnPermissionApi = (data: ColumnPermissionRuleUpdatePayload) =>
   request.post({
     url: '/columnPermission/edit',
-    data: { id: data.id, action: data.action, enabled: data.enabled }
+    data: {
+      id: data.id,
+      action: data.action,
+      mask_start: data.maskStart,
+      mask_end: data.maskEnd,
+      enabled: data.enabled
+    }
   })
 
 export const deleteColumnPermissionApi = (ruleId: number | string) =>
