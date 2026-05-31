@@ -183,7 +183,8 @@ router.beforeEach(async (to, from, next) => {
 })
 const FEATURE_ROUTE_MAP: Record<string, () => boolean> = {
   'system/auth-provider': () => featureFlagStore.isIdentificationEnabled,
-  'data-filing': () => featureFlagStore.isDataFilingEnabled
+  'data-filing': () => featureFlagStore.isDataFilingEnabled,
+  'sys-variable': () => featureFlagStore.isSysVariableEnabled
 }
 
 const filterDisabledFeatures = (routers: any[]): any[] => {
