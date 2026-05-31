@@ -29,7 +29,7 @@ async def dataset_tree(
     service: DatasetService = Depends(get_dataset_service),
     perm: PermissionService = Depends(get_permission_service),
 ) -> object:
-    await perm.require_resource_access(user, "dataset", "use")
+    await perm.require_resource_access(user, "dataset", "view")
     return await service.tree()
 
 
@@ -106,7 +106,7 @@ async def bar_info(
     service: DatasetService = Depends(get_dataset_service),
     perm: PermissionService = Depends(get_permission_service),
 ) -> object:
-    await perm.require_resource_access(user, "dataset", "use")
+    await perm.require_resource_access(user, "dataset", "view")
     return await service.get_bar_info(group_id)
 
 
@@ -117,7 +117,7 @@ async def get_dataset(
     service: DatasetService = Depends(get_dataset_service),
     perm: PermissionService = Depends(get_permission_service),
 ) -> object:
-    await perm.require_resource_access(user, "dataset", "use")
+    await perm.require_resource_access(user, "dataset", "view")
     return await service.get_dataset_preview(group_id)
 
 
@@ -139,7 +139,7 @@ async def export_dataset(
     service: DatasetService = Depends(get_dataset_service),
     perm: PermissionService = Depends(get_permission_service),
 ) -> object:
-    await perm.require_resource_access(user, "dataset", "manage")
+    await perm.require_resource_access(user, "dataset", "export")
     return await service.export_dataset(payload)
 
 
@@ -150,7 +150,7 @@ async def ds_details(
     service: DatasetService = Depends(get_dataset_service),
     perm: PermissionService = Depends(get_permission_service),
 ) -> object:
-    await perm.require_resource_access(user, "dataset", "use")
+    await perm.require_resource_access(user, "dataset", "view")
     return await service.ds_details(payload)
 
 
@@ -161,7 +161,7 @@ async def detail_with_perm(
     service: DatasetService = Depends(get_dataset_service),
     perm: PermissionService = Depends(get_permission_service),
 ) -> object:
-    await perm.require_resource_access(user, "dataset", "use")
+    await perm.require_resource_access(user, "dataset", "view")
     return await service.ds_details(payload)
 
 
@@ -172,7 +172,7 @@ async def table_field(
     service: DatasetService = Depends(get_dataset_service),
     perm: PermissionService = Depends(get_permission_service),
 ) -> object:
-    await perm.require_resource_access(user, "dataset", "use")
+    await perm.require_resource_access(user, "dataset", "view")
     return await service.get_fields(payload)
 
 
@@ -183,7 +183,7 @@ async def get_dataset_total(
     service: DatasetService = Depends(get_dataset_service),
     perm: PermissionService = Depends(get_permission_service),
 ) -> object:
-    await perm.require_resource_access(user, "dataset", "use")
+    await perm.require_resource_access(user, "dataset", "view")
     group_id = int(str(payload.get("id", "0")))
     return await service.get_dataset_total(group_id)
 
@@ -195,7 +195,7 @@ async def preview_sql(
     service: DatasetService = Depends(get_dataset_service),
     perm: PermissionService = Depends(get_permission_service),
 ) -> object:
-    await perm.require_resource_access(user, "dataset", "use")
+    await perm.require_resource_access(user, "dataset", "view")
     return await service.preview_sql(payload)
 
 
@@ -206,7 +206,7 @@ async def preview_data(
     service: DatasetService = Depends(get_dataset_service),
     perm: PermissionService = Depends(get_permission_service),
 ) -> object:
-    await perm.require_resource_access(user, "dataset", "use")
+    await perm.require_resource_access(user, "dataset", "view")
     return await service.preview_data(payload)
 
 
@@ -217,7 +217,7 @@ async def enum_value(
     service: DatasetService = Depends(get_dataset_service),
     perm: PermissionService = Depends(get_permission_service),
 ) -> object:
-    await perm.require_resource_access(user, "dataset", "use")
+    await perm.require_resource_access(user, "dataset", "view")
     return await service.get_enum_values(payload)
 
 
@@ -262,7 +262,7 @@ async def get_sql_params(
     service: DatasetService = Depends(get_dataset_service),
     perm: PermissionService = Depends(get_permission_service),
 ) -> list[object]:
-    await perm.require_resource_access(user, "dataset", "use")
+    await perm.require_resource_access(user, "dataset", "view")
     _ = service
     group_id = payload.get("id") or payload.get("groupId") or payload.get("group_id")
     if group_id is not None:
@@ -277,5 +277,5 @@ async def inner_export_dataset_details(
     service: ChartService = Depends(get_chart_service),
     perm: PermissionService = Depends(get_permission_service),
 ) -> object:
-    await perm.require_resource_access(user, "dataset", "use")
+    await perm.require_resource_access(user, "dataset", "export")
     return await service.inner_export_dataset_details(payload)

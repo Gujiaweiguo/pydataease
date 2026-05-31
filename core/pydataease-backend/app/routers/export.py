@@ -7,6 +7,7 @@ from app.dependencies.auth import get_current_user
 from app.schemas.auth import TokenUser
 from app.schemas.export import ExportTaskCreateRequest
 from app.services.export_service import ExportService, get_export_service
+from app.services.permission_service import PermissionService, get_permission_service
 
 router = APIRouter(prefix="/exportCenter", tags=["export"])
 
@@ -16,7 +17,11 @@ async def create_export_task(
     payload: ExportTaskCreateRequest,
     user: TokenUser = Depends(get_current_user),
     service: ExportService = Depends(get_export_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> object:
+    export_from_type = (payload.export_from_type or "").lower()
+    if export_from_type in {"dataset", "datasource", "dashboard", "screen"}:
+        await perm.require_resource_access(user, export_from_type, "export")
     return await service.create_task(payload, user)
 
 
