@@ -10,6 +10,7 @@ from app.dependencies.database import get_db  # pyright: ignore[reportImplicitRe
 from app.schemas.auth import TokenUser  # pyright: ignore[reportImplicitRelativeImport]
 from app.services.font_service import FontPayload, get_font_service  # pyright: ignore[reportImplicitRelativeImport]
 from app.services.auth_provider_service import AuthProviderService, get_auth_provider_service  # pyright: ignore[reportImplicitRelativeImport]
+from app.services.permission_service import PermissionService, get_permission_service  # pyright: ignore[reportImplicitRelativeImport]
 from app.services.sys_setting_service import SysSettingService, get_sys_setting_service  # pyright: ignore[reportImplicitRelativeImport]
 from app.services.template_market_service import get_template_market_service  # pyright: ignore[reportImplicitRelativeImport]
 from app.services.watermark_service import WatermarkService, get_watermark_service  # pyright: ignore[reportImplicitRelativeImport]
@@ -249,11 +250,22 @@ async def get_sqlbot_dataset_list(dv_info: str) -> list[object]:
 @router.post("/resource/checkPermission/{resource_id}")
 async def check_resource_permission(
     resource_id: int,
+    resource_type: str | None = None,
+    permission_type: str | None = None,
     user: TokenUser = Depends(get_current_user),  # BUG-060 fix: require auth
+    service: PermissionService = Depends(get_permission_service),
 ) -> bool:
-    """Check if the current user has permission for the given resource.
+    """Check if the current user has the requested resource permission."""
+    resolved_type = (resource_type or "").strip().lower() or _resource_type_for_permission_check(resource_id)
+    resolved_permission = (permission_type or "view").strip().lower() or "view"
+    return await service.has_resource_permission(user, resolved_type, resolved_permission)
 
-    Stub — community edition grants access to all authenticated resources.
-    """
-    _ = user
-    return True
+
+def _resource_type_for_permission_check(resource_id: int) -> str:
+    if resource_id == 2:
+        return "screen"
+    if resource_id == 3:
+        return "dataset"
+    if resource_id == 4:
+        return "datasource"
+    return "dashboard"
