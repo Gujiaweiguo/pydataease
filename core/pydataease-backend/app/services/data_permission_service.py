@@ -1,15 +1,19 @@
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.column_permission import CoreColumnPermission
-from app.models.permission_whitelist import CorePermissionWhitelist
-from app.models.role_user import CoreRoleUser
-from app.models.row_permission import CoreRowPermission
-from app.schemas.auth import TokenUser
+from app.models.column_permission import CoreColumnPermission  # pyright: ignore[reportImplicitRelativeImport]
+from app.models.permission_whitelist import CorePermissionWhitelist  # pyright: ignore[reportImplicitRelativeImport]
+from app.models.role_user import CoreRoleUser  # pyright: ignore[reportImplicitRelativeImport]
+from app.models.row_permission import CoreRowPermission  # pyright: ignore[reportImplicitRelativeImport]
+from app.models.sys_variable import CoreSysVariable, CoreSysVariableValue  # pyright: ignore[reportImplicitRelativeImport]
+from app.schemas.auth import TokenUser  # pyright: ignore[reportImplicitRelativeImport]
+
+_SYSVAR_PATTERN = re.compile(r"\$\{([A-Za-z][A-Za-z0-9_]*)\}")
 
 
 def apply_row_filters(sql: str, filters: list[str]) -> str:
@@ -39,6 +43,21 @@ def _mask_value(value: str) -> str:
     return value[0] + "*" * (len(value) - 2) + value[-1]
 
 
+def _mask_value_range(value: str, start: int | None, end: int | None) -> str:
+    """Mask a string value within a custom range, or use default behavior."""
+    if start is None and end is None:
+        return _mask_value(value)
+    if not value:
+        return ""
+
+    length = len(value)
+    mask_start = min(max(start or 0, 0), length)
+    mask_end = min(max(end if end is not None else length, 0), length)
+    if mask_end <= mask_start:
+        return value
+    return value[:mask_start] + "*" * (mask_end - mask_start) + value[mask_end:]
+
+
 class DataPermissionService:
     """Query-time enforcement of row and column permissions."""
 
@@ -48,7 +67,7 @@ class DataPermissionService:
     async def collect_row_filters(self, user: TokenUser, dataset_id: int) -> list[str]:
         """Collect all enabled row-permission WHERE fragments for this user.
 
-        Priority: user > role > org (higher priority entries override lower).
+        Priority: user > sysvar > role > org (higher priority entries override lower).
         Returns list of filter_sql fragments to AND together.
         """
         if user.user_id == 1:
@@ -64,6 +83,10 @@ class DataPermissionService:
         user_rules = await self._fetch_rules(dataset_id, "user", user.user_id)
         if user_rules:
             return [r.filter_sql for r in user_rules]
+
+        sysvar_rules = await self._resolve_sysvar_rules(dataset_id, user)
+        if sysvar_rules is not None:
+            return sysvar_rules
 
         role_filters: list[str] = []
         for rid in role_ids:
@@ -108,7 +131,7 @@ class DataPermissionService:
         all_rules = await self._fetch_column_rules(dataset_id, user, role_ids)
 
         # Build field -> action map with priority
-        field_actions: dict[int, str] = {}  # field_id -> action
+        field_rules: dict[int, CoreColumnPermission] = {}
         field_priorities: dict[int, int] = {}  # field_id -> priority (3=user, 2=role, 1=org)
 
         _RESTRICTIVENESS: dict[str, int] = {"disable": 3, "desensitize": 2, "mask": 1}
@@ -116,14 +139,16 @@ class DataPermissionService:
         for rule in all_rules:
             priority = {"user": 3, "role": 2, "org": 1}.get(rule.target_type, 0)
             existing = field_priorities.get(rule.field_id, 0)
+            existing_rule = field_rules.get(rule.field_id)
             if priority > existing or (
                 priority == existing
-                and _RESTRICTIVENESS.get(rule.action, 0) > _RESTRICTIVENESS.get(field_actions.get(rule.field_id, ""), 0)
+                and _RESTRICTIVENESS.get(rule.action, 0)
+                > _RESTRICTIVENESS.get(existing_rule.action if existing_rule else "", 0)
             ):
-                field_actions[rule.field_id] = rule.action
+                field_rules[rule.field_id] = rule
                 field_priorities[rule.field_id] = priority
 
-        if not field_actions:
+        if not field_rules:
             return fields, rows
 
         # Map field names to their indices and build field_id lookup
@@ -132,8 +157,8 @@ class DataPermissionService:
         # For simplicity, we use the field name to look up the rule.
         # The rules store field_id, but we need to match to field names.
         field_name_to_id: dict[str, int] = {}
-        if field_actions:
-            from app.models.dataset import CoreDatasetTableField
+        if field_rules:
+            from app.models.dataset import CoreDatasetTableField  # pyright: ignore[reportImplicitRelativeImport]
 
             field_stmt = select(CoreDatasetTableField).where(
                 CoreDatasetTableField.dataset_group_id == dataset_id
@@ -154,8 +179,8 @@ class DataPermissionService:
         for idx, field in enumerate(fields):
             name = field.get("name", "")
             fid = field_name_to_id.get(name)
-            if fid is not None and fid in field_actions:
-                action = field_actions[fid]
+            if fid is not None and fid in field_rules:
+                action = field_rules[fid].action
                 if action == "disable":
                     disable_indices.add(idx)
                 elif action == "desensitize":
@@ -179,7 +204,18 @@ class DataPermissionService:
                 if idx in desensitize_indices:
                     new_row.append("***")
                 elif idx in mask_indices:
-                    new_row.append(_mask_value(str(val)) if val is not None else None)
+                    field = fields[idx]
+                    fid = field_name_to_id.get(field.get("name", ""))
+                    rule = field_rules.get(fid) if fid is not None else None
+                    new_row.append(
+                        _mask_value_range(
+                            str(val),
+                            getattr(rule, "mask_start", None),
+                            getattr(rule, "mask_end", None),
+                        )
+                        if val is not None and rule
+                        else val
+                    )
                 else:
                     new_row.append(val)
             new_rows.append(new_row)
@@ -252,3 +288,72 @@ class DataPermissionService:
         )
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
+
+    async def _resolve_sysvar_rules(self, dataset_id: int, user: TokenUser) -> list[str] | None:
+        """Resolve sysvar row-permission rules for the current user context.
+
+        Returns:
+        - None when the dataset has no sysvar rules configured
+        - ["1=0"] when sysvar rules exist but required variables cannot be resolved
+        - resolved filter_sql fragments otherwise
+        """
+
+        del user
+
+        if not hasattr(self.session, "execute"):
+            return None
+
+        stmt = select(CoreRowPermission).where(
+            CoreRowPermission.dataset_id == dataset_id,
+            CoreRowPermission.target_type == "sysvar",
+            CoreRowPermission.enabled.is_(True),
+        )
+        result = await self.session.execute(stmt)
+        rules = list(result.scalars().all())
+        if not rules:
+            return None
+
+        variable_names = {
+            match.group(1)
+            for rule in rules
+            for match in _SYSVAR_PATTERN.finditer(rule.filter_sql)
+        }
+        value_map = await self._fetch_sysvar_values(variable_names)
+
+        resolved_rules: list[str] = []
+        for rule in rules:
+            missing_variable = False
+
+            def replace(match: re.Match[str]) -> str:
+                nonlocal missing_variable
+                variable_name = match.group(1)
+                variable_value = value_map.get(variable_name)
+                if variable_value is None:
+                    missing_variable = True
+                    return match.group(0)
+                return variable_value
+
+            resolved_sql = _SYSVAR_PATTERN.sub(replace, rule.filter_sql)
+            if missing_variable:
+                return ["1=0"]
+            resolved_rules.append(resolved_sql)
+
+        return resolved_rules
+
+    async def _fetch_sysvar_values(self, variable_names: set[str]) -> dict[str, str | None]:
+        if not variable_names:
+            return {}
+
+        stmt = (
+            select(CoreSysVariable.name, CoreSysVariableValue.value)
+            .outerjoin(CoreSysVariableValue, CoreSysVariableValue.variable_id == CoreSysVariable.id)
+            .where(CoreSysVariable.name.in_(variable_names))
+            .order_by(CoreSysVariable.id.asc(), CoreSysVariableValue.create_time.asc(), CoreSysVariableValue.id.asc())
+        )
+        result = await self.session.execute(stmt)
+
+        values: dict[str, str | None] = {}
+        for name, value in result.all():
+            if name not in values:
+                values[name] = value
+        return values
