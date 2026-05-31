@@ -468,7 +468,15 @@ export default {
     qr_code: 'QR Code',
     platform_disable: '{0} setting disabled!',
     input_account: 'Please enter account number',
-    redirect_2_auth: 'Redirecting to {0} authentication, {1} seconds...'
+    input_password: 'Please enter password',
+    redirect_2_auth: 'Redirecting to {0} authentication, {1} seconds...',
+    third_party_login: 'Third-party Login',
+    ldap_username: 'LDAP Username',
+    ldap_password: 'LDAP Password',
+    invalid_callback_params: 'Invalid callback parameters',
+    logging_in: 'Logging in...',
+    auth_failed: 'Authentication failed',
+    back_to_login: 'Back to Login'
   },
   component: {
     columnList: 'List item',

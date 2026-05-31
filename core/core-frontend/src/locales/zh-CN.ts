@@ -455,7 +455,15 @@ export default {
     qr_code: '二维码',
     platform_disable: '{0}设置未开启！',
     input_account: '请输入账号',
-    redirect_2_auth: '正在跳转至 {0} 认证，{1} 秒...'
+    input_password: '请输入密码',
+    redirect_2_auth: '正在跳转至 {0} 认证，{1} 秒...',
+    third_party_login: '第三方登录',
+    ldap_username: 'LDAP 用户名',
+    ldap_password: 'LDAP 密码',
+    invalid_callback_params: '无效的回调参数',
+    logging_in: '登录中...',
+    auth_failed: '认证失败',
+    back_to_login: '返回登录'
   },
   component: {
     columnList: '列表项',

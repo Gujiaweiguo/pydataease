@@ -454,7 +454,15 @@ export default {
     qr_code: '二維碼',
     platform_disable: '{0}設置未開啟！',
     input_account: '請輸入賬號',
-    redirect_2_auth: '正在跳轉至 {0} 認證，{1} 秒...'
+    input_password: '請輸入密碼',
+    redirect_2_auth: '正在跳轉至 {0} 認證，{1} 秒...',
+    third_party_login: '第三方登錄',
+    ldap_username: 'LDAP 使用者名稱',
+    ldap_password: 'LDAP 密碼',
+    invalid_callback_params: '無效的回調參數',
+    logging_in: '登錄中...',
+    auth_failed: '認證失敗',
+    back_to_login: '返回登錄'
   },
   component: {
     columnList: '列表項目',

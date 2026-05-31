@@ -426,7 +426,7 @@ onMounted(async () => {
               />
 
               <div v-if="thirdPartyProviders.length > 0" class="third-party-section">
-                <el-divider>第三方登录</el-divider>
+                <el-divider>{{ t('login.third_party_login') }}</el-divider>
                 <div class="third-party-buttons">
                   <template v-for="provider in thirdPartyProviders" :key="provider.id">
                     <el-button
@@ -441,14 +441,17 @@ onMounted(async () => {
               </div>
 
               <div v-if="ldapLoginVisible" class="ldap-section">
-                <el-divider>LDAP 登录</el-divider>
+                <el-divider>{{ t('login.ldap_login') }}</el-divider>
                 <el-form-item class="login-input-module">
-                  <el-input v-model="ldapLoginForm.username" placeholder="LDAP 用户名" />
+                  <el-input
+                    v-model="ldapLoginForm.username"
+                    :placeholder="t('login.ldap_username')"
+                  />
                 </el-form-item>
                 <el-form-item class="login-input-module">
                   <CustomPassword
                     v-model="ldapLoginForm.password"
-                    placeholder="LDAP 密码"
+                    :placeholder="t('login.ldap_password')"
                     show-password
                     maxlength="30"
                     @keypress.enter.stop="handleLdapLogin"
@@ -461,7 +464,7 @@ onMounted(async () => {
                   :loading="ldapLoading"
                   @click="handleLdapLogin"
                 >
-                  LDAP 登录
+                  {{ t('login.ldap_login') }}
                 </el-button>
               </div>
             </div>

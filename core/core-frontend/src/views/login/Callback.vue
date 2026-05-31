@@ -4,8 +4,10 @@ import { useRoute, useRouter } from 'vue-router_2'
 import { authProviderCallback } from '@/api/auth-provider'
 import { useUserStoreWithOut } from '@/store/modules/user'
 import { usePermissionStoreWithOut } from '@/store/modules/permission'
+import { useI18n } from '@/hooks/web/useI18n'
 import { ElMessage } from 'element-plus-secondary'
 
+const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStoreWithOut()
@@ -18,7 +20,7 @@ onMounted(async () => {
   const state = (route.query.state as string) || ''
 
   if (!providerId || !code) {
-    errorMsg.value = 'Invalid callback parameters'
+    errorMsg.value = t('login.invalid_callback_params')
     loading.value = false
     return
   }
@@ -42,7 +44,7 @@ onMounted(async () => {
 
     router.push({ path: '/workbranch/index' })
   } catch (err: any) {
-    errorMsg.value = err?.response?.data?.detail || err?.message || 'Authentication failed'
+    errorMsg.value = err?.response?.data?.detail || err?.message || t('login.auth_failed')
     loading.value = false
     ElMessage.error(errorMsg.value)
   }
@@ -50,10 +52,12 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="callback-container" v-loading="loading" :element-loading-text="'Logging in...'">
+  <div class="callback-container" v-loading="loading" :element-loading-text="t('login.logging_in')">
     <div v-if="errorMsg" class="callback-error">
       <p>{{ errorMsg }}</p>
-      <el-button type="primary" @click="router.push('/login')">Back to Login</el-button>
+      <el-button type="primary" @click="router.push('/login')">{{
+        t('login.back_to_login')
+      }}</el-button>
     </div>
   </div>
 </template>

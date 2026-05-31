@@ -1,13 +1,18 @@
 <script lang="ts" setup>
 import icon_invisible_outlined from '@/assets/svg/icon_invisible_outlined.svg'
 import icon_visible_outlined from '@/assets/svg/icon_visible_outlined.svg'
-import { ref } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import VanCellGroup from 'vant/es/cell-group'
 import mobileWholeBg from '@/assets/img/bg-mobile.png'
 import mobileDeTop from '@/assets/img/mobile-de-top.png'
 import { useAppearanceStoreWithOut } from '@/store/modules/appearance'
 import { showToast } from 'vant'
 import { loginApi, queryDekey } from '@/api/login'
+import {
+  authStatusApi,
+  authProviderAuthorizeApi,
+  authProviderDirectLoginApi
+} from '@/api/auth-provider'
 import { useAppStoreWithOut } from '@/store/modules/app'
 import { useUserStoreWithOut } from '@/store/modules/user'
 import { useCache } from '@/hooks/web/useCache'
@@ -34,6 +39,11 @@ const appearanceStore = useAppearanceStoreWithOut()
 const username = ref('')
 const password = ref('')
 const duringLogin = ref(false)
+const thirdPartyProviders = ref<any[]>([])
+const ldapLoginVisible = ref(false)
+const ldapProviderId = ref<number | null>(null)
+const ldapLoginForm = reactive({ username: '', password: '' })
+const ldapLoading = ref(false)
 
 const xpackLoadFail = ref(false)
 const xpackInvalidPwd = ref()
@@ -109,11 +119,62 @@ const closeMfa = () => {
 const mfaSuccess = () => {
   router.push({ path: '/index' })
 }
+
+const loadThirdPartyProviders = async () => {
+  try {
+    const res = await authStatusApi()
+    const providers = (res.data || []).filter(p => p.type !== 'local' && p.enabled && p.id)
+    thirdPartyProviders.value = providers
+    const ldapProvider = providers.find(p => p.type === 'ldap')
+    if (ldapProvider) {
+      ldapLoginVisible.value = true
+      ldapProviderId.value = ldapProvider.id
+    }
+  } catch {
+    thirdPartyProviders.value = []
+  }
+}
+
+const handleOAuthLogin = async (provider: any) => {
+  const redirectUri = `${window.location.origin}/#/auth/callback/${provider.id}`
+  try {
+    const res = await authProviderAuthorizeApi(provider.id, redirectUri)
+    const authorizeUrl = res.data?.authorizeUrl
+    if (authorizeUrl) {
+      window.location.href = authorizeUrl
+    } else {
+      showToast(t('login.auth_failed'))
+    }
+  } catch {
+    showToast(t('login.auth_failed'))
+  }
+}
+
+const handleLdapLogin = async () => {
+  if (!ldapProviderId.value) return
+  ldapLoading.value = true
+  try {
+    const res = await authProviderDirectLoginApi(ldapProviderId.value, {
+      username: ldapLoginForm.username,
+      password: ldapLoginForm.password
+    })
+    const { token, exp } = res.data
+    userStore.setToken(token)
+    userStore.setExp(exp)
+    userStore.setTime(Date.now())
+    router.push({ path: '/index' })
+  } catch (err: any) {
+    showToast(err?.response?.data?.detail || t('login.auth_failed'))
+  } finally {
+    ldapLoading.value = false
+  }
+}
+
 const onSubmit = async () => {
   if (!checkUsername(username.value) || !validatePwd(password.value)) {
     showToast({
       duration: 2000,
-      message: '用户名、密码不对',
+      message: t('login.pwd_invalid_error'),
       className: 'de-mobile-error'
     })
     return
@@ -189,6 +250,10 @@ const loadFail = () => {
   xpackLoadFail.value = true
   showPlatLoginMask.value = false
 }
+
+onMounted(() => {
+  loadThirdPartyProviders()
+})
 </script>
 
 <template>
@@ -210,14 +275,14 @@ const loadFail = () => {
         <van-cell-group inset>
           <van-field
             v-model="username"
-            name="用户名"
+            name="username"
             :style="{ borderColor: !!usernameError ? '#F54A45' : '#bbbfc4' }"
             :placeholder="t('login.input_account')"
             @blur="handleBlur"
             :class="inputFocus === 'username' && 'input-focus-primary'"
             @end-validate="usernameEndValidate"
             @focus="handleFocus('username')"
-            :rules="[{ required: true, message: '请填写用户名' }]"
+            :rules="[{ required: true, message: t('login.input_account') }]"
           />
           <div v-if="!!usernameError" class="van-ed-error">
             {{ usernameError }}
@@ -230,9 +295,9 @@ const loadFail = () => {
             :style="{ borderColor: !!passwordError ? '#F54A45' : '#bbbfc4' }"
             @focus="handleFocus('password')"
             @blur="handleBlur"
-            name="密码"
-            placeholder="请输入密码"
-            :rules="[{ required: true, message: '请填写密码' }]"
+            name="password"
+            :placeholder="t('login.input_password')"
+            :rules="[{ required: true, message: t('login.input_password') }]"
             @end-validate="passwordEndValidate"
           >
             <template #right-icon>
@@ -250,8 +315,55 @@ const loadFail = () => {
             {{ passwordError }}
           </div>
         </van-cell-group>
-        <van-button block type="primary" native-type="submit"> 登录 </van-button>
+        <van-button block type="primary" native-type="submit">{{ t('login.btn') }}</van-button>
       </van-form>
+
+      <div
+        v-if="thirdPartyProviders.filter(p => p.type !== 'ldap').length > 0"
+        class="mobile-third-party-section"
+      >
+        <div class="mobile-divider">{{ t('login.third_party_login') }}</div>
+        <template
+          v-for="provider in thirdPartyProviders.filter(p => p.type !== 'ldap')"
+          :key="provider.id"
+        >
+          <van-button
+            block
+            type="primary"
+            plain
+            class="third-party-btn-mobile"
+            @click="handleOAuthLogin(provider)"
+          >
+            {{ provider.name }}
+          </van-button>
+        </template>
+      </div>
+
+      <div v-if="ldapLoginVisible" class="mobile-ldap-section">
+        <div class="mobile-divider">{{ t('login.ldap_login') }}</div>
+        <van-form @submit="handleLdapLogin">
+          <van-cell-group inset>
+            <van-field
+              v-model="ldapLoginForm.username"
+              :placeholder="t('login.ldap_username')"
+              :class="inputFocus === 'ldap-user' && 'input-focus-primary'"
+              @focus="handleFocus('ldap-user')"
+              @blur="handleBlur"
+            />
+            <van-field
+              v-model="ldapLoginForm.password"
+              type="password"
+              :placeholder="t('login.ldap_password')"
+              :class="inputFocus === 'ldap-pwd' && 'input-focus-primary'"
+              @focus="handleFocus('ldap-pwd')"
+              @blur="handleBlur"
+            />
+          </van-cell-group>
+          <van-button block type="primary" native-type="submit" :loading="ldapLoading">
+            {{ t('login.ldap_login') }}
+          </van-button>
+        </van-form>
+      </div>
     </div>
     <XpackComponent
       jsname="L2NvbXBvbmVudC9sb2dpbi9Nb2JpbGVIYW5kbGVy"
@@ -321,6 +433,37 @@ const loadFail = () => {
     --van-cell-vertical-padding: 12px;
     --van-button-default-height: 48px;
     --van-field-placeholder-text-color: #8f959e;
+
+    .mobile-divider {
+      text-align: center;
+      color: #8f959e;
+      font-size: 14px;
+      margin: 16px 0;
+      position: relative;
+      &::before,
+      &::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        width: 30%;
+        height: 1px;
+        background: #d9dcdf;
+      }
+      &::before {
+        left: 0;
+      }
+      &::after {
+        right: 0;
+      }
+    }
+
+    .third-party-btn-mobile {
+      margin-top: 8px;
+    }
+
+    .mobile-ldap-section {
+      margin-top: 16px;
+    }
 
     .input-focus-primary {
       border-color: var(--ed-color-primary) !important;
