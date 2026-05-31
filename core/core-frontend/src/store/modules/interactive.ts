@@ -10,16 +10,27 @@ import { useAppStoreWithOut } from '@/store/modules/app'
 import {
   getInteractiveIndex,
   INTERACTIVE_CANVAS_ORDER,
-  INTERACTIVE_PERMISSION_ORDER
+  INTERACTIVE_PERMISSION_ORDER,
+  normalizePermissionType
 } from '@/utils/visualizationResource'
 const appStore = useAppStoreWithOut()
 const { wsCache } = useCache()
+
+export interface ResourceCapabilities {
+  canView: boolean
+  canUse: boolean
+  canExport: boolean
+  canManage: boolean
+  canAuthorize: boolean
+}
+
 export interface InnerInteractive {
   rootManage: boolean
   anyManage: boolean
   treeNodes: BusiTreeNode[]
   leafNodeCount: number
   menuAuth: boolean
+  capabilities: ResourceCapabilities
 }
 
 interface InteractiveState {
@@ -27,6 +38,33 @@ interface InteractiveState {
 }
 
 const apiMap = [queryTreeApi, queryTreeApi, getDatasetTree, listDatasources]
+
+const createEmptyCapabilities = (): ResourceCapabilities => ({
+  canView: false,
+  canUse: false,
+  canExport: false,
+  canManage: false,
+  canAuthorize: false
+})
+
+export const deriveCapabilities = (weight = 0): ResourceCapabilities => ({
+  canView: weight >= 1,
+  canUse: weight >= 2,
+  canExport: weight >= 4,
+  canManage: weight >= 7,
+  canAuthorize: weight >= 9
+})
+
+const mergeCapabilities = (
+  base: ResourceCapabilities,
+  current: ResourceCapabilities
+): ResourceCapabilities => ({
+  canView: base.canView || current.canView,
+  canUse: base.canUse || current.canUse,
+  canExport: base.canExport || current.canExport,
+  canManage: base.canManage || current.canManage,
+  canAuthorize: base.canAuthorize || current.canAuthorize
+})
 
 export const interactiveStore = defineStore('interactive', {
   state: (): InteractiveState => ({
@@ -47,10 +85,20 @@ export const interactiveStore = defineStore('interactive', {
     },
     getData(): InteractiveState {
       return this.data
+    },
+    getResourceCapabilities(): (resourceType?: string | null) => ResourceCapabilities {
+      return resourceType => {
+        const normalizedType = normalizePermissionType(resourceType)
+        if (!normalizedType) {
+          return createEmptyCapabilities()
+        }
+        const index = INTERACTIVE_PERMISSION_ORDER.indexOf(normalizedType)
+        return this.data[index]?.capabilities || createEmptyCapabilities()
+      }
     }
   },
   actions: {
-    async setInteractive(param: BusiTreeRequest, resParam?: object) {
+    async setInteractive(param: BusiTreeRequest, resParam?: BusiTreeNode[] | null) {
       const flag = getInteractiveIndex(param.busiFlag)
       if (flag < 0) {
         return []
@@ -61,7 +109,8 @@ export const interactiveStore = defineStore('interactive', {
           anyManage: false,
           treeNodes: [],
           leafNodeCount: 0,
-          menuAuth: false
+          menuAuth: false,
+          capabilities: createEmptyCapabilities()
         }
         this.data[flag] = tempData
         if (flag === 0) {
@@ -77,7 +126,7 @@ export const interactiveStore = defineStore('interactive', {
         const method = apiMap[flag]
         res = await method(param)
       }
-      this.data[flag] = convertInteractive(res)
+      this.data[flag] = convertInteractive(res as BusiTreeNode[] | null | undefined)
       if (flag === 0) {
         wsCache.set('panel-weight', convertLocalStorage(this.data[flag]))
       }
@@ -125,28 +174,35 @@ export const interactiveStore = defineStore('interactive', {
 
 export const interactiveStoreWithOut = () => interactiveStore(store)
 
-const convertInteractive = (list): InnerInteractive => {
+const convertInteractive = (list?: BusiTreeNode[] | null): InnerInteractive => {
   if (!list || !list.length) {
     return {
       rootManage: false,
       anyManage: false,
       treeNodes: [],
       leafNodeCount: 0,
-      menuAuth: true
+      menuAuth: true,
+      capabilities: createEmptyCapabilities()
     }
   }
   const result: InnerInteractive = {
     rootManage: list[0]['weight'] >= 7,
     anyManage: false,
-    treeNodes: (list as unknown as BusiTreeNode[]) || [],
+    treeNodes: list,
     leafNodeCount: 0,
-    menuAuth: true
+    menuAuth: true,
+    capabilities: createEmptyCapabilities()
   }
-  const stack = [...list]
+  const stack: BusiTreeNode[] = [...list]
   let leafNodeCount = 0
   while (stack.length) {
     const node = stack.pop()
-    if (!node['leaf'] && node['weight'] >= 7) {
+    if (!node) {
+      continue
+    }
+    const nodeCapabilities = deriveCapabilities(node?.['weight'])
+    result.capabilities = mergeCapabilities(result.capabilities, nodeCapabilities)
+    if (!node['leaf'] && nodeCapabilities.canManage) {
       result.anyManage = true
       // break
     }
@@ -154,7 +210,7 @@ const convertInteractive = (list): InnerInteractive => {
       ++leafNodeCount
     }
     if (node?.children?.length) {
-      node.children.forEach(kid => {
+      node.children.forEach((kid: BusiTreeNode) => {
         stack.push(kid)
       })
     }
@@ -183,15 +239,18 @@ const convertLocalStorage = (data?: InnerInteractive) => {
   }
   const result = {}
   const treeNodes = data.treeNodes
-  const stack = [...treeNodes]
+  const stack: BusiTreeNode[] = [...treeNodes]
   while (stack.length) {
     const node = stack.pop()
+    if (!node) {
+      continue
+    }
     if (node.leaf) {
       const { id, weight } = node
       result[id] = weight
     }
     if (node.children?.length) {
-      node.children.forEach(kid => {
+      node.children.forEach((kid: BusiTreeNode) => {
         stack.push(kid)
       })
     }

@@ -20,6 +20,13 @@ export interface InteractivePermissionLike {
   menuAuth?: boolean
   rootManage?: boolean
   anyManage?: boolean
+  capabilities?: {
+    canView?: boolean
+    canUse?: boolean
+    canExport?: boolean
+    canManage?: boolean
+    canAuthorize?: boolean
+  }
 }
 
 export interface TemplateCreateAuthLike {
