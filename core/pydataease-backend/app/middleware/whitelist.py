@@ -107,6 +107,8 @@ PUBLIC_SUFFIXES = (
     "/check",
     "/authorize",
     "/login",
+    "/platform/qrinfo",
+    "/platform/token",
 )
 
 
@@ -125,8 +127,13 @@ def is_whitelisted_path(path: str) -> bool:
         return True
     if any(normalized.startswith(prefix) for prefix in WHITE_PREFIXES):
         return True
+    if normalized.startswith("/platform/") and normalized.endswith(("/qrinfo", "/token")):
+        return True
     if any(normalized.endswith(suffix) for suffix in PUBLIC_SUFFIXES):
         stripped = normalized.rsplit("/", 1)[0]
-        if stripped.startswith("/auth-provider/") or stripped.startswith("/embed-control/"):
+        if (
+            stripped.startswith("/auth-provider/")
+            or stripped.startswith("/embed-control/")
+        ):
             return True
     return False

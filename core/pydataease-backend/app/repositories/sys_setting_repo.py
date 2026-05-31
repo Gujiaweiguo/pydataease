@@ -29,6 +29,11 @@ class SysSettingRepository:
         result = await self.session.execute(stmt)
         return result.scalars().all()
 
+    async def list_by_prefix(self, prefix: str) -> Sequence[CoreSysSetting]:
+        stmt = select(CoreSysSetting).where(CoreSysSetting.setting_key.like(f"{prefix}%")).order_by(CoreSysSetting.id.asc())
+        result = await self.session.execute(stmt)
+        return result.scalars().all()
+
     async def upsert(self, key: str, value: str, setting_type: str = "setting") -> CoreSysSetting:
         existing = await self.get_by_key(key)
         if existing is not None:

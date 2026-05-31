@@ -51,6 +51,7 @@ from app.routers.user import router as user_router  # pyright: ignore[reportImpl
 from app.routers.bootstrap import router as bootstrap_router  # pyright: ignore[reportImplicitRelativeImport]
 from app.routers.link_jump import router as link_jump_router  # pyright: ignore[reportImplicitRelativeImport]
 from app.routers.outer_params import router as outer_params_router  # pyright: ignore[reportImplicitRelativeImport]
+from app.routers.platform import router as platform_router  # pyright: ignore[reportImplicitRelativeImport]
 from app.routers.visualization_bg import router as visualization_bg_router  # pyright: ignore[reportImplicitRelativeImport]
 from app.routers.visualization_subject import router as visualization_subject_router  # pyright: ignore[reportImplicitRelativeImport]
 from app.routers.watermark import router as watermark_router  # pyright: ignore[reportImplicitRelativeImport]
@@ -122,6 +123,7 @@ api_router.include_router(dataset_sql_log_router)
 api_router.include_router(geo_router)
 api_router.include_router(auth_router)
 api_router.include_router(auth_provider_router)
+api_router.include_router(platform_router)
 api_router.include_router(embed_control_router)
 api_router.include_router(static_resource_router)
 api_router.include_router(sys_variable_router)
