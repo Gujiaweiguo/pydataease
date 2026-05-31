@@ -4893,13 +4893,12 @@ export default {
   },
   feature_flag: {
     title: '功能開關',
-    watermark: '水印',
+    watermark: '水印管理',
     appearance: '外觀設定',
-    embedding: '嵌入功能',
-    platform_integration: '平台整合',
+    embedding: '嵌入控制',
+    platform_integration: '第三方嵌入',
     data_filing: '數據填報',
-    identification: '身份認證',
-    admin_config: '管理配置',
+    identification: '認證設置',
     sys_variable_contract: '系統變量',
     toggle_success: '功能開關已更新'
   }

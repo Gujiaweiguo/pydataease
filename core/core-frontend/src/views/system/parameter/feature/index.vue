@@ -20,7 +20,6 @@ const featureFlagStore = useFeatureFlagStoreWithOut()
 const loading = ref(false)
 
 const flagItems: { key: FeatureKey; label: string }[] = [
-  { key: FEATURE_KEYS.adminConfig, label: t('feature_flag.admin_config') },
   { key: FEATURE_KEYS.appearance, label: t('feature_flag.appearance') },
   { key: FEATURE_KEYS.watermark, label: t('feature_flag.watermark') },
   { key: FEATURE_KEYS.sysVariable, label: t('feature_flag.sys_variable_contract') },

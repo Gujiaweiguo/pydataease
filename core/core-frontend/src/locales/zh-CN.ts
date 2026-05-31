@@ -4902,13 +4902,12 @@ export default {
   },
   feature_flag: {
     title: '功能开关',
-    watermark: '水印',
+    watermark: '水印管理',
     appearance: '外观设置',
-    embedding: '嵌入功能',
-    platform_integration: '平台集成',
+    embedding: '嵌入控制',
+    platform_integration: '第三方嵌入',
     data_filing: '数据填报',
-    identification: '身份认证',
-    admin_config: '管理配置',
+    identification: '认证设置',
     sys_variable_contract: '系统变量',
     toggle_success: '功能开关已更新'
   },
