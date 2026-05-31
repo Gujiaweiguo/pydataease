@@ -382,6 +382,7 @@ class TestCreateAndSaveUnionFallback:
             table_repo=cast(Any, table_repo),
             field_repo=cast(Any, field_repo),
         )
+        service._require_datasource_manage_access = AsyncMock()  # type: ignore[method-assign]
         service._sync_dataset_source = AsyncMock()  # type: ignore[method-assign]
         service._save_fields_for_group = AsyncMock()  # type: ignore[method-assign]
         service._get_group = AsyncMock(return_value=SimpleNamespace(id=1002, name="existing", pid=0, level=0, node_type="dataset", type=None, mode=None, info=None, create_by="7", create_time=1, qrtz_instance=None, sync_status=None, update_by="7", last_update_time=1, union_sql=None, is_cross=None))  # type: ignore[method-assign]

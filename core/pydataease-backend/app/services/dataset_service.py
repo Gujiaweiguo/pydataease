@@ -22,6 +22,7 @@ from app.repositories.dataset_repo import (
 from app.repositories.datasource_repo import DatasourceRepository
 from app.services.datasource_drivers import is_supported_type
 from app.services.datasource_service import DatasourceService, _as_config_dict
+from app.services.permission_service import PermissionService
 from app.services.sql_executor import apply_limit, validate_readonly_sql
 from app.utils.id_utils import _sid
 from app.schemas.auth import TokenUser
@@ -142,6 +143,7 @@ class DatasetService:
         )
         info_value = self._merge_source_info(source_info, datasource_id, table_name)
         info_value = self._attach_union_to_info(info_value, payload.union)
+        await self._require_datasource_manage_access(user, datasource_id)
 
         created = await self.group_repo.create({
             "id": _new_identifier(),
@@ -190,6 +192,7 @@ class DatasetService:
         )
         info_value = self._merge_source_info(source_info, datasource_id, table_name)
         info_value = self._attach_union_to_info(info_value, payload.union)
+        await self._require_datasource_manage_access(user, datasource_id)
 
         update_data: dict[str, object] = {
             "update_by": str(user.user_id),
@@ -811,6 +814,11 @@ class DatasetService:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Datasource not found")
         service = DatasourceService(self.session, DatasourceRepository(self.session))
         return await service.get_fields(datasource_id, table_name)
+
+    async def _require_datasource_manage_access(self, user: TokenUser, datasource_id: int | None) -> None:
+        if datasource_id is None:
+            return
+        await PermissionService(self.session).require_resource_access(user, "datasource", "manage")
 
     @staticmethod
     def _build_dataset_sql_static(group: CoreDatasetGroup) -> str | None:
