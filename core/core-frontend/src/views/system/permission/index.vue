@@ -678,7 +678,7 @@ onMounted(async () => {
 
   .page-layout {
     display: grid;
-    grid-template-columns: 300px minmax(0, 1fr);
+    grid-template-columns: 420px minmax(0, 1fr);
     min-height: calc(100vh - 224px);
     padding: 0;
     overflow: hidden;
