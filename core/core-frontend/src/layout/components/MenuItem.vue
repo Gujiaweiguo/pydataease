@@ -23,6 +23,8 @@ import icon_security from '@/assets/svg/icon_security.svg'
 import icon_webhook from '@/assets/svg/icon_webhook.svg'
 import icon_template from '@/assets/svg/icon_template.svg'
 import form from '@/assets/svg/form.svg'
+import role from '@/assets/svg/role.svg'
+import user from '@/assets/svg/user.svg'
 import log from '@/assets/svg/log.svg'
 
 const iconMap = {
@@ -35,6 +37,12 @@ const iconMap = {
   variable: variable,
   watermark: watermark,
   form: form,
+  'sys-org': org,
+  'sys-user': peoples,
+  'sys-role': role,
+  'sys-auth': auth,
+  role: role,
+  user: user,
   icon_font: icon_font,
   icon_msg_fill: icon_msg_fill,
   icon_free: icon_free,
