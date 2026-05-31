@@ -8,6 +8,7 @@
       class="container-sys-param"
       :class="{ 'setting-max-h': activeName === 'map', 'basic-info_bg': activeName === 'basic' }"
     >
+      <appearance-settings v-if="activeName === 'appearance'" />
       <map-setting v-if="activeName === 'map'" />
       <basic-info v-if="activeName === 'basic'" />
       <engine-info v-if="activeName === 'engine'" />
@@ -31,6 +32,7 @@ import BasicInfo from './basic/BasicInfo.vue'
 import ThirdParty from './third-party/index.vue'
 import EmbedControl from './embed/index.vue'
 import FeatureFlags from './feature/index.vue'
+import AppearanceSettings from './appearance/index.vue'
 import EngineInfo from '@/views/system/parameter/engine/EngineInfo.vue'
 import { XpackComponent } from '@/components/plugin'
 import { isDesktop } from '@/utils/ModelUtil'
@@ -48,6 +50,7 @@ interface TabItem {
 }
 
 const allTabs: TabItem[] = [
+  { label: t('system.appearance_settings'), name: 'appearance', feature: 'appearance' as const },
   { label: t('system.basic_settings'), name: 'basic' },
   { label: t('system.map_settings'), name: 'map' },
   { label: t('system.engine_settings'), name: 'engine' },
@@ -81,6 +84,9 @@ onMounted(() => {
     }
   }
   tabArray.value = allTabs.filter(tab => {
+    if (tab.feature === 'appearance') {
+      return featureFlagStore.isAppearanceEnabled
+    }
     if (tab.feature === 'platformIntegration') {
       return featureFlagStore.isPlatformIntegrationEnabled
     }
