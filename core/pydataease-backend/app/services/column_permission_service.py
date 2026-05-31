@@ -26,6 +26,25 @@ def _timestamp_ms() -> int:
 _VALID_ACTIONS = {"disable", "desensitize", "mask"}
 
 
+def _normalize_mask_range(action: str, mask_start: int | None, mask_end: int | None) -> tuple[int | None, int | None]:
+    if action != "mask":
+        return None, None
+    return mask_start, mask_end
+
+
+def _resolve_mask_range_update(
+    payload: ColumnPermissionUpdateRequest, current_action: str, current_start: int | None, current_end: int | None
+) -> tuple[int | None, int | None]:
+    next_action = payload.action if payload.action is not None else current_action
+    if next_action != "mask":
+        return None, None
+
+    fields_set = payload.model_fields_set
+    next_start = payload.mask_start if "mask_start" in fields_set else current_start
+    next_end = payload.mask_end if "mask_end" in fields_set else current_end
+    return next_start, next_end
+
+
 @final
 class ColumnPermissionService:
     def __init__(self, session: AsyncSession) -> None:
@@ -51,6 +70,7 @@ class ColumnPermissionService:
                 detail=f"Invalid action: {payload.action}. Must be one of: {', '.join(sorted(_VALID_ACTIONS))}",
             )
         now = _timestamp_ms()
+        mask_start, mask_end = _normalize_mask_range(payload.action, payload.mask_start, payload.mask_end)
         rule = CoreColumnPermission(
             id=time.time_ns(),
             dataset_id=payload.dataset_id,
@@ -58,6 +78,8 @@ class ColumnPermissionService:
             target_type=payload.target_type,
             target_id=payload.target_id,
             action=payload.action,
+            mask_start=mask_start,
+            mask_end=mask_end,
             enabled=payload.enabled,
             create_time=now,
             update_time=now,
@@ -79,6 +101,10 @@ class ColumnPermissionService:
                     detail=f"Invalid action: {payload.action}. Must be one of: {', '.join(sorted(_VALID_ACTIONS))}",
                 )
             rule.action = payload.action
+        if payload.action is not None or "mask_start" in payload.model_fields_set or "mask_end" in payload.model_fields_set:
+            rule.mask_start, rule.mask_end = _resolve_mask_range_update(
+                payload, rule.action, rule.mask_start, rule.mask_end
+            )
         if payload.enabled is not None:
             rule.enabled = payload.enabled
         rule.update_time = _timestamp_ms()
