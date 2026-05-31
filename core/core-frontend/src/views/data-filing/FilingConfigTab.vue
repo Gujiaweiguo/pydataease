@@ -42,6 +42,9 @@
           <el-button v-if="row.status === 'draft'" link type="success" @click="handlePublish(row)">
             {{ t('data_filing.publish') }}
           </el-button>
+          <el-button v-if="row.status === 'draft'" link type="danger" @click="handleDelete(row)">
+            {{ t('common.delete') }}
+          </el-button>
           <el-button
             v-if="row.status === 'published'"
             link
@@ -62,7 +65,12 @@
 import { onMounted, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus-secondary'
 import { useI18n } from '@/hooks/web/useI18n'
-import { filingConfigList, filingConfigPublish, filingConfigDisable } from '@/api/data-filing'
+import {
+  filingConfigDelete,
+  filingConfigDisable,
+  filingConfigList,
+  filingConfigPublish
+} from '@/api/data-filing'
 import type { FilingConfig, FilingConfigStatus } from '@/api/data-filing'
 import FilingConfigEdit from './FilingConfigEdit.vue'
 
@@ -109,6 +117,13 @@ const handleDisable = async (row: FilingConfig) => {
   await ElMessageBox.confirm(t('data_filing.disable_confirm'), { type: 'warning' })
   await filingConfigDisable(row.id)
   ElMessage.success(t('data_filing.disable_success'))
+  await loadData()
+}
+
+const handleDelete = async (row: FilingConfig) => {
+  await ElMessageBox.confirm(t('common.delete_confirm'), { type: 'warning' })
+  await filingConfigDelete(row.id)
+  ElMessage.success(t('common.delete_success'))
   await loadData()
 }
 

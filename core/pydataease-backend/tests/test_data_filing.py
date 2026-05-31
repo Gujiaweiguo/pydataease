@@ -1,4 +1,5 @@
 """Tests for data filing backbone: models, service, routes."""
+# pyright: reportAttributeAccessIssue=false, reportCallIssue=false, reportArgumentType=false
 
 from __future__ import annotations
 
@@ -131,12 +132,14 @@ class TestFilingConfigModelFields:
 
 class TestSchemas:
     def test_create_request_accepts_camel_and_snake_case(self):
-        model = FilingConfigCreateRequest(
-            name="demo",
-            targetDatasourceId=1,
-            target_table="orders",
-            formSchema={"fields": []},
-            field_mapping={"formField": "column_a"},
+        model = FilingConfigCreateRequest.model_validate(
+            {
+                "name": "demo",
+                "targetDatasourceId": 1,
+                "target_table": "orders",
+                "formSchema": {"fields": []},
+                "field_mapping": {"formField": "column_a"},
+            }
         )
 
         dumped = model.model_dump(by_alias=True)
@@ -145,11 +148,11 @@ class TestSchemas:
         assert dumped["fieldMapping"] == {"formField": "column_a"}
 
     def test_update_request_excludes_unset_fields(self):
-        model = FilingConfigUpdateRequest(target_datasource_id=9)
+        model = FilingConfigUpdateRequest.model_validate({"target_datasource_id": 9})
         assert model.model_dump(by_alias=True, exclude_unset=True) == {"targetDatasourceId": 9}
 
     def test_submit_request_allows_dynamic_fields(self):
-        model = FilingSubmitRequest(anyField="value", another=1)
+        model = FilingSubmitRequest.model_validate({"anyField": "value", "another": 1})
         assert model.model_dump() == {"anyField": "value", "another": 1}
 
 

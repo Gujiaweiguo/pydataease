@@ -4,11 +4,17 @@ import { ElMessage } from 'element-plus-secondary'
 import { useI18n } from '@/hooks/web/useI18n'
 import type { FormInstance, FormRules } from 'element-plus-secondary'
 import { filingConfigCreate, filingConfigUpdate } from '@/api/data-filing'
+import { queryDatasources } from '@/api/datasource'
 import type {
   FilingConfig,
   FilingConfigCreateRequest,
   FilingConfigUpdateRequest
 } from '@/api/data-filing'
+
+interface DatasourceOption {
+  id: number
+  name: string
+}
 
 const { t } = useI18n()
 const emits = defineEmits(['saved'])
@@ -29,6 +35,8 @@ const defaultForm = (): FilingConfigCreateRequest => ({
 const form = ref<FilingConfigCreateRequest>(defaultForm())
 const formSchemaText = ref('{}')
 const fieldMappingText = ref('{}')
+const datasourceLoading = ref(false)
+const datasourceOptions = ref<DatasourceOption[]>([])
 
 const formRules = ref<FormRules>({
   name: [{ required: true, message: t('common.please_input'), trigger: 'blur' }]
@@ -54,7 +62,21 @@ const open = (m: 'create' | 'edit', row?: FilingConfig) => {
     formSchemaText.value = '{}'
     fieldMappingText.value = '{}'
   }
+  void loadDatasources()
   drawerVisible.value = true
+}
+
+const loadDatasources = async () => {
+  datasourceLoading.value = true
+  try {
+    const res = await queryDatasources('_')
+    datasourceOptions.value = (res.data || []).map(item => ({
+      id: Number(item.id),
+      name: item.name
+    }))
+  } finally {
+    datasourceLoading.value = false
+  }
 }
 
 const submitForm = async () => {
@@ -106,11 +128,21 @@ defineExpose({ open })
       </el-form-item>
       <el-form-item :label="t('data_filing.config_target')">
         <div style="display: flex; gap: 8px; width: 100%">
-          <el-input-number
+          <el-select
             v-model="form.targetDatasourceId"
-            :placeholder="'Datasource ID'"
+            clearable
+            filterable
+            :loading="datasourceLoading"
+            :placeholder="t('common.please_select')"
             style="flex: 1"
-          />
+          >
+            <el-option
+              v-for="item in datasourceOptions"
+              :key="item.id"
+              :label="item.name"
+              :value="item.id"
+            />
+          </el-select>
           <el-input v-model="form.targetTable" :placeholder="'Table name'" style="flex: 1" />
         </div>
       </el-form-item>

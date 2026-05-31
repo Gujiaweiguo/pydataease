@@ -164,7 +164,8 @@ export const deleteById = (id: number) => request.post({ url: '/datasource/delet
 
 export const getById = (id: number) => request.get({ url: '/datasource/get/' + id })
 
-export const queryDatasources = (keyword = '_') => request.get({ url: '/datasource/query/' + keyword })
+export const queryDatasources = (keyword = '_') =>
+  request.get({ url: '/datasource/query/' + keyword })
 
 export const getHidePwById = (id: number) => request.get({ url: '/datasource/hidePw/' + id })
 
