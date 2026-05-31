@@ -5,6 +5,11 @@ import { useI18n } from '@/hooks/web/useI18n'
 import { FormRules, FormInstance } from 'element-plus-secondary'
 import { Icon } from '@/components/icon-custom'
 import { loginApi, queryDekey } from '@/api/login'
+import {
+  authStatusApi,
+  authProviderAuthorizeApi,
+  authProviderDirectLoginApi
+} from '@/api/auth-provider'
 import { useCache } from '@/hooks/web/useCache'
 import { useAppStoreWithOut } from '@/store/modules/app'
 import { CustomPassword } from '@/components/custom-password'
@@ -141,6 +146,11 @@ const xpackLoadFail = ref(false)
 const loadingText = ref('加载中...')
 const loginContainer = ref()
 const loginContainerWidth = ref(0)
+const thirdPartyProviders = ref<any[]>([])
+const ldapLoginVisible = ref(false)
+const ldapLoginForm = reactive({ username: '', password: '' })
+const ldapProviderId = ref<number | null>(null)
+const ldapLoading = ref(false)
 const showLoginImage = computed<boolean>(() => {
   return !(loginContainerWidth.value < 889)
 })
@@ -233,8 +243,65 @@ const handlerFail = () => {
   }
   autoCallback(param)
 }
+const loadThirdPartyProviders = async () => {
+  try {
+    const res = await authStatusApi()
+    const providers = (res.data || []).filter(p => p.type !== 'local' && p.enabled && p.id)
+    thirdPartyProviders.value = providers
+    const ldapProvider = providers.find(p => p.type === 'ldap')
+    if (ldapProvider) {
+      ldapLoginVisible.value = true
+      ldapProviderId.value = ldapProvider.id
+    }
+  } catch {
+    thirdPartyProviders.value = []
+  }
+}
+
+const handleOAuthLogin = async (provider: any) => {
+  const redirectUri = `${window.location.origin}/#/auth/callback/${provider.id}`
+  try {
+    const res = await authProviderAuthorizeApi(provider.id, redirectUri)
+    const authorizeUrl = res.data?.authorizeUrl
+    if (authorizeUrl) {
+      window.location.href = authorizeUrl
+    } else {
+      ElMessage.error('Failed to get authorization URL')
+    }
+  } catch (err: any) {
+    ElMessage.error(err?.response?.data?.detail || 'Failed to initiate login')
+  }
+}
+
+const handleLdapLogin = async () => {
+  if (!ldapProviderId.value) return
+  if (!ldapLoginForm.username || !ldapLoginForm.password) {
+    ElMessage.error('Username and password are required')
+    return
+  }
+  ldapLoading.value = true
+  try {
+    const res = await authProviderDirectLoginApi(ldapProviderId.value, {
+      username: ldapLoginForm.username,
+      password: ldapLoginForm.password
+    })
+    const { token, exp } = res.data
+    userStore.setToken(token)
+    userStore.setExp(exp)
+    userStore.setTime(Date.now())
+    const permissionStore = usePermissionStoreWithOut()
+    permissionStore.clear()
+    router.push({ path: getCurLocation() })
+  } catch (err: any) {
+    ElMessage.error(err?.response?.data?.detail || 'LDAP authentication failed')
+  } finally {
+    ldapLoading.value = false
+  }
+}
+
 onMounted(async () => {
   loadArrearance()
+  loadThirdPartyProviders()
   duringLogin.value = false
   if (localStorage.getItem('DE-GATEWAY-FLAG')) {
     const msg = localStorage.getItem('DE-GATEWAY-FLAG')
@@ -357,6 +424,46 @@ onMounted(async () => {
                 @load-fail="() => (xpackLoadFail = true)"
                 @call-back="invalidPwdCb"
               />
+
+              <div v-if="thirdPartyProviders.length > 0" class="third-party-section">
+                <el-divider>第三方登录</el-divider>
+                <div class="third-party-buttons">
+                  <template v-for="provider in thirdPartyProviders" :key="provider.id">
+                    <el-button
+                      v-if="provider.type !== 'ldap'"
+                      class="third-party-btn"
+                      @click="handleOAuthLogin(provider)"
+                    >
+                      {{ provider.name }}
+                    </el-button>
+                  </template>
+                </div>
+              </div>
+
+              <div v-if="ldapLoginVisible" class="ldap-section">
+                <el-divider>LDAP 登录</el-divider>
+                <el-form-item class="login-input-module">
+                  <el-input v-model="ldapLoginForm.username" placeholder="LDAP 用户名" />
+                </el-form-item>
+                <el-form-item class="login-input-module">
+                  <CustomPassword
+                    v-model="ldapLoginForm.password"
+                    placeholder="LDAP 密码"
+                    show-password
+                    maxlength="30"
+                    @keypress.enter.stop="handleLdapLogin"
+                  />
+                </el-form-item>
+                <el-button
+                  type="primary"
+                  class="submit"
+                  size="default"
+                  :loading="ldapLoading"
+                  @click="handleLdapLogin"
+                >
+                  LDAP 登录
+                </el-button>
+              </div>
             </div>
 
             <div class="login-msg">
@@ -517,6 +624,28 @@ onMounted(async () => {
   .login-btn {
     position: relative;
     margin-bottom: 120px;
+    .submit {
+      width: 100%;
+      height: 40px;
+      line-height: 40px;
+    }
+  }
+
+  .third-party-section {
+    margin-top: 16px;
+    .third-party-buttons {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      .third-party-btn {
+        flex: 1;
+        min-width: 120px;
+      }
+    }
+  }
+
+  .ldap-section {
+    margin-top: 16px;
     .submit {
       width: 100%;
       height: 40px;

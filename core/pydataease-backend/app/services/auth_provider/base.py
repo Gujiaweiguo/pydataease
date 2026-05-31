@@ -36,6 +36,9 @@ class BaseAuthProvider(ABC):
 
     provider_type: str = ""  # Override in subclass: "ldap", "oidc", "cas", "mock"
 
+    def __init__(self, config: dict | None = None) -> None:
+        self.config: dict = config or {}
+
     @abstractmethod
     async def authenticate(self, credentials: dict) -> AuthResult:
         """Authenticate a user with provider-specific credentials.

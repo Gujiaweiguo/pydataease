@@ -51,6 +51,13 @@ export const routes: AppRouteRecordRaw[] = [
     component: () => import('@/views/login/index.vue')
   },
   {
+    path: '/auth/callback/:providerId',
+    name: 'auth-callback',
+    hidden: true,
+    meta: {},
+    component: () => import('@/views/login/Callback.vue')
+  },
+  {
     path: '/401',
     name: '401',
     hidden: true,

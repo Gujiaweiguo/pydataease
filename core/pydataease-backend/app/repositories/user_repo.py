@@ -24,6 +24,11 @@ class UserRepository:
         result = await self.session.execute(stmt)
         return result.scalars().first()
 
+    async def get_by_email(self, email: str) -> CoreUser | None:
+        stmt = select(CoreUser).where(CoreUser.email == email).limit(1)
+        result = await self.session.execute(stmt)
+        return result.scalars().first()
+
     async def create(self, payload: dict[str, object]) -> CoreUser:
         return await self._base.create(payload)
 

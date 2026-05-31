@@ -109,12 +109,17 @@ async def provider_callback(
     session: AsyncSession = Depends(get_db),
     service: AuthProviderService = Depends(get_auth_provider_service),
 ) -> dict:
-    """Handle SSO callback. Public endpoint (no auth required)."""
+    """Handle SSO callback. Public endpoint (no auth required).
+
+    Exchanges the OAuth code for user claims, provisions the user,
+    and returns a JWT token.
+    """
     code = payload.get("code", "")
     state = payload.get("state", "")
     redirect_uri = payload.get("redirect_uri", "")
 
     from app.services.auth_provider.base import AuthResult
+    from app.services.user_provisioning_service import UserProvisioningService
 
     result = await service.handle_provider_callback(provider_id, code, state, redirect_uri)
     if isinstance(result, str):
@@ -122,14 +127,17 @@ async def provider_callback(
     if isinstance(result, AuthResult):
         if not result.success:
             raise HTTPException(status_code=401, detail=result.error or "Authentication failed")
-        return {
-            "success": True,
-            "claims": {
-                "externalId": result.claims.external_id,
-                "username": result.claims.username,
-                "email": result.claims.email,
-            },
-        }
+        if result.claims is None:
+            raise HTTPException(status_code=500, detail="No claims returned from provider")
+
+        # Provision user and issue JWT
+        provisioning = UserProvisioningService(session)
+        token_result = await provisioning.provision_and_issue_token(provider_id, result.claims)
+        if isinstance(token_result, str):
+            raise HTTPException(status_code=500, detail=token_result)
+
+        await session.commit()
+        return {"success": True, "token": token_result.token, "exp": token_result.exp}
     raise HTTPException(status_code=500, detail="Unexpected result")
 
 
@@ -158,4 +166,72 @@ async def test_provider(
             if result.claims
             else None,
         }
+    raise HTTPException(status_code=500, detail="Unexpected result")
+
+
+@router.get("/auth-provider/{provider_id}/authorize")
+async def provider_authorize(
+    provider_id: int,
+    redirect_uri: str,
+    service: AuthProviderService = Depends(get_auth_provider_service),
+) -> dict:
+    """Get the OAuth authorize URL for a provider. Public endpoint."""
+    import secrets as _secrets
+
+    provider = await service.repo.get_by_id(provider_id)
+    if provider is None:
+        raise HTTPException(status_code=404, detail="Provider not found")
+    if not provider.enabled:
+        raise HTTPException(status_code=400, detail="Provider is disabled")
+
+    from app.services.auth_provider import get_provider_class
+
+    provider_cls = get_provider_class(provider.type)
+    if provider_cls is None:
+        raise HTTPException(status_code=400, detail=f"Unknown provider type: {provider.type}")
+
+    instance = provider_cls(provider.config or {})
+    state = _secrets.token_urlsafe(32)
+    authorize_url = await instance.get_authorize_url(redirect_uri, state)
+
+    if authorize_url is None:
+        raise HTTPException(status_code=400, detail="This provider does not support OAuth redirect flow")
+
+    return {"authorizeUrl": authorize_url, "state": state}
+
+
+@router.post("/auth-provider/{provider_id}/login")
+async def provider_direct_login(
+    provider_id: int,
+    payload: dict,
+    session: AsyncSession = Depends(get_db),
+    service: AuthProviderService = Depends(get_auth_provider_service),
+) -> dict:
+    """Direct login for providers like LDAP. Public endpoint (no auth required).
+
+    Accepts username/password, authenticates against the provider,
+    provisions the user, and returns a JWT token.
+    """
+    credentials = payload.get("credentials", {})
+
+    from app.services.auth_provider.base import AuthResult
+    from app.services.user_provisioning_service import UserProvisioningService
+
+    result = await service.authenticate_with_provider(provider_id, credentials)
+    if isinstance(result, str):
+        raise HTTPException(status_code=400, detail=result)
+    if isinstance(result, AuthResult):
+        if not result.success:
+            raise HTTPException(status_code=401, detail=result.error or "Authentication failed")
+        if result.claims is None:
+            raise HTTPException(status_code=500, detail="No claims returned from provider")
+
+        # Provision user and issue JWT
+        provisioning = UserProvisioningService(session)
+        token_result = await provisioning.provision_and_issue_token(provider_id, result.claims)
+        if isinstance(token_result, str):
+            raise HTTPException(status_code=500, detail=token_result)
+
+        await session.commit()
+        return {"success": True, "token": token_result.token, "exp": token_result.exp}
     raise HTTPException(status_code=500, detail="Unexpected result")

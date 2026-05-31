@@ -79,6 +79,7 @@ class AuthProviderService:
         has_external_default = False
         for p in providers:
             status.append({
+                "id": p.id,
                 "type": p.type,
                 "name": p.name,
                 "enabled": p.enabled,
@@ -110,7 +111,7 @@ class AuthProviderService:
 
         # Validate config
         config = payload.get("config", {})
-        provider_instance = provider_cls()
+        provider_instance = provider_cls(config)
         errors = provider_instance.validate_config(config)
         if errors:
             return f"Config validation failed: {'; '.join(errors)}"
@@ -158,7 +159,7 @@ class AuthProviderService:
             ptype = updates.get("type", provider.type)
             provider_cls = get_provider_class(ptype)
             if provider_cls:
-                errors = provider_cls().validate_config(config)
+                errors = provider_cls(config).validate_config(config)
                 if errors:
                     return f"Config validation failed: {'; '.join(errors)}"
             updates["config"] = config
@@ -233,7 +234,7 @@ class AuthProviderService:
         if provider_cls is None:
             return AuthResult(success=False, error=f"Unknown provider type: {provider.type}")
 
-        instance = provider_cls()
+        instance = provider_cls(provider.config or {})
         result = await instance.authenticate(credentials)
 
         if result.success and result.claims:
@@ -255,7 +256,7 @@ class AuthProviderService:
         if provider_cls is None:
             return AuthResult(success=False, error=f"Unknown provider type: {provider.type}")
 
-        instance = provider_cls()
+        instance = provider_cls(provider.config or {})
         result = await instance.handle_callback(code, state, redirect_uri)
 
         if result.success and result.claims:

@@ -59,3 +59,12 @@ export const authProviderCallback = (id: number, data: AuthProviderCallbackReque
 
 export const authProviderTest = (id: number, data: AuthProviderTestRequest) =>
   request.post({ url: `/auth-provider/${id}/test`, data })
+
+// Public APIs (no auth required)
+export const authStatusApi = () => request.get({ url: '/setting/authentication/status' })
+
+export const authProviderAuthorizeApi = (id: number, redirectUri: string) =>
+  request.get({ url: `/auth-provider/${id}/authorize`, params: { redirect_uri: redirectUri } })
+
+export const authProviderDirectLoginApi = (id: number, credentials: Record<string, any>) =>
+  request.post({ url: `/auth-provider/${id}/login`, data: { credentials } })

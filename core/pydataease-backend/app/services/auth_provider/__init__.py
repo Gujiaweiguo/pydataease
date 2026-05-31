@@ -26,5 +26,11 @@ def list_provider_types() -> list[str]:
 
 # Auto-register built-in providers
 from app.services.auth_provider.mock_provider import MockAuthProvider  # noqa: E402
+from app.services.auth_provider.oidc_provider import OIDCAuthProvider  # noqa: E402
+from app.services.auth_provider.cas_provider import CASAuthProvider  # noqa: E402
+from app.services.auth_provider.ldap_provider import LDAPAuthProvider  # noqa: E402
 
 register_provider("mock", MockAuthProvider)
+register_provider("oidc", OIDCAuthProvider)
+register_provider("cas", CASAuthProvider)
+register_provider("ldap", LDAPAuthProvider)
