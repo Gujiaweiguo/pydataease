@@ -183,6 +183,7 @@ router.beforeEach(async (to, from, next) => {
 })
 const FEATURE_ROUTE_MAP: Record<string, () => boolean> = {
   'system/auth-provider': () => featureFlagStore.isIdentificationEnabled,
+  'data-filing/MyFiling': () => featureFlagStore.isDataFilingEnabled,
   'data-filing': () => featureFlagStore.isDataFilingEnabled,
   'sys-variable': () => featureFlagStore.isSysVariableEnabled,
   watermark: () => featureFlagStore.isWatermarkEnabled

@@ -13,14 +13,10 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.execute(
-        """
-        UPDATE core_menu SET icon = 'authentication' WHERE id = 1780136996351725191;
-        UPDATE core_menu SET icon = 'form'         WHERE id = 1780136996351725192;
-        UPDATE core_menu SET icon = 'watermark'    WHERE id = 1780136996351725193;
-        UPDATE core_menu SET icon = 'variable'     WHERE id = 1780196628838721401;
-        """
-    )
+    op.execute("UPDATE core_menu SET icon = 'authentication' WHERE id = 1780136996351725191")
+    op.execute("UPDATE core_menu SET icon = 'form' WHERE id = 1780136996351725192")
+    op.execute("UPDATE core_menu SET icon = 'watermark' WHERE id = 1780136996351725193")
+    op.execute("UPDATE core_menu SET icon = 'variable' WHERE id = 1780196628838721401")
 
 
 def downgrade() -> None:
