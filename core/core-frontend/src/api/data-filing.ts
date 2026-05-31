@@ -82,6 +82,9 @@ export const filingConfigPublish = (id: number) =>
 export const filingConfigDisable = (id: number) =>
   request.post({ url: `/data-filing/config/${id}/disable` })
 
+export const filingConfigDelete = (id: number) =>
+  request.delete({ url: `/data-filing/config/${id}` })
+
 // Submissions
 export const filingSubmit = (filingId: number, data: Record<string, any>) =>
   request.post({ url: `/data-filing/${filingId}/submit`, data })

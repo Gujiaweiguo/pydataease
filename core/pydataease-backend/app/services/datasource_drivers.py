@@ -23,6 +23,7 @@ from app.schemas.datasource import JSONDict
 class DatasourceConnection(Protocol):
     async def fetch(self, query: str, *args: Any) -> list[Any]: ...
     async def fetchval(self, query: str, *args: Any) -> Any: ...
+    async def execute(self, query: str, *args: Any) -> str: ...
     async def close(self) -> None: ...
 
 
@@ -121,6 +122,16 @@ class _AsyncmyConnectionWrapper:
         if not rows:
             return None
         return next(iter(rows[0].values()), None)
+
+    async def execute(self, query: str, *args: Any) -> str:
+        sql = _mysql_query(query)
+        async with self._conn.cursor() as cursor:
+            if args:
+                affected = await cursor.execute(sql, args)
+            else:
+                affected = await cursor.execute(sql)
+        await self._conn.commit()
+        return f"EXECUTE {affected}"
 
     async def close(self) -> None:
         self._conn.close()

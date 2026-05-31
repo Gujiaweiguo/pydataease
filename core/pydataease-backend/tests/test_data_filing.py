@@ -5,14 +5,14 @@ from __future__ import annotations
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from httpx import ASGITransport, AsyncClient
 
+from app.main import app
 from app.models.data_filing import FilingAudit, FilingConfig, FilingSubmission
-from app.services.data_filing_service import DataFilingService
+from app.schemas.data_filing import FilingConfigCreateRequest, FilingConfigUpdateRequest, FilingSubmitRequest
+from app.services.data_filing_service import DataFilingService, get_data_filing_service
+from tests.fixtures.auth_fixtures import _build_token
 
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
 
 def _make_config(**overrides) -> FilingConfig:
     defaults = {
@@ -29,8 +29,8 @@ def _make_config(**overrides) -> FilingConfig:
     }
     defaults.update(overrides)
     cfg = MagicMock(spec=FilingConfig)
-    for k, v in defaults.items():
-        setattr(cfg, k, v)
+    for key, value in defaults.items():
+        setattr(cfg, key, value)
     return cfg
 
 
@@ -46,10 +46,24 @@ def _make_submission(**overrides) -> FilingSubmission:
         "retry_count": 0,
     }
     defaults.update(overrides)
-    sub = MagicMock(spec=FilingSubmission)
-    for k, v in defaults.items():
-        setattr(sub, k, v)
-    return sub
+    submission = MagicMock(spec=FilingSubmission)
+    for key, value in defaults.items():
+        setattr(submission, key, value)
+    return submission
+
+
+def _make_datasource(**overrides) -> MagicMock:
+    defaults = {
+        "id": 3001,
+        "name": "target-ds",
+        "type": "pg",
+        "configuration": {"host": "localhost", "database": "demo"},
+    }
+    defaults.update(overrides)
+    datasource = MagicMock()
+    for key, value in defaults.items():
+        setattr(datasource, key, value)
+    return datasource
 
 
 def _mock_service() -> DataFilingService:
@@ -61,18 +75,22 @@ def _mock_service() -> DataFilingService:
     return svc
 
 
-# ---------------------------------------------------------------------------
-# 1. Model field checks
-# ---------------------------------------------------------------------------
-
-
 class TestFilingConfigModelFields:
     def test_config_has_expected_columns(self):
         mapper = FilingConfig.__table__.columns
         expected = [
-            "id", "name", "status", "target_datasource_id", "target_table",
-            "form_schema", "field_mapping", "idempotency_window_seconds",
-            "oid", "creator_uid", "create_time", "update_time",
+            "id",
+            "name",
+            "status",
+            "target_datasource_id",
+            "target_table",
+            "form_schema",
+            "field_mapping",
+            "idempotency_window_seconds",
+            "oid",
+            "creator_uid",
+            "create_time",
+            "update_time",
         ]
         for col_name in expected:
             assert col_name in mapper, f"Missing column: {col_name}"
@@ -80,9 +98,16 @@ class TestFilingConfigModelFields:
     def test_submission_has_expected_columns(self):
         mapper = FilingSubmission.__table__.columns
         expected = [
-            "id", "filing_id", "payload_hash", "payload", "status",
-            "error_message", "submitter_uid", "retry_count",
-            "create_time", "update_time",
+            "id",
+            "filing_id",
+            "payload_hash",
+            "payload",
+            "status",
+            "error_message",
+            "submitter_uid",
+            "retry_count",
+            "create_time",
+            "update_time",
         ]
         for col_name in expected:
             assert col_name in mapper, f"Missing column: {col_name}"
@@ -90,26 +115,50 @@ class TestFilingConfigModelFields:
     def test_audit_has_expected_columns(self):
         mapper = FilingAudit.__table__.columns
         expected = [
-            "id", "filing_id", "submission_id", "action", "actor_uid",
-            "details", "outcome", "error_code", "create_time",
+            "id",
+            "filing_id",
+            "submission_id",
+            "action",
+            "actor_uid",
+            "details",
+            "outcome",
+            "error_code",
+            "create_time",
         ]
         for col_name in expected:
             assert col_name in mapper, f"Missing column: {col_name}"
 
 
-# ---------------------------------------------------------------------------
-# 2. Config status transitions
-# ---------------------------------------------------------------------------
+class TestSchemas:
+    def test_create_request_accepts_camel_and_snake_case(self):
+        model = FilingConfigCreateRequest(
+            name="demo",
+            targetDatasourceId=1,
+            target_table="orders",
+            formSchema={"fields": []},
+            field_mapping={"formField": "column_a"},
+        )
+
+        dumped = model.model_dump(by_alias=True)
+        assert dumped["targetDatasourceId"] == 1
+        assert dumped["targetTable"] == "orders"
+        assert dumped["fieldMapping"] == {"formField": "column_a"}
+
+    def test_update_request_excludes_unset_fields(self):
+        model = FilingConfigUpdateRequest(target_datasource_id=9)
+        assert model.model_dump(by_alias=True, exclude_unset=True) == {"targetDatasourceId": 9}
+
+    def test_submit_request_allows_dynamic_fields(self):
+        model = FilingSubmitRequest(anyField="value", another=1)
+        assert model.model_dump() == {"anyField": "value", "another": 1}
 
 
 class TestFilingConfigStatusTransitions:
     @pytest.mark.asyncio
     async def test_draft_to_published(self):
         svc = _mock_service()
-        draft = _make_config(status="draft")
-        svc.config_repo.get_by_id.return_value = draft
-        published = _make_config(status="published")
-        svc.config_repo.update.return_value = published
+        svc.config_repo.get_by_id.return_value = _make_config(status="draft")
+        svc.config_repo.update.return_value = _make_config(status="published")
         svc.audit_repo.create.return_value = AsyncMock()
 
         result = await svc.publish_config(1001)
@@ -120,10 +169,8 @@ class TestFilingConfigStatusTransitions:
     @pytest.mark.asyncio
     async def test_published_to_disabled(self):
         svc = _mock_service()
-        published = _make_config(status="published")
-        svc.config_repo.get_by_id.return_value = published
-        disabled = _make_config(status="disabled")
-        svc.config_repo.update.return_value = disabled
+        svc.config_repo.get_by_id.return_value = _make_config(status="published")
+        svc.config_repo.update.return_value = _make_config(status="disabled")
         svc.audit_repo.create.return_value = AsyncMock()
 
         result = await svc.disable_config(1001)
@@ -131,10 +178,19 @@ class TestFilingConfigStatusTransitions:
         assert result["status"] == "disabled"
 
     @pytest.mark.asyncio
+    async def test_delete_draft_config(self):
+        svc = _mock_service()
+        svc.config_repo.get_by_id.return_value = _make_config(status="draft")
+        svc.config_repo.delete.return_value = True
+
+        result = await svc.delete_config(1001)
+        assert result is True
+        svc.config_repo.delete.assert_awaited_once_with(1001)
+
+    @pytest.mark.asyncio
     async def test_cannot_publish_non_draft(self):
         svc = _mock_service()
-        already_published = _make_config(status="published")
-        svc.config_repo.get_by_id.return_value = already_published
+        svc.config_repo.get_by_id.return_value = _make_config(status="published")
 
         result = await svc.publish_config(1001)
         assert isinstance(result, str)
@@ -143,17 +199,20 @@ class TestFilingConfigStatusTransitions:
     @pytest.mark.asyncio
     async def test_cannot_disable_non_published(self):
         svc = _mock_service()
-        draft = _make_config(status="draft")
-        svc.config_repo.get_by_id.return_value = draft
+        svc.config_repo.get_by_id.return_value = _make_config(status="draft")
 
         result = await svc.disable_config(1001)
         assert isinstance(result, str)
         assert "published" in result.lower()
 
+    @pytest.mark.asyncio
+    async def test_cannot_delete_non_draft(self):
+        svc = _mock_service()
+        svc.config_repo.get_by_id.return_value = _make_config(status="published")
 
-# ---------------------------------------------------------------------------
-# 3. Feature disabled
-# ---------------------------------------------------------------------------
+        result = await svc.delete_config(1001)
+        assert isinstance(result, str)
+        assert "draft" in result.lower()
 
 
 class TestSubmitDataFeatureDisabled:
@@ -164,11 +223,6 @@ class TestSubmitDataFeatureDisabled:
             result = await svc.submit_data(1001, {"field1": "val"}, 42)
         assert isinstance(result, str)
         assert "disabled" in result.lower()
-
-
-# ---------------------------------------------------------------------------
-# 4. Cannot submit to non-published config
-# ---------------------------------------------------------------------------
 
 
 class TestSubmitDataNotPublished:
@@ -191,17 +245,11 @@ class TestSubmitDataNotPublished:
         assert "not published" in result.lower()
 
 
-# ---------------------------------------------------------------------------
-# 5. Idempotency check
-# ---------------------------------------------------------------------------
-
-
 class TestIdempotencyCheck:
     @pytest.mark.asyncio
     async def test_duplicate_rejected(self):
         svc = _mock_service()
         svc.config_repo.get_by_id.return_value = _make_config(status="published")
-        # Simulate existing duplicate
         svc.submission_repo.get_by_hash.return_value = _make_submission()
         svc.audit_repo.create.return_value = AsyncMock()
 
@@ -211,29 +259,15 @@ class TestIdempotencyCheck:
         assert "duplicate" in result.lower()
 
 
-# ---------------------------------------------------------------------------
-# 6. Payload validation
-# ---------------------------------------------------------------------------
-
-
 class TestValidatePayload:
     def test_missing_required_field(self):
-        schema = {
-            "fields": [
-                {"name": "email", "required": True},
-                {"name": "name", "required": False},
-            ]
-        }
+        schema = {"fields": [{"name": "email", "required": True}, {"name": "name", "required": False}]}
         error = DataFilingService._validate_payload(schema, {"name": "Alice"})
         assert error is not None
         assert "email" in error
 
     def test_all_required_present(self):
-        schema = {
-            "fields": [
-                {"name": "email", "required": True},
-            ]
-        }
+        schema = {"fields": [{"name": "email", "required": True}]}
         error = DataFilingService._validate_payload(schema, {"email": "a@b.com"})
         assert error is None
 
@@ -242,9 +276,93 @@ class TestValidatePayload:
         assert error is None
 
 
-# ---------------------------------------------------------------------------
-# 7. Audit record created on submit
-# ---------------------------------------------------------------------------
+class TestWriteBackExecution:
+    @pytest.mark.asyncio
+    async def test_submit_writes_to_datasource_and_marks_success(self):
+        svc = _mock_service()
+        config = _make_config(
+            status="published",
+            target_datasource_id=3001,
+            target_table="orders",
+            field_mapping={"formField": "target_col"},
+        )
+        svc.config_repo.get_by_id.return_value = config
+        svc.submission_repo.get_by_hash.return_value = None
+        svc.submission_repo.create.return_value = _make_submission(status="pending", payload={"formField": "value"})
+        svc.submission_repo.update_status.return_value = _make_submission(status="success", payload={"formField": "value"})
+        svc.audit_repo.create.return_value = AsyncMock()
+
+        conn = AsyncMock()
+        with (
+            patch("app.services.data_filing_service.is_feature_enabled", new_callable=AsyncMock, return_value=True),
+            patch("app.services.data_filing_service.DatasourceRepository") as repo_cls,
+            patch("app.services.data_filing_service.open_connection", new=AsyncMock(return_value=conn)),
+        ):
+            repo_cls.return_value.get_by_id = AsyncMock(return_value=_make_datasource())
+            result = await svc.submit_data(1001, {"formField": "value"}, 42)
+
+        assert isinstance(result, dict)
+        assert result["status"] == "success"
+        conn.execute.assert_awaited_once_with('INSERT INTO "orders" ("target_col") VALUES ($1)', "value")
+        conn.close.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_submit_write_failure_marks_failed(self):
+        svc = _mock_service()
+        svc.config_repo.get_by_id.return_value = _make_config(status="published")
+        svc.submission_repo.get_by_hash.return_value = None
+        svc.submission_repo.create.return_value = _make_submission(status="pending")
+        svc.submission_repo.update_status.return_value = _make_submission(status="failed", error_message="boom")
+        svc.audit_repo.create.return_value = AsyncMock()
+
+        with (
+            patch("app.services.data_filing_service.is_feature_enabled", new_callable=AsyncMock, return_value=True),
+            patch.object(svc, "_write_to_datasource", new=AsyncMock(side_effect=RuntimeError("boom"))),
+        ):
+            result = await svc.submit_data(1001, {"field1": "val"}, 42)
+
+        assert isinstance(result, dict)
+        assert result["status"] == "failed"
+        assert result["errorMessage"] == "boom"
+
+    @pytest.mark.asyncio
+    async def test_retry_executes_write_back_and_marks_success(self):
+        svc = _mock_service()
+        failed = _make_submission(status="failed", retry_count=0)
+        svc.submission_repo.get_by_id.return_value = failed
+        svc.config_repo.get_by_id.return_value = _make_config(status="published")
+        svc.submission_repo.update_status.side_effect = [
+            _make_submission(status="retrying", retry_count=1),
+            _make_submission(status="success", retry_count=1),
+        ]
+        svc.audit_repo.create.return_value = AsyncMock()
+
+        with patch.object(svc, "_write_to_datasource", new=AsyncMock()) as write_mock:
+            result = await svc.retry_submission(2001)
+
+        assert isinstance(result, dict)
+        assert result["status"] == "success"
+        write_mock.assert_awaited_once_with(svc.config_repo.get_by_id.return_value, failed.payload)
+
+    @pytest.mark.asyncio
+    async def test_retry_failure_marks_failed_and_increments_retry_count(self):
+        svc = _mock_service()
+        failed = _make_submission(status="failed", retry_count=1)
+        svc.submission_repo.get_by_id.return_value = failed
+        svc.config_repo.get_by_id.return_value = _make_config(status="published")
+        svc.submission_repo.update_status.side_effect = [
+            _make_submission(status="retrying", retry_count=2),
+            _make_submission(status="failed", retry_count=2, error_message="boom"),
+        ]
+        svc.audit_repo.create.return_value = AsyncMock()
+
+        with patch.object(svc, "_write_to_datasource", new=AsyncMock(side_effect=RuntimeError("boom"))):
+            result = await svc.retry_submission(2001)
+
+        assert isinstance(result, dict)
+        assert result["status"] == "failed"
+        assert result["retryCount"] == 2
+        assert result["errorMessage"] == "boom"
 
 
 class TestAuditOnSubmit:
@@ -252,67 +370,100 @@ class TestAuditOnSubmit:
     async def test_audit_created_on_successful_submit(self):
         svc = _mock_service()
         svc.config_repo.get_by_id.return_value = _make_config(status="published")
-        svc.submission_repo.get_by_hash.return_value = None  # no duplicate
-        svc.submission_repo.create.return_value = _make_submission()
+        svc.submission_repo.get_by_hash.return_value = None
+        svc.submission_repo.create.return_value = _make_submission(status="pending")
+        svc.submission_repo.update_status.return_value = _make_submission(status="success")
         svc.audit_repo.create.return_value = AsyncMock()
 
-        with patch("app.services.data_filing_service.is_feature_enabled", new_callable=AsyncMock, return_value=True):
+        with (
+            patch("app.services.data_filing_service.is_feature_enabled", new_callable=AsyncMock, return_value=True),
+            patch.object(svc, "_write_to_datasource", new=AsyncMock()),
+        ):
             result = await svc.submit_data(1001, {"field1": "val"}, 42)
 
         assert isinstance(result, dict)
         svc.audit_repo.create.assert_called_once()
-        call_kwargs = svc.audit_repo.create.call_args[1]
+        call_kwargs = svc.audit_repo.create.call_args.kwargs
         assert call_kwargs["action"] == "submit"
         assert call_kwargs["outcome"] == "success"
 
 
-# ---------------------------------------------------------------------------
-# 8. Retry submission
-# ---------------------------------------------------------------------------
-
-
 class TestRetrySubmission:
-    @pytest.mark.asyncio
-    async def test_retry_resets_status(self):
-        svc = _mock_service()
-        failed = _make_submission(status="failed", retry_count=0)
-        svc.submission_repo.get_by_id.return_value = failed
-        retried = _make_submission(status="retrying", retry_count=1)
-        svc.submission_repo.update_status.return_value = retried
-        svc.audit_repo.create.return_value = AsyncMock()
-
-        result = await svc.retry_submission(2001)
-        assert isinstance(result, dict)
-        assert result["status"] == "retrying"
-        svc.submission_repo.update_status.assert_called_once_with(2001, "retrying", retry_count=1)
-
     @pytest.mark.asyncio
     async def test_cannot_retry_non_failed(self):
         svc = _mock_service()
-        success = _make_submission(status="success")
-        svc.submission_repo.get_by_id.return_value = success
+        svc.submission_repo.get_by_id.return_value = _make_submission(status="success")
 
         result = await svc.retry_submission(2001)
         assert isinstance(result, str)
         assert "failed" in result.lower()
 
 
-# ---------------------------------------------------------------------------
-# 9. All routes require auth
-# ---------------------------------------------------------------------------
+class FakeDataFilingService:
+    def __init__(self) -> None:
+        self.deleted: list[int] = []
+
+    async def list_configs(self, status: str | None = None) -> list[dict[str, object]]:
+        return []
+
+    async def get_config(self, filing_id: int) -> dict[str, object]:
+        return {"id": filing_id}
+
+    async def create_config(self, payload: dict[str, object]) -> dict[str, object]:
+        return payload
+
+    async def update_config(self, filing_id: int, payload: dict[str, object]) -> dict[str, object]:
+        return {"id": filing_id, **payload}
+
+    async def delete_config(self, filing_id: int) -> bool:
+        self.deleted.append(filing_id)
+        return True
+
+    async def publish_config(self, filing_id: int) -> dict[str, object]:
+        return {"id": filing_id}
+
+    async def disable_config(self, filing_id: int) -> dict[str, object]:
+        return {"id": filing_id}
+
+    async def submit_data(self, filing_id: int, payload: dict[str, object], submitter_uid: int) -> dict[str, object]:
+        return {"id": filing_id, "payload": payload, "submitterUid": submitter_uid}
+
+    async def list_submissions(self, filing_id: int) -> list[dict[str, object]]:
+        return []
+
+    async def get_submission(self, submission_id: int) -> dict[str, object]:
+        return {"id": submission_id}
+
+    async def retry_submission(self, submission_id: int) -> dict[str, object]:
+        return {"id": submission_id}
+
+    async def list_audit(self, filing_id: int) -> list[dict[str, object]]:
+        return []
+
+
+class TestDeleteRoute:
+    @pytest.mark.asyncio
+    async def test_delete_route_calls_service(self):
+        fake = FakeDataFilingService()
+        app.dependency_overrides[get_data_filing_service] = lambda: fake
+        headers = {"X-DE-TOKEN": _build_token(uid=1, oid=1)}
+        try:
+            async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+                response = await client.delete("/de2api/data-filing/config/123", headers=headers)
+            assert response.status_code == 200
+            assert response.json()["data"] is True
+            assert fake.deleted == [123]
+        finally:
+            app.dependency_overrides.clear()
 
 
 class TestAllRoutesRequireAuth:
-    """Verify every data-filing route has get_current_user dependency."""
-
     def test_all_routes_require_auth(self):
         from app.routers.data_filing import router
 
         for route in router.routes:
-            # Check that every route has a dependency that calls get_current_user
             deps = getattr(route, "dependant", None)
             assert deps is not None, f"Route {route.path} has no dependant"
-            # Look for get_current_user in the dependencies
             dep_names = []
             for dep in deps.dependencies:
                 if dep.call is not None:

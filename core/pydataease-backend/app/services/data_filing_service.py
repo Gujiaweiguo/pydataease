@@ -14,7 +14,9 @@ from app.repositories.data_filing_repo import (
     FilingConfigRepository,
     FilingSubmissionRepository,
 )
+from app.repositories.datasource_repo import DatasourceRepository
 from app.settings.defaults import is_feature_enabled
+from app.services.datasource_drivers import open_connection
 
 logger = logging.getLogger(__name__)
 
@@ -91,6 +93,15 @@ class DataFilingService:
         await self._create_audit(filing_id, "config_update", payload.get("creatorUid"), details=updates)
         return self._config_to_dict(updated)
 
+    async def delete_config(self, filing_id: int) -> bool | str:
+        config = await self.config_repo.get_by_id(filing_id)
+        if config is None:
+            return "Config not found"
+        if config.status != "draft":
+            return "Only draft configs can be deleted"
+
+        return await self.config_repo.delete(filing_id)
+
     async def publish_config(self, filing_id: int) -> dict[str, Any] | str:
         config = await self.config_repo.get_by_id(filing_id)
         if config is None:
@@ -145,14 +156,40 @@ class DataFilingService:
             await self._create_audit(filing_id, "submit", submitter_uid, outcome="failure", error_code="duplicate_submission", details={"hash": payload_hash})
             return "Duplicate submission within idempotency window"
 
-        # Create submission (actual write-back is future work)
         submission = await self.submission_repo.create(
             filing_id=filing_id,
             payload_hash=payload_hash,
             payload=payload,
-            status="success",
+            status="pending",
             submitter_uid=submitter_uid,
         )
+
+        try:
+            await self._write_to_datasource(config, payload)
+            submission = await self.submission_repo.update_status(submission.id, "success", error_message=None)
+        except Exception as exc:  # noqa: BLE001
+            logger.exception("Data filing write-back failed for filing_id=%s submission_id=%s", filing_id, submission.id)
+            error_message = str(exc)
+            submission = await self.submission_repo.update_status(
+                submission.id,
+                "failed",
+                error_message=error_message,
+            )
+            await self._create_audit(
+                filing_id,
+                "submit",
+                submitter_uid,
+                submission_id=submission.id if submission else None,
+                outcome="failure",
+                error_code="write_back_failed",
+                details={"payloadHash": payload_hash, "error": error_message},
+            )
+            if submission is None:
+                return "Submission not found"
+            return self._submission_to_dict(submission)
+
+        if submission is None:
+            return "Submission not found"
 
         await self._create_audit(
             filing_id, "submit", submitter_uid,
@@ -178,11 +215,48 @@ class DataFilingService:
         if submission.status not in ("failed",):
             return "Only failed submissions can be retried"
 
-        # Increment retry count and reset status (actual retry is future work)
+        config = await self.config_repo.get_by_id(submission.filing_id)
+        if config is None:
+            return "Filing config not found"
+
         updated = await self.submission_repo.update_status(
             submission_id, "retrying",
             retry_count=submission.retry_count + 1,
+            error_message=None,
         )
+        if updated is None:
+            return "Submission not found"
+
+        try:
+            await self._write_to_datasource(config, submission.payload or {})
+            updated = await self.submission_repo.update_status(
+                submission_id,
+                "success",
+                retry_count=updated.retry_count,
+                error_message=None,
+            )
+        except Exception as exc:  # noqa: BLE001
+            logger.exception("Data filing retry failed for submission_id=%s", submission_id)
+            error_message = str(exc)
+            updated = await self.submission_repo.update_status(
+                submission_id,
+                "failed",
+                retry_count=updated.retry_count,
+                error_message=error_message,
+            )
+            if updated is None:
+                return "Submission not found"
+            await self._create_audit(
+                submission.filing_id,
+                "retry",
+                submission.submitter_uid,
+                submission_id=submission_id,
+                outcome="failure",
+                error_code="write_back_failed",
+                details={"retryCount": updated.retry_count, "error": error_message},
+            )
+            return self._submission_to_dict(updated)
+
         if updated is None:
             return "Submission not found"
 
@@ -210,6 +284,40 @@ class DataFilingService:
         duplicate = await self.submission_repo.get_by_hash(filing_id, payload_hash, window_seconds)
         return duplicate is not None
 
+    async def _write_to_datasource(self, config: Any, payload: dict[str, Any]) -> None:
+        if not config.target_datasource_id or not config.target_table:
+            raise ValueError("Filing config has no target datasource/table configured")
+
+        ds_repo = DatasourceRepository(self.session)
+        datasource = await ds_repo.get_by_id(config.target_datasource_id)
+        if datasource is None:
+            raise ValueError(f"Datasource {config.target_datasource_id} not found")
+
+        mapping = config.field_mapping or {}
+        mapped_payload: dict[str, Any] = {}
+        for form_field, value in payload.items():
+            target_col = mapping.get(form_field, form_field)
+            if target_col:
+                mapped_payload[str(target_col)] = value
+
+        if not mapped_payload:
+            raise ValueError("No fields to write after applying field mapping")
+
+        columns = list(mapped_payload.keys())
+        placeholders = [f"${i + 1}" for i in range(len(columns))]
+        values = [mapped_payload[column] for column in columns]
+
+        quoted_cols = ", ".join(self._quote_identifier(column) for column in columns)
+        quoted_table = self._quote_identifier(config.target_table)
+        sql = f"INSERT INTO {quoted_table} ({quoted_cols}) VALUES ({', '.join(placeholders)})"
+
+        configuration = datasource.configuration if isinstance(datasource.configuration, dict) else {}
+        conn = await open_connection(datasource.type, configuration)
+        try:
+            await conn.execute(sql, *values)
+        finally:
+            await conn.close()
+
     @staticmethod
     def _compute_hash(payload: dict[str, Any]) -> str:
         canonical = json.dumps(payload, sort_keys=True, ensure_ascii=False)
@@ -228,6 +336,11 @@ class DataFilingService:
             if required and field_name not in payload:
                 return f"Missing required field: {field_name}"
         return None
+
+    @staticmethod
+    def _quote_identifier(identifier: str) -> str:
+        escaped = identifier.replace('"', '""')
+        return f'"{escaped}"'
 
     async def _create_audit(
         self,
