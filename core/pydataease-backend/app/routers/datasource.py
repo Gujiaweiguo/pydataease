@@ -78,16 +78,18 @@ async def datasource_tree(
     service: DatasourceService = Depends(get_datasource_service),
     perm: PermissionService = Depends(get_permission_service),
 ) -> object:
-    await perm.require_resource_access(user, "datasource", "use")
+    await perm.require_resource_access(user, "datasource", "view")
     return await service.tree()
 
 
 @router.get("/query/{keyWord}")
 async def query_datasources(
     keyWord: str,
-    _: TokenUser = Depends(get_current_user),
+    user: TokenUser = Depends(get_current_user),
     service: DatasourceService = Depends(get_datasource_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> object:
+    await perm.require_resource_access(user, "datasource", "view")
     return await service.query(keyWord)
 
 
@@ -118,9 +120,11 @@ async def update_datasource(
 @router.post("/validate")
 async def validate_datasource(
     payload: dict,
-    _: TokenUser = Depends(get_current_user),
+    user: TokenUser = Depends(get_current_user),
     service: DatasourceService = Depends(get_datasource_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> object:
+    await perm.require_resource_access(user, "datasource", "view")
     decoded = _decode_datasource_payload(payload)
     # Frontend may send only {id} to validate an existing datasource
     if decoded.get("id") and not decoded.get("name"):
@@ -132,9 +136,11 @@ async def validate_datasource(
 @router.post("/getSchema")
 async def get_schema_from_config(
     payload: dict,
-    _: TokenUser = Depends(get_current_user),
+    user: TokenUser = Depends(get_current_user),
     service: DatasourceService = Depends(get_datasource_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> list[str]:
+    await perm.require_resource_access(user, "datasource", "view")
     decoded = _decode_datasource_payload(payload)
     configuration = decoded.get("configuration", {})
     ds_type = decoded.get("type") or decoded.get("dsType") or "postgresql"
@@ -146,9 +152,11 @@ async def get_schema_from_config(
 @router.get("/getSchema/{datasource_id}")
 async def get_schema(
     datasource_id: int,
-    _: TokenUser = Depends(get_current_user),
+    user: TokenUser = Depends(get_current_user),
     service: DatasourceService = Depends(get_datasource_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> object:
+    await perm.require_resource_access(user, "datasource", "view")
     tables = await service.get_tables(datasource_id)
     return [
         {"name": table.name, "tableName": table.table_name, "schema": table.schema_name, "type": table.type}
@@ -160,9 +168,11 @@ async def get_schema(
 async def get_table_field(
     datasource_id: int,
     table_name: str,
-    _: TokenUser = Depends(get_current_user),
+    user: TokenUser = Depends(get_current_user),
     service: DatasourceService = Depends(get_datasource_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> object:
+    await perm.require_resource_access(user, "datasource", "view")
     fields = await service.get_fields(datasource_id, table_name)
     return [f.model_dump(by_alias=True) for f in fields]
 
@@ -170,9 +180,11 @@ async def get_table_field(
 @router.post("/getTableField")
 async def get_table_field_post(
     payload: dict = Body(...),
-    _: TokenUser = Depends(get_current_user),
+    user: TokenUser = Depends(get_current_user),
     service: DatasourceService = Depends(get_datasource_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> object:
+    await perm.require_resource_access(user, "datasource", "view")
     datasource_id = payload.get("datasourceId") or payload.get("datasource_id")
     table_name = payload.get("tableName") or payload.get("table_name")
     if datasource_id is None or table_name is None:
@@ -189,15 +201,18 @@ async def upload_datasource_file(
     user: TokenUser = Depends(get_current_user),
     service: DatasourceService = Depends(get_datasource_service),
 ) -> object:
+    _ = user
     return await service.upload_file(file, id, editType)
 
 
 @router.post("/loadRemoteFile")
 async def load_remote_file(
     payload: dict,
-    _: TokenUser = Depends(get_current_user),
+    user: TokenUser = Depends(get_current_user),
     service: DatasourceService = Depends(get_datasource_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> object:
+    await perm.require_resource_access(user, "datasource", "view")
     return await service.load_remote_file(_decode_datasource_payload(payload))
 
 
@@ -214,9 +229,11 @@ async def delete_datasource(
 
 @router.post("/latestUse")
 async def latest_use(
-    _: TokenUser = Depends(get_current_user),
+    user: TokenUser = Depends(get_current_user),
     service: DatasourceService = Depends(get_datasource_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> list[str]:
+    await perm.require_resource_access(user, "datasource", "view")
     return await service.latest_use()
 
 
@@ -259,45 +276,55 @@ async def list_datasource_types_post(
 @router.post("/getTables")
 async def get_tables(
     payload: DatasourceTablesRequest,
-    _: TokenUser = Depends(get_current_user),
+    user: TokenUser = Depends(get_current_user),
     service: DatasourceService = Depends(get_datasource_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> object:
+    await perm.require_resource_access(user, "datasource", "view")
     return [t.model_dump(by_alias=True) for t in await service.get_tables(payload.datasource_id)]
 
 
 @router.post("/getTableStatus")
 async def get_table_status(
     payload: DatasourceTablesRequest,
-    _: TokenUser = Depends(get_current_user),
+    user: TokenUser = Depends(get_current_user),
     service: DatasourceService = Depends(get_datasource_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> object:
+    await perm.require_resource_access(user, "datasource", "view")
     return await service.get_table_status(payload.datasource_id)
 
 
 @router.get("/validate/{datasource_id}")
 async def validate_by_id(
     datasource_id: int,
-    _: TokenUser = Depends(get_current_user),
+    user: TokenUser = Depends(get_current_user),
     service: DatasourceService = Depends(get_datasource_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> dict[str, str]:
+    await perm.require_resource_access(user, "datasource", "view")
     return await service.validate_by_id(datasource_id)
 
 
 @router.get("/get/{datasource_id}")
 async def get_datasource(
     datasource_id: int,
-    _: TokenUser = Depends(get_current_user),
+    user: TokenUser = Depends(get_current_user),
     service: DatasourceService = Depends(get_datasource_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> object:
+    await perm.require_resource_access(user, "datasource", "view")
     return await service.get_full(datasource_id)
 
 
 @router.get("/hidePw/{datasource_id}")
 async def get_datasource_hide_pw(
     datasource_id: int,
-    _: TokenUser = Depends(get_current_user),
+    user: TokenUser = Depends(get_current_user),
     service: DatasourceService = Depends(get_datasource_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> object:
+    await perm.require_resource_access(user, "datasource", "view")
     return await service.get_hide_pw(datasource_id)
 
 
@@ -315,9 +342,11 @@ async def create_folder(
 @router.post("/perDelete/{datasource_id}")
 async def pre_delete_check(
     datasource_id: int,
-    _: TokenUser = Depends(get_current_user),
+    user: TokenUser = Depends(get_current_user),
     service: DatasourceService = Depends(get_datasource_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> dict[str, bool]:
+    await perm.require_resource_access(user, "datasource", "manage")
     in_use = await service.check_in_use(datasource_id)
     return {"inUse": in_use}
 
@@ -325,18 +354,22 @@ async def pre_delete_check(
 @router.post("/checkRepeat")
 async def check_repeat(
     payload: dict,
-    _: TokenUser = Depends(get_current_user),
+    user: TokenUser = Depends(get_current_user),
     service: DatasourceService = Depends(get_datasource_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> bool:
+    await perm.require_resource_access(user, "datasource", "manage")
     return await service.check_repeat(_decode_datasource_payload(payload))
 
 
 @router.post("/previewData")
 async def preview_data(
     payload: dict,
-    _: TokenUser = Depends(get_current_user),
+    user: TokenUser = Depends(get_current_user),
     service: DatasourceService = Depends(get_datasource_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> object:
+    await perm.require_resource_access(user, "datasource", "view")
     return await service.preview_data(payload)
 
 
@@ -358,18 +391,22 @@ async def set_show_finish_page(
 @router.post("/syncApiTable")
 async def sync_api_table(
     payload: dict,
-    _: TokenUser = Depends(get_current_user),
+    user: TokenUser = Depends(get_current_user),
     service: DatasourceService = Depends(get_datasource_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> None:
+    await perm.require_resource_access(user, "datasource", "manage")
     await service.sync_api_table(payload)
 
 
 @router.post("/syncApiDs")
 async def sync_api_datasource(
     payload: dict,
-    _: TokenUser = Depends(get_current_user),
+    user: TokenUser = Depends(get_current_user),
     service: DatasourceService = Depends(get_datasource_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> None:
+    await perm.require_resource_access(user, "datasource", "manage")
     await service.sync_api_datasource(payload)
 
 
@@ -378,25 +415,31 @@ async def list_sync_record(
     datasource_id: int,
     page: int,
     limit: int,
-    _: TokenUser = Depends(get_current_user),
+    user: TokenUser = Depends(get_current_user),
     service: DatasourceService = Depends(get_datasource_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> dict[str, object]:
+    await perm.require_resource_access(user, "datasource", "view")
     return await service.list_sync_record(datasource_id, page, limit)
 
 
 @router.post("/checkApiDatasource")
 async def check_api_datasource(
     payload: dict,
-    _: TokenUser = Depends(get_current_user),
+    user: TokenUser = Depends(get_current_user),
     service: DatasourceService = Depends(get_datasource_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> object:
+    await perm.require_resource_access(user, "datasource", "view")
     return await service.check_api_datasource(payload)
 
 
 @router.get("/getSimpleDs/{datasource_id}")
 async def get_simple_datasource(
     datasource_id: int,
-    _: TokenUser = Depends(get_current_user),
+    user: TokenUser = Depends(get_current_user),
     service: DatasourceService = Depends(get_datasource_service),
+    perm: PermissionService = Depends(get_permission_service),
 ) -> object:
+    await perm.require_resource_access(user, "datasource", "view")
     return await service.get_simple(datasource_id)
