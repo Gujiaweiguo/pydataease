@@ -45,10 +45,9 @@ class OrgService:
         if not user_orgs:
             return [OrgTreeNode(id="0", name="root", pid=-1, leaf=False, children=[])]
 
-        all_orgs = await self.repository.list_all()
-        allowed_ids = self._collect_allowed_org_ids(user_orgs, all_orgs)
-        flat = [self._to_tree_node(org) for org in all_orgs if org.id in allowed_ids]
-        children = [OrgTreeNode.model_validate(node) for node in _build_tree(flat, pid="0")]
+        # Strict isolation: non-admin users see only their own orgs — no ancestors, no descendants.
+        flat = [self._to_tree_node(org) for org in user_orgs]
+        children = [OrgTreeNode.model_validate(node) for node in flat]
         return [OrgTreeNode(id="0", name="root", pid=-1, leaf=False, children=children)]
 
     async def create(self, payload: OrgCreateRequest) -> OrgResponse:
