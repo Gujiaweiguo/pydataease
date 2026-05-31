@@ -22,6 +22,7 @@ import icon_free from '@/assets/svg/icon_free.svg'
 import icon_security from '@/assets/svg/icon_security.svg'
 import icon_webhook from '@/assets/svg/icon_webhook.svg'
 import icon_template from '@/assets/svg/icon_template.svg'
+import form from '@/assets/svg/form.svg'
 import log from '@/assets/svg/log.svg'
 
 const iconMap = {
@@ -33,6 +34,7 @@ const iconMap = {
   'sys-parameter': sysParameter,
   variable: variable,
   watermark: watermark,
+  form: form,
   icon_font: icon_font,
   icon_msg_fill: icon_msg_fill,
   icon_free: icon_free,

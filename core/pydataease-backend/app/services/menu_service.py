@@ -26,6 +26,10 @@ TITLE_MAP: dict[str, str] = {
     "user-management": "用户管理",
     "role-management": "角色管理",
     "permission-management": "权限管理",
+    "auth-provider": "认证设置",
+    "data-filing": "数据填报",
+    "watermark": "水印管理",
+    "sys-variable": "系统变量",
 }
 
 
