@@ -4,8 +4,12 @@ import io
 
 from fastapi import APIRouter, Depends, File, UploadFile
 from fastapi.responses import StreamingResponse
+from sqlalchemy import and_, case, or_, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.dependencies.auth import get_current_user
+from app.dependencies.database import get_db
+from app.models.sys_variable import CoreSysVariable, CoreSysVariableValue
 from app.schemas.auth import TokenUser
 from app.schemas.auth_permission import UserOrgOptionResponse
 from app.schemas.user import (
@@ -112,8 +116,34 @@ async def switch_language(
 
 
 @router.get("/user/personSysVariableInfo/{uid}")
-async def person_sys_variable_info(_uid: int, _: TokenUser = Depends(get_current_user)) -> dict[str, object]:
-    return {}
+async def person_sys_variable_info(
+    uid: int,
+    _: TokenUser = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db),
+) -> dict[str, object]:
+    stmt = (
+        select(CoreSysVariable.name, CoreSysVariableValue.value)
+        .outerjoin(
+            CoreSysVariableValue,
+            and_(
+                CoreSysVariableValue.variable_id == CoreSysVariable.id,
+                or_(CoreSysVariableValue.user_id == uid, CoreSysVariableValue.user_id.is_(None)),
+            ),
+        )
+        .order_by(
+            CoreSysVariable.id.asc(),
+            case((CoreSysVariableValue.user_id.is_not(None), 0), else_=1),
+            CoreSysVariableValue.create_time.asc(),
+            CoreSysVariableValue.id.asc(),
+        )
+    )
+    result = await session.execute(stmt)
+
+    values: dict[str, object] = {}
+    for name, value in result.all():
+        if name not in values:
+            values[name] = value
+    return values
 
 
 @router.get("/user/queryById/{uid}")
