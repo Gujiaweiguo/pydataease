@@ -25,6 +25,15 @@
 - `permission-config-ui`: 前端权限消费模型从 anyManage 改为 capability 表达
 - `menu-authorization`: 收敛菜单授权为 role-only，移除 user/org 维度执行逻辑
 
+## Final Outcome
+
+- 后端资源权限强制校验、sysvar 行权限、组织隔离、datasource view-only guard、菜单 role-only 与列权限自定义掩码均已落地。
+- 额外修复了一个运行态缺口：外部 MySQL datasource 的 dataset `previewData` / `enumValue` 在最初单测通过但真实运行未应用行列权限。最终已补齐执行链，并修复 sysvar SQL 字面量与 enum 字段标识符问题。
+- 已完成真实受限用户验证：
+  - `POST /de2api/datasetData/previewData` 仅返回 `蓝墨店` 相关数据，并将 `店铺` 按规则掩码为 `蓝*店`
+  - `POST /de2api/datasetData/enumValue` 返回 `["蓝*店"]`
+- 已新增真实 MySQL datasource 集成回归测试，覆盖 sysvar 行过滤 + column mask 的 `preview_data()` / `get_enum_values()` 运行路径，避免再次出现“service/unit 通过但运行态失效”的回归。
+
 ## Impact
 
 - **后端服务层**：`permission_service.py`, `data_permission_service.py`, `auth_permission_service.py`, `org_service.py`, `menu_service.py`, `column_permission_service.py`, `row_permission_service.py`, 各业务 router
