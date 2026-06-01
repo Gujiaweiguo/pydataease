@@ -11,7 +11,7 @@ from typing import Any, cast, final
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.dependencies.database import get_db
+from app.dependencies.database import async_session, get_db
 from app.models.dataset import CoreDatasetGroup, CoreDatasetTable, CoreDatasetTableField
 from app.models.datasource import CoreDatasource
 from app.repositories.dataset_repo import (
@@ -21,9 +21,11 @@ from app.repositories.dataset_repo import (
 )
 from app.repositories.datasource_repo import DatasourceRepository
 from app.services.datasource_drivers import is_supported_type
+from app.services.data_permission_service import DataPermissionService, apply_row_filters
 from app.services.datasource_service import DatasourceService, _as_config_dict
 from app.services.permission_service import PermissionService
 from app.services.sql_executor import apply_limit, validate_readonly_sql
+from app.settings.config import get_settings
 from app.utils.id_utils import _sid
 from app.schemas.auth import TokenUser
 from app.schemas.dataset import (
@@ -270,7 +272,7 @@ class DatasetService:
         payload["union"] = self._build_detail_union(group, tables, fields)
         return payload
 
-    async def get_dataset_preview(self, group_id: int) -> dict[str, object]:
+    async def get_dataset_preview(self, group_id: int, user: TokenUser | None = None) -> dict[str, object]:
         group = await self._get_group(group_id)
         fields = await self.field_repo.list_by_group(group_id)
 
@@ -299,9 +301,9 @@ class DatasetService:
         total = 0
         if base_sql:
             preview_sql = f"SELECT * FROM ({base_sql}) AS dataset_preview LIMIT 100"
-            data_result = await self._execute_dataset_sql(preview_sql, group_id)
+            data_result = await self._execute_dataset_sql(preview_sql, group_id, user=user)
             count_sql = f"SELECT COUNT(*) AS cnt FROM ({base_sql}) AS dataset_count"
-            count_result = await self._execute_dataset_sql(count_sql, group_id)
+            count_result = await self._execute_dataset_sql(count_sql, group_id, user=user)
             rows = cast(list[list[object]], count_result.get("data", []))
             total = int(cast(int | str, rows[0][0])) if rows else 0
         else:
@@ -315,7 +317,7 @@ class DatasetService:
             "total": total,
         }
 
-    async def get_dataset_total(self, group_id: int) -> int:
+    async def get_dataset_total(self, group_id: int, user: TokenUser | None = None) -> int:
         group = await self._get_group(group_id)
         file_preview = await self._preview_file_dataset_data(
             group=group,
@@ -331,11 +333,11 @@ class DatasetService:
         if base_sql is None:
             return 0
         count_sql = f"SELECT COUNT(*) AS cnt FROM ({base_sql}) AS dataset_count"
-        result = await self._execute_dataset_sql(count_sql, group_id)
+        result = await self._execute_dataset_sql(count_sql, group_id, user=user)
         rows = cast(list[list[object]], result.get("data", []))
         return int(cast(int | str, rows[0][0])) if rows else 0
 
-    async def preview_data(self, request: DatasetPreviewDataRequest) -> dict[str, object]:
+    async def preview_data(self, request: DatasetPreviewDataRequest, user: TokenUser | None = None) -> dict[str, object]:
         limit = max(1, request.limit)
         offset = max(0, request.offset)
 
@@ -362,7 +364,7 @@ class DatasetService:
                 return {"allFields": [], "data": {"fields": [], "data": [], "total": 0}}
 
             sql = f"SELECT * FROM ({base_sql}) AS dataset_preview LIMIT {limit} OFFSET {offset}"
-            result = await self._execute_dataset_sql(sql, request.dataset_group_id)
+            result = await self._execute_dataset_sql(sql, request.dataset_group_id, user=user)
             return {
                 "allFields": [self._field_to_dict(field) for field in fields],
                 "data": result,
@@ -394,7 +396,7 @@ class DatasetService:
 
         return {"allFields": [], "data": {"fields": [], "data": [], "total": 0}}
 
-    async def get_enum_values(self, request: DatasetEnumValueRequest) -> list[str]:
+    async def get_enum_values(self, request: DatasetEnumValueRequest, user: TokenUser | None = None) -> list[str]:
         group = await self._get_group(request.dataset_group_id)
         if request.field_id is None:
             return []
@@ -440,20 +442,25 @@ class DatasetService:
         if target is None:
             return []
 
-        column_name = target.dataease_name or target.origin_name
+        column_name = target.origin_name or target.dataease_name
         if not isinstance(column_name, str) or not column_name.strip():
             return []
 
+        safe_column_name = column_name.strip().replace('"', '""')
         sql = (
-            f'SELECT DISTINCT {self._quote_identifier(column_name.strip())} '
+            f'SELECT DISTINCT "{safe_column_name}" '
             f'FROM ({base_sql}) AS dataset_enum LIMIT {max(1, request.result_limit)}'
         )
-        result = await self._execute_dataset_sql(sql, request.dataset_group_id)
+        result = await self._execute_dataset_sql(sql, request.dataset_group_id, user=user)
         rows = cast(list[list[object]], result.get("data", []))
-        return ["" if not row or row[0] is None else str(row[0]) for row in rows]
+        return ["" if row[0] is None else str(row[0]) for row in rows if row]
 
-    async def get_enum_value_objects(self, request: DatasetEnumValueRequest) -> list[dict[str, str]]:
-        values = await self.get_enum_values(request)
+    async def get_enum_value_objects(
+        self,
+        request: DatasetEnumValueRequest,
+        user: TokenUser | None = None,
+    ) -> list[dict[str, str]]:
+        values = await self.get_enum_values(request, user=user)
         return [{"text": value, "value": value} for value in values]
 
     async def get_enum_values_from_datasource(self, request: DatasetEnumValueDsRequest) -> list[str]:
@@ -873,14 +880,51 @@ class DatasetService:
 
         return None
 
-    async def _execute_dataset_sql(self, sql: str, dataset_group_id: int) -> dict[str, object]:
+    async def _execute_dataset_sql(
+        self,
+        sql: str,
+        dataset_group_id: int,
+        user: TokenUser | None = None,
+    ) -> dict[str, object]:
         tables = list(await self.table_repo.list_by_group(dataset_group_id))
         datasource = await self._resolve_datasource_for_dataset(tables)
 
         if datasource is not None:
-            return await self._execute_sql_for_datasource(sql, datasource.id)
+            effective_sql = sql
+            settings = get_settings()
 
-        return await self.sql_executor.execute_select(sql, limit=1000)
+            if user is not None and settings.row_column_permission_enabled:
+                async with async_session() as session:
+                    perm_svc = DataPermissionService(session)
+                    row_filters = await perm_svc.collect_row_filters(user, dataset_group_id)
+                    if row_filters:
+                        effective_sql = apply_row_filters(sql, row_filters)
+
+            result = await self._execute_sql_for_datasource(effective_sql, datasource.id)
+
+            if user is None or not settings.row_column_permission_enabled:
+                return result
+
+            fields = result.get("fields")
+            rows = result.get("data")
+            if not isinstance(fields, list) or not isinstance(rows, list):
+                return result
+
+            async with async_session() as session:
+                perm_svc = DataPermissionService(session)
+                filtered_fields, filtered_rows = await perm_svc.apply_column_rules(
+                    user,
+                    dataset_group_id,
+                    cast(list[dict[str, str]], fields),
+                    cast(list[list[object]], rows),
+                )
+            result["fields"] = filtered_fields
+            result["data"] = filtered_rows
+            result["total"] = len(filtered_rows)
+            result["sql"] = effective_sql
+            return result
+
+        return await self.sql_executor.execute_select(sql, limit=1000, user=user, dataset_id=dataset_group_id)
 
     async def _preview_file_dataset_data(
         self,

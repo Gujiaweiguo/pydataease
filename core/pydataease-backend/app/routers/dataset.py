@@ -118,7 +118,7 @@ async def get_dataset(
     perm: PermissionService = Depends(get_permission_service),
 ) -> object:
     await perm.require_resource_access(user, "dataset", "view")
-    return await service.get_dataset_preview(group_id)
+    return await service.get_dataset_preview(group_id, user)
 
 
 @router.post("/datasetTree/details/{group_id}")
@@ -185,7 +185,7 @@ async def get_dataset_total(
 ) -> object:
     await perm.require_resource_access(user, "dataset", "view")
     group_id = int(str(payload.get("id", "0")))
-    return await service.get_dataset_total(group_id)
+    return await service.get_dataset_total(group_id, user)
 
 
 @router.post("/datasetData/previewSql")
@@ -207,7 +207,7 @@ async def preview_data(
     perm: PermissionService = Depends(get_permission_service),
 ) -> object:
     await perm.require_resource_access(user, "dataset", "view")
-    return await service.preview_data(payload)
+    return await service.preview_data(payload, user)
 
 
 @router.post("/datasetData/enumValue")
@@ -218,7 +218,7 @@ async def enum_value(
     perm: PermissionService = Depends(get_permission_service),
 ) -> object:
     await perm.require_resource_access(user, "dataset", "view")
-    return await service.get_enum_values(payload)
+    return await service.get_enum_values(payload, user)
 
 
 @router.post("/datasetData/enumValueObj")
@@ -229,7 +229,7 @@ async def enum_value_obj(
     perm: PermissionService = Depends(get_permission_service),
 ) -> object:
     await perm.require_resource_access(user, "dataset", "use")
-    return await service.get_enum_value_objects(payload)
+    return await service.get_enum_value_objects(payload, user)
 
 
 @router.post("/datasetData/enumValueDs")

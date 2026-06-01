@@ -331,7 +331,10 @@ class DataPermissionService:
                 if variable_value is None:
                     missing_variable = True
                     return match.group(0)
-                return variable_value
+                if variable_value.startswith("'") and variable_value.endswith("'"):
+                    return variable_value
+                escaped = variable_value.replace("'", "''")
+                return f"'{escaped}'"
 
             resolved_sql = _SYSVAR_PATTERN.sub(replace, rule.filter_sql)
             if missing_variable:
