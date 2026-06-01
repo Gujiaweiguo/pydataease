@@ -83,6 +83,54 @@ async def test_resolve_sysvar_rules_returns_default_deny_when_variable_value_mis
 
 
 @pytest.mark.asyncio
+async def test_resolve_prefers_user_scoped_over_global() -> None:
+    service = DataPermissionService(
+        session=_as_session(
+            _SequenceSession(
+                [
+                    _ExecuteResult(scalars_values=[SimpleNamespace(filter_sql="region = ${dept_region}")]),
+                    _ExecuteResult(rows=[("dept_region", "east"), ("dept_region", "west")]),
+                ]
+            )
+        )
+    )
+
+    assert await service._resolve_sysvar_rules(88, _user(user_id=99)) == ["region = 'east'"]
+
+
+@pytest.mark.asyncio
+async def test_resolve_falls_back_to_global_when_no_user_value() -> None:
+    service = DataPermissionService(
+        session=_as_session(
+            _SequenceSession(
+                [
+                    _ExecuteResult(scalars_values=[SimpleNamespace(filter_sql="region = ${dept_region}")]),
+                    _ExecuteResult(rows=[("dept_region", "west")]),
+                ]
+            )
+        )
+    )
+
+    assert await service._resolve_sysvar_rules(88, _user(user_id=99)) == ["region = 'west'"]
+
+
+@pytest.mark.asyncio
+async def test_resolve_default_deny_when_no_value() -> None:
+    service = DataPermissionService(
+        session=_as_session(
+            _SequenceSession(
+                [
+                    _ExecuteResult(scalars_values=[SimpleNamespace(filter_sql="region = ${dept_region}")]),
+                    _ExecuteResult(rows=[("dept_region", None)]),
+                ]
+            )
+        )
+    )
+
+    assert await service._resolve_sysvar_rules(88, _user(user_id=99)) == ["1=0"]
+
+
+@pytest.mark.asyncio
 async def test_collect_row_filters_prefers_user_rules_over_sysvar(monkeypatch: pytest.MonkeyPatch) -> None:
     service = DataPermissionService(session=_as_session(SimpleNamespace()))
 

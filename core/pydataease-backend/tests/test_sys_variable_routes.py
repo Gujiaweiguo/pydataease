@@ -14,6 +14,8 @@ from tests.fixtures.auth_fixtures import _build_token
 class FakeSysVariableService:
     def __init__(self) -> None:
         self.created_payload = None
+        self.created_value_payload = None
+        self.edited_value_payload = None
         self.page_payload = None
         self.page_args = None
         self.batch_deleted_ids = None
@@ -64,10 +66,12 @@ class FakeSysVariableService:
 
     async def create_value(self, payload) -> dict[str, object]:
         data = payload.model_dump(by_alias=True)
+        self.created_value_payload = data
         return {"id": 202, **data, "createTime": 1, "updateTime": 1}
 
     async def edit_value(self, payload) -> dict[str, object]:
         data = payload.model_dump(by_alias=True)
+        self.edited_value_payload = data
         return {**data, "createTime": 1, "updateTime": 2}
 
     async def delete_value(self, value_id: int) -> None:
@@ -207,3 +211,41 @@ async def test_batch_delete_values_accepts_ids(
     assert response.status_code == 200
     assert response.json() == {"code": 0, "data": None, "msg": "success"}
     assert fake_service.batch_deleted_ids == [3, 4]
+
+
+@pytest.mark.asyncio
+async def test_create_and_edit_value_accept_user_id(
+    client: AsyncClient,
+    auth_headers: dict[str, str],
+    fake_service: FakeSysVariableService,
+) -> None:
+    create_response = await client.post(
+        "/de2api/sysVariable/value/create",
+        headers=auth_headers,
+        json={"variableId": 101, "userId": 77, "value": "beijing", "name": "北京"},
+    )
+    assert create_response.status_code == 200
+    assert create_response.json()["data"]["userId"] == 77
+    assert fake_service.created_value_payload == {
+        "variableId": 101,
+        "userId": 77,
+        "value": "beijing",
+        "name": "北京",
+        "remark": None,
+    }
+
+    edit_response = await client.post(
+        "/de2api/sysVariable/value/edit",
+        headers=auth_headers,
+        json={"id": 202, "variableId": 101, "userId": 88, "value": "shanghai", "name": "上海"},
+    )
+    assert edit_response.status_code == 200
+    assert edit_response.json()["data"]["userId"] == 88
+    assert fake_service.edited_value_payload == {
+        "id": 202,
+        "variableId": 101,
+        "userId": 88,
+        "value": "shanghai",
+        "name": "上海",
+        "remark": None,
+    }
