@@ -7,7 +7,7 @@ import re
 from typing import final
 
 from fastapi import Depends
-from sqlalchemy import select
+from sqlalchemy import and_, case, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.dependencies.database import get_db  # pyright: ignore[reportImplicitRelativeImport]
@@ -99,14 +99,27 @@ class WatermarkService:
         if update_data:
             await self.repo.update(update_data)
 
-    async def _system_variable_sources(self, keys: list[str], session: AsyncSession) -> list[ResolutionSource]:
+    async def _system_variable_sources(
+        self, keys: list[str], session: AsyncSession, user_id: int | None = None
+    ) -> list[ResolutionSource]:
         if not keys:
             return []
         stmt = (
             select(CoreSysVariable.name, CoreSysVariableValue.value)
-            .outerjoin(CoreSysVariableValue, CoreSysVariableValue.variable_id == CoreSysVariable.id)
+            .outerjoin(
+                CoreSysVariableValue,
+                and_(
+                    CoreSysVariableValue.variable_id == CoreSysVariable.id,
+                    or_(CoreSysVariableValue.user_id == user_id, CoreSysVariableValue.user_id.is_(None)),
+                ),
+            )
             .where(CoreSysVariable.name.in_(keys))
-            .order_by(CoreSysVariable.id.asc(), CoreSysVariableValue.create_time.asc(), CoreSysVariableValue.id.asc())
+            .order_by(
+                CoreSysVariable.id.asc(),
+                case((CoreSysVariableValue.user_id.is_not(None), 0), else_=1),
+                CoreSysVariableValue.create_time.asc(),
+                CoreSysVariableValue.id.asc(),
+            )
         )
         result = await session.execute(stmt)
         selected_values: dict[str, str | None] = {}

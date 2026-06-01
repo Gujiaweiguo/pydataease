@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import and_, case, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.column_permission import CoreColumnPermission  # pyright: ignore[reportImplicitRelativeImport]
@@ -298,7 +298,7 @@ class DataPermissionService:
         - resolved filter_sql fragments otherwise
         """
 
-        del user
+        user_id = user.user_id if user else None
 
         if not hasattr(self.session, "execute"):
             return None
@@ -318,7 +318,7 @@ class DataPermissionService:
             for rule in rules
             for match in _SYSVAR_PATTERN.finditer(rule.filter_sql)
         }
-        value_map = await self._fetch_sysvar_values(variable_names)
+        value_map = await self._fetch_sysvar_values(variable_names, user_id=user_id)
 
         resolved_rules: list[str] = []
         for rule in rules:
@@ -343,15 +343,26 @@ class DataPermissionService:
 
         return resolved_rules
 
-    async def _fetch_sysvar_values(self, variable_names: set[str]) -> dict[str, str | None]:
+    async def _fetch_sysvar_values(self, variable_names: set[str], user_id: int | None = None) -> dict[str, str | None]:
         if not variable_names:
             return {}
 
         stmt = (
             select(CoreSysVariable.name, CoreSysVariableValue.value)
-            .outerjoin(CoreSysVariableValue, CoreSysVariableValue.variable_id == CoreSysVariable.id)
+            .outerjoin(
+                CoreSysVariableValue,
+                and_(
+                    CoreSysVariableValue.variable_id == CoreSysVariable.id,
+                    or_(CoreSysVariableValue.user_id == user_id, CoreSysVariableValue.user_id.is_(None)),
+                ),
+            )
             .where(CoreSysVariable.name.in_(variable_names))
-            .order_by(CoreSysVariable.id.asc(), CoreSysVariableValue.create_time.asc(), CoreSysVariableValue.id.asc())
+            .order_by(
+                CoreSysVariable.id.asc(),
+                case((CoreSysVariableValue.user_id.is_not(None), 0), else_=1),
+                CoreSysVariableValue.create_time.asc(),
+                CoreSysVariableValue.id.asc(),
+            )
         )
         result = await self.session.execute(stmt)
 

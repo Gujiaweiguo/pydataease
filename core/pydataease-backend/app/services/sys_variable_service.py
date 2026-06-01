@@ -138,6 +138,7 @@ class SysVariableService:
             {
                 "id": _identifier(),
                 "variable_id": payload.variable_id,
+                "user_id": payload.user_id,
                 "value": payload.value,
                 "name": _clean_optional(payload.name),
                 "remark": _clean_optional(payload.remark),
@@ -154,6 +155,7 @@ class SysVariableService:
             entity,
             {
                 "variable_id": payload.variable_id,
+                "user_id": payload.user_id,
                 "value": payload.value,
                 "name": _clean_optional(payload.name),
                 "remark": _clean_optional(payload.remark),
