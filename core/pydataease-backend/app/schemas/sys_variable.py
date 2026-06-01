@@ -52,6 +52,11 @@ class SysVariableValueCreateRequest(BaseModel):
         validation_alias=AliasChoices("variableId", "variable_id", "sysVariableId", "sys_variable_id"),
         serialization_alias="variableId",
     )
+    user_id: int | None = Field(
+        default=None,
+        validation_alias=AliasChoices("userId", "user_id"),
+        serialization_alias="userId",
+    )
     value: str = Field(min_length=1)
     name: str | None = None
     remark: str | None = None
@@ -87,6 +92,7 @@ class SysVariableValueResponse(BaseModel):
 
     id: int
     variable_id: int = Field(serialization_alias="variableId")
+    user_id: int | None = Field(default=None, serialization_alias="userId")
     value: str
     name: str | None = None
     remark: str | None = None

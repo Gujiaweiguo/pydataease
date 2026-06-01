@@ -30,6 +30,7 @@ class CoreSysVariableValue(Base):
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=False)
     variable_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    user_id: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
     value: Mapped[str] = mapped_column(Text, nullable=False)
     name: Mapped[str | None] = mapped_column(String(255), nullable=True)
     remark: Mapped[str | None] = mapped_column(Text, nullable=True)
