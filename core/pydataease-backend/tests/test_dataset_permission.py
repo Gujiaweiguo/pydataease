@@ -36,6 +36,17 @@ class FakeRowsResult:
     def all(self) -> list[tuple[Any, ...]]:
         return self._rows
 
+    def scalars(self) -> "FakeScalarRowsResult":
+        return FakeScalarRowsResult([row[0] for row in self._rows])
+
+
+class FakeScalarRowsResult:
+    def __init__(self, rows: list[Any]) -> None:
+        self._rows = rows
+
+    def all(self) -> list[Any]:
+        return self._rows
+
 
 class FakeSession:
     def __init__(self, results: list[FakeScalarResult | FakeRowsResult]) -> None:
@@ -45,6 +56,36 @@ class FakeSession:
         if not self._results:
             raise AssertionError("No fake results remaining for execute()")
         return self._results.pop(0)
+
+
+class InspectingAclSession:
+    def __init__(self, *, role_ids: list[int], acl_result_by_target: dict[str, Any] | None = None) -> None:
+        self._role_ids = role_ids
+        self._acl_result_by_target = acl_result_by_target or {}
+
+    async def execute(self, statement: Any, _params=None):
+        compiled = statement.compile(compile_kwargs={"literal_binds": False})
+        sql = str(compiled)
+        params = compiled.params
+
+        if "FROM core_permission_point" in sql:
+            return FakeScalarResult(None)
+
+        if "FROM core_role_user" in sql:
+            return FakeRowsResult([(role_id,) for role_id in self._role_ids])
+
+        if (
+            "FROM core_role_permission" in sql
+            or "FROM core_user_permission" in sql
+            or "FROM core_org_permission" in sql
+        ):
+            return FakeScalarResult(None)
+
+        if "FROM core_resource_acl" in sql:
+            target = str(params.get("target_type_1", "none"))
+            return FakeScalarResult(self._acl_result_by_target.get(target))
+
+        raise AssertionError(f"Unhandled statement: {sql}")
 
 
 def build_permission_service(results: list[FakeScalarResult | FakeRowsResult]) -> PermissionService:
@@ -148,7 +189,15 @@ class TestPermissionServiceBehavior:
         monkeypatch: pytest.MonkeyPatch,
         token_user: TokenUser,
     ) -> None:
-        service = build_permission_service([FakeScalarResult(None)])
+        service = build_permission_service(
+            [
+                FakeRowsResult([]),
+                FakeScalarResult(None),
+                FakeScalarResult(None),
+                FakeScalarResult(None),
+                FakeScalarResult(None),
+            ]
+        )
         monkeypatch.setattr(PermissionService, "_enforcement_enabled", staticmethod(lambda: True))
 
         assert await service.has_resource_permission(token_user, "dataset", "use") is False
@@ -161,8 +210,8 @@ class TestPermissionServiceBehavior:
     ) -> None:
         service = build_permission_service(
             [
-                FakeScalarResult(99),
                 FakeRowsResult([(101,), (202,)]),
+                FakeScalarResult(99),
                 FakeScalarResult(1),
             ]
         )
@@ -178,8 +227,8 @@ class TestPermissionServiceBehavior:
     ) -> None:
         service = build_permission_service(
             [
-                FakeScalarResult(99),
                 FakeRowsResult([]),
+                FakeScalarResult(99),
                 FakeScalarResult(1),
             ]
         )
@@ -195,8 +244,8 @@ class TestPermissionServiceBehavior:
     ) -> None:
         service = build_permission_service(
             [
-                FakeScalarResult(99),
                 FakeRowsResult([]),
+                FakeScalarResult(99),
                 FakeScalarResult(None),
                 FakeScalarResult(1),
             ]
@@ -213,8 +262,8 @@ class TestPermissionServiceBehavior:
     ) -> None:
         service = build_permission_service(
             [
-                FakeScalarResult(99),
                 FakeRowsResult([]),
+                FakeScalarResult(99),
                 FakeScalarResult(None),
                 FakeScalarResult(None),
                 FakeScalarResult(1),
@@ -232,8 +281,10 @@ class TestPermissionServiceBehavior:
     ) -> None:
         service = build_permission_service(
             [
-                FakeScalarResult(99),
                 FakeRowsResult([]),
+                FakeScalarResult(99),
+                FakeScalarResult(None),
+                FakeScalarResult(None),
                 FakeScalarResult(None),
                 FakeScalarResult(None),
                 FakeScalarResult(None),
@@ -242,6 +293,50 @@ class TestPermissionServiceBehavior:
         monkeypatch.setattr(PermissionService, "_enforcement_enabled", staticmethod(lambda: True))
 
         assert await service.has_resource_permission(token_user, "dataset", "use") is False
+
+    @pytest.mark.asyncio
+    async def test_has_resource_permission_falls_back_to_role_acl_weight(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        token_user: TokenUser,
+    ) -> None:
+        service = PermissionService(
+            cast(AsyncSession, cast(object, InspectingAclSession(role_ids=[101, 202], acl_result_by_target={"role": 1})))
+        )
+        monkeypatch.setattr(PermissionService, "_enforcement_enabled", staticmethod(lambda: True))
+
+        assert await service.has_resource_permission(token_user, "dataset", "manage") is True
+
+    @pytest.mark.asyncio
+    async def test_has_resource_permission_acl_insufficient_weight_denies(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        token_user: TokenUser,
+    ) -> None:
+        service = PermissionService(
+            cast(AsyncSession, cast(object, InspectingAclSession(role_ids=[101], acl_result_by_target={})))
+        )
+        monkeypatch.setattr(PermissionService, "_enforcement_enabled", staticmethod(lambda: True))
+
+        assert await service.has_resource_permission(token_user, "dataset", "authorize") is False
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("target_type", ["user", "org"])
+    async def test_has_resource_permission_falls_back_to_direct_and_org_acl_targets(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        token_user: TokenUser,
+        target_type: str,
+    ) -> None:
+        service = PermissionService(
+            cast(
+                AsyncSession,
+                cast(object, InspectingAclSession(role_ids=[], acl_result_by_target={target_type: 1})),
+            )
+        )
+        monkeypatch.setattr(PermissionService, "_enforcement_enabled", staticmethod(lambda: True))
+
+        assert await service.has_resource_permission(token_user, "datasource", "view") is True
 
 
 class TestDatasetPermissionEndpoints:

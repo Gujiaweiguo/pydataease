@@ -1113,3 +1113,170 @@ class TestPreviewDataForFileDatasources:
             {"订单号": 3, "客户名称": "carol"},
         ]
         assert payload["total"] == 3
+
+
+class TestDatasetSqlPermissionForwarding:
+    @staticmethod
+    def _user() -> TokenUser:
+        return TokenUser(user_id=7, oid=9)
+
+    @staticmethod
+    def _service() -> DatasetService:
+        service = DatasetService(
+            session=AsyncMock(),
+            group_repo=cast(Any, SimpleNamespace()),
+            table_repo=cast(Any, SimpleNamespace(list_by_group=AsyncMock(return_value=[]))),
+            field_repo=cast(Any, SimpleNamespace(
+                list_checked_by_group_no_chart_filter=AsyncMock(return_value=[make_field(id=1, origin_name="name", name="name", dataease_name="name")]),
+                list_by_group=AsyncMock(return_value=[make_field(id=1, origin_name="name", name="name", dataease_name="name")]),
+            )),
+        )
+        service._get_group = AsyncMock(return_value=make_group(  # type: ignore[method-assign]
+            id=321,
+            name="orders",
+            node_type="dataset",
+            info={"sql": "SELECT * FROM orders"},
+        ))
+        service._preview_file_dataset_data = AsyncMock(return_value=None)  # type: ignore[method-assign]
+        return service
+
+    @pytest.mark.asyncio
+    async def test_preview_data_passes_user_and_dataset_id_to_sql_executor(self) -> None:
+        service = self._service()
+        service.sql_executor.execute_select = AsyncMock(return_value={  # type: ignore[attr-defined]
+            "sql": 'SELECT * FROM (SELECT * FROM orders) AS dataset_preview LIMIT 5 OFFSET 2',
+            "fields": [{"name": "name", "type": "varchar"}],
+            "data": [["alice"]],
+            "total": 1,
+        })
+
+        result = await service.preview_data(
+            DatasetPreviewDataRequest(dataset_group_id=321, limit=5, offset=2),
+            self._user(),
+        )
+
+        assert cast(dict[str, object], result["data"])["data"] == [["alice"]]
+        cast(Any, service.sql_executor.execute_select).assert_awaited_once_with(
+            'SELECT * FROM (SELECT * FROM orders) AS dataset_preview LIMIT 5 OFFSET 2',
+            limit=1000,
+            user=self._user(),
+            dataset_id=321,
+        )
+
+    @pytest.mark.asyncio
+    async def test_dataset_read_helpers_pass_user_and_dataset_id_to_sql_executor(self) -> None:
+        service = self._service()
+        service.sql_executor.execute_select = AsyncMock(side_effect=[  # type: ignore[attr-defined]
+            {"sql": "preview", "fields": [{"name": "name", "type": "varchar"}], "data": [["alice"]], "total": 1},
+            {"sql": "count", "fields": [{"name": "cnt", "type": "integer"}], "data": [[3]], "total": 1},
+            {"sql": "count", "fields": [{"name": "cnt", "type": "integer"}], "data": [[4]], "total": 1},
+            {"sql": "enum", "fields": [{"name": "name", "type": "varchar"}], "data": [["alice"], ["bob"]], "total": 2},
+        ])
+
+        preview = await service.get_dataset_preview(321, self._user())
+        total = await service.get_dataset_total(321, self._user())
+        enum_values = await service.get_enum_values(
+            DatasetEnumValueRequest(dataset_group_id=321, field_id=1, result_limit=10),
+            self._user(),
+        )
+
+        assert cast(dict[str, object], preview["data"])["data"] == [["alice"]]
+        assert preview["total"] == 3
+        assert total == 4
+        assert enum_values == ["alice", "bob"]
+        assert cast(Any, service.sql_executor.execute_select).await_args_list == [
+            (("SELECT * FROM (SELECT * FROM orders) AS dataset_preview LIMIT 100",), {"limit": 1000, "user": self._user(), "dataset_id": 321}),
+            (("SELECT COUNT(*) AS cnt FROM (SELECT * FROM orders) AS dataset_count",), {"limit": 1000, "user": self._user(), "dataset_id": 321}),
+            (("SELECT COUNT(*) AS cnt FROM (SELECT * FROM orders) AS dataset_count",), {"limit": 1000, "user": self._user(), "dataset_id": 321}),
+            (('SELECT DISTINCT "name" FROM (SELECT * FROM orders) AS dataset_enum LIMIT 10',), {"limit": 1000, "user": self._user(), "dataset_id": 321}),
+        ]
+
+    @pytest.mark.asyncio
+    async def test_external_dataset_sql_applies_row_and_column_permissions(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        service = self._service()
+        datasource = CoreDatasource(
+            id=202,
+            name="orders-db",
+            type="mysql",
+            pid=None,
+            edit_type=None,
+            configuration={},
+            description=None,
+            create_time=1,
+            update_time=2,
+            update_by=7,
+            create_by="7",
+            status="Success",
+            qrtz_instance=None,
+            task_status="WaitingForExecution",
+            enable_data_fill=False,
+        )
+        service.table_repo.list_by_group = AsyncMock(return_value=[make_table(dataset_group_id=321, datasource_id=202)])
+        service._resolve_datasource_for_dataset = AsyncMock(return_value=datasource)  # type: ignore[method-assign]
+        service._execute_sql_for_datasource = AsyncMock(return_value={  # type: ignore[method-assign]
+            "sql": "SELECT * FROM orders",
+            "fields": [{"name": "name", "type": "varchar"}],
+            "data": [["alice"], ["bob"]],
+            "total": 2,
+        })
+
+        class FakePermService:
+            def __init__(self, session: object) -> None:
+                self.session = session
+
+            async def collect_row_filters(self, user: TokenUser, dataset_id: int) -> list[str]:
+                assert user == self_outer._user()
+                assert dataset_id == 321
+                return ["name = 'alice'"]
+
+            async def apply_column_rules(
+                self,
+                user: TokenUser,
+                dataset_id: int,
+                fields: list[dict[str, str]],
+                rows: list[list[object]],
+            ) -> tuple[list[dict[str, str]], list[list[object]]]:
+                assert user == self_outer._user()
+                assert dataset_id == 321
+                assert fields == [{"name": "name", "type": "varchar"}]
+                assert rows == [["alice"], ["bob"]]
+                return ([{"name": "name", "type": "varchar"}], [["a***e"]])
+
+        class FakeAsyncSessionContext:
+            async def __aenter__(self) -> object:
+                return object()
+
+            async def __aexit__(self, exc_type: object, exc: object, tb: object) -> None:
+                return None
+
+        self_outer = self
+        monkeypatch.setattr("app.services.dataset_service.get_settings", lambda: SimpleNamespace(row_column_permission_enabled=True))
+        monkeypatch.setattr("app.services.dataset_service.async_session", lambda: FakeAsyncSessionContext())
+        monkeypatch.setattr("app.services.dataset_service.DataPermissionService", FakePermService)
+
+        result = await service._execute_dataset_sql("SELECT * FROM orders", 321, self._user())
+
+        cast(Any, service._execute_sql_for_datasource).assert_awaited_once_with(
+            "SELECT * FROM (SELECT * FROM orders) AS _perm_filtered WHERE (name = 'alice')",
+            202,
+        )
+        assert result["sql"] == "SELECT * FROM (SELECT * FROM orders) AS _perm_filtered WHERE (name = 'alice')"
+        assert result["data"] == [["a***e"]]
+        assert result["total"] == 1
+
+    @pytest.mark.asyncio
+    async def test_get_enum_values_skips_permission_pruned_empty_rows(self) -> None:
+        service = self._service()
+        service.sql_executor.execute_select = AsyncMock(return_value={  # type: ignore[attr-defined]
+            "sql": "enum",
+            "fields": [],
+            "data": [[], ["alice"], []],
+            "total": 3,
+        })
+
+        values = await service.get_enum_values(
+            DatasetEnumValueRequest(dataset_group_id=321, field_id=1, result_limit=10),
+            self._user(),
+        )
+
+        assert values == ["alice"]

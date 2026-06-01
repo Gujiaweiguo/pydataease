@@ -7,22 +7,27 @@ from typing import Any, cast
 import pytest
 from sqlalchemy import update
 from sqlalchemy import select, text
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from tests.fixtures.test_factories import stamp as _stamp  # pyright: ignore[reportImplicitRelativeImport]
 from tests.fixtures.test_factories import timestamp_ms as _timestamp_ms  # pyright: ignore[reportImplicitRelativeImport]
 
 from app.models.dataset import CoreDatasetGroup, CoreDatasetTable, CoreDatasetTableField  # pyright: ignore[reportImplicitRelativeImport]
 from app.models.datasource import CoreDatasource  # pyright: ignore[reportImplicitRelativeImport]
+from app.models.column_permission import CoreColumnPermission  # pyright: ignore[reportImplicitRelativeImport]
+from app.models.row_permission import CoreRowPermission  # pyright: ignore[reportImplicitRelativeImport]
+from app.models.sys_variable import CoreSysVariable, CoreSysVariableValue  # pyright: ignore[reportImplicitRelativeImport]
+from app.models.user import CoreUser  # pyright: ignore[reportImplicitRelativeImport]
 from app.repositories.dataset_repo import DatasetFieldRepository  # pyright: ignore[reportImplicitRelativeImport]
 from app.repositories.dataset_repo import DatasetGroupRepository  # pyright: ignore[reportImplicitRelativeImport]
 from app.repositories.dataset_repo import DatasetTableRepository  # pyright: ignore[reportImplicitRelativeImport]
 from app.repositories.datasource_repo import DatasourceRepository  # pyright: ignore[reportImplicitRelativeImport]
 from app.schemas.auth import TokenUser  # pyright: ignore[reportImplicitRelativeImport]
-from app.schemas.dataset import DatasetGroupCreate  # pyright: ignore[reportImplicitRelativeImport]
+from app.schemas.dataset import DatasetGroupCreate, DatasetEnumValueRequest, DatasetPreviewDataRequest  # pyright: ignore[reportImplicitRelativeImport]
 from app.services.dataset_service import DatasetService  # pyright: ignore[reportImplicitRelativeImport]
 from app.services.datasource_service import DatasourceService  # pyright: ignore[reportImplicitRelativeImport]
 from app.services.datasource_drivers import _AsyncmyConnectionWrapper  # pyright: ignore[reportImplicitRelativeImport]
+from app.utils.password_utils import hash_password  # pyright: ignore[reportImplicitRelativeImport]
 
 MYSQL_CONFIG: dict[str, object] = {
     "host": "127.0.0.1",
@@ -92,7 +97,45 @@ async def _create_dataset_group(session: AsyncSession, datasource_id: int, stamp
         ),
         _user(),
     )
-    return group.id
+    payload = group.model_dump() if hasattr(group, "model_dump") else cast(dict[str, object], cast(object, group))
+    return int(cast(int | str, payload["id"]))
+
+
+async def _create_stores_dataset_group(session: AsyncSession, datasource_id: int, stamp: int) -> int:
+    service = _dataset_service(session)
+    group = await service.create(
+        DatasetGroupCreate(
+            name=f"mysql-store-dataset-{stamp}",
+            pid=0,
+            node_type="dataset",
+            info={"datasourceId": datasource_id, "tableName": "permission_stores"},
+        ),
+        _user(),
+    )
+    payload = group.model_dump() if hasattr(group, "model_dump") else cast(dict[str, object], cast(object, group))
+    return int(cast(int | str, payload["id"]))
+
+
+async def _prepare_permission_stores_table(session: AsyncSession) -> None:
+    connection = await _datasource_service(session)._open_connection(MYSQL_CONFIG, ds_type="mysql")
+    try:
+        await connection.execute("DROP TABLE IF EXISTS permission_stores")
+        await connection.execute(
+            "CREATE TABLE permission_stores ("
+            "日期 DATETIME, 店铺 VARCHAR(255), 用途 VARCHAR(255), 金额 INT"
+            ")"
+        )
+        await connection.execute(
+            "INSERT INTO permission_stores (日期, 店铺, 用途, 金额) VALUES "
+            "('2024-03-10 17:00:18', '欢果店', '原料购进', 162),"
+            "('2024-03-25 01:07:42', '蓝墨店', '原料购进', 141),"
+            "('2024-03-28 05:35:18', '果元店', '原料购进', 802),"
+            "('2024-03-03 15:26:33', '蓝墨店', '原料购进', 646),"
+            "('2024-03-26 18:36:21', '南都店', '原料购进', 680),"
+            "('2024-03-01 07:55:58', '蓝墨店', '原料购进', 571)"
+        )
+    finally:
+        await connection.close()
 
 
 async def _load_dataset_table(session: AsyncSession, group_id: int) -> CoreDatasetTable:
@@ -143,6 +186,107 @@ async def _cleanup_entities(
                 await session.commit()
         except Exception:
             await session.rollback()
+
+
+async def _cleanup_permission_entities(
+    session: AsyncSession,
+    *,
+    dataset_id: int,
+    user_id: int,
+    variable_name: str,
+) -> None:
+    variable_stmt = select(CoreSysVariable).where(CoreSysVariable.name == variable_name)
+    variable = (await session.execute(variable_stmt)).scalar_one_or_none()
+    if variable is not None:
+        await session.execute(text("DELETE FROM core_sys_variable_value WHERE variable_id = :variable_id"), {"variable_id": variable.id})
+        await session.execute(text("DELETE FROM core_sys_variable WHERE id = :variable_id"), {"variable_id": variable.id})
+    await session.execute(text("DELETE FROM core_column_permission WHERE dataset_id = :dataset_id"), {"dataset_id": dataset_id})
+    await session.execute(text("DELETE FROM core_row_permission WHERE dataset_id = :dataset_id"), {"dataset_id": dataset_id})
+    await session.execute(text("DELETE FROM core_user WHERE id = :user_id"), {"user_id": user_id})
+    await session.commit()
+
+
+async def _seed_mysql_dataset_permissions(
+    session: AsyncSession,
+    *,
+    dataset_id: int,
+    user_id: int,
+    oid: int,
+    field_id: int,
+    variable_name: str,
+    variable_value: str,
+) -> None:
+    now = _timestamp_ms()
+    variable_id = _stamp()
+    session.add(
+        CoreUser(
+            id=user_id,
+            account=f"perm_user_{user_id}",
+            name=f"perm_user_{user_id}",
+            email=None,
+            phone=None,
+            phone_prefix=None,
+            password=hash_password("DataEase@123456"),
+            enable=True,
+            oid=oid,
+            origin=0,
+            mfa_enable=False,
+            language="zh_CN",
+            create_time=now,
+            update_time=now,
+        )
+    )
+    session.add(
+        CoreSysVariable(
+            id=variable_id,
+            name=variable_name,
+            alias=variable_name,
+            type="string",
+            remark="integration test variable",
+            dataset_group_id=dataset_id,
+            dataset_table_id=None,
+            create_time=now,
+            update_time=now,
+            create_by=1,
+        )
+    )
+    session.add(
+        CoreSysVariableValue(
+            id=_stamp(),
+            variable_id=variable_id,
+            value=variable_value,
+            name=variable_name,
+            remark="integration test value",
+            create_time=now,
+            update_time=now,
+        )
+    )
+    session.add(
+        CoreRowPermission(
+            id=_stamp(),
+            dataset_id=dataset_id,
+            target_type="sysvar",
+            target_id=0,
+            filter_sql="店铺 = ${store_name}",
+            enabled=True,
+            create_time=now,
+            update_time=now,
+        )
+    )
+    session.add(
+        CoreColumnPermission(
+            id=_stamp(),
+            dataset_id=dataset_id,
+            field_id=field_id,
+            target_type="user",
+            target_id=user_id,
+            action="mask",
+            enabled=True,
+            create_time=now,
+            update_time=now,
+        )
+    )
+    await session.commit()
 
 
 class TestDatasetDatasourceIntegration:
@@ -415,4 +559,106 @@ class TestDatasetDatasourceIntegration:
                 {"id": 3, "name": "Charlie", "age": 35},
             ]
         finally:
+            await _cleanup_entities(db_session, created_group_ids, created_ds_ids)
+
+    async def test_preview_data_restricted_user_applies_sysvar_row_filter_and_mask_on_mysql_dataset(
+        self,
+        db_session: AsyncSession,
+        mysql_preview_records: None,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        created_group_ids: list[int] = []
+        created_ds_ids: list[int] = []
+        user_id = _stamp()
+        variable_name = "store_name"
+        stamp = _stamp()
+        try:
+            ds = await _create_mysql_datasource(db_session, stamp)
+            created_ds_ids.append(ds.id)
+            await _prepare_permission_stores_table(db_session)
+            group_id = await _create_stores_dataset_group(db_session, ds.id, stamp)
+            created_group_ids.append(group_id)
+            fields = await _load_dataset_fields(db_session, group_id)
+            store_field = next(field for field in fields if field.origin_name == "店铺")
+            await _seed_mysql_dataset_permissions(
+                db_session,
+                dataset_id=group_id,
+                user_id=user_id,
+                oid=9,
+                field_id=store_field.id,
+                variable_name=variable_name,
+                variable_value="蓝墨店",
+            )
+            factory = async_sessionmaker(bind=db_session.bind, class_=AsyncSession, expire_on_commit=False)
+            monkeypatch.setattr("app.services.dataset_service.async_session", factory)
+
+            payload = await _dataset_service(db_session).preview_data(
+                DatasetPreviewDataRequest(dataset_group_id=group_id, limit=20, offset=0),
+                TokenUser(user_id=user_id, oid=9),
+            )
+            data = cast(dict[str, Any], payload["data"])
+            rows = cast(list[list[Any]], data["data"])
+            normalized_rows = [[str(row[0]).replace(" ", "T"), row[1], row[2], row[3]] for row in rows]
+
+            assert data["total"] == 3
+            assert normalized_rows == [
+                ["2024-03-25T01:07:42", "蓝*店", "原料购进", 141],
+                ["2024-03-03T15:26:33", "蓝*店", "原料购进", 646],
+                ["2024-03-01T07:55:58", "蓝*店", "原料购进", 571],
+            ]
+        finally:
+            if created_group_ids:
+                await _cleanup_permission_entities(
+                    db_session,
+                    dataset_id=created_group_ids[0],
+                    user_id=user_id,
+                    variable_name=variable_name,
+                )
+            await _cleanup_entities(db_session, created_group_ids, created_ds_ids)
+
+    async def test_enum_values_restricted_user_applies_sysvar_row_filter_and_mask_on_mysql_dataset(
+        self,
+        db_session: AsyncSession,
+        mysql_preview_records: None,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        created_group_ids: list[int] = []
+        created_ds_ids: list[int] = []
+        user_id = _stamp()
+        variable_name = "store_name"
+        stamp = _stamp()
+        try:
+            ds = await _create_mysql_datasource(db_session, stamp)
+            created_ds_ids.append(ds.id)
+            await _prepare_permission_stores_table(db_session)
+            group_id = await _create_stores_dataset_group(db_session, ds.id, stamp)
+            created_group_ids.append(group_id)
+            fields = await _load_dataset_fields(db_session, group_id)
+            store_field = next(field for field in fields if field.origin_name == "店铺")
+            await _seed_mysql_dataset_permissions(
+                db_session,
+                dataset_id=group_id,
+                user_id=user_id,
+                oid=9,
+                field_id=store_field.id,
+                variable_name=variable_name,
+                variable_value="蓝墨店",
+            )
+            factory = async_sessionmaker(bind=db_session.bind, class_=AsyncSession, expire_on_commit=False)
+            monkeypatch.setattr("app.services.dataset_service.async_session", factory)
+
+            values = await _dataset_service(db_session).get_enum_values(
+                DatasetEnumValueRequest(dataset_group_id=group_id, field_id=store_field.id, result_limit=20),
+                TokenUser(user_id=user_id, oid=9),
+            )
+
+            assert values == ["蓝*店"]
+        finally:
+            if created_group_ids:
+                await _cleanup_permission_entities(
+                    db_session,
+                    dataset_id=created_group_ids[0],
+                    user_id=user_id,
+                    variable_name=variable_name,
+                )
             await _cleanup_entities(db_session, created_group_ids, created_ds_ids)
