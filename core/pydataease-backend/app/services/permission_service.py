@@ -9,11 +9,21 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.dependencies.database import get_db
 from app.models.org_permission import CoreOrgPermission
 from app.models.permission_point import CorePermissionPoint
+from app.models.resource_acl import CoreResourceAcl
 from app.models.role_permission import CoreRolePermission
 from app.models.role_user import CoreRoleUser
 from app.models.user_permission import CoreUserPermission
 from app.schemas.auth import TokenUser
 from app.settings.config import get_settings
+
+
+_ACL_WEIGHT_BY_PERMISSION_TYPE = {
+    "view": 1,
+    "use": 2,
+    "export": 4,
+    "manage": 7,
+    "authorize": 9,
+}
 
 
 @final
@@ -67,6 +77,8 @@ class PermissionService:
         if user.user_id == 1:
             return True
 
+        role_ids = await self._get_role_ids(user)
+
         # Find the permission point for this resource_type + permission_type
         point_stmt = select(CorePermissionPoint.id).where(
             CorePermissionPoint.resource_type == resource_type,
@@ -75,57 +87,13 @@ class PermissionService:
         )
         point_result = await self.session.execute(point_stmt)
         point_id = point_result.scalar_one_or_none()
-        if point_id is None:
-            # BUG-008 fix: No permission point defined means no access (fail-closed)
-            # Admin users (uid=1) are already handled above
+        point_allowed, point_denied = await self._check_point_based_permission(point_id, user, role_ids)
+        if point_allowed:
+            return True
+        if point_denied:
             return False
 
-        # Check role-based grants
-        role_stmt = select(CoreRoleUser.role_id).where(
-            CoreRoleUser.user_id == user.user_id,
-            CoreRoleUser.oid == user.oid,
-        )
-        role_result = await self.session.execute(role_stmt)
-        role_ids = [row[0] for row in role_result.all()]
-
-        if role_ids:
-            role_perm_stmt = select(CoreRolePermission.id).where(
-                CoreRolePermission.role_id.in_(role_ids),
-                CoreRolePermission.permission_point_id == point_id,
-                CoreRolePermission.oid.in_([0, user.oid]),
-                CoreRolePermission.granted.is_(True),
-            ).limit(1)
-            if (await self.session.execute(role_perm_stmt)).scalar_one_or_none() is not None:
-                return True
-
-        # Check user-direct grants
-        user_grant_stmt = select(CoreUserPermission.id).where(
-            CoreUserPermission.user_id == user.user_id,
-            CoreUserPermission.permission_point_id == point_id,
-            CoreUserPermission.granted.is_(True),
-        ).limit(1)
-        if (await self.session.execute(user_grant_stmt)).scalar_one_or_none() is not None:
-            return True
-
-        # Check user-direct denials (explicit denial overrides everything)
-        user_deny_stmt = select(CoreUserPermission.id).where(
-            CoreUserPermission.user_id == user.user_id,
-            CoreUserPermission.permission_point_id == point_id,
-            CoreUserPermission.granted.is_(False),
-        ).limit(1)
-        if (await self.session.execute(user_deny_stmt)).scalar_one_or_none() is not None:
-            return False
-
-        # Check org-level grants
-        org_grant_stmt = select(CoreOrgPermission.id).where(
-            CoreOrgPermission.org_id == user.oid,
-            CoreOrgPermission.permission_point_id == point_id,
-            CoreOrgPermission.granted.is_(True),
-        ).limit(1)
-        if (await self.session.execute(org_grant_stmt)).scalar_one_or_none() is not None:
-            return True
-
-        return False
+        return await self._check_resource_acl_fallback(user, role_ids, resource_type, permission_type)
 
     async def require_resource_access(self, user: TokenUser, resource_type: str, permission_type: str = "use") -> None:
         """Raise 403 if user lacks the specified resource permission."""
@@ -140,6 +108,96 @@ class PermissionService:
     @staticmethod
     def _enforcement_enabled() -> bool:
         return get_settings().permission_enforcement_enabled
+
+    async def _get_role_ids(self, user: TokenUser) -> list[int]:
+        role_stmt = select(CoreRoleUser.role_id).where(
+            CoreRoleUser.user_id == user.user_id,
+            CoreRoleUser.oid == user.oid,
+        )
+        role_result = await self.session.execute(role_stmt)
+        return [row[0] for row in role_result.all()]
+
+    async def _check_point_based_permission(
+        self,
+        point_id: int | None,
+        user: TokenUser,
+        role_ids: list[int],
+    ) -> tuple[bool, bool]:
+        if point_id is None:
+            return False, False
+
+        if role_ids:
+            role_perm_stmt = select(CoreRolePermission.id).where(
+                CoreRolePermission.role_id.in_(role_ids),
+                CoreRolePermission.permission_point_id == point_id,
+                CoreRolePermission.oid.in_([0, user.oid]),
+                CoreRolePermission.granted.is_(True),
+            ).limit(1)
+            if (await self.session.execute(role_perm_stmt)).scalar_one_or_none() is not None:
+                return True, False
+
+        user_grant_stmt = select(CoreUserPermission.id).where(
+            CoreUserPermission.user_id == user.user_id,
+            CoreUserPermission.permission_point_id == point_id,
+            CoreUserPermission.granted.is_(True),
+        ).limit(1)
+        if (await self.session.execute(user_grant_stmt)).scalar_one_or_none() is not None:
+            return True, False
+
+        user_deny_stmt = select(CoreUserPermission.id).where(
+            CoreUserPermission.user_id == user.user_id,
+            CoreUserPermission.permission_point_id == point_id,
+            CoreUserPermission.granted.is_(False),
+        ).limit(1)
+        if (await self.session.execute(user_deny_stmt)).scalar_one_or_none() is not None:
+            return False, True
+
+        org_grant_stmt = select(CoreOrgPermission.id).where(
+            CoreOrgPermission.org_id == user.oid,
+            CoreOrgPermission.permission_point_id == point_id,
+            CoreOrgPermission.granted.is_(True),
+        ).limit(1)
+        if (await self.session.execute(org_grant_stmt)).scalar_one_or_none() is not None:
+            return True, False
+
+        return False, False
+
+    async def _check_resource_acl_fallback(
+        self,
+        user: TokenUser,
+        role_ids: list[int],
+        resource_type: str,
+        permission_type: str,
+    ) -> bool:
+        required_weight = _ACL_WEIGHT_BY_PERMISSION_TYPE.get(permission_type)
+        if required_weight is None:
+            return False
+
+        if await self._has_resource_acl_grant(resource_type, required_weight, "user", [user.user_id]):
+            return True
+        if await self._has_resource_acl_grant(resource_type, required_weight, "org", [user.oid]):
+            return True
+        if role_ids and await self._has_resource_acl_grant(resource_type, required_weight, "role", role_ids):
+            return True
+        return False
+
+    async def _has_resource_acl_grant(
+        self,
+        resource_type: str,
+        required_weight: int,
+        target_type: str,
+        target_ids: list[int],
+    ) -> bool:
+        if not target_ids:
+            return False
+
+        stmt = select(CoreResourceAcl.id).where(
+            CoreResourceAcl.target_type == target_type,
+            CoreResourceAcl.target_id.in_(target_ids),
+            CoreResourceAcl.resource_type == resource_type,
+            CoreResourceAcl.weight >= required_weight,
+        ).limit(1)
+        return (await self.session.execute(stmt)).scalar_one_or_none() is not None
 
 
 async def get_permission_service(session: AsyncSession = Depends(get_db)) -> PermissionService:
