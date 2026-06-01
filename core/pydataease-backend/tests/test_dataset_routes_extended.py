@@ -23,7 +23,7 @@ class ExtendedFakeDatasetService(FakeDatasetService):
         self.ds_details_payloads: list[dict[str, object]] = []
         self.export_payloads: list[dict[str, object]] = []
 
-    async def get_dataset_preview(self, group_id: int) -> dict[str, object]:
+    async def get_dataset_preview(self, group_id: int, user=None) -> dict[str, object]:
         self.preview_ids.append(group_id)
         return {
             "id": group_id,
@@ -33,7 +33,7 @@ class ExtendedFakeDatasetService(FakeDatasetService):
             "total": 1,
         }
 
-    async def get_dataset_total(self, group_id: int) -> int:
+    async def get_dataset_total(self, group_id: int, user=None) -> int:
         self.total_ids.append(group_id)
         return 0
 

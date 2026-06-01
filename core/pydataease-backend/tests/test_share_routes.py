@@ -611,25 +611,26 @@ async def test_proxy_info_rsa_password_decryption() -> None:
     svc = ShareService(mock_session)
 
     with patch.object(svc.share_repo, "get_by_uuid", return_value=mock_share):
-        with patch("app.utils.rsa_utils.decrypt_rsa", return_value="testuuid,mysecretpwd"):
-            payload = ShareProxyInfoRequest(uuid="testuuid", ciphertext="fake_rsa_ciphertext")
-            result = await svc.proxy_info(payload)
-            assert result is not None
-            response, _link_token = result
-            assert response.pwd_valid is True
+        with patch("app.repositories.embed_config_repo.EmbedConfigRepository.get_by_resource_type", return_value=None):
+            with patch("app.utils.rsa_utils.decrypt_rsa", return_value="testuuid,mysecretpwd"):
+                payload = ShareProxyInfoRequest(uuid="testuuid", ciphertext="fake_rsa_ciphertext")
+                result = await svc.proxy_info(payload)
+                assert result is not None
+                response, _link_token = result
+                assert response.pwd_valid is True
 
-        # Test wrong password via RSA decryption
-        with patch("app.utils.rsa_utils.decrypt_rsa", return_value="testuuid,wrongpwd"):
-            payload = ShareProxyInfoRequest(uuid="testuuid", ciphertext="fake_rsa_ciphertext")
-            result = await svc.proxy_info(payload)
-            assert result is not None
-            response, _link_token = result
-            assert response.pwd_valid is False
+            # Test wrong password via RSA decryption
+            with patch("app.utils.rsa_utils.decrypt_rsa", return_value="testuuid,wrongpwd"):
+                payload = ShareProxyInfoRequest(uuid="testuuid", ciphertext="fake_rsa_ciphertext")
+                result = await svc.proxy_info(payload)
+                assert result is not None
+                response, _link_token = result
+                assert response.pwd_valid is False
 
-        # Test decryption failure (exception) → pwd_valid = False
-        with patch("app.utils.rsa_utils.decrypt_rsa", side_effect=Exception("decryption error")):
-            payload = ShareProxyInfoRequest(uuid="testuuid", ciphertext="bad_ciphertext")
-            result = await svc.proxy_info(payload)
-            assert result is not None
-            response, _link_token = result
-            assert response.pwd_valid is False
+            # Test decryption failure (exception) → pwd_valid = False
+            with patch("app.utils.rsa_utils.decrypt_rsa", side_effect=Exception("decryption error")):
+                payload = ShareProxyInfoRequest(uuid="testuuid", ciphertext="bad_ciphertext")
+                result = await svc.proxy_info(payload)
+                assert result is not None
+                response, _link_token = result
+                assert response.pwd_valid is False

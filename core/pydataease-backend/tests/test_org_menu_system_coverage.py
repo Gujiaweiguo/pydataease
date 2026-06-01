@@ -129,7 +129,7 @@ class TestOrgServiceCoverage:
         assert result[0].children == []
 
     @pytest.mark.asyncio
-    async def test_tree_for_non_admin_includes_ancestors_and_descendants(self) -> None:
+    async def test_tree_for_non_admin_returns_only_current_org(self) -> None:
         repo = FakeOrgRepo()
         root = CoreOrg(id=10, pid=0, name="Sales", create_time=1, update_time=1)
         child = CoreOrg(id=11, pid=10, name="APAC", create_time=1, update_time=1)
@@ -141,10 +141,8 @@ class TestOrgServiceCoverage:
 
         result = await service.tree(_token_user())
 
-        assert result[0].children[0].name == "Sales"
-        assert result[0].children[0].children[0].name == "APAC"
-        assert result[0].children[0].children[0].children[0].name == "Japan"
-        assert all(node.name != "Other" for node in result[0].children)
+        assert [node.name for node in result[0].children] == ["APAC"]
+        assert result[0].children[0].children == []
 
     @pytest.mark.asyncio
     async def test_create_requires_existing_parent_and_strips_name(self) -> None:

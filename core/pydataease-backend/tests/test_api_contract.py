@@ -42,8 +42,11 @@ class FakeDatasetService:
     async def move(self, payload, user): return {"pid": 5}
     async def export_dataset(self, payload): return {}
     async def ds_details(self, payload): return {}
-    async def get_dataset_preview(self, gid): return {}
-    async def get_dataset_total(self, gid): return 0
+    async def get_dataset_preview(self, gid, user=None): return {}
+    async def get_dataset_total(self, gid, user=None): return 0
+    async def preview_data(self, payload, user=None): return {}
+    async def get_enum_values(self, payload, user=None): return []
+    async def get_enum_value_objects(self, payload, user=None): return []
 
 
 class FakeChartService:
@@ -78,7 +81,6 @@ class FakeDatasourceService:
     async def create_folder(self, name, pid, user): return {"id": 1, "name": name}
     async def check_in_use(self, ds_id): return False
     async def check_repeat(self, payload): return False
-    async def preview_data(self, payload): return {}
     async def sync_api_table(self, payload): pass
     async def sync_api_datasource(self, payload): pass
     async def list_sync_record(self, ds_id, page, limit): return {"data": [], "total": 0}

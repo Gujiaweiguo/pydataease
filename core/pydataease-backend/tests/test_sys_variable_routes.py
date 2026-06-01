@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Generator
+from unittest.mock import AsyncMock
 
 import pytest
 from httpx import AsyncClient
@@ -85,8 +86,13 @@ def auth_headers() -> dict[str, str]:
 def fake_service() -> Generator[FakeSysVariableService, None, None]:
     svc = FakeSysVariableService()
     app.dependency_overrides[get_sys_variable_service] = lambda: svc
+    import app.routers.sys_variable as sys_variable_router  # pyright: ignore[reportImplicitRelativeImport]
+    feature_check = AsyncMock(return_value=True)
+    previous = sys_variable_router.is_feature_enabled
+    sys_variable_router.is_feature_enabled = feature_check
     yield svc
     _ = app.dependency_overrides.pop(get_sys_variable_service, None)
+    sys_variable_router.is_feature_enabled = previous
 
 
 @pytest.fixture

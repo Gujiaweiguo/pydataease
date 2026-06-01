@@ -3,6 +3,7 @@ from __future__ import annotations
 # pyright: reportMissingTypeArgument=false
 
 from collections.abc import Generator
+from unittest.mock import AsyncMock
 
 import pytest
 
@@ -264,11 +265,15 @@ def fake_service() -> Generator[FakeVisualizationService, None, None]:
     from tests.test_watermark import FakeWatermarkService  # pyright: ignore[reportImplicitRelativeImport]
     fake_watermark = FakeWatermarkService()
     app.dependency_overrides[get_watermark_service] = lambda: fake_watermark
+    import app.routers.watermark as watermark_router  # pyright: ignore[reportImplicitRelativeImport]
+    previous = watermark_router.is_feature_enabled
+    watermark_router.is_feature_enabled = AsyncMock(return_value=True)
     yield svc
     _ = app.dependency_overrides.pop(get_visualization_service, None)
     _ = app.dependency_overrides.pop(get_outer_params_service, None)
     _ = app.dependency_overrides.pop(get_linkage_service, None)
     _ = app.dependency_overrides.pop(get_watermark_service, None)
+    watermark_router.is_feature_enabled = previous
 
 
 @pytest.mark.asyncio

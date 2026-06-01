@@ -118,5 +118,20 @@ class FakeDatasetService:
     async def preview_sql(self, payload: dict[str, object]) -> dict[str, object]:
         return {"sql": str(payload.get("sql", "")), "data": [], "fields": [], "total": 0}
 
+    async def get_dataset_preview(self, group_id: int, user: TokenUser | None = None) -> dict[str, object]:
+        return {}
+
+    async def get_dataset_total(self, group_id: int, user: TokenUser | None = None) -> int:
+        return 0
+
+    async def preview_data(self, payload: object, user: TokenUser | None = None) -> dict[str, object]:
+        return {"allFields": [], "data": {"fields": [], "data": [], "total": 0}}
+
+    async def get_enum_values(self, payload: object, user: TokenUser | None = None) -> list[str]:
+        return []
+
+    async def get_enum_value_objects(self, payload: object, user: TokenUser | None = None) -> list[dict[str, str]]:
+        return []
+
     async def export_dataset(self, payload: object) -> dict:  # pyright: ignore[reportMissingTypeArgument]
         return {"file": "dataset.xlsx", "status": "SUCCESS"}
