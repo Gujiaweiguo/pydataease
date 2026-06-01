@@ -105,6 +105,13 @@
               min-width="140"
               show-overflow-tooltip
             />
+            <el-table-column label="用户" min-width="160" show-overflow-tooltip>
+              <template #default="{ row }">
+                <span>{{
+                  row.userId ? row.userName || row.userAccount || `用户 #${row.userId}` : '全局'
+                }}</span>
+              </template>
+            </el-table-column>
             <el-table-column
               prop="remark"
               :label="t('system.variable_desc')"
@@ -194,6 +201,27 @@
         <el-form-item :label="t('common.name')" prop="name">
           <el-input v-model="valueEditForm.name" maxlength="100" />
         </el-form-item>
+        <el-form-item label="关联用户">
+          <el-select
+            v-model="valueEditForm.userId"
+            filterable
+            clearable
+            remote
+            reserve-keyword
+            placeholder="请选择用户，留空则为全局"
+            style="width: 100%"
+            :loading="userOptionsLoading"
+            :remote-method="remoteSearchUser"
+            @visible-change="handleUserSelectVisibleChange"
+          >
+            <el-option
+              v-for="item in userOptions"
+              :key="item.id"
+              :label="formatUserOptionLabel(item)"
+              :value="item.id"
+            />
+          </el-select>
+        </el-form-item>
         <el-form-item :label="t('system.variable_desc')" prop="remark">
           <el-input v-model="valueEditForm.remark" type="textarea" :rows="3" maxlength="255" />
         </el-form-item>
@@ -211,6 +239,7 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus-secondary'
 import type { FormInstance, FormRules } from 'element-plus-secondary'
 import { useI18n } from '@/hooks/web/useI18n'
+import { userOptionForRoleApi } from '@/api/user'
 import {
   batchDelApi,
   searchVariableApi,
@@ -238,6 +267,15 @@ interface VariableValueItem {
   value: string
   name?: string
   remark?: string
+  userId?: number
+  userName?: string
+  userAccount?: string
+}
+
+interface UserOptionItem {
+  id: number
+  account?: string
+  name?: string
 }
 
 const { t } = useI18n()
@@ -264,6 +302,8 @@ const valueEditFormRef = ref<FormInstance>()
 const isValueEdit = ref(false)
 const valueEditingId = ref<number | null>(null)
 const valueLoading = ref(false)
+const userOptions = ref<UserOptionItem[]>([])
+const userOptionsLoading = ref(false)
 
 const editForm = reactive({
   name: '',
@@ -275,7 +315,8 @@ const editForm = reactive({
 const valueEditForm = reactive({
   value: '',
   name: '',
-  remark: ''
+  remark: '',
+  userId: undefined as number | undefined
 })
 
 const variableTypeOptions = computed(() => [
@@ -321,6 +362,61 @@ const getVariableTypeLabel = (type: string) => {
   return match?.label || type
 }
 
+const formatUserOptionLabel = (user: UserOptionItem) => {
+  if (user.name && user.account) {
+    return `${user.name}（${user.account}）`
+  }
+  if (user.name) {
+    return user.name
+  }
+  if (user.account) {
+    return user.account
+  }
+  return `用户 #${user.id}`
+}
+
+const ensureUserOption = (user?: UserOptionItem) => {
+  if (!user?.id) {
+    return
+  }
+  const current = userOptions.value.find(item => item.id === user.id)
+  if (current) {
+    current.name = user.name || current.name
+    current.account = user.account || current.account
+    return
+  }
+  userOptions.value = [...userOptions.value, user]
+}
+
+const remoteSearchUser = async (keyword = '') => {
+  userOptionsLoading.value = true
+  try {
+    const response = await userOptionForRoleApi({ keyword: keyword.trim() || undefined })
+    const list = normalizeResponseData<UserOptionItem[]>(response, [])
+    const optionMap = new Map<number, UserOptionItem>()
+    ;(Array.isArray(list) ? list : []).forEach(item => {
+      optionMap.set(item.id, item)
+    })
+
+    if (valueEditForm.userId) {
+      const selected = userOptions.value.find(item => item.id === valueEditForm.userId)
+      if (selected) {
+        optionMap.set(selected.id, selected)
+      }
+    }
+
+    userOptions.value = Array.from(optionMap.values())
+  } finally {
+    userOptionsLoading.value = false
+  }
+}
+
+const handleUserSelectVisibleChange = (visible: boolean) => {
+  if (visible && userOptions.value.length === 0) {
+    remoteSearchUser()
+  }
+}
+
 const resetVariableForm = () => {
   variableEditingId.value = null
   variableOriginalType.value = 'text'
@@ -336,6 +432,7 @@ const resetValueForm = () => {
   valueEditForm.value = ''
   valueEditForm.name = ''
   valueEditForm.remark = ''
+  valueEditForm.userId = undefined
   valueEditFormRef.value?.clearValidate()
 }
 
@@ -500,6 +597,7 @@ const handleAddValue = () => {
   }
   isValueEdit.value = false
   resetValueForm()
+  void remoteSearchUser()
   valueEditDialogVisible.value = true
 }
 
@@ -510,6 +608,15 @@ const handleEditValue = (value: VariableValueItem) => {
   valueEditForm.value = value.value || ''
   valueEditForm.name = value.name || ''
   valueEditForm.remark = value.remark || ''
+  valueEditForm.userId = value.userId
+  if (value.userId) {
+    ensureUserOption({
+      id: value.userId,
+      name: value.userName,
+      account: value.userAccount
+    })
+    void remoteSearchUser(value.userName || value.userAccount || '')
+  }
   valueEditDialogVisible.value = true
 }
 
@@ -527,7 +634,8 @@ const handleSaveValue = async () => {
     variableId: selectedVariableId.value,
     value: valueEditForm.value.trim(),
     name: valueEditForm.name.trim(),
-    remark: valueEditForm.remark.trim()
+    remark: valueEditForm.remark.trim(),
+    userId: valueEditForm.userId
   }
 
   if (isValueEdit.value) {
