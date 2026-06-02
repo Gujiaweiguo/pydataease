@@ -5,6 +5,63 @@
         <el-input v-model="form['basic.siteName']" />
       </el-form-item>
 
+      <el-form-item :label="t('system.navigate_logo')">
+        <div class="appearance-upload-field">
+          <div class="appearance-upload-actions">
+            <el-upload
+              action=""
+              :show-file-list="false"
+              :accept="uploadAccept"
+              :before-upload="createImageBeforeUpload('ui.navigate')"
+            >
+              <el-button>{{
+                form['ui.navigate'] ? t('system.replace_image') : t('common.add')
+              }}</el-button>
+            </el-upload>
+            <el-button
+              v-if="form['ui.navigate']"
+              link
+              type="danger"
+              @click="clearImage('ui.navigate')"
+            >
+              {{ t('common.delete') }}
+            </el-button>
+          </div>
+          <img
+            v-if="form['ui.navigate']"
+            class="appearance-upload-preview"
+            :src="getImageSrc('ui.navigate')"
+            :alt="t('system.navigate_logo')"
+          />
+        </div>
+      </el-form-item>
+
+      <el-form-item :label="t('system.login_logo')">
+        <div class="appearance-upload-field">
+          <div class="appearance-upload-actions">
+            <el-upload
+              action=""
+              :show-file-list="false"
+              :accept="uploadAccept"
+              :before-upload="createImageBeforeUpload('ui.login')"
+            >
+              <el-button>{{
+                form['ui.login'] ? t('system.replace_image') : t('common.add')
+              }}</el-button>
+            </el-upload>
+            <el-button v-if="form['ui.login']" link type="danger" @click="clearImage('ui.login')">
+              {{ t('common.delete') }}
+            </el-button>
+          </div>
+          <img
+            v-if="form['ui.login']"
+            class="appearance-upload-preview"
+            :src="getImageSrc('ui.login')"
+            :alt="t('system.login_logo')"
+          />
+        </div>
+      </el-form-item>
+
       <el-form-item :label="t('system.theme_color')">
         <div class="appearance-color-field">
           <div class="appearance-color-options">
@@ -89,13 +146,18 @@ import { onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus-secondary'
 import request from '@/config/axios'
 import { useI18n } from '@/hooks/web/useI18n'
+import { beforeUploadCheck } from '@/api/staticResource'
 import { COLOR_PANEL } from '@/views/chart/components/editor/util/chart'
 
 const { t } = useI18n()
 
 const DEFAULT_THEME_COLOR = '#3370FF'
+const basePath = import.meta.env.VITE_API_BASEPATH
+const uploadAccept = '.png,.jpg,.jpeg,.svg,.gif'
 const APPEARANCE_FORM_KEYS = [
   'basic.siteName',
+  'ui.navigate',
+  'ui.login',
   'ui.themeColor',
   'ui.navigationBarStyle',
   'ui.loginTitle',
@@ -103,9 +165,7 @@ const APPEARANCE_FORM_KEYS = [
   'ui.footerText',
   'ui.footerLink',
   'ui.helpLink'
-] as const
-
-type AppearanceFormKey = (typeof APPEARANCE_FORM_KEYS)[number]
+]
 type ThemePreset = 'default' | 'custom'
 
 const loading = ref(false)
@@ -120,8 +180,10 @@ const navigationBarStyleOptions = [
   { label: t('system.light_color'), value: 'light' }
 ] as const
 
-const form = reactive<Record<AppearanceFormKey, string>>({
+const form = reactive<Record<string, string>>({
   'basic.siteName': '',
+  'ui.navigate': '',
+  'ui.login': '',
   'ui.themeColor': '',
   'ui.navigationBarStyle': 'default',
   'ui.loginTitle': '',
@@ -133,6 +195,56 @@ const form = reactive<Record<AppearanceFormKey, string>>({
 
 const applyThemeColor = () => {
   form['ui.themeColor'] = themePreset.value === 'custom' ? customThemeColor.value : ''
+}
+
+const readFileAsDataUrl = (file: File) =>
+  new Promise<string>((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = event => {
+      const result = event.target?.result
+      if (typeof result === 'string') {
+        resolve(result)
+        return
+      }
+      reject(new Error('invalid image content'))
+    }
+    reader.onerror = () => {
+      reject(reader.error || new Error('failed to read image'))
+    }
+    reader.readAsDataURL(file)
+  })
+
+const uploadImage = async (key: string, file: File) => {
+  const content = await readFileAsDataUrl(file)
+  const fileId = Date.now().toString()
+  const res = await request.post({
+    url: `/staticResource/upload/${fileId}`,
+    data: { content }
+  })
+  form[key] = res.data?.id || fileId
+}
+
+const createImageBeforeUpload = (key: string) => async (file: File) => {
+  if (!beforeUploadCheck(file)) {
+    return false
+  }
+
+  try {
+    await uploadImage(key, file)
+  } catch (error) {
+    console.error(error)
+    ElMessage.error(t('system.contact_the_administrator'))
+  }
+
+  return false
+}
+
+const getImageSrc = (key: string) => {
+  return form[key] ? `${basePath}/appearance/image/${form[key]}` : ''
+}
+
+const clearImage = (key: string) => {
+  form[key] = ''
 }
 
 const syncForm = (data: Record<string, string>) => {
@@ -228,6 +340,28 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: var(--appearance-space-3);
+}
+
+.appearance-upload-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--appearance-space-3);
+}
+
+.appearance-upload-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--appearance-space-3);
+}
+
+.appearance-upload-preview {
+  width: 160px;
+  max-width: 100%;
+  height: 80px;
+  border: 1px solid var(--ed-border-color-light, #dee0e3);
+  border-radius: var(--ed-border-radius-base, 6px);
+  object-fit: contain;
+  background: var(--ContentBG, #ffffff);
 }
 
 .appearance-color-options {

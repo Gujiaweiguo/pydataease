@@ -42,6 +42,10 @@ class StaticResourceService:
             )
         return {"resourceId": resource.id, "content": resource.content or ""}
 
+    async def get_resource_by_id(self, resource_id: str):
+        """Return the raw StaticResource row, or None if not found."""
+        return await self.resource_repo.get_by_id(resource_id)
+
 
 def _resource_to_dict(resource) -> dict:
     return {

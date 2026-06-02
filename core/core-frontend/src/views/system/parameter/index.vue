@@ -9,6 +9,7 @@
       :class="{ 'setting-max-h': activeName === 'map', 'basic-info_bg': activeName === 'basic' }"
     >
       <appearance-settings v-if="activeName === 'appearance'" />
+      <about-settings v-if="activeName === 'about'" />
       <map-setting v-if="activeName === 'map'" />
       <basic-info v-if="activeName === 'basic'" />
       <engine-info v-if="activeName === 'engine'" />
@@ -33,6 +34,7 @@ import ThirdParty from './third-party/index.vue'
 import EmbedControl from './embed/index.vue'
 import FeatureFlags from './feature/index.vue'
 import AppearanceSettings from './appearance/index.vue'
+import AboutSettings from './about/index.vue'
 import EngineInfo from '@/views/system/parameter/engine/EngineInfo.vue'
 import { XpackComponent } from '@/components/plugin'
 import { isDesktop } from '@/utils/ModelUtil'
@@ -51,6 +53,7 @@ interface TabItem {
 
 const allTabs: TabItem[] = [
   { label: t('system.appearance_settings'), name: 'appearance', feature: 'appearance' as const },
+  { label: t('system.about_settings'), name: 'about' },
   { label: t('system.basic_settings'), name: 'basic' },
   { label: t('system.map_settings'), name: 'map' },
   { label: t('system.engine_settings'), name: 'engine' },

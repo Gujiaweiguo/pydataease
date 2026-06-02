@@ -99,8 +99,8 @@ async def save_appearance_settings(
     for item in payload:
         key = item.get("pkey")
         value = item.get("pval")
-        if not isinstance(key, str) or (not key.startswith("ui.") and key != "basic.siteName"):
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Appearance setting key must start with 'ui.' or equal 'basic.siteName'")
+        if not isinstance(key, str) or (not key.startswith("ui.") and not key.startswith("about.") and key != "basic.siteName"):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Appearance setting key must start with 'ui.', 'about.' or equal 'basic.siteName'")
         if not isinstance(value, str):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Appearance setting value must be a string")
         await service.upsert_setting(key, value, key.split(".", 1)[0])

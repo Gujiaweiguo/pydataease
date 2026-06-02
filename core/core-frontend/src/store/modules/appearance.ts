@@ -37,6 +37,9 @@ interface AppearanceState {
   demoTipsContent?: string
   community: boolean
   fontList: Array<{ name: string; id: string; isDefault: boolean }>
+  aboutBg?: string
+  aboutContent?: string
+  aboutLogo?: string
 }
 const { wsCache } = useCache()
 export const useAppearanceStore = defineStore('appearanceStore', {
@@ -65,7 +68,10 @@ export const useAppearanceStore = defineStore('appearanceStore', {
       showDemoTips: false,
       demoTipsContent: '',
       community: true,
-      fontList: []
+      fontList: [],
+      aboutBg: '',
+      aboutContent: '',
+      aboutLogo: ''
     }
   },
   getters: {
@@ -152,6 +158,21 @@ export const useAppearanceStore = defineStore('appearanceStore', {
     },
     getShowAbout(): boolean {
       return isBtnShow(this.showAbout)
+    },
+    getAboutBg(): string {
+      if (this.aboutBg) {
+        return baseUrl + this.aboutBg
+      }
+      return null
+    },
+    getAboutContent(): string {
+      return this.aboutContent
+    },
+    getAboutLogo(): string {
+      if (this.aboutLogo) {
+        return baseUrl + this.aboutLogo
+      }
+      return null
     }
   },
   actions: {
@@ -333,6 +354,9 @@ export const useAppearanceStore = defineStore('appearanceStore', {
       this.name = data.name
       this.foot = data.foot
       this.footContent = data.footContent
+      this.aboutBg = data.aboutBg
+      this.aboutContent = data.aboutContent
+      this.aboutLogo = data.aboutLogo
       if (isDataEaseBi) return
       if (this.name) {
         document.title = this.name

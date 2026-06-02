@@ -50,7 +50,7 @@ async def get_sys_parameter_ui(service=Depends(get_sys_setting_service)):
 async def get_appearance_settings(
     service: SysSettingService = Depends(get_sys_setting_service),
 ) -> dict[str, str]:
-    keys = [key for key in SETTINGS_DEFAULTS if key.startswith("ui.")]
+    keys = [key for key in SETTINGS_DEFAULTS if key.startswith("ui.") or key.startswith("about.")]
     keys.append("basic.siteName")
     values: dict[str, str] = {}
     for key in keys:
@@ -164,13 +164,32 @@ async def get_template_market_search_recommend(service=Depends(get_template_mark
 
 
 @router.post("/license/validate")
-async def validate_license():
-    return {"status": "valid", "license": "community", "edition": "Community Edition", "serialNo": "", "remark": "", "expired": False}
+async def validate_license(service: SysSettingService = Depends(get_sys_setting_service)):
+    corporation = await service.get_setting("about.corporation") or ""
+    expired = await service.get_setting("about.expired") or ""
+    count = await service.get_setting("about.count") or ""
+    edition = await service.get_setting("about.edition") or "社区版"
+    serial_no = await service.get_setting("about.serialNo") or ""
+    remark = await service.get_setting("about.remark") or ""
+    return {
+        "status": "valid",
+        "license": {
+            "corporation": corporation,
+            "expired": expired,
+            "count": int(count) if count.isdigit() else 0,
+            "edition": edition,
+            "version": edition,
+            "serialNo": serial_no,
+            "remark": remark,
+            "isv": "",
+        },
+    }
 
 
 @router.get("/license/version")
-async def get_license_version():
-    return {"version": "2.10", "type": "community"}
+async def get_license_version(service: SysSettingService = Depends(get_sys_setting_service)):
+    version = await service.get_setting("about.version") or "2.10"
+    return version
 
 
 @router.get("/aiBase/findTargetUrl")

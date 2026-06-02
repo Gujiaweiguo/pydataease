@@ -21,6 +21,8 @@ TITLE_MAP: dict[str, str] = {
     "dataset": "数据集",
     "datasource": "数据源",
     "sys-setting": "系统设置",
+    "org-mgmt-group": "组织管理",
+    "sys-mgmt-group": "系统管理",
     "parameter": "系统参数",
     "org-management": "组织管理",
     "user-management": "用户管理",

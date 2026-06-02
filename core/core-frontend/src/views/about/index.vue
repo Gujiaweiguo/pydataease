@@ -1,8 +1,9 @@
 <script lang="ts" setup>
 import logo from '@/assets/svg/logo.svg'
 import aboutBg from '@/assets/img/about-bg.png'
-import { ref, reactive, onMounted } from 'vue'
+import { computed, ref, reactive, onMounted } from 'vue'
 import { useUserStoreWithOut } from '@/store/modules/user'
+import { useAppearanceStoreWithOut } from '@/store/modules/appearance'
 import { F2CLicense } from './index'
 import { validateApi, buildVersionApi, updateInfoApi, revertApi } from '@/api/about'
 import { ElMessage, ElMessageBox } from 'element-plus-secondary'
@@ -15,6 +16,7 @@ const dialogVisible = ref(false)
 const { wsCache } = useCache('localStorage')
 const { t } = useI18n()
 const userStore = useUserStoreWithOut()
+const appearanceStore = useAppearanceStoreWithOut()
 const license: F2CLicense = reactive({
   status: '',
   corporation: '',
@@ -32,6 +34,12 @@ const isAdmin = ref(false)
 const fileList = reactive([])
 const dynamicCardClass = ref('')
 const loading = ref(false)
+const aboutBgSrc = computed(() => appearanceStore.getAboutBg || aboutBg)
+const aboutLogoSrc = computed(() => appearanceStore.getAboutLogo || appearanceStore.getNavigate)
+const aboutDescriptionHtml = computed(() => {
+  const text = appearanceStore.getAboutContent || ''
+  return text.replace(/\n/g, '<br/>')
+})
 onMounted(() => {
   isAdmin.value = userStore.getUid === '1'
   initVersion()
@@ -161,9 +169,10 @@ const update = (licKey: string) => {
     v-model="dialogVisible"
     class="about-dialog"
   >
-    <img width="792" height="180" :src="aboutBg" />
+    <img width="792" height="180" :src="aboutBgSrc" style="object-fit: cover" />
     <div class="color-overlay"></div>
-    <el-icon class="logo">
+    <img v-if="aboutLogoSrc" class="logo about-custom-logo" :src="aboutLogoSrc" />
+    <el-icon v-else class="logo">
       <icon name="logo"><logo class="svg-icon" /></icon>
     </el-icon>
     <div class="content">
@@ -214,6 +223,11 @@ const update = (licKey: string) => {
         <div class="value ellipsis">{{ license.remark || '-' }}</div>
       </div>
 
+      <div v-if="appearanceStore.getAboutContent" class="item about-description">
+        <div class="label">{{ $t('system.about_content') }}</div>
+        <div class="value" v-html="aboutDescriptionHtml"></div>
+      </div>
+
       <div v-if="isAdmin" style="margin-top: 24px" class="lic_rooter">
         <el-upload
           action=""
@@ -259,6 +273,12 @@ const update = (licKey: string) => {
     color: #fff;
   }
 
+  .about-custom-logo {
+    width: 400px;
+    height: 400px;
+    object-fit: contain;
+  }
+
   .content {
     border-radius: 6px;
     border: 1px solid #dee0e3;
@@ -286,6 +306,15 @@ const update = (licKey: string) => {
       .value {
         margin-left: 24px;
         max-width: 388px;
+      }
+    }
+
+    .about-description {
+      align-items: flex-start;
+
+      .value {
+        white-space: normal;
+        line-height: 24px;
       }
     }
   }

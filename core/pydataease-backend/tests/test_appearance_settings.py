@@ -14,7 +14,7 @@ from app.services.sys_setting_service import SysSettingService, get_sys_setting_
 from app.settings.defaults import SETTINGS_DEFAULTS  # pyright: ignore[reportImplicitRelativeImport]
 from tests.fixtures.auth_fixtures import _build_token  # pyright: ignore[reportImplicitRelativeImport]
 
-APPEARANCE_KEYS = [key for key in SETTINGS_DEFAULTS if key.startswith("ui.")]
+APPEARANCE_KEYS = [key for key in SETTINGS_DEFAULTS if key.startswith("ui.") or key.startswith("about.")]
 APPEARANCE_KEYS_WITH_SITE = [*APPEARANCE_KEYS, "basic.siteName"]
 
 
@@ -66,6 +66,11 @@ async def test_appearance_defaults_contain_expected_keys() -> None:
     assert SETTINGS_DEFAULTS["ui.demoPromptText"] == ""
     assert SETTINGS_DEFAULTS["ui.demoPromptLink"] == ""
     assert SETTINGS_DEFAULTS["ui.fontFallbackStack"] == "PingFang, sans-serif"
+    assert SETTINGS_DEFAULTS["ui.navigate"] == ""
+    assert SETTINGS_DEFAULTS["ui.login"] == ""
+    assert SETTINGS_DEFAULTS["ui.aboutBg"] == ""
+    assert SETTINGS_DEFAULTS["ui.aboutContent"] == ""
+    assert SETTINGS_DEFAULTS["ui.aboutLogo"] == ""
     assert SETTINGS_DEFAULTS["ui.cacheVersion"] == "0"
     assert SETTINGS_DEFAULTS["ui.updatedAt"] == "0"
     assert SETTINGS_DEFAULTS["basic.siteName"] == "PyDataEase"
