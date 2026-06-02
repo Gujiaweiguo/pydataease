@@ -134,7 +134,51 @@ class TemplateMarketService:
         }
 
     async def search_preview(self) -> dict[str, object]:
-        return await self.search()
+        """Return templates grouped by category for the preview panel.
+
+        The frontend MarketPreviewV2 component expects contents to be an
+        array of {category: {label, source}, contents: [template, ...]}
+        objects, not a flat template list.
+        """
+        base = await self.search()
+        cat_map: dict[str, list[str]] = {}
+        for cat in base["categories"]:
+            cat_map[cat["value"]] = cat["label"]
+
+        # Build {category_label: [content_items]} from categoryNames
+        groups: dict[str, list[dict]] = {}
+        uncategorized: list[dict] = []
+        for item in base["contents"]:
+            names: list[str] = item.get("categoryNames", [])  # type: ignore[assignment]
+            if names:
+                for name in names:
+                    groups.setdefault(name, []).append(item)
+            else:
+                uncategorized.append(item)
+
+        grouped_contents: list[dict[str, object]] = []
+        for cat_label, items in groups.items():
+            # Find the source for this category
+            source = "manage"
+            for cat in base["categories"]:
+                if cat["label"] == cat_label:
+                    source = cat.get("source", "manage")
+                    break
+            grouped_contents.append({
+                "category": {"label": cat_label, "source": source},
+                "contents": items,
+            })
+        if uncategorized:
+            grouped_contents.append({
+                "category": {"label": "其他", "source": "manage"},
+                "contents": uncategorized,
+            })
+
+        return {
+            "baseUrl": base["baseUrl"],
+            "categories": base["categories"],
+            "contents": grouped_contents,
+        }
 
     async def get_categories(self) -> list[str]:
         categories = await self._fetch_categories_with_templates()
