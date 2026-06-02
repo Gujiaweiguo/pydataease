@@ -56,6 +56,7 @@ from app.routers.visualization_bg import router as visualization_bg_router  # py
 from app.routers.visualization_subject import router as visualization_subject_router  # pyright: ignore[reportImplicitRelativeImport]
 from app.routers.watermark import router as watermark_router  # pyright: ignore[reportImplicitRelativeImport]
 from app.routers.websocket import router as websocket_router  # pyright: ignore[reportImplicitRelativeImport]
+from app.routers.mysqlbot import router as mysqlbot_router  # pyright: ignore[reportImplicitRelativeImport]
 from app.schemas.response import ResultMessage  # pyright: ignore[reportImplicitRelativeImport]
 from app.settings.config import get_settings  # pyright: ignore[reportImplicitRelativeImport]
 from app.settings.seed import seed_defaults  # pyright: ignore[reportImplicitRelativeImport]
@@ -128,6 +129,7 @@ api_router.include_router(embed_control_router)
 api_router.include_router(static_resource_router)
 api_router.include_router(sys_variable_router)
 api_router.include_router(sync_router)
+api_router.include_router(mysqlbot_router)
 
 
 @app.exception_handler(HTTPException)

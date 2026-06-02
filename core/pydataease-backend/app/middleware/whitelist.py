@@ -45,6 +45,7 @@ WHITE_PATHS = {
 }
 
 WHITE_PREFIXES = (
+    "/mysqlbot/api/",
     "/login/platformLogin/",
     "/static-resource/",
     "/appearance/image/",
