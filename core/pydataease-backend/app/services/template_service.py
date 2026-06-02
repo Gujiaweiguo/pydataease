@@ -392,6 +392,22 @@ def _cat_to_dict(cat: VisualizationTemplateCategory) -> dict:
     }
 
 
+    async def export_template(self, template_id: str) -> dict[str, object]:
+        tpl = await self.template_repo.get_by_id(template_id)
+        if tpl is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Template not found")
+        return {
+            "name": tpl.name or "",
+            "dvType": tpl.dv_type or "PANEL",
+            "nodeType": tpl.node_type or "template",
+            "snapshot": tpl.snapshot or "",
+            "canvasStyleData": tpl.template_style or {},
+            "componentData": tpl.template_data or [],
+            "dynamicData": tpl.dynamic_data or {},
+            "version": 3,
+        }
+
+
 async def get_template_service(
     session: AsyncSession = Depends(get_db),
 ) -> TemplateService:

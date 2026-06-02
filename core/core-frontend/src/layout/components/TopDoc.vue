@@ -1,8 +1,5 @@
 <script lang="ts" setup>
-import topEnterpriseTrial from '@/assets/svg/top-enterprise-trial.svg'
 import topHelpDoc from '@/assets/svg/top-help-doc.svg'
-import topProductBbs from '@/assets/svg/top-product-bbs.svg'
-import topTechnology from '@/assets/svg/top-technology.svg'
 import { useI18n } from '@/hooks/web/useI18n'
 import docs from '@/assets/svg/icon-maybe_outlined.svg'
 import { computed } from 'vue'
@@ -19,21 +16,6 @@ const cardInfoList = [
     name: t('api_pagination.help_documentation'),
     url: help.value || '#',
     icon: topHelpDoc
-  },
-  {
-    name: t('api_pagination.product_forum'),
-    url: '#',
-    icon: topProductBbs
-  },
-  {
-    name: t('api_pagination.technical_blog'),
-    url: '#',
-    icon: topTechnology
-  },
-  {
-    name: t('api_pagination.enterprise_edition_trial'),
-    url: 'https://jinshuju.net/f/TK5TTd',
-    icon: topEnterpriseTrial
   }
 ]
 </script>

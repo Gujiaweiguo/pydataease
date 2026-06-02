@@ -227,12 +227,14 @@ import {
   find,
   findCategories,
   deleteCategory,
-  batchDelete
+  batchDelete,
+  exportTemplate
 } from '@/api/template'
 import elementResizeDetectorMaker from 'element-resize-detector'
 import { computed, nextTick, onMounted, reactive, ref } from 'vue'
 import { useI18n } from '@/hooks/web/useI18n'
 import { ElMessage, ElMessageBox } from 'element-plus-secondary'
+import FileSaver from 'file-saver'
 import DeTemplateList from '@/views/template/component/DeTemplateList.vue'
 
 const { t } = useI18n()
@@ -260,7 +262,23 @@ type TemplateItem = {
   name?: string
   label?: string
   checked?: boolean
+  nodeType?: string
 }
+
+type TemplateExportData = {
+  name: string
+  dvType: string
+  nodeType: string
+  snapshot: string
+  canvasStyleData: string
+  componentData: string
+  dynamicData: string
+  version: number | null
+}
+
+type TemplateExportResponse = {
+  data?: TemplateExportData
+} & Partial<TemplateExportData>
 
 const roleValidator = (_rule, value, callback) => {
   if (nameRepeat(value)) {
@@ -434,12 +452,36 @@ const handleCommand = (key, data) => {
     case 'templateEdit':
       templateEdit(data)
       break
+    case 'export':
+      templateExportCurrent(data)
+      break
     case 'delete':
       templateDeleteConfirm(data)
       break
     default:
       break
   }
+}
+
+const resolveTemplateExportData = (response: TemplateExportResponse) => {
+  if (typeof response?.name === 'string') {
+    return response as TemplateExportData
+  }
+  return response?.data
+}
+
+const templateExportCurrent = (templateInfo: TemplateItem) => {
+  if (!templateInfo?.id) {
+    return
+  }
+  exportTemplate(templateInfo.id).then(response => {
+    const templateData = resolveTemplateExportData(response)
+    if (!templateData) {
+      return
+    }
+    const blob = new Blob([JSON.stringify(templateData)], { type: '' })
+    FileSaver.saveAs(blob, `${templateData.name || templateInfo.name}-TEMPLATE.DET2`)
+  })
 }
 
 const templateDeleteConfirm = template => {

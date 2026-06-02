@@ -24,6 +24,10 @@
                 <el-icon class="opt-icon"><EditPen /></el-icon>
                 <span class="opt-name">{{ t('commons.edit') }}</span>
               </el-dropdown-item>
+              <el-dropdown-item v-if="model?.nodeType === 'template'" command="export">
+                <el-icon class="opt-icon"><Download /></el-icon>
+                <span class="opt-name">{{ t('template_manage.export_template') }}</span>
+              </el-dropdown-item>
               <el-dropdown-item command="delete">
                 <el-icon class="opt-icon"><Delete /></el-icon>
                 <span class="opt-name">{{ t('chart.delete') }}</span>

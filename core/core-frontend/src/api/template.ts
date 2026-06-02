@@ -32,6 +32,12 @@ export function findOne(id) {
   })
 }
 
+export function exportTemplate(id) {
+  return request.get({
+    url: '/templateManage/export/' + id
+  })
+}
+
 export function find(data) {
   return request.post({
     url: '/templateManage/find',

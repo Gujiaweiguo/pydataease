@@ -205,6 +205,15 @@ async def check_category_template(
 # ------------------------------------------------------------------
 
 
+@router.get("/templateManage/export/{template_id}")
+async def export_template(
+    template_id: str,
+    user: TokenUser = Depends(get_current_user),
+    service: TemplateService = Depends(get_template_service),
+) -> object:
+    return await service.export_template(template_id)
+
+
 @router.post("/store/toggleFavorite")
 async def store_toggle_favorite(
     payload: StoreToggleRequest,
