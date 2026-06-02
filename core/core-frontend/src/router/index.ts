@@ -165,6 +165,22 @@ export const routes: AppRouteRecordRaw[] = [
     component: () => import('@/views/chart/ChartView.vue')
   },
   {
+    path: '/template-market',
+    name: 'template-market',
+    component: () => import('@/layout/index.vue'),
+    hidden: true,
+    meta: {},
+    children: [
+      {
+        path: 'index',
+        name: 'template-market-index',
+        hidden: true,
+        component: () => import('@/views/template-market/index.vue'),
+        meta: { hidden: true }
+      }
+    ]
+  },
+  {
     path: '/template-manage',
     name: 'template-manage',
     hidden: true,
