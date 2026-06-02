@@ -91,7 +91,9 @@ class TemplateMarketService:
             "templateType": t.dv_type or "PANEL",
             "source": "manage",
             "classify": "推荐",
+            "showFlag": True,
             "categoryNames": category_names,
+            "categories": [{"name": n} for n in category_names],
             "metas": {"theme_repo": ""},
         }
 
