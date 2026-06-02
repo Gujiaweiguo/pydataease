@@ -817,7 +817,7 @@ def seed_postgresql():
 SCREEN_FOLDER = 995100000000000001  # data_visualization_info folder for screens
 SCREEN_DV = 995100000000000002      # data_visualization_info 大屏 leaf
 TEMPLATE_ID = "995200000000000001"
-TEMPLATE_CATEGORY_ID = "995200000000000010"
+TEMPLATE_CATEGORY_ID = "900000000000000002"
 BANNER_H = 80
 # Screen chart view IDs — unique from dashboard charts
 SCREEN_CHART_IDS = [
@@ -1378,18 +1378,22 @@ def build_screen_sql() -> str:
     lines.append("-- Seed big-screen template into visualization_template")
     lines.append(f"DELETE FROM visualization_template_category_map WHERE template_id = '{TEMPLATE_ID}';")
     lines.append(f"DELETE FROM visualization_template WHERE id = '{TEMPLATE_ID}';")
-    lines.append(f"DELETE FROM visualization_template_category WHERE id = '{TEMPLATE_CATEGORY_ID}';")
 
-    lines.append(f"INSERT INTO visualization_template_category "
-                 f"(id, name, pid, level, dv_type, node_type, create_by, create_time, snapshot, template_type) "
-                 f"VALUES ('{TEMPLATE_CATEGORY_ID}', '大屏模板', '0', 0, 'dataV', 'folder', '1', {now_ms}, '', 'system');")
+    lines.append(
+        f"INSERT INTO visualization_template_category "
+        f"(id, name, pid, level, dv_type, node_type, create_by, create_time, snapshot, template_type) "
+        f"VALUES ('{TEMPLATE_CATEGORY_ID}', '大屏模板', '0', 0, 'dataV', 'folder', '1', {now_ms}, '', 'system') "
+        f"ON CONFLICT (id) DO NOTHING;"
+    )
 
     lines.append(
         f"INSERT INTO visualization_template "
         f"(id, name, pid, level, dv_type, node_type, create_by, create_time, "
         f"snapshot, template_type, template_style, template_data, dynamic_data) VALUES ("
         f"'{TEMPLATE_ID}', '连锁茶饮销售大屏', '{TEMPLATE_CATEGORY_ID}', 0, 'dataV', 'template', "
-        f"'1', {now_ms}, '', 'self', "
+        f"'1', {now_ms}, "
+        f"'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', "
+        f"'self', "
         f"'{screen_style}'::jsonb, "
         f"'{component_data}'::jsonb, "
         f"'{template_dynamic_data}'::jsonb);"
