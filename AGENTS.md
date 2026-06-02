@@ -72,15 +72,15 @@
 
 ## Local dev environment (Docker containers)
 
-Two shared containers are used for development. **Always use these, never create new ones.**
+One shared container is used for development. **Always use this, never create new ones.**
 
 | Container | Image | Port | Purpose | Credentials |
 |-----------|-------|------|---------|-------------|
-| `postgres16` | `pgvector/pgvector:pg16` | 5432 | **内部元数据库** — FastAPI 后端的系统库（用户、角色、仪表板、数据源配置等） | `dataease:dataease` / db: `dataease` |
-| `mysql8` | `mysql:8.0` | 3306 | **外部 MySQL 数据源** — 用于测试用户添加的 MySQL 类型数据源连接 | `root:` (空密码) / 或看容器 env |
+| `postgres16` | `pgvector/pgvector:pg16` | 5432 | **元数据库 + demo 业务数据** — FastAPI 后端的系统库和 `demo` schema 中的演示数据 | `dataease:dataease` / db: `dataease` |
 
 - `.env` 中 `DE_DATABASE_URL=postgresql+asyncpg://dataease:dataease@127.0.0.1:5432/dataease`
-- 如果容器没启动：`docker start postgres16 mysql8`
+- Demo 业务数据（`demo_tea_material`、`demo_tea_order`）存储在 PostgreSQL 的 `demo` schema 中
+- 如果容器没启动：`docker start postgres16`
 
 ## CI and contribution signals
 - PRs satisfy `.github/PULL_REQUEST_TEMPLATE.md`: passing tests, coverage, Conventional Commit messages, docs impact review.

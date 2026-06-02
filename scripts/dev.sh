@@ -3,7 +3,7 @@
 # Usage: ./scripts/dev.sh [backend|frontend|all]
 # Default: all
 #
-# Requires: Docker containers postgres16 & mysql8 running,
+# Requires: Docker container postgres16 running,
 #           uv (backend), npm (frontend)
 
 set -euo pipefail
@@ -37,7 +37,7 @@ start_frontend() {
 
 ensure_dbs() {
     local need_start=()
-    for c in postgres16 mysql8; do
+    for c in postgres16; do
         if ! docker ps --format '{{.Names}}' | grep -qx "$c"; then
             need_start+=("$c")
         fi

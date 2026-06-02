@@ -107,14 +107,13 @@ docker compose -f docker-compose.prod.yml up -d
 ### 前置条件
 
 1. PostgreSQL 已启动并完成迁移（`uv run alembic upgrade head`）
-2. MySQL 容器已启动（`docker start mysql8`），用于 demo 数据源
 
 ### 使用方式
 
 ```bash
 # 从项目根目录执行
 
-# 仅生成 demo 看板（仪表板 + MySQL 数据源 + 数据集）
+# 仅生成 demo 看板（仪表板 + PostgreSQL 数据源 + 数据集）
 python3 scripts/seed_demo_data.py
 
 # 仅生成 demo 大屏（连锁茶饮销售大屏，深色主题，13 个组件）

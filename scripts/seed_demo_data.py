@@ -3,13 +3,13 @@
 Seed official demo data for PyDataEase.
 
 Creates:
-  - MySQL `demo` database with demo_tea_material (30 rows) and demo_tea_order (60 rows)
+  - PostgreSQL `demo` schema with demo_tea_material (30 rows) and demo_tea_order (60 rows)
   - PostgreSQL metadata: datasource, dataset groups/tables/fields, dashboard, 15 chart views
 
 Usage:
   python scripts/seed_demo_data.py
 
-Requires: docker containers `postgres16` and `mysql8` running.
+Requires: docker container `postgres16` running.
 """
 
 import base64
@@ -45,11 +45,6 @@ PG_PORT = os.getenv("SEED_PG_PORT", "5432")
 PG_USER = os.getenv("SEED_PG_USER", "dataease")
 PG_PASS = os.getenv("SEED_PG_PASS", "dataease")
 PG_DB = os.getenv("SEED_PG_DB", "dataease")
-
-MYSQL_HOST = os.getenv("SEED_MYSQL_HOST", "127.0.0.1")
-MYSQL_PORT = os.getenv("SEED_MYSQL_PORT", "3306")
-MYSQL_USER = os.getenv("SEED_MYSQL_USER", "root")
-MYSQL_PASS = os.getenv("SEED_MYSQL_PASS", "Admin168")
 
 USE_DIRECT_TCP = bool(PG_HOST)
 
@@ -90,38 +85,6 @@ def psql_file(sql: str) -> subprocess.CompletedProcess[str]:
         input=sql, capture_output=True, text=True, timeout=120
     )
 
-def mysql_exec(sql: str) -> subprocess.CompletedProcess[str]:
-    if USE_DIRECT_TCP:
-        return subprocess.run(
-            ["mysql", f"-h{MYSQL_HOST}", f"-P{MYSQL_PORT}", f"-u{MYSQL_USER}", f"-p{MYSQL_PASS}",
-             "--default-character-set=utf8mb4", "-e", sql],
-            capture_output=True,
-            text=True,
-            timeout=60,
-        )
-    return docker_exec("mysql8", [
-        "mysql", f"-h{MYSQL_HOST}", f"-P{MYSQL_PORT}",
-        f"-u{MYSQL_USER}", f"-p{MYSQL_PASS}",
-        "--default-character-set=utf8mb4", "-e", sql
-    ])
-
-def mysql_file(sql: str) -> subprocess.CompletedProcess[str]:
-    if USE_DIRECT_TCP:
-        return subprocess.run(
-            ["mysql", f"-h{MYSQL_HOST}", f"-P{MYSQL_PORT}", f"-u{MYSQL_USER}", f"-p{MYSQL_PASS}",
-             "--default-character-set=utf8mb4"],
-            input=sql,
-            capture_output=True,
-            text=True,
-            timeout=60,
-        )
-    return subprocess.run(
-        ["docker", "exec", "-i", "mysql8",
-         "mysql", f"-u{MYSQL_USER}", f"-p{MYSQL_PASS}",
-         "--default-character-set=utf8mb4"],
-        input=sql, capture_output=True, text=True, timeout=60
-    )
-
 def check_ok(result: subprocess.CompletedProcess[str], label: str):
     if result.returncode != 0:
         print(f"FAIL [{label}]: {result.stderr[:500]}", file=sys.stderr)
@@ -134,22 +97,20 @@ def check_ok(result: subprocess.CompletedProcess[str], label: str):
             print(f"FAIL [{label}]: {'; '.join(errors)}", file=sys.stderr)
             sys.exit(1)
 
-# ── Step 1: MySQL demo data ────────────────────────────────────────
+# ── Step 1: PostgreSQL demo schema data ────────────────────────────
 
-MYSQL_SQL = """\
-DROP DATABASE IF EXISTS demo;
-CREATE DATABASE demo;
-USE demo;
+DEMO_SCHEMA_SQL = """\
+CREATE SCHEMA IF NOT EXISTS demo;
 
-DROP TABLE IF EXISTS demo_tea_material;
-CREATE TABLE demo_tea_material (
-  `日期` datetime DEFAULT NULL,
-  `店铺` longtext,
-  `用途` longtext,
-  `金额` bigint DEFAULT NULL
+DROP TABLE IF EXISTS demo.demo_tea_material;
+CREATE TABLE demo.demo_tea_material (
+  "日期" timestamp DEFAULT NULL,
+  "店铺" text,
+  "用途" text,
+  "金额" bigint DEFAULT NULL
 );
 
-INSERT INTO demo_tea_material (`日期`, `店铺`, `用途`, `金额`) VALUES
+INSERT INTO demo.demo_tea_material ("日期", "店铺", "用途", "金额") VALUES
 ('2024-03-10 17:00:18', '欢果店', '原料购进', 162),
 ('2024-03-25 01:07:42', '蓝墨店', '原料购进', 141),
 ('2024-03-28 05:35:18', '果元店', '原料购进', 802),
@@ -181,20 +142,20 @@ INSERT INTO demo_tea_material (`日期`, `店铺`, `用途`, `金额`) VALUES
 ('2024-03-09 02:22:10', '乐园店', '原料购进', 194),
 ('2024-03-10 01:43:49', '水围店', '原料购进', 122);
 
-DROP TABLE IF EXISTS demo_tea_order;
-CREATE TABLE demo_tea_order (
-  `店铺` longtext,
-  `品线` longtext,
-  `菜品名称` longtext,
-  `冷热` longtext,
-  `规格` longtext,
-  `销售数量` bigint DEFAULT NULL,
-  `单价` bigint DEFAULT NULL,
-  `账单流水号` longtext,
-  `销售日期` datetime DEFAULT NULL
+DROP TABLE IF EXISTS demo.demo_tea_order;
+CREATE TABLE demo.demo_tea_order (
+  "店铺" text,
+  "品线" text,
+  "菜品名称" text,
+  "冷热" text,
+  "规格" text,
+  "销售数量" bigint DEFAULT NULL,
+  "单价" bigint DEFAULT NULL,
+  "账单流水号" text,
+  "销售日期" timestamp DEFAULT NULL
 );
 
-INSERT INTO demo_tea_order (`店铺`, `品线`, `菜品名称`, `冷热`, `规格`, `销售数量`, `单价`, `账单流水号`, `销售日期`) VALUES
+INSERT INTO demo.demo_tea_order ("店铺", "品线", "菜品名称", "冷热", "规格", "销售数量", "单价", "账单流水号", "销售日期") VALUES
 ('香橙店', '浓郁椰奶', '超大酷柠', '冷', '50塑', 165, 16, '131696143796', '2024-03-13 01:39:25'),
 ('果元店', '果粒果汁', '爆粒鲜橙', '热', '40塑', 228, 10, '600033642270', '2024-03-20 16:43:33'),
 ('蓝墨店', '浓郁椰奶', '爆粒鲜橙', '冷', '1000ml', 154, 16, '884244813757', '2024-03-17 20:13:47'),
@@ -258,14 +219,15 @@ INSERT INTO demo_tea_order (`店铺`, `品线`, `菜品名称`, `冷热`, `规�
 """
 
 
-def seed_mysql():
-    print("==> Step 1: Seeding MySQL demo data ...")
-    r = mysql_file(MYSQL_SQL)
-    check_ok(r, "mysql seed")
-    # Verify
-    r = mysql_exec("SELECT COUNT(*) FROM demo.demo_tea_material;")
+def seed_demo_schema():
+    print("==> Step 1: Seeding PostgreSQL demo schema data ...")
+    r = psql_file(DEMO_SCHEMA_SQL)
+    check_ok(r, "demo schema seed")
+    r = psql("SELECT COUNT(*) FROM demo.demo_tea_material;")
+    check_ok(r, "demo_tea_material verify")
     print(f"    demo_tea_material: {r.stdout.strip().splitlines()[-1].strip()} rows")
-    r = mysql_exec("SELECT COUNT(*) FROM demo.demo_tea_order;")
+    r = psql("SELECT COUNT(*) FROM demo.demo_tea_order;")
+    check_ok(r, "demo_tea_order verify")
     print(f"    demo_tea_order:    {r.stdout.strip().splitlines()[-1].strip()} rows")
 
 
@@ -291,19 +253,21 @@ def build_pg_sql() -> str:
     # ── Datasource ──
     lines.append("-- Datasource")
     ds_config = json.dumps({
-        "dataBase": "demo",
+        "dataBase": "dataease",
+        "database": "dataease",
         "connectionType": "jdbc",
-        "extraParams": "characterEncoding=UTF-8&connectTimeout=5000&useSSL=false",
-        "host": MYSQL_HOST,
-        "password": MYSQL_PASS,
-        "port": MYSQL_PORT,
-        "username": MYSQL_USER
+        "host": PG_HOST or "127.0.0.1",
+        "password": PG_PASS or "dataease",
+        "port": PG_PORT or "5432",
+        "username": PG_USER or "dataease",
+        "schema": "demo",
+        "currentSchema": "demo"
     }, ensure_ascii=False)
     lines.append(
         f"INSERT INTO core_datasource (id, name, description, type, pid, edit_type, "
         f"configuration, create_time, update_time, update_by, create_by, status, "
         f"task_status, enable_data_fill) VALUES ("
-        f"{DS_ID}, 'demo', NULL, 'mysql', 0, NULL, "
+        f"{DS_ID}, 'demo', NULL, 'postgresql', 0, NULL, "
         f"'{ds_config}'::jsonb, {now_ms}, {now_ms}, NULL, '1', 'Success', NULL, false);"
     )
 
@@ -1477,7 +1441,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="PyDataEase Official Demo Data Seeder")
     parser.add_argument("--screen-only", action="store_true",
-                        help="Only seed the demo big-screen (大屏), skip dashboard + MySQL")
+                        help="Only seed the demo big-screen (大屏), skip dashboard demo data")
     parser.add_argument("--with-screen", action="store_true",
                         help="Seed both dashboard and big-screen demo data")
     args = parser.parse_args()
@@ -1487,11 +1451,11 @@ if __name__ == "__main__":
     print("=" * 60)
 
     if USE_DIRECT_TCP:
-        print(f"Mode: direct TCP (PostgreSQL {PG_HOST}:{PG_PORT}, MySQL {MYSQL_HOST}:{MYSQL_PORT})")
+        print(f"Mode: direct TCP (PostgreSQL {PG_HOST}:{PG_PORT})")
     else:
-        print("Mode: docker exec (postgres16/mysql8)")
+        print("Mode: docker exec (postgres16)")
         # Check containers are running
-        for container in ["postgres16", "mysql8"]:
+        for container in ["postgres16"]:
             r = subprocess.run(["docker", "inspect", "-f", "{{.State.Running}}", container],
                               capture_output=True, text=True)
             if r.stdout.strip() != "true":
@@ -1502,8 +1466,8 @@ if __name__ == "__main__":
         # Only seed the big-screen, assumes dashboard data already exists
         seed_screen()
     else:
-        # Default: seed dashboard + MySQL
-        seed_mysql()
+        # Default: seed dashboard demo data
+        seed_demo_schema()
         seed_postgresql()
         if args.with_screen:
             seed_screen()

@@ -210,14 +210,11 @@ Coverage reports are uploaded as artifacts and retained for 7 days.
 
 ## Database Setup
 
-Two Docker containers are used for local development:
+PostgreSQL is the sole database for both system metadata and demo business data:
 
 ```bash
-# PostgreSQL 16 (internal metadata DB)
+# PostgreSQL 16 (metadata + demo data in `demo` schema)
 docker start postgres16
-
-# MySQL 8 (external datasource for testing)
-docker start mysql8
 ```
 
 Connection details:
@@ -225,6 +222,5 @@ Connection details:
 | Container | Port | User | Password | Database |
 |-----------|------|------|----------|----------|
 | `postgres16` | 5432 | `dataease` | `dataease` | `dataease` |
-| `mysql8` | 3306 | `root` | (empty) | - |
 
 The `DE_DATABASE_URL` env var in `.env` points to the PostgreSQL container.
