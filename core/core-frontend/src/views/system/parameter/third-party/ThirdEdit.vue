@@ -13,11 +13,19 @@ interface DingtalkForm {
   domain?: string
   valid?: boolean
   enabled?: boolean
+  mode?: string
+  apiKey?: string
+  aesKey?: string
+  aesIv?: string
 }
 const state = reactive({
   form: reactive<DingtalkForm>({
     id: null,
-    domain: null
+    domain: null,
+    mode: 'basic',
+    apiKey: null,
+    aesKey: null,
+    aesIv: null
   })
 })
 const validateUrl = (_, value, callback) => {
@@ -43,15 +51,31 @@ const rule = reactive<FormRules>({
       trigger: 'blur'
     },
     { required: true, validator: validateUrl, trigger: 'blur' }
+  ],
+  apiKey: [
+    {
+      validator: (_, value, callback) => {
+        if (state.form.mode === 'advanced' && !value) {
+          callback(new Error(t('common.please_input') + t('common.sqlbot_api_key')))
+          return
+        }
+        callback()
+      },
+      trigger: ['blur', 'change']
+    }
   ]
 })
 
-const edit = ({ id, domain, valid, enabled }) => {
+const edit = ({ id, domain, valid, enabled, mode, apiKey, aesKey, aesIv }) => {
   state.form = {
     id,
     domain,
     valid,
-    enabled
+    enabled,
+    mode: mode || 'basic',
+    apiKey: apiKey || null,
+    aesKey: aesKey || null,
+    aesIv: aesIv || null
   }
   dialogVisible.value = true
 }
@@ -179,6 +203,38 @@ defineExpose({
       <el-form-item :label="$t('common.application_id')" prop="id">
         <el-input v-model="state.form.id" :placeholder="t('common.the_application_id')" />
       </el-form-item>
+      <el-form-item :label="$t('common.sqlbot_mode')">
+        <el-radio-group v-model="state.form.mode">
+          <el-radio label="basic">{{ t('common.sqlbot_mode_basic') }}</el-radio>
+          <el-radio label="advanced">{{ t('common.sqlbot_mode_advanced') }}</el-radio>
+        </el-radio-group>
+      </el-form-item>
+      <template v-if="state.form.mode === 'advanced'">
+        <el-form-item :label="$t('common.sqlbot_api_key')" prop="apiKey">
+          <el-input
+            v-model="state.form.apiKey"
+            :placeholder="t('common.sqlbot_api_key_placeholder')"
+            type="password"
+            show-password
+          />
+        </el-form-item>
+        <el-form-item :label="$t('common.sqlbot_aes_key')">
+          <el-input
+            v-model="state.form.aesKey"
+            :placeholder="t('common.sqlbot_aes_key_placeholder')"
+            type="password"
+            show-password
+          />
+        </el-form-item>
+        <el-form-item :label="$t('common.sqlbot_aes_iv')">
+          <el-input
+            v-model="state.form.aesIv"
+            :placeholder="t('common.sqlbot_aes_iv_placeholder')"
+            type="password"
+            show-password
+          />
+        </el-form-item>
+      </template>
     </el-form>
     <template #footer>
       <span class="dialog-footer">

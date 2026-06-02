@@ -12,6 +12,12 @@ const existInfo = ref(true)
 const copyList = []
 const settingList = reactive([
   {
+    pkey: t('common.sqlbot_mode'),
+    pval: '',
+    type: 'text',
+    sort: 1
+  },
+  {
     pkey: t('common.sqlbot_server_url'),
     pval: '',
     type: 'text',
@@ -28,9 +34,13 @@ const info = ref({
   id: '',
   domain: '',
   enabled: false,
-  valid: false
+  valid: false,
+  mode: 'basic',
+  apiKey: '',
+  aesKey: '',
+  aesIv: ''
 })
-const mappingArray = ['domain', 'id']
+const mappingArray = ['mode', 'domain', 'id']
 const search = () => {
   const url = '/sysParameter/sqlbot'
   request.get({ url }).then(res => {
@@ -40,6 +50,13 @@ const search = () => {
         const element = settingList[index]
         const key = mappingArray[index]
         element['pval'] = res.data[key] || '-'
+      }
+      const modeEntry = settingList.find(s => s.pkey === t('common.sqlbot_mode'))
+      if (modeEntry) {
+        modeEntry.pval =
+          res.data.mode === 'advanced'
+            ? t('common.sqlbot_mode_advanced')
+            : t('common.sqlbot_mode_basic')
       }
     }
   })
