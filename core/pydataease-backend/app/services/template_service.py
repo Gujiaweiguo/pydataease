@@ -97,10 +97,11 @@ class TemplateService:
         user: TokenUser,
     ) -> dict:
         tpl_id = _new_id()
+        categories = payload.categories or ([] if payload.pid in (None, "0", "") else [payload.pid])
         data: dict[str, object] = {
             "id": tpl_id,
             "name": payload.name,
-            "pid": payload.pid,
+            "pid": categories[0] if categories else payload.pid,
             "level": 0,
             "dv_type": payload.dv_type,
             "node_type": payload.node_type,
@@ -113,6 +114,13 @@ class TemplateService:
             "dynamic_data": payload.dynamic_data,
         }
         tpl = await self.template_repo.create(data)
+        for category_id in categories:
+            await self.category_map_repo.create({
+                "id": _new_id(),
+                "template_id": tpl_id,
+                "category_id": category_id,
+            })
+        await self.session.commit()
         return _tpl_to_dict(tpl)
 
     async def name_list(self) -> list[dict]:
@@ -252,6 +260,18 @@ class TemplateService:
     async def category_template_name_check(
         self, payload: CategoryTemplateNameCheckRequest
     ) -> str:
+        if not payload.name or not payload.categories:
+            return "none"
+
+        for category_id in payload.categories:
+            maps = await self.category_map_repo.list_by_category_id(category_id)
+            for category_map in maps:
+                if not category_map.template_id:
+                    continue
+                tpl = await self.template_repo.get_by_id(category_map.template_id)
+                if tpl is not None and tpl.name == payload.name:
+                    return "exist"
+
         return "none"
 
     async def delete_category(self, category_id: str) -> str:

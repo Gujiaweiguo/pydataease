@@ -1,6 +1,21 @@
 from __future__ import annotations
 
-from pydantic import AliasChoices, BaseModel, ConfigDict, Field
+import json
+
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field, field_validator
+
+
+JsonObject = dict[str, object]
+JsonArray = list[object]
+
+
+def _parse_json_value(value: object) -> object:
+    if isinstance(value, str):
+        stripped = value.strip()
+        if not stripped:
+            return None
+        return json.loads(stripped)
+    return value
 
 
 class TemplateTreeNode(BaseModel):
@@ -23,6 +38,7 @@ class TemplateSaveRequest(BaseModel):
 
     name: str
     pid: str | None = "0"
+    categories: list[str] | None = None
     dv_type: str | None = Field(
         "dashboard", validation_alias=AliasChoices("dvType", "dv_type")
     )
@@ -33,15 +49,20 @@ class TemplateSaveRequest(BaseModel):
         "self", validation_alias=AliasChoices("templateType", "template_type")
     )
     snapshot: str | None = None
-    template_style: dict | None = Field(
+    template_style: JsonObject | None = Field(
         None, validation_alias=AliasChoices("templateStyle", "template_style")
     )
-    template_data: dict | None = Field(
+    template_data: JsonObject | JsonArray | None = Field(
         None, validation_alias=AliasChoices("templateData", "template_data")
     )
-    dynamic_data: dict | None = Field(
+    dynamic_data: JsonObject | JsonArray | None = Field(
         None, validation_alias=AliasChoices("dynamicData", "dynamic_data")
     )
+
+    @field_validator("template_style", "template_data", "dynamic_data", mode="before")
+    @classmethod
+    def parse_serialized_json(cls, value: object) -> object:
+        return _parse_json_value(value)
 
 
 class TemplateUpdateRequest(BaseModel):
@@ -50,15 +71,20 @@ class TemplateUpdateRequest(BaseModel):
     id: str
     name: str | None = None
     snapshot: str | None = None
-    template_style: dict | None = Field(
+    template_style: JsonObject | None = Field(
         None, validation_alias=AliasChoices("templateStyle", "template_style")
     )
-    template_data: dict | None = Field(
+    template_data: JsonObject | JsonArray | None = Field(
         None, validation_alias=AliasChoices("templateData", "template_data")
     )
-    dynamic_data: dict | None = Field(
+    dynamic_data: JsonObject | JsonArray | None = Field(
         None, validation_alias=AliasChoices("dynamicData", "dynamic_data")
     )
+
+    @field_validator("template_style", "template_data", "dynamic_data", mode="before")
+    @classmethod
+    def parse_serialized_json(cls, value: object) -> object:
+        return _parse_json_value(value)
 
 
 class TemplateListRequest(BaseModel):
