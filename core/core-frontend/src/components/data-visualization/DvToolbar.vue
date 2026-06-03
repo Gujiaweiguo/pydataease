@@ -87,7 +87,7 @@ const closeEditCanvasName = () => {
     return
   }
   if (inputName.value.trim().length > 64 || inputName.value.trim().length < 1) {
-    ElMessage.warning('名称字段长度1-64个字符')
+    ElMessage.warning(t('visualization.length_1_64_characters'))
     editCanvasName()
     return
   }
@@ -133,11 +133,11 @@ const resourceOptFinish = param => {
 
 const saveCanvasWithCheck = (withPublish = false, status?) => {
   if (userStore.getOid && wsCache.get('user.oid') && userStore.getOid !== wsCache.get('user.oid')) {
-    ElMessageBox.confirm('已切换至新组织，无权保存其他组织的资源', {
+    ElMessageBox.confirm(t('visualization.from_other_organizations'), {
       confirmButtonType: 'primary',
       type: 'warning',
-      confirmButtonText: '关闭页面',
-      cancelButtonText: '取消',
+      confirmButtonText: t('visualization.close_the_page'),
+      cancelButtonText: t('visualization.cancel'),
       autofocus: false,
       showClose: false
     }).then(() => {

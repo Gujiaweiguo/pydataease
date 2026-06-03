@@ -4,10 +4,12 @@ import { eventList } from '@/utils/events'
 import { ref } from 'vue'
 import { dvMainStoreWithOut } from '@/store/modules/data-visualization/dvMain'
 import { eventStoreWithOut } from '@/store/modules/data-visualization/event'
+import { useI18n } from '@/hooks/web/useI18n'
 import { storeToRefs } from 'pinia'
 const dvMainStore = dvMainStoreWithOut()
 const eventStore = eventStoreWithOut()
 const { curComponent } = storeToRefs(dvMainStore)
+const { t } = useI18n()
 
 const isShowEvent = ref(false)
 const eventActiveName = ref('redirect')
@@ -25,7 +27,7 @@ const removeEvent = event => {
 <template>
   <div class="event-list">
     <div class="div-events">
-      <el-button @click="isShowEvent = true">添加事件</el-button>
+      <el-button @click="isShowEvent = true">{{ t('visualization.add_event') }}</el-button>
       <div>
         <el-tag
           v-for="event in Object.keys(curComponent.events)"
@@ -52,17 +54,17 @@ const removeEvent = event => {
             v-if="item.key == 'redirect'"
             v-model="item.param"
             type="textarea"
-            placeholder="请输入完整的 URL"
+            :placeholder="t('visualization.input_full_url')"
           />
           <el-input
             v-if="item.key == 'alert'"
             v-model="item.param"
             type="textarea"
-            placeholder="请输入要 alert 的内容"
+            :placeholder="t('visualization.input_alert_content')"
           />
-          <el-button style="margin-top: 20px" @click="addEvent(item.key, item.param)"
-            >确定</el-button
-          >
+          <el-button style="margin-top: 20px" @click="addEvent(item.key, item.param)">
+            {{ t('visualization.confirm') }}
+          </el-button>
         </el-tab-pane>
       </el-tabs>
     </Modal>

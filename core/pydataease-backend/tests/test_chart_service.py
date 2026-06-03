@@ -4,6 +4,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from typing import Any, cast
 from unittest.mock import AsyncMock
+import base64
 
 import pytest
 from fastapi.responses import FileResponse
@@ -131,3 +132,132 @@ async def test_export_details_returns_file_response_for_dataease_bi(tmp_path: Pa
     assert worksheet is not None
     rows = list(worksheet.iter_rows(values_only=True))
     assert rows == [("name", "value"), ("alice", 1)]
+
+
+def test_resolve_computed_expression_supports_double_encoded_origin_name() -> None:
+    service = ChartService(cast(AsyncSession, cast(Any, SimpleNamespace())))
+    expression = "[1715072798361]*[1715072798367]"
+    double_encoded = base64.b64encode(base64.b64encode(expression.encode("utf-8"))).decode("utf-8")
+
+    field = {
+        "originName": double_encoded,
+        "extField": 2,
+    }
+    all_fields = [
+        {"id": "1715072798361", "originName": "单价"},
+        {"id": "1715072798367", "originName": "销售数量"},
+    ]
+
+    resolved = service._resolve_computed_expression(field, all_fields)
+
+    assert resolved == 'chart_source."单价"*chart_source."销售数量"'
+
+
+def test_resolve_computed_expression_keeps_single_encoded_origin_name() -> None:
+    service = ChartService(cast(AsyncSession, cast(Any, SimpleNamespace())))
+    expression = "round(sum([7193537137675866112])/count([1715072798366])/100,2)"
+    encoded = base64.b64encode(expression.encode("utf-8")).decode("utf-8")
+
+    field = {
+        "originName": encoded,
+        "extField": 2,
+    }
+    all_fields = [
+        {"id": "7193537137675866112", "originName": "销售金额"},
+        {"id": "1715072798366", "originName": "账单流水号"},
+    ]
+
+    resolved = service._resolve_computed_expression(field, all_fields)
+
+    assert resolved == 'round(sum(chart_source."销售金额")/count(chart_source."账单流水号")/100,2)'
+
+
+def test_resolve_computed_expression_supports_nested_computed_references() -> None:
+    service = ChartService(cast(AsyncSession, cast(Any, SimpleNamespace())))
+    inner_expression = "[1715072798361]*[1715072798367]"
+    outer_expression = "round(sum([7193537137675866112])/count([1715072798366])/100,2)"
+
+    field = {
+        "originName": base64.b64encode(base64.b64encode(outer_expression.encode("utf-8"))).decode("utf-8"),
+        "extField": 2,
+    }
+    all_fields = [
+        {
+            "id": "7193537137675866112",
+            "originName": base64.b64encode(base64.b64encode(inner_expression.encode("utf-8"))).decode("utf-8"),
+            "extField": 2,
+        },
+        {"id": "1715072798361", "originName": "单价", "extField": 0},
+        {"id": "1715072798367", "originName": "销售数量", "extField": 0},
+        {"id": "1715072798366", "originName": "账单流水号", "extField": 0},
+    ]
+
+    resolved = service._resolve_computed_expression(field, all_fields)
+
+    assert resolved == (
+        'round(sum(chart_source."单价"*chart_source."销售数量")/'
+        'count(chart_source."账单流水号")/100,2)'
+    )
+
+
+def test_resolve_computed_expression_supports_triple_encoded_origin_name() -> None:
+    service = ChartService(cast(AsyncSession, cast(Any, SimpleNamespace())))
+    expression = "[1715072798361]*[1715072798367]"
+    triple_encoded = base64.b64encode(
+        base64.b64encode(base64.b64encode(expression.encode("utf-8")))
+    ).decode("utf-8")
+
+    field = {
+        "originName": triple_encoded,
+        "extField": 2,
+    }
+    all_fields = [
+        {"id": "1715072798361", "originName": "单价", "extField": 0},
+        {"id": "1715072798367", "originName": "销售数量", "extField": 0},
+    ]
+
+    resolved = service._resolve_computed_expression(field, all_fields)
+
+    assert resolved == 'chart_source."单价"*chart_source."销售数量"'
+
+
+def test_build_chart_sql_does_not_wrap_aggregated_computed_expression_twice() -> None:
+    service = ChartService(cast(AsyncSession, cast(Any, SimpleNamespace())))
+
+    sql = service._build_chart_sql(
+        'SELECT * FROM "demo_tea_order"',
+        [],
+        [
+            {
+                "id": "7193537244429291520",
+                "dataeaseName": "f_39fd4542efb6a572",
+                "name": "客单价",
+                "summary": "sum",
+                "extField": 2,
+                "originName": base64.b64encode(
+                    base64.b64encode(
+                        b'round(sum([7193537137675866112])/count([1715072798366])/100,2)'
+                    )
+                ).decode("utf-8"),
+            }
+        ],
+        1000,
+        [
+            {
+                "id": "7193537137675866112",
+                "originName": base64.b64encode(
+                    base64.b64encode(b'[1715072798361]*[1715072798367]')
+                ).decode("utf-8"),
+                "extField": 2,
+            },
+            {"id": "1715072798361", "originName": "单价", "extField": 0},
+            {"id": "1715072798367", "originName": "销售数量", "extField": 0},
+            {"id": "1715072798366", "originName": "账单流水号", "extField": 0},
+        ],
+    )
+
+    assert 'SUM(round(' not in sql
+    assert (
+        'round(sum(chart_source."单价"*chart_source."销售数量")/'
+        'count(chart_source."账单流水号")/100,2) AS "f_39fd4542efb6a572"'
+    ) in sql

@@ -3238,6 +3238,11 @@ export default {
     enable_event_binding: 'Enable Event Binding',
     event_binding_tips:
       'Event bindings will take effect after exiting edit mode. When rich text have event binding enabled, their internal click events will be disabled.',
+    add_event: 'Add Event',
+    input_full_url: 'Please enter a complete URL',
+    input_alert_content: 'Please enter the alert content',
+    component_move_out_tab: 'Component will be moved out of Tab',
+    jump_no_dashboard_tips: 'No target dashboard specified for redirect',
     input_url_tips: 'Please enter the redirect URL',
     edit_title: 'Edit Title',
     custom_sort: 'Custom Sort',

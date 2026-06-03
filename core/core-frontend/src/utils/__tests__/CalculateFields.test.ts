@@ -69,4 +69,13 @@ describe('CalculateFields utils', () => {
 
     expect(payload[0].originName).toBe('订单日期')
   })
+
+  it('does not re-encode already encoded computed origin names', () => {
+    const encoded = Base64.encode('[1715072798361]*[1715072798367]')
+    const fields = [{ extField: 2, originName: encoded }]
+
+    originNameHandle(fields as any)
+
+    expect(fields[0].originName).toBe(encoded)
+  })
 })

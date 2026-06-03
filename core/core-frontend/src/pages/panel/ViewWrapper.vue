@@ -230,7 +230,11 @@ onMounted(() => {
     />
     <user-view-enlarge ref="userViewEnlargeRef"></user-view-enlarge>
   </div>
-  <empty-background v-if="!state.initState" description="参数不能为空" img-type="noneWhite" />
+  <empty-background
+    v-if="!state.initState"
+    :description="t('visualization.no_params_tips')"
+    img-type="noneWhite"
+  />
   <XpackComponent ref="openHandler" jsname="L2NvbXBvbmVudC9lbWJlZGRlZC1pZnJhbWUvT3BlbkhhbmRsZXI=" />
 </template>
 

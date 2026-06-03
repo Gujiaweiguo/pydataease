@@ -114,6 +114,31 @@ async def test_big_screen_api_kpi_returns_value(api_client: httpx.AsyncClient) -
 
 @E2E_GATE
 @pytest.mark.asyncio
+async def test_big_screen_api_avg_order_value_computed_kpi_returns_value(
+    api_client: httpx.AsyncClient,
+) -> None:
+    headers = await login(api_client)
+
+    resp = await api_client.post(
+        "/de2api/chart/getData",
+        json={"id": CHART_IDS[3]},
+        headers=headers,
+    )
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["code"] == 0, f"Avg order KPI error: {body.get('data', {}).get('error')}"
+
+    data = body["data"]
+    assert data.get("error") is None, f"Avg order KPI error: {data.get('error')}"
+
+    data_items = data.get("data", [])
+    assert len(data_items) == 1, f"Avg order KPI should return exactly 1 data point, got {len(data_items)}"
+    assert data_items[0]["name"] == "客单价"
+    assert data_items[0]["value"] > 0, "Avg order KPI value should be positive"
+
+
+@E2E_GATE
+@pytest.mark.asyncio
 async def test_big_screen_api_trend_chart_has_data(api_client: httpx.AsyncClient) -> None:
     headers = await login(api_client)
 

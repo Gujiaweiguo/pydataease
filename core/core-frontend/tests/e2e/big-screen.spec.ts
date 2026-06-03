@@ -77,6 +77,18 @@ test.describe('Demo big screen (大屏) rendering', () => {
     }
   })
 
+  test('computed KPI indicators show expected seeded values', async ({ page }) => {
+    await page.goto(SCREEN_URL)
+    await page.waitForSelector('#wrapper-outer-id-995100000000000103', { timeout: 30_000 })
+    await page.waitForTimeout(3000)
+
+    const totalSales = page.locator('#wrapper-outer-id-995100000000000101')
+    await expect(totalSales).toContainText('169,715')
+
+    const avgOrderValue = page.locator('#wrapper-outer-id-995100000000000103')
+    await expect(avgOrderValue).toContainText('28.29')
+  })
+
   test('chart canvases are present for non-KPI components', async ({ page }) => {
     await page.goto(SCREEN_URL)
     await page.waitForSelector('#wrapper-outer-id-995100000000000105', { timeout: 30_000 })
