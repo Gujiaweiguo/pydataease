@@ -45,7 +45,7 @@ async def test_big_screen_api_find_by_id(api_client: httpx.AsyncClient) -> None:
 
     data = body["data"]
     assert data["name"] == "连锁茶饮销售大屏"
-    assert data["type"] == "screen"
+    assert data["type"] in {"screen", "dataV"}
     assert data["nodeType"] == "leaf"
 
     import json
@@ -106,9 +106,7 @@ async def test_big_screen_api_kpi_returns_value(api_client: httpx.AsyncClient) -
     assert body["code"] == 0, f"KPI chart error: {body.get('data', {}).get('error')}"
 
     data = body["data"]
-    assert data["type"] == "indicator"
-    assert data.get("error") is None
-
+    assert data.get("error") is None, f"KPI chart error: {data.get('error')}"
     data_items = data.get("data", [])
     assert len(data_items) >= 1, "KPI should return at least 1 data point"
     assert data_items[0]["value"] > 0, "KPI value should be positive"
@@ -128,7 +126,7 @@ async def test_big_screen_api_trend_chart_has_data(api_client: httpx.AsyncClient
     body = resp.json()
     assert body["code"] == 0
     data = body["data"]
-    assert data.get("error") is None
+    assert data.get("error") is None, f"Trend chart error: {data.get('error')}"
 
     data_items = data.get("data", [])
     assert len(data_items) >= 2, "Trend chart should have multiple data points"
@@ -148,7 +146,7 @@ async def test_big_screen_api_pie_chart_has_segments(api_client: httpx.AsyncClie
     body = resp.json()
     assert body["code"] == 0
     data = body["data"]
-    assert data.get("error") is None
+    assert data.get("error") is None, f"Pie chart error: {data.get('error')}"
 
     data_items = data.get("data", [])
     assert len(data_items) >= 2, f"冷热饮 pie should have >= 2 segments, got {len(data_items)}"

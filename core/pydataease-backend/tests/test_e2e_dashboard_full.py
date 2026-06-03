@@ -42,7 +42,7 @@ async def test_e2e_dashboard_full() -> None:
             folder_response = await api_client.post(
                 "/de2api/dataVisualization/save",
                 headers=headers,
-                json={"name": folder_name, "nodeType": "folder", "pid": 0, "type": "dashboard"},
+                json={"name": folder_name, "nodeType": "folder", "pid": 0, "type": "panel"},
             )
             folder_body = assert_ok(folder_response)
             folder_data = data_dict(folder_body)
@@ -54,7 +54,7 @@ async def test_e2e_dashboard_full() -> None:
             dashboard_response = await api_client.post(
                 "/de2api/dataVisualization/save",
                 headers=headers,
-                json={"name": dashboard_name, "nodeType": "leaf", "pid": ids["folder"], "type": "dashboard"},
+                json={"name": dashboard_name, "nodeType": "leaf", "pid": ids["folder"], "type": "panel"},
             )
             dashboard_body = assert_ok(dashboard_response)
             dashboard_data = data_dict(dashboard_body)
@@ -90,14 +90,14 @@ async def test_e2e_dashboard_full() -> None:
             name_check_new = await api_client.post(
                 "/de2api/dataVisualization/nameCheck",
                 headers=headers,
-                json={"name": f"{dashboard_name} Unique", "pid": ids["folder"], "type": "dashboard", "nodeType": "leaf", "opt": "new"},
+                json={"name": f"{dashboard_name} Unique", "pid": ids["folder"], "type": "panel", "nodeType": "leaf", "opt": "new"},
             )
             name_check_new_body = assert_ok(name_check_new)
             assert name_check_new_body["data"] is True
             name_check_existing = await api_client.post(
                 "/de2api/dataVisualization/nameCheck",
                 headers=headers,
-                json={"name": dashboard_name, "pid": ids["folder"], "type": "dashboard", "nodeType": "leaf", "opt": "new"},
+                json={"name": dashboard_name, "pid": ids["folder"], "type": "panel", "nodeType": "leaf", "opt": "new"},
             )
             name_check_existing_body = assert_ok(name_check_existing)
             assert name_check_existing_body["data"] is False

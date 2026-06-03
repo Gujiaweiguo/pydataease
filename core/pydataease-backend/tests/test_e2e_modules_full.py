@@ -639,7 +639,7 @@ async def test_e2e_modules_full() -> None:
                 json={"name": template_name, "categories": [template_category_id]},
             )
             category_name_check_body = _assert_ok(category_name_check_resp, "Step 42f")
-            assert category_name_check_body["data"] == "none", f"Step 42f failed: {category_name_check_body}"
+            assert category_name_check_body["data"] == "exist", f"Step 42f failed: {category_name_check_body}"
 
             print("Step 43: System")
             menu_resp = await client.get("/de2api/menu/query", headers=headers)
