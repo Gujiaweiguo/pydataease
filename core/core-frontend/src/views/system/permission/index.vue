@@ -782,7 +782,7 @@ onMounted(async () => {
   .menu-section {
     flex: 1;
     min-height: 0;
-    overflow: hidden;
+    overflow: auto;
   }
 
   .section-header {
@@ -809,8 +809,8 @@ onMounted(async () => {
   }
 
   .tree-shell {
-    height: calc(100% - 68px);
     min-height: 420px;
+    max-height: calc(100vh - 380px);
     padding: 0 16px 16px;
     overflow: auto;
   }
