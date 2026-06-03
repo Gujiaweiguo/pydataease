@@ -127,7 +127,7 @@ const isBulletGraph = computed(() => {
 })
 
 const isHorizontalLayout = computed(() => {
-  return props.chart.customAttr.basicStyle.layout === 'horizontal'
+  return props.chart?.customAttr?.basicStyle?.layout === 'horizontal'
 })
 
 onMounted(() => {

@@ -333,7 +333,7 @@ watch(
           <collapse-switch-item
             :themes="themes"
             v-model="chart.customStyle.text.show"
-            v-if="showProperties('title-selector')"
+            v-if="showProperties('title-selector') && chart.customStyle?.text"
             :change-model="chart.customStyle.text"
             @modelChange="val => onTextChange(val, 'show')"
             name="title"
@@ -349,7 +349,7 @@ watch(
           </collapse-switch-item>
           <collapse-switch-item
             :themes="themes"
-            v-if="showProperties('legend-selector')"
+            v-if="showProperties('legend-selector') && chart.customStyle?.legend"
             v-model="chart.customStyle.legend.show"
             :change-model="chart.customStyle.legend"
             @modelChange="val => onLegendChange(val, 'show')"
@@ -427,7 +427,7 @@ watch(
           <collapse-switch-item
             :themes="themes"
             v-model="chart.customAttr.indicatorName.show"
-            v-if="showProperties('indicator-name-selector')"
+            v-if="showProperties('indicator-name-selector') && chart.customAttr?.indicatorName"
             :change-model="chart.customAttr.indicatorName"
             @modelChange="val => onIndicatorNameChange(val, 'show')"
             :title="t('visualization.indicator_name')"
@@ -476,7 +476,7 @@ watch(
           </el-collapse-item>
           <collapse-switch-item
             :themes="themes"
-            v-if="showProperties('label-selector')"
+            v-if="showProperties('label-selector') && chart.customAttr?.label"
             v-model="chart.customAttr.label.show"
             :change-model="chart.customAttr.label"
             @modelChange="val => onLabelChange({ data: val }, 'show')"
@@ -493,12 +493,12 @@ watch(
             />
           </collapse-switch-item>
           <collapse-switch-item
-            v-if="showProperties('tooltip-selector')"
+            v-if="showProperties('tooltip-selector') && chart.customAttr?.tooltip"
             v-model="chart.customAttr.tooltip.show"
             :themes="themes"
             :change-model="chart.customAttr.tooltip"
             :title="t('chart.tooltip')"
-            :show-switch="propertyInnerAll['tooltip-selector'].includes('show')"
+            :show-switch="propertyInnerAll['tooltip-selector']?.includes('show')"
             name="tooltip"
             @modelChange="val => onTooltipChange({ data: val }, 'show')"
           >
@@ -513,12 +513,12 @@ watch(
             />
           </collapse-switch-item>
           <collapse-switch-item
-            v-if="showProperties('table-header-selector')"
+            v-if="showProperties('table-header-selector') && chart.customAttr?.tableHeader"
             v-model="chart.customAttr.tableHeader.showTableHeader"
             :change-model="chart.customAttr.tableHeader"
             :effect="themes"
             :title="t('chart.table_header')"
-            :show-switch="propertyInnerAll['table-header-selector'].includes('showTableHeader')"
+            :show-switch="propertyInnerAll['table-header-selector']?.includes('showTableHeader')"
             name="tableHeader"
             @modelChange="val => onTableHeaderChange(val, 'showTableHeader')"
           >
@@ -603,7 +603,7 @@ watch(
         <el-collapse v-model="state.styleActiveNames" class="style-collapse">
           <collapse-switch-item
             :themes="themes"
-            v-if="showProperties('x-axis-selector')"
+            v-if="showProperties('x-axis-selector') && chart.customStyle?.xAxis"
             v-model="chart.customStyle.xAxis.show"
             :change-model="chart.customStyle.xAxis"
             @modelChange="val => onChangeXAxisForm(val, 'show')"
@@ -620,7 +620,7 @@ watch(
           </collapse-switch-item>
           <collapse-switch-item
             :themes="themes"
-            v-if="showProperties('y-axis-selector')"
+            v-if="showProperties('y-axis-selector') && chart.customStyle?.yAxis"
             v-model="chart.customStyle.yAxis.show"
             :change-model="chart.customStyle.yAxis"
             @modelChange="val => onChangeYAxisForm(val, 'show')"
@@ -638,7 +638,7 @@ watch(
 
           <collapse-switch-item
             :themes="themes"
-            v-if="showProperties('dual-y-axis-selector')"
+            v-if="showProperties('dual-y-axis-selector') && chart.customStyle?.yAxis"
             v-model="chart.customStyle.yAxis.show"
             :change-model="chart.customStyle.yAxis"
             @modelChange="val => onChangeYAxisForm(val, 'show')"
@@ -657,7 +657,7 @@ watch(
 
           <collapse-switch-item
             :themes="themes"
-            v-if="showProperties('summary-selector')"
+            v-if="showProperties('summary-selector') && chart.customAttr?.basicStyle"
             v-model="chart.customAttr.basicStyle.showSummary"
             :change-model="chart.customAttr.basicStyle"
             @modelChange="val => onBasicStyleChange({ data: val }, 'showSummary')"
