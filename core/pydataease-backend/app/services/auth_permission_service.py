@@ -133,7 +133,8 @@ class AuthPermissionService:
     async def get_menu_permission(self, request: MenuPermissionRequest, user: TokenUser) -> PermissionVO:
         target_type = await self._infer_target_type(request.id, user.oid)
         await self._assert_target_in_scope(target_type, request.id, user)
-        grants = await self.repo.get_menu_point_grants(target_type, request.id, self._menu_grant_oid(target_type, user, request.id))
+        oid = await self._menu_grant_oid(target_type, user, request.id)
+        grants = await self.repo.get_menu_point_grants(target_type, request.id, oid)
         permissions = [PermissionItem(id=menu_id, weight=1 if granted else 0) for menu_id, granted in grants.items()]
         return PermissionVO(
             root=self._is_root_access(user),
@@ -165,7 +166,7 @@ class AuthPermissionService:
     async def save_menu_per(self, editor: MenuPerEditor, user: TokenUser) -> None:
         target_type = await self._infer_target_type(editor.id, user.oid)
         await self._require_auth_manage_permission(user, target_type, editor.id)
-        oid = self._menu_grant_oid(target_type, user, editor.id)
+        oid = await self._menu_grant_oid(target_type, user, editor.id)
         grants = [(int(item.id), True) for item in editor.permissions]
         await self.repo.save_menu_point_grants(target_type, editor.id, oid, grants)
 
@@ -250,7 +251,7 @@ class AuthPermissionService:
 
         for target_id in creator.ids:
             target_type = await self._infer_target_type(target_id, user.oid)
-            oid = self._menu_grant_oid(target_type, user, target_id)
+            oid = await self._menu_grant_oid(target_type, user, target_id)
             grants = [(int(item.id), True) for item in creator.permissions]
             await self.repo.save_menu_point_grants(target_type, target_id, oid, grants)
 
@@ -474,9 +475,15 @@ class AuthPermissionService:
 
         return False
 
-    def _menu_grant_oid(self, target_type: str, user: TokenUser, target_id: int) -> int:
-        del target_id
-        return user.oid if target_type == "role" else 0
+    async def _menu_grant_oid(self, target_type: str, user: TokenUser, target_id: int) -> int:
+        if target_type != "role":
+            return 0
+        # Use the role's own oid, not the current user's oid.
+        # Global roles (oid=0) store their grants with oid=0.
+        role_oid = (
+            await self.session.execute(select(CoreRole.oid).where(CoreRole.id == target_id).limit(1))
+        ).scalar_one_or_none()
+        return role_oid if role_oid is not None else user.oid
 
 
 async def get_auth_permission_service(session: AsyncSession = Depends(get_db)) -> AuthPermissionService:
