@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 import json
 import logging
 import os
@@ -566,7 +567,13 @@ class ChartService:
     ) -> str:
         dimensions = [item for item in x_axis if self._field_key(item)]
         metrics = [item for item in y_axis if self._field_key(item)]
-        all_fields = [*dimensions, *metrics]
+        axis_fields = [*dimensions, *metrics]
+        all_fields = [*axis_fields]
+        if all_dataset_fields:
+            existing_ids = {str(f.get("id", "")) for f in all_fields}
+            for f in all_dataset_fields:
+                if str(f.get("id", "")) not in existing_ids:
+                    all_fields.append(f)
 
         if not dimensions and not metrics:
             return base_sql
@@ -668,7 +675,37 @@ class ChartService:
         return 0
 
     def _select_expression(self, field: dict[str, Any], all_fields: list[dict[str, Any]]) -> str:
+        if self._field_ext_type(field) == 2:
+            resolved = self._resolve_computed_expression(field, all_fields)
+            if resolved is not None:
+                return resolved
         return self._column_reference(self._sql_column_name(field))
+
+    def _resolve_computed_expression(self, field: dict[str, Any], all_fields: list[dict[str, Any]]) -> str | None:
+        raw_origin = field.get("originName") or field.get("origin_name")
+        if not isinstance(raw_origin, str) or not raw_origin:
+            return None
+        try:
+            decoded = base64.b64decode(raw_origin).decode("utf-8")
+        except Exception:
+            return None
+        field_id_map: dict[str, dict[str, Any]] = {}
+        for f in all_fields:
+            fid = str(f.get("id", ""))
+            if fid:
+                field_id_map[f"[{fid}]"] = f
+        pattern_parts = re.split(r"(\[\d+\])", decoded)
+        result_parts: list[str] = []
+        for part in pattern_parts:
+            if part in field_id_map:
+                ref_field = field_id_map[part]
+                ref_col = str(ref_field.get("originName") or ref_field.get("name") or ref_field.get("dataeaseName") or "")
+                if not ref_col:
+                    return None
+                result_parts.append(self._column_reference(ref_col))
+            else:
+                result_parts.append(part)
+        return "".join(result_parts)
 
     @staticmethod
     def _sql_column_name(field: dict[str, Any]) -> str:
