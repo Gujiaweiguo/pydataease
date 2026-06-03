@@ -11,7 +11,7 @@
       <el-row>
         <el-col :span="18" style="height: 40px">
           <el-radio v-model="state.inputType" label="new_outer_template"
-            >{{ t('visualization.import_template') }}
+            >{{ t('visualization.upload_det2_template') }}
           </el-radio>
           <el-radio v-model="state.inputType" label="new_inner_template" @click="getTree"
             >{{ t('visualization.copy_template') }}
@@ -36,6 +36,12 @@
         <el-col :span="20">
           <el-input v-model="state.dvCreateInfo.name" clearable size="small" />
         </el-col>
+      </el-row>
+      <el-row v-if="state.inputType === 'new_outer_template'" class="template-upload-tip">
+        <span>{{ t('template_manage.resource_upload_tip') }}</span>
+        <el-button link type="primary" @click="openTemplateManage">
+          {{ t('template_manage.open_import_entry') }}
+        </el-button>
       </el-row>
       <el-row v-if="state.inputType === 'new_inner_template'" class="preview">
         <el-col :span="8" style="height: 100%; overflow-y: auto">
@@ -70,7 +76,9 @@ import { imgUrlTrans } from '@/utils/imgUtils'
 import { ElMessage } from 'element-plus-secondary'
 import { decompression } from '@/api/visualization/dataVisualization'
 import DeTemplatePreviewList from '@/views/common/DeTemplatePreviewList.vue'
+import { useRouter } from 'vue-router'
 const { t } = useI18n()
+const router = useRouter()
 const emits = defineEmits(['finish'])
 type TemplatePreviewItem = {
   id?: string | number
@@ -226,6 +234,10 @@ const goFile = () => {
   files.value?.click()
 }
 
+const openTemplateManage = () => {
+  window.open(router.resolve({ name: 'template-manage' }).href, '_blank')
+}
+
 const close = () => {
   state.dialogShow = false
 }
@@ -274,5 +286,13 @@ defineExpose({
   border-left: 1px solid #e6e6e6;
   height: 310px;
   background-size: 100% 100% !important;
+}
+
+.template-upload-tip {
+  margin-top: 8px;
+  align-items: center;
+  color: var(--deTextSecondary, #646a73);
+  font-size: 12px;
+  line-height: 18px;
 }
 </style>

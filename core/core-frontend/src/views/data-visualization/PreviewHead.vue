@@ -30,7 +30,7 @@ const { wsCache } = useCache('localStorage')
 const dvMainStore = dvMainStoreWithOut()
 const appStore = useAppStoreWithOut()
 const { dvInfo } = storeToRefs(dvMainStore)
-const emit = defineEmits(['reload', 'download', 'downloadAsAppTemplate'])
+const emit = defineEmits(['reload', 'download', 'downloadAsAppTemplate', 'saveToTemplate'])
 const { t } = useI18n()
 const embeddedStore = useEmbedded()
 const openType = wsCache.get('open-backend') === '1' ? '_self' : '_blank'
@@ -66,6 +66,9 @@ const download = type => {
 }
 const downloadAsAppTemplate = downloadType => {
   emit('downloadAsAppTemplate', downloadType)
+}
+const saveToTemplate = () => {
+  emit('saveToTemplate')
 }
 
 const dvEdit = () => {
@@ -224,6 +227,9 @@ const initOpenHandler = newWindow => {
                   <el-dropdown-item @click="download('pdf')">PDF</el-dropdown-item>
                   <el-dropdown-item @click="downloadAsAppTemplate('template')">{{
                     t('visualization.style_template')
+                  }}</el-dropdown-item>
+                  <el-dropdown-item @click="saveToTemplate()">{{
+                    t('visualization.save_to_panel')
                   }}</el-dropdown-item>
                   <el-dropdown-item @click="downloadAsAppTemplate('app')">{{
                     t('visualization.apply_template')

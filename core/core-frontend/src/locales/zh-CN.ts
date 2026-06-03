@@ -3507,6 +3507,7 @@ export default {
     import_template: '导入模板',
     copy_template: '复用模板',
     upload_template: '上传模板',
+    upload_det2_template: '上传 .DET2 文件',
     belong_to_category: '所属类别',
     pls_select_belong_to_category: '请选择所属类别',
     template_name_cannot_be_empty: '模板名称不能为空',
@@ -3713,7 +3714,17 @@ export default {
     get_download_link_hint: '未获取模板下载链接请联系模板市场官方',
     search_result_count: '的搜索结果是 {0} 个',
     template_center: '模版中心',
-    preview: '预览'
+    preview: '预览',
+    workflow_tip_det2:
+      '`.DET2` 用于可复用的本地模板。导出的 `.DET2` 文件可在此导入，导入后会进入本地模板库。',
+    workflow_tip_det2app:
+      '`.DET2APP` 用于应用型模板包；同样通过这里导入，并继续纳入本地模板库流程中复用。',
+    open_import_entry: '前往模板导入',
+    market_import_tip:
+      '如果要导入自己的 `.DET2` / `.DET2APP` 文件，请前往模板管理中的标准导入入口。',
+    market_reuse_tip: '导入后的模板会进入本地模板库，之后可回到这里并从“模板管理”来源中继续复用。',
+    resource_upload_tip:
+      '这里上传 `.DET2` 仅用于本次新建。若要把 `.DET2` / `.DET2APP` 纳入可复用的本地模板库，请使用“模板管理 > 导入模板”。'
   },
   work_branch: {
     new_empty: '空白新建',

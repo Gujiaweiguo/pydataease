@@ -3601,6 +3601,7 @@ export default {
     import_template: 'Import Template',
     copy_template: 'Reuse Template',
     upload_template: 'Upload Template',
+    upload_det2_template: 'Upload .DET2 File',
     belong_to_category: 'Belonging Category',
     pls_select_belong_to_category: 'Please select a category',
     template_name_cannot_be_empty: 'Template name cannot be empty',
@@ -3813,7 +3814,18 @@ export default {
       'The template download link was not obtained, please contact the template market official',
     search_result_count: 'The search results are {0}',
     template_center: 'Template Center',
-    preview: 'Preview'
+    preview: 'Preview',
+    workflow_tip_det2:
+      'Use .DET2 for reusable local templates. Exported .DET2 files can be imported here and will appear in your local template library.',
+    workflow_tip_det2app:
+      'Use .DET2APP for application-style template packages when you want to import that app template into the same local library workflow.',
+    open_import_entry: 'Go to Template Import',
+    market_import_tip:
+      'Need to import your own .DET2 or .DET2APP file? Open Template Management to use the canonical import entry.',
+    market_reuse_tip:
+      'Imported templates become part of your local template library, then you can return here and reuse them from the Template Management source.',
+    resource_upload_tip:
+      'Upload .DET2 here for one-time creation. To add .DET2 or .DET2APP files into the reusable local template library, use Template Management > Import.'
   },
   work_branch: {
     new_empty: 'New Empty',

@@ -20,6 +20,7 @@ import { download2AppTemplate, downloadCanvas2 } from '@/utils/imgUtils'
 import MultiplexPreviewShow from '@/views/data-visualization/MultiplexPreviewShow.vue'
 import DvPreview from '@/views/data-visualization/DvPreview.vue'
 import AppExportForm from '@/components/de-app/AppExportForm.vue'
+import DeTemplateSaveDialog from '@/views/common/DeTemplateSaveDialog.vue'
 import { ElMessage } from 'element-plus-secondary'
 import { useEmitt } from '@/hooks/web/useEmitt'
 
@@ -32,6 +33,7 @@ import {
   exportLogTemplate
 } from '@/api/visualization/dataVisualization'
 import { deepCopy } from '@/utils/utils'
+import { saveCanvasTemplateToLibrary } from '@/utils/templateSave'
 const userStore = useUserStoreWithOut()
 
 const userName = computed(() => userStore.getName)
@@ -46,6 +48,7 @@ const dataInitState = ref(true)
 const downloadStatus = ref(false)
 const { width, node } = useMoveLine('DASHBOARD')
 const appExportFormRef = ref(null)
+const templateSaveDialogRef = ref(null)
 const props = defineProps({
   showPosition: {
     required: false,
@@ -127,7 +130,9 @@ const loadCanvasData = (dvId, weight?, ext?) => {
 const download = type => {
   downloadStatus.value = true
   const mapElementIds = getMapElementIds(state.canvasDataPreview)
-  mapElementIds.forEach(id => useEmitt().emitter.emit('l7-prepare-picture', id))
+  mapElementIds.forEach(id => {
+    useEmitt().emitter.emit('l7-prepare-picture', id)
+  })
   setTimeout(() => {
     const vueDom = previewCanvasContainer.value.querySelector('.canvas-container')
     downloadCanvas2(type, vueDom, state.dvInfo.name, () => {
@@ -137,14 +142,18 @@ const download = type => {
         type: state.dvInfo.type === 'dashboard' ? 'panel' : 'screen'
       }
       type === 'img' ? exportLogImg(param) : exportLogPDF(param)
-      mapElementIds.forEach(id => useEmitt().emitter.emit('l7-unprepare-picture', id))
+      mapElementIds.forEach(id => {
+        useEmitt().emitter.emit('l7-unprepare-picture', id)
+      })
     })
   }, 200)
 }
 const fileDownload = (downloadType, attachParams) => {
   downloadStatus.value = true
   const mapElementIds = getMapElementIds(state.canvasDataPreview)
-  mapElementIds.forEach(id => useEmitt().emitter.emit('l7-prepare-picture', id))
+  mapElementIds.forEach(id => {
+    useEmitt().emitter.emit('l7-prepare-picture', id)
+  })
   setTimeout(() => {
     const vueDom = previewCanvasContainer.value.querySelector('.canvas-container')
     download2AppTemplate(downloadType, vueDom, state.dvInfo.name, attachParams, () => {
@@ -154,7 +163,9 @@ const fileDownload = (downloadType, attachParams) => {
         type: state.dvInfo.type === 'dashboard' ? 'panel' : 'screen'
       }
       downloadType === 'app' ? exportLogApp(param) : exportLogTemplate(param)
-      mapElementIds.forEach(id => useEmitt().emitter.emit('l7-unprepare-picture', id))
+      mapElementIds.forEach(id => {
+        useEmitt().emitter.emit('l7-unprepare-picture', id)
+      })
     })
   }, 1000)
 }
@@ -181,6 +192,43 @@ const downLoadToAppPre = () => {
       description: null
     })
   }
+}
+const openTemplateSaveDialog = () => {
+  templateSaveDialogRef.value?.open({
+    name: state.dvInfo?.name || '',
+    dvType: state.dvInfo?.type || 'dataV'
+  })
+}
+
+const saveToTemplateLibrary = async ({ name, categoryId }, done) => {
+  downloadStatus.value = true
+  const mapElementIds = getMapElementIds(state.canvasDataPreview)
+  mapElementIds.forEach(id => {
+    useEmitt().emitter.emit('l7-prepare-picture', id)
+  })
+  setTimeout(async () => {
+    try {
+      const vueDom = previewCanvasContainer.value.querySelector('.canvas-container')
+      const success = await saveCanvasTemplateToLibrary({
+        canvasDom: vueDom,
+        name,
+        categoryId,
+        t
+      })
+      if (success) {
+        exportLogTemplate({
+          id: state.dvInfo.id,
+          type: state.dvInfo.type === 'dashboard' ? 'panel' : 'screen'
+        })
+      }
+      done(success)
+    } finally {
+      downloadStatus.value = false
+      mapElementIds.forEach(id => {
+        useEmitt().emitter.emit('l7-unprepare-picture', id)
+      })
+    }
+  }, 1000)
 }
 const checkTemplate = () => {
   let templateViewNames = ','
@@ -306,6 +354,7 @@ onBeforeMount(() => {
           @reload="reload"
           @download="download"
           @downloadAsAppTemplate="downloadAsAppTemplate"
+          @saveToTemplate="openTemplateSaveDialog"
         />
         <div
           v-if="showPosition === 'multiplexing' && dataInitState"
@@ -367,6 +416,10 @@ onBeforeMount(() => {
     :canvas-view-info="state.canvasViewInfoPreview"
     @downLoadApp="downLoadApp"
   ></app-export-form>
+  <de-template-save-dialog
+    ref="templateSaveDialogRef"
+    @submit="saveToTemplateLibrary"
+  ></de-template-save-dialog>
 </template>
 
 <style lang="less">

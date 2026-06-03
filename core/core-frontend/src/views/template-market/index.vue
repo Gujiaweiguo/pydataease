@@ -89,6 +89,9 @@
               :value="item.value"
             />
           </el-select>
+          <el-button class="import-manage-button" secondary @click="openTemplateManage">
+            {{ t('template_manage.open_import_entry') }}
+          </el-button>
           <template v-if="['branchCreate', 'create'].includes(state.curPosition)">
             <el-divider class="custom-divider-line" direction="vertical" />
             <el-icon class="custom-market-icon hover-icon_custom" @click="close"><Close /></el-icon>
@@ -96,6 +99,10 @@
         </el-row>
       </el-row>
       <el-row class="template-area">
+        <div class="template-market-tip">
+          <p>{{ t('template_manage.market_import_tip') }}</p>
+          <p>{{ t('template_manage.market_reuse_tip') }}</p>
+        </div>
         <el-scrollbar>
           <div class="template-left">
             <el-tree
@@ -198,6 +205,7 @@ import { nextTick, reactive, watch, onMounted, ref, computed } from 'vue'
 import { useI18n } from '@/hooks/web/useI18n'
 import { ElMessage } from 'element-plus-secondary'
 import { useCache } from '@/hooks/web/useCache'
+import { useRouter } from 'vue-router'
 import MarketPreviewV2 from '@/views/template-market/component/MarketPreviewV2.vue'
 import { imgUrlTrans } from '@/utils/imgUtils'
 import CategoryTemplateV2 from '@/views/template-market/component/CategoryTemplateV2.vue'
@@ -213,6 +221,7 @@ import {
   matchesTemplateType
 } from '@/utils/visualizationResource'
 const { t } = useI18n()
+const router = useRouter()
 const { wsCache } = useCache()
 const embeddedStore = useEmbedded()
 const appStore = useAppStoreWithOut()
@@ -220,7 +229,7 @@ const interactiveStore = interactiveStoreWithOut()
 
 type TreeNodeData = { label: string }
 
-defineProps({
+const props = defineProps({
   isDialog: {
     type: Boolean,
     default: false
@@ -432,6 +441,19 @@ const nodeClick = (data: TreeNodeData) => {
 }
 const closePreview = () => {
   previewModel.value = 'full'
+}
+
+const openTemplateManage = () => {
+  const templateManageHref = `${window.location.origin}${window.location.pathname}#/template-manage`
+  if (props.isDialog) {
+    window.open(templateManageHref, '_blank')
+    return
+  }
+  if (router) {
+    router.push({ name: 'template-manage' })
+    return
+  }
+  window.location.href = templateManageHref
 }
 
 const initMarketTemplate = async () => {
@@ -675,10 +697,29 @@ defineExpose({
           margin-left: 12px;
           width: 104px;
         }
+
+        .import-manage-button {
+          margin-left: 12px;
+        }
       }
     }
     .template-area {
       height: calc(100vh - 135px);
+      .template-market-tip {
+        width: 100%;
+        margin-bottom: 16px;
+        padding: 12px 16px;
+        background: var(--ed-color-primary-1a, #e0eaff);
+        border-radius: 12px;
+        color: var(--deTextPrimary, #1f2329);
+        line-height: 20px;
+
+        p + p {
+          margin-top: 4px;
+          color: var(--deTextSecondary, #646a73);
+        }
+      }
+
       .template-left {
         padding: 8px;
         width: 204px;

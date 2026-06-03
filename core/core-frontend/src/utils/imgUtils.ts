@@ -8,6 +8,10 @@ import FileSaver from 'file-saver'
 import { deepCopy } from '@/utils/utils'
 import { domToPng } from 'modern-screenshot'
 import { initCanvasDataPrepare } from '@/utils/canvasUtils'
+
+type TemplateExportType = 'template' | 'app'
+type TemplateAttachParams = Record<string, any> | null | undefined
+
 const embeddedStore = useEmbedded()
 const dvMainStore = dvMainStoreWithOut()
 const { canvasStyleData, componentData, canvasViewInfo, canvasViewDataInfo, dvInfo } =
@@ -59,49 +63,92 @@ function prePareTemplateBaseData(dvId, callback) {
   }
 }
 
+function getTemplateBaseData(dvId) {
+  return new Promise<{ canvasDataResult: string; canvasStyleResult: string }>(resolve => {
+    prePareTemplateBaseData(dvId, resolve)
+  })
+}
+
+function getStaticSource() {
+  return new Promise(resolve => {
+    findStaticSource(resolve)
+  })
+}
+
+export async function buildTemplateExportInfo(
+  downloadType: TemplateExportType,
+  canvasDom,
+  name: string,
+  attachParams: TemplateAttachParams
+) {
+  const staticResource = await getStaticSource()
+  const canvas = await html2canvas(canvasDom)
+  const canvasViewDataTemplate = deepCopy(canvasViewInfo.value)
+  Object.keys(canvasViewDataTemplate).forEach(viewId => {
+    canvasViewDataTemplate[viewId].data = canvasViewDataInfo.value[viewId]
+  })
+  const snapshot = canvas.toDataURL('image/jpeg', 0.1)
+  const templateName = attachParams?.appName ? attachParams.appName : name
+  const { canvasDataResult, canvasStyleResult } = await getTemplateBaseData(dvInfo.value.id)
+  return {
+    name: templateName,
+    templateType: 'self',
+    snapshot,
+    dvType: dvInfo.value.type,
+    nodeType: downloadType,
+    version: 3,
+    canvasStyleData: canvasStyleResult,
+    componentData: canvasDataResult,
+    dynamicData: JSON.stringify(canvasViewDataTemplate),
+    staticResource: JSON.stringify(staticResource || {}),
+    appData: attachParams ? JSON.stringify(attachParams) : null
+  }
+}
+
+export function toTemplateSavePayload(templateInfo, categories: string[]) {
+  const currentCategories = (Array.isArray(categories) ? categories : [categories]).filter(Boolean)
+  return {
+    level: '1',
+    pid: currentCategories[0] || '',
+    categories: currentCategories,
+    dvType: templateInfo.dvType,
+    nodeType: 'template',
+    name: templateInfo.name,
+    templateType: templateInfo.templateType || 'self',
+    templateStyle: templateInfo.canvasStyleData,
+    templateData: templateInfo.componentData,
+    dynamicData: templateInfo.dynamicData,
+    appData: templateInfo.appData,
+    staticResource: templateInfo.staticResource,
+    snapshot: templateInfo.snapshot,
+    version: templateInfo.version
+  }
+}
+
 export function download2AppTemplate(downloadType, canvasDom, name, attachParams, callBack?) {
   try {
-    findStaticSource(function (staticResource) {
-      html2canvas(canvasDom).then(canvas => {
-        const canvasViewDataTemplate = deepCopy(canvasViewInfo.value)
-        Object.keys(canvasViewDataTemplate).forEach(viewId => {
-          canvasViewDataTemplate[viewId].data = canvasViewDataInfo.value[viewId]
-        })
-        const snapshot = canvas.toDataURL('image/jpeg', 0.1) // 0.1是图片质量
-        const templateName = attachParams?.appName ? attachParams.appName : name
-        if (snapshot !== '') {
-          prePareTemplateBaseData(
-            dvInfo.value.id,
-            function ({ canvasDataResult, canvasStyleResult }) {
-              const templateInfo = {
-                name: templateName,
-                templateType: 'self',
-                snapshot: snapshot,
-                dvType: dvInfo.value.type,
-                nodeType: downloadType,
-                version: 3,
-                canvasStyleData: canvasStyleResult,
-                componentData: canvasDataResult,
-                dynamicData: JSON.stringify(canvasViewDataTemplate),
-                staticResource: JSON.stringify(staticResource || {}),
-                appData: attachParams ? JSON.stringify(attachParams) : null
-              }
-              const blob = new Blob([JSON.stringify(templateInfo)], { type: '' })
-              if (downloadType === 'template') {
-                FileSaver.saveAs(blob, name + '-TEMPLATE.DET2')
-              } else if (downloadType === 'app') {
-                FileSaver.saveAs(blob, templateName + '-APP.DET2APP')
-              }
-              if (callBack) {
-                callBack()
-              }
-            }
-          )
-        } else if (callBack) {
+    buildTemplateExportInfo(downloadType, canvasDom, name, attachParams)
+      .then(templateInfo => {
+        if (!templateInfo.snapshot) {
+          callBack()
+          return
+        }
+        const blob = new Blob([JSON.stringify(templateInfo)], { type: '' })
+        if (downloadType === 'template') {
+          FileSaver.saveAs(blob, name + '-TEMPLATE.DET2')
+        } else if (downloadType === 'app') {
+          FileSaver.saveAs(blob, templateInfo.name + '-APP.DET2APP')
+        }
+        if (callBack) {
           callBack()
         }
       })
-    })
+      .catch(e => {
+        if (callBack) {
+          callBack()
+        }
+        console.error(e)
+      })
   } catch (e) {
     if (callBack) {
       callBack()

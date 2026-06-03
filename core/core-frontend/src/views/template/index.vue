@@ -31,6 +31,14 @@
       </el-button>
     </div>
   </div>
+  <el-alert
+    class="template-flow-alert"
+    type="info"
+    :closable="false"
+    show-icon
+    :title="t('template_manage.workflow_tip_det2')"
+    :description="t('template_manage.workflow_tip_det2app')"
+  />
   <div class="sys-setting-p">
     <div class="container-sys-param" v-show="state.templateCategories.length">
       <div style="width: 100%; height: 100%">
@@ -791,6 +799,10 @@ onMounted(() => {
 .template-search-class {
   float: right;
   width: 220px;
+}
+
+.template-flow-alert {
+  margin-top: 12px;
 }
 
 .custom-position {

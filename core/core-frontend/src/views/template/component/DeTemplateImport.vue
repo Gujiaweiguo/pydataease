@@ -26,6 +26,10 @@
             @change="handleFileChange"
           />
         </div>
+        <div class="template-import-tip">
+          <p>{{ t('template_manage.workflow_tip_det2') }}</p>
+          <p>{{ t('template_manage.workflow_tip_det2app') }}</p>
+        </div>
       </el-form-item>
       <el-row v-show="!!state.templateInfo.snapshot" class="preview" :style="classBackground" />
       <el-form-item
@@ -335,6 +339,17 @@ if (props.templateId) {
   border-left: 1px solid #e6e6e6;
   height: 300px;
   background-size: 100% 100% !important;
+}
+
+.template-import-tip {
+  margin-top: 8px;
+  color: var(--deTextSecondary, #646a73);
+  font-size: 12px;
+  line-height: 18px;
+
+  p + p {
+    margin-top: 4px;
+  }
 }
 </style>
 
