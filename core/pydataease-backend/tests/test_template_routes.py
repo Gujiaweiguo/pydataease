@@ -3,6 +3,7 @@ from __future__ import annotations
 # pyright: reportMissingTypeArgument=false, reportAttributeAccessIssue=false
 
 from collections.abc import Generator
+from typing import cast
 
 import pytest
 from httpx import AsyncClient
@@ -204,6 +205,30 @@ async def test_template_save(
     data = response.json()["data"]
     assert data["id"] == "tpl_100"
     assert len(fake_service.saved_templates) == 1
+
+
+@pytest.mark.asyncio
+async def test_template_save_accepts_stringified_json_fields(
+    client: AsyncClient,
+    auth_headers: dict[str, str],
+    fake_service: FakeTemplateService,
+) -> None:
+    response = await client.post(
+        "/de2api/templateManage/save",
+        headers=auth_headers,
+        json={
+            "name": "Serialized Template",
+            "dvType": "dashboard",
+            "templateStyle": '{"width": 1920, "height": 1080}',
+            "templateData": '[{"component":"Text"}]',
+            "dynamicData": '{"view-1": {"data": []}}'
+        },
+    )
+    assert response.status_code == 200
+    payload, _user = cast(tuple[object, object], fake_service.saved_templates[-1])
+    assert payload.template_style == {"width": 1920, "height": 1080}
+    assert payload.template_data == [{"component": "Text"}]
+    assert payload.dynamic_data == {"view-1": {"data": []}}
 
 
 @pytest.mark.asyncio

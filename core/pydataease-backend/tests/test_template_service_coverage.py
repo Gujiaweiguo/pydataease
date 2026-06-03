@@ -23,6 +23,7 @@ from app.schemas.auth import TokenUser  # pyright: ignore[reportImplicitRelative
 from app.schemas.template import (  # pyright: ignore[reportImplicitRelativeImport]
     BatchDeleteRequest,
     BatchUpdateRequest,
+    CategoryTemplateNameCheckRequest,
     FindCategoriesByTemplateIdsRequest,
     FindCategoriesRequest,
     NameCheckRequest,
@@ -158,6 +159,12 @@ class FakeTemplateRepo:
     async def list_all(self) -> list[object]:
         return self.templates
 
+    async def get_by_id(self, template_id: str) -> object | None:
+        for template in self.templates:
+            if getattr(template, "id", None) == template_id:
+                return template
+        return None
+
 
 class FakeMapRepo:
     def __init__(self, maps_by_category: dict[str, list[object]] | None = None) -> None:
@@ -194,8 +201,14 @@ async def test_name_check_honors_create_and_update_modes() -> None:
     assert await service.name_check(NameCheckRequest(name="Alpha", opt_type=None)) == "exist_all"
     assert await service.name_check(NameCheckRequest(name="Alpha", id="tpl-1", opt_type="update")) == "none"
     assert await service.name_check(NameCheckRequest(name="Beta", id="tpl-1", opt_type="update")) == "exist_all"
+    cast(Any, service).category_map_repo = FakeMapRepo(
+        {"cat-1": [SimpleNamespace(template_id="tpl-1")]}
+    )
     assert await service.category_template_name_check(
         cast(Any, SimpleNamespace(name="Alpha", categories=["cat-1"]))
+    ) == "exist"
+    assert await service.category_template_name_check(
+        cast(Any, SimpleNamespace(name="Gamma", categories=["cat-1"]))
     ) == "none"
 
 
@@ -260,11 +273,17 @@ class TestTemplateServiceIntegration:
 
     async def test_save_find_update_list_and_delete_template(self, db_session: AsyncSession) -> None:
         service = _service(db_session)
+        cat_repo = TemplateCategoryRepository(db_session)
+        map_repo = TemplateCategoryMapRepository(db_session)
         template_ids: list[str] = []
+        category_ids: list[str] = []
         try:
+            category = await cat_repo.create(_category_payload(_stamp(), name="service-save-category"))
+            category_ids.append(category.id)
             created = await service.save(
                 TemplateSaveRequest(
                     name=f"service-template-{_stamp()}",
+                    categories=[category.id],
                     node_type="panel",
                     dv_type="dashboard",
                     template_type="self",
@@ -284,10 +303,18 @@ class TestTemplateServiceIntegration:
             listed = await service.list_templates("service-template")
             filtered = await service.template_list(
                 TemplateListBodyRequest(
-                    category_id=None,
+                    category_id=category.id,
                     dv_type="dashboard",
                     template_type="self",
                     keyword="service-template",
+                )
+            )
+            category_ids_for_template = await service.find_categories_by_template_ids(
+                FindCategoriesByTemplateIdsRequest(template_ids=[created["id"]])
+            )
+            duplicate_name_check = await service.category_template_name_check(
+                CategoryTemplateNameCheckRequest(
+                    name=created["name"], categories=[category.id]
                 )
             )
             updated = await service.update(
@@ -306,7 +333,14 @@ class TestTemplateServiceIntegration:
             assert by_body[0]["id"] == created["id"]
             assert any(item["id"] == created["id"] for item in all_names)
             assert any(item["id"] == created["id"] for item in listed)
+            assert created["pid"] == category.id
             assert filtered[0]["templateType"] == "self"
+            assert filtered[0]["id"] == created["id"]
+            assert category.id in category_ids_for_template
+            assert duplicate_name_check == "exist"
+
+            stored_maps = await map_repo.list_by_template_id(created["id"])
+            assert [item.category_id for item in stored_maps] == [category.id]
             assert updated["name"] == "updated-template-name"
             assert await service.find_by_body(
                 TemplateFindRequest(id=None, template_id=created["id"])
@@ -319,7 +353,7 @@ class TestTemplateServiceIntegration:
                 TemplateFindRequest(id=created["id"], template_id=None)
             ) == []
         finally:
-            await _cleanup_templates(db_session, template_ids=template_ids, category_ids=[])
+            await _cleanup_templates(db_session, template_ids=template_ids, category_ids=category_ids)
 
     async def test_categories_tree_form_find_and_delete_category(self, db_session: AsyncSession) -> None:
         service = _service(db_session)
