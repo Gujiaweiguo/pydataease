@@ -56,6 +56,22 @@ def upgrade() -> None:
                 "name": "menu:watermark:use",
                 "create_time": _CREATE_TIME,
             },
+            {
+                "id": 10013,
+                "menu_id": 16,
+                "resource_type": None,
+                "permission_type": "use",
+                "name": "menu:parameter:use",
+                "create_time": _CREATE_TIME,
+            },
+            {
+                "id": 10014,
+                "menu_id": 1780196628838721401,
+                "resource_type": None,
+                "permission_type": "use",
+                "name": "menu:sys-variable:use",
+                "create_time": _CREATE_TIME,
+            },
         ],
     )
 
@@ -74,10 +90,12 @@ def upgrade() -> None:
             {"id": 20010, "role_id": 1, "permission_point_id": 10010, "oid": 0, "granted": True, "create_time": _CREATE_TIME},
             {"id": 20011, "role_id": 1, "permission_point_id": 10011, "oid": 0, "granted": True, "create_time": _CREATE_TIME},
             {"id": 20012, "role_id": 1, "permission_point_id": 10012, "oid": 0, "granted": True, "create_time": _CREATE_TIME},
+            {"id": 20013, "role_id": 1, "permission_point_id": 10013, "oid": 0, "granted": True, "create_time": _CREATE_TIME},
+            {"id": 20014, "role_id": 1, "permission_point_id": 10014, "oid": 0, "granted": True, "create_time": _CREATE_TIME},
         ],
     )
 
 
 def downgrade() -> None:
-    op.execute("DELETE FROM core_role_permission WHERE id IN (20010, 20011, 20012)")
-    op.execute("DELETE FROM core_permission_point WHERE id IN (10010, 10011, 10012)")
+    op.execute("DELETE FROM core_role_permission WHERE id IN (20010, 20011, 20012, 20013, 20014)")
+    op.execute("DELETE FROM core_permission_point WHERE id IN (10010, 10011, 10012, 10013, 10014)")
