@@ -2,7 +2,11 @@ import { describe, expect, it } from 'vitest'
 import { encodeCalculatedFieldsDeep, decodeCalculatedFieldsDeep } from '../calculateFieldTransform'
 
 describe('calculateFieldTransform', () => {
-  const computedField = { extField: 2, originName: '[1715072798361]*[1715072798367]', name: 'revenue' }
+  const computedField = {
+    extField: 2,
+    originName: '[1715072798361]*[1715072798367]',
+    name: 'revenue'
+  }
   const regularField = { extField: 0, originName: 'sales_amount', name: 'amount' }
 
   it('encodes computed field originName (extField === 2)', () => {
