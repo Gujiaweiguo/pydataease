@@ -10,7 +10,19 @@
         'create-area': !canCreateCurrentTemplate
       }"
     >
-      <el-row class="demonstration"> {{ template.title }} </el-row>
+      <el-row class="demonstration">
+        <span class="template-title-text">{{ template.title }}</span>
+        <span class="template-action-icons">
+          <el-tooltip :content="t('template_manage.export_template')" placement="top">
+            <el-icon class="action-icon" @click.stop="handleDownload"><Download /></el-icon>
+          </el-tooltip>
+          <el-tooltip :content="t('commons.delete')" placement="top">
+            <el-icon class="action-icon action-icon-danger" @click.stop="handleDelete"
+              ><Delete
+            /></el-icon>
+          </el-tooltip>
+        </span>
+      </el-row>
       <el-row class="template-button" v-show="canCreateCurrentTemplate">
         <el-button secondary style="width: calc(50% - 18px)" @click="templateInnerPreview">{{
           t('visualization.preview')
@@ -28,9 +40,15 @@ import { useI18n } from '@/hooks/web/useI18n'
 import { computed } from 'vue'
 import { imgUrlTrans } from '@/utils/imgUtils'
 import { hasTemplateCreatePermission } from '@/utils/visualizationResource'
+import { Download, Delete } from '@element-plus/icons-vue'
 const { t } = useI18n()
 
-const emits = defineEmits(['templateApply', 'templatePreview'])
+const emits = defineEmits([
+  'templateApply',
+  'templatePreview',
+  'templateDownload',
+  'templateDelete'
+])
 
 const props = defineProps({
   template: {
@@ -92,6 +110,14 @@ const apply = () => {
 const templateInnerPreview = () => {
   emits('templatePreview', props.template.id)
 }
+
+const handleDownload = () => {
+  emits('templateDownload', props.template)
+}
+
+const handleDelete = () => {
+  emits('templateDelete', props.template)
+}
 </script>
 
 <style scoped lang="less">
@@ -140,6 +166,37 @@ const templateInnerPreview = () => {
   display: none;
 }
 
+.template-title-text {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.template-action-icons {
+  display: none;
+  align-items: center;
+  gap: 4px;
+  margin-left: 8px;
+  flex-shrink: 0;
+
+  .action-icon {
+    font-size: 14px;
+    cursor: pointer;
+    color: var(--TextSecondary, #646a73);
+    padding: 2px;
+    border-radius: 4px;
+
+    &:hover {
+      background: rgba(31, 35, 41, 0.1);
+    }
+
+    &.action-icon-danger:hover {
+      color: var(--ed-color-danger, #f54a45);
+    }
+  }
+}
+
 .bottom-area {
   height: 38px;
 }
@@ -166,6 +223,9 @@ const templateInnerPreview = () => {
 .testcase-template:hover {
   .template-button {
     display: block;
+  }
+  .template-action-icons {
+    display: flex;
   }
 }
 .create-area {

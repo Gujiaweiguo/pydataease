@@ -23,6 +23,8 @@
       :create-auth="createAuth"
       @templateApply="templateApply"
       @templatePreview="templatePreview"
+      @templateDownload="templateDownload"
+      @templateDelete="templateDelete"
     />
   </el-col>
 </template>
@@ -31,7 +33,12 @@
 import TemplateMarketV2Item from '@/views/template-market/component/TemplateMarketV2Item.vue'
 import { computed } from 'vue'
 import { useI18n } from '@/hooks/web/useI18n'
-const emits = defineEmits(['templateApply', 'templatePreview'])
+const emits = defineEmits([
+  'templateApply',
+  'templatePreview',
+  'templateDownload',
+  'templateDelete'
+])
 const { t } = useI18n()
 
 const templateApply = params => {
@@ -40,6 +47,14 @@ const templateApply = params => {
 
 const templatePreview = params => {
   emits('templatePreview', params)
+}
+
+const templateDownload = params => {
+  emits('templateDownload', params)
+}
+
+const templateDelete = params => {
+  emits('templateDelete', params)
 }
 
 type TemplateCategoryItem = {
