@@ -24,6 +24,7 @@ import { useLinkStoreWithOut } from '@/store/modules/link'
 import { useAppStoreWithOut } from '@/store/modules/app'
 
 const { t } = useI18n()
+const { emitter } = useEmitt()
 const state = reactive({
   paginationConfig: {
     currentPage: 1,
@@ -77,6 +78,7 @@ type ExportTaskNotice = {
 
 onUnmounted(() => {
   clearInterval(timer)
+  emitter.off('task-export-topic-call', taskExportTopicCall)
 })
 const handleClick = (tab?: { paneName?: string | number }) => {
   if (tab) {
@@ -347,7 +349,7 @@ const delAll = () => {
     })
 }
 
-useEmitt({ name: 'task-export-topic-call', callback: taskExportTopicCall })
+emitter.on('task-export-topic-call', taskExportTopicCall)
 
 defineExpose({
   init
@@ -356,7 +358,6 @@ defineExpose({
 
 <template>
   <el-drawer
-    v-loading="drawerLoading"
     modal-class="de-export-excel"
     :title="$t('data_export.export_center')"
     v-model="drawer"
@@ -365,139 +366,151 @@ defineExpose({
     append-to-body
     :before-close="handleClose"
   >
-    <el-tabs v-model="activeName" @tab-click="handleClick">
-      <el-tab-pane v-for="tab in tabList" :key="tab.name" :label="tab.label" :name="tab.name" />
-    </el-tabs>
-    <el-button
-      v-if="activeName === 'SUCCESS' && multipleSelection.length === 0"
-      secondary
-      @click="downLoadAll"
-    >
-      <template #icon>
-        <Icon name="dv-preview-download"><dvPreviewDownload class="svg-icon" /></Icon>
-      </template>
-      {{ $t('data_export.download_all') }}
-    </el-button>
-    <el-button
-      v-if="activeName === 'SUCCESS' && multipleSelection.length !== 0"
-      secondary
-      @click="downLoadAll"
-    >
-      <template #icon>
-        <Icon name="dv-preview-download"><dvPreviewDownload class="svg-icon" /></Icon>
-      </template>
-      {{ $t('data_export.download') }}
-    </el-button>
-    <el-button v-if="multipleSelection.length === 0" secondary @click="delAll"
-      ><template #icon>
-        <Icon name="de-delete"><deDelete class="svg-icon" /></Icon> </template
-      >{{ $t('data_export.del_all') }}
-    </el-button>
-    <el-button v-if="multipleSelection.length !== 0" secondary @click="delAll"
-      ><template #icon>
-        <Icon name="de-delete"><deDelete class="svg-icon" /></Icon> </template
-      >{{ $t('commons.delete') }}
-    </el-button>
-    <div class="table-container" :class="!tableData.length && 'hidden-bottom'">
-      <GridTable
-        ref="multipleTable"
-        :pagination="state.paginationConfig"
-        :table-data="tableData"
-        class="popper-max-width"
-        @current-change="pageChange"
-        @size-change="sizeChange"
-        @selection-change="handleSelectionChange"
+    <div v-loading="drawerLoading">
+      <el-tabs v-model="activeName" @tab-click="handleClick">
+        <el-tab-pane v-for="tab in tabList" :key="tab.name" :label="tab.label" :name="tab.name" />
+      </el-tabs>
+      <el-button
+        v-if="activeName === 'SUCCESS' && multipleSelection.length === 0"
+        secondary
+        @click="downLoadAll"
       >
-        <el-table-column type="selection" width="50" />
-        <el-table-column prop="fileName" :label="$t('driver.file_name')" width="332">
-          <template #default="scope">
-            <div class="name-excel">
-              <el-icon style="font-size: 24px">
-                <Icon name="icon_file-excel_colorful"
-                  ><icon_fileExcel_colorful class="svg-icon"
-                /></Icon>
-              </el-icon>
-              <div class="name-content">
-                <div class="fileName">{{ scope.row.fileName }}</div>
-                <div
-                  v-if="scope.row.exportStatus === 'FAILED'"
-                  class="failed"
-                  @click="showMsg(scope.row)"
-                >
-                  {{ $t('data_export.export_failed') }}
-                </div>
-                <div v-if="scope.row.exportStatus === 'SUCCESS'" class="success">
-                  {{ scope.row.fileSize }}{{ scope.row.fileSizeUnit }}
+        <template #icon>
+          <Icon name="dv-preview-download"><dvPreviewDownload class="svg-icon" /></Icon>
+        </template>
+        {{ $t('data_export.download_all') }}
+      </el-button>
+      <el-button
+        v-if="activeName === 'SUCCESS' && multipleSelection.length !== 0"
+        secondary
+        @click="downLoadAll"
+      >
+        <template #icon>
+          <Icon name="dv-preview-download"><dvPreviewDownload class="svg-icon" /></Icon>
+        </template>
+        {{ $t('data_export.download') }}
+      </el-button>
+      <el-button v-if="multipleSelection.length === 0" secondary @click="delAll"
+        ><template #icon>
+          <Icon name="de-delete"><deDelete class="svg-icon" /></Icon> </template
+        >{{ $t('data_export.del_all') }}
+      </el-button>
+      <el-button v-if="multipleSelection.length !== 0" secondary @click="delAll"
+        ><template #icon>
+          <Icon name="de-delete"><deDelete class="svg-icon" /></Icon> </template
+        >{{ $t('commons.delete') }}
+      </el-button>
+      <div class="table-container" :class="!tableData.length && 'hidden-bottom'">
+        <GridTable
+          ref="multipleTable"
+          :pagination="state.paginationConfig"
+          :table-data="tableData"
+          class="popper-max-width"
+          @current-change="pageChange"
+          @size-change="sizeChange"
+          @selection-change="handleSelectionChange"
+        >
+          <el-table-column type="selection" width="50" />
+          <el-table-column prop="fileName" :label="$t('driver.file_name')" width="332">
+            <template #default="scope">
+              <div class="name-excel">
+                <el-icon style="font-size: 24px">
+                  <Icon name="icon_file-excel_colorful"
+                    ><icon_fileExcel_colorful class="svg-icon"
+                  /></Icon>
+                </el-icon>
+                <div class="name-content">
+                  <div class="fileName">{{ scope.row.fileName }}</div>
+                  <div
+                    v-if="scope.row.exportStatus === 'FAILED'"
+                    class="failed"
+                    @click="showMsg(scope.row)"
+                  >
+                    {{ $t('data_export.export_failed') }}
+                  </div>
+                  <div v-if="scope.row.exportStatus === 'SUCCESS'" class="success">
+                    {{ scope.row.fileSize }}{{ scope.row.fileSizeUnit }}
+                  </div>
                 </div>
               </div>
-            </div>
-            <div v-if="scope.row.exportStatus === 'FAILED'" class="red-line" />
-            <el-progress
-              v-if="scope.row.exportStatus === 'IN_PROGRESS'"
-              :percentage="+scope.row.exportProgress"
-            />
-          </template>
-        </el-table-column>
-        <el-table-column prop="exportFromName" :label="$t('data_export.export_obj')" width="200" />
-        <el-table-column prop="exportTime" width="180" :label="$t('data_export.export_time')">
-          <template #default="scope">
-            <span>{{ timestampFormatDate(scope.row.exportTime) }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="exportFromType" width="120" :label="$t('data_export.export_from')">
-          <template #default="scope">
-            <span v-if="scope.row.exportFromType === 'dataset'">{{ t('data_set.data_set') }}</span>
-            <span v-if="scope.row.exportFromType === 'chart'">{{ t('data_set.view') }}</span>
-            <span v-if="scope.row.exportFromType === 'data_filling'">{{
-              t('data_fill.data_fill')
-            }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column
-          v-if="!desktop"
-          prop="orgName"
-          :label="t('data_set.organization')"
-          width="200"
-        />
-        <el-table-column fixed="right" prop="operate" width="90" :label="$t('commons.operating')">
-          <template #default="scope">
-            <el-tooltip effect="dark" :content="t('data_set.download')" placement="top">
-              <el-button
-                v-if="scope.row.exportStatus === 'SUCCESS'"
-                text
-                @click="downloadClick(scope.row)"
-              >
-                <template #icon>
-                  <el-icon>
-                    <Icon name="dv-preview-download"><dvPreviewDownload class="svg-icon" /></Icon>
-                  </el-icon>
-                </template>
-              </el-button>
-            </el-tooltip>
+              <div v-if="scope.row.exportStatus === 'FAILED'" class="red-line" />
+              <el-progress
+                v-if="scope.row.exportStatus === 'IN_PROGRESS'"
+                :percentage="+scope.row.exportProgress"
+              />
+            </template>
+          </el-table-column>
+          <el-table-column
+            prop="exportFromName"
+            :label="$t('data_export.export_obj')"
+            width="200"
+          />
+          <el-table-column prop="exportTime" width="180" :label="$t('data_export.export_time')">
+            <template #default="scope">
+              <span>{{ timestampFormatDate(scope.row.exportTime) }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="exportFromType" width="120" :label="$t('data_export.export_from')">
+            <template #default="scope">
+              <span v-if="scope.row.exportFromType === 'dataset'">{{
+                t('data_set.data_set')
+              }}</span>
+              <span v-if="scope.row.exportFromType === 'chart'">{{ t('data_set.view') }}</span>
+              <span v-if="scope.row.exportFromType === 'data_filling'">{{
+                t('data_fill.data_fill')
+              }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column
+            v-if="!desktop"
+            prop="orgName"
+            :label="t('data_set.organization')"
+            width="200"
+          />
+          <el-table-column fixed="right" prop="operate" width="90" :label="$t('commons.operating')">
+            <template #default="scope">
+              <el-tooltip effect="dark" :content="t('data_set.download')" placement="top">
+                <el-button
+                  v-if="scope.row.exportStatus === 'SUCCESS'"
+                  text
+                  @click="downloadClick(scope.row)"
+                >
+                  <template #icon>
+                    <el-icon>
+                      <Icon name="dv-preview-download"><dvPreviewDownload class="svg-icon" /></Icon>
+                    </el-icon>
+                  </template>
+                </el-button>
+              </el-tooltip>
 
-            <el-tooltip effect="dark" :content="t('data_set.re_export')" placement="top">
-              <el-button v-if="scope.row.exportStatus === 'FAILED'" text @click="retry(scope.row)">
-                <template #icon>
-                  <Icon name="icon_refresh_outlined"
-                    ><icon_refresh_outlined class="svg-icon"
-                  /></Icon>
-                </template>
-              </el-button>
-            </el-tooltip>
+              <el-tooltip effect="dark" :content="t('data_set.re_export')" placement="top">
+                <el-button
+                  v-if="scope.row.exportStatus === 'FAILED'"
+                  text
+                  @click="retry(scope.row)"
+                >
+                  <template #icon>
+                    <Icon name="icon_refresh_outlined"
+                      ><icon_refresh_outlined class="svg-icon"
+                    /></Icon>
+                  </template>
+                </el-button>
+              </el-tooltip>
 
-            <el-tooltip effect="dark" :content="t('data_set.delete')" placement="top">
-              <el-button text @click="deleteField(scope.row)">
-                <template #icon>
-                  <Icon name="de-delete"><deDelete class="svg-icon" /></Icon>
-                </template>
-              </el-button>
-            </el-tooltip>
+              <el-tooltip effect="dark" :content="t('data_set.delete')" placement="top">
+                <el-button text @click="deleteField(scope.row)">
+                  <template #icon>
+                    <Icon name="de-delete"><deDelete class="svg-icon" /></Icon>
+                  </template>
+                </el-button>
+              </el-tooltip>
+            </template>
+          </el-table-column>
+          <template #empty>
+            <empty-background :description="description" img-type="noneWhite" />
           </template>
-        </el-table-column>
-        <template #empty>
-          <empty-background :description="description" img-type="noneWhite" />
-        </template>
-      </GridTable>
+        </GridTable>
+      </div>
     </div>
   </el-drawer>
 
