@@ -11,25 +11,24 @@
       }"
     >
       <el-row class="demonstration"> {{ template.title }} </el-row>
-      <el-row class="template-button" v-show="canCreateCurrentTemplate">
-        <el-button secondary style="width: calc(25% - 12px)" @click="templateInnerPreview">{{
+      <div class="template-button" v-show="canCreateCurrentTemplate">
+        <el-button secondary class="action-btn" @click="templateInnerPreview">{{
           t('visualization.preview')
         }}</el-button>
-        <el-button style="width: calc(25% - 12px)" type="primary" @click="apply">{{
+        <el-button type="primary" class="action-btn" @click="apply">{{
           t('visualization.apply')
         }}</el-button>
-        <el-button secondary style="width: calc(25% - 12px)" @click.stop="handleDownload">
-          <template #icon><Download /></template>
-        </el-button>
-        <el-button
-          secondary
-          style="width: calc(25% - 12px)"
-          class="delete-btn"
-          @click.stop="handleDelete"
-        >
-          <template #icon><Delete /></template>
-        </el-button>
-      </el-row>
+        <el-tooltip :content="t('visualization.export_as')" placement="top">
+          <el-button secondary class="action-btn icon-btn" @click.stop="handleDownload">
+            <template #icon><Download /></template>
+          </el-button>
+        </el-tooltip>
+        <el-tooltip :content="t('visualization.delete')" placement="top">
+          <el-button secondary class="action-btn icon-btn delete-btn" @click.stop="handleDelete">
+            <template #icon><Delete /></template>
+          </el-button>
+        </el-tooltip>
+      </div>
     </el-row>
   </div>
 </template>
@@ -159,11 +158,20 @@ const handleDelete = () => {
 }
 
 .template-button {
-  justify-content: center;
-  width: 100%;
-  padding-bottom: 8px;
   display: none;
-  gap: 4px;
+  gap: 6px;
+  padding: 0 12px 8px 12px;
+
+  .action-btn {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .icon-btn {
+    flex: 0 0 32px;
+    width: 32px;
+    padding: 8px 0;
+  }
 
   .delete-btn:hover {
     color: var(--ed-color-danger, #f54a45);

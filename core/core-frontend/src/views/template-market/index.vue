@@ -155,12 +155,13 @@
             </el-row>
             <el-row v-show="state.marketActiveTab === t('work_branch.recommend')">
               <el-row
-                style="display: inline; width: 100%; margin-bottom: 32px"
-                :style="{
-                  marginBottom: categoryItem.label !== t('work_branch.recent') ? '32px' : 0
-                }"
                 v-for="(categoryItem, index) in categoriesComputed"
                 :key="index"
+                class="template-category-section"
+                :class="{
+                  'template-category-section--no-gap':
+                    categoryItem.label === t('work_branch.recent')
+                }"
               >
                 <category-template-v2
                   v-if="categoryItem.label !== t('work_branch.recent')"
@@ -218,7 +219,12 @@
 <script setup lang="ts">
 import no_result from '@/assets/svg/no_result.svg'
 import { searchMarket } from '@/api/templateMarket'
-import { exportTemplate, templateDelete, findCategories, findCategoriesByTemplateIds } from '@/api/template'
+import {
+  exportTemplate,
+  templateDelete,
+  findCategories,
+  findCategoriesByTemplateIds
+} from '@/api/template'
 import FileSaver from 'file-saver'
 import { useEmbedded } from '@/store/modules/embedded'
 import { useAppStoreWithOut } from '@/store/modules/app'
@@ -516,6 +522,7 @@ const handleTemplateDelete = async (template: { id: string; title: string }) => 
 }
 
 const initMarketTemplate = async () => {
+  const previousActiveTab = state.marketActiveTab
   await searchMarket()
     .then(rsp => {
       state.baseUrl = rsp.data.baseUrl
@@ -526,7 +533,12 @@ const initMarketTemplate = async () => {
       state.marketTabs = rsp.data.categories.filter(category =>
         activeCategories.has(category.label)
       )
-      state.marketActiveTab = state.marketTabs[1]?.label || state.marketTabs[0]?.label || null
+      const hasPreviousActiveTab = state.marketTabs.some(
+        category => category.label === previousActiveTab
+      )
+      state.marketActiveTab = hasPreviousActiveTab
+        ? previousActiveTab
+        : state.marketTabs[1]?.label || state.marketTabs[0]?.label || null
     })
     .catch(err => {
       console.error('searchMarket:', err)
@@ -903,6 +915,20 @@ defineExpose({
       overflow: hidden;
       text-overflow: ellipsis;
     }
+  }
+}
+
+.template-category-section {
+  display: inline;
+  width: 100%;
+  margin-bottom: 40px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(31, 35, 41, 0.08);
+
+  &.template-category-section--no-gap {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: 0;
   }
 }
 </style>
