@@ -558,7 +558,7 @@ const jumpClick = (param: any) => {
           windowsJump(url, jumpInfo.jumpType, jumpInfo.windowSize)
         }
       } else {
-        ElMessage.warning('未指定跳转仪表板')
+        ElMessage.warning(t('visualization.jump_no_dashboard_tips'))
       }
     } else {
       const colList = [...param.dimensionList, ...param.quotaList]
@@ -1181,7 +1181,12 @@ const clearG2Tooltip = () => {
                 <Icon name="icon_info_outlined"><icon_info_outlined class="svg-icon" /></Icon>
               </el-icon>
             </el-tooltip>
-            <el-tooltip :effect="toolTip" placement="top" content="已设置联动" v-if="hasLinkIcon">
+            <el-tooltip
+              :effect="toolTip"
+              placement="top"
+              :content="t('visualization.linkage')"
+              v-if="hasLinkIcon"
+            >
               <el-icon :size="iconSize" class="inner-icon">
                 <Icon name="icon_link-record_outlined"
                   ><icon_linkRecord_outlined class="svg-icon"

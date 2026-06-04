@@ -47,6 +47,7 @@ from app.tasks.file_generator import generate_export_file
 logger = logging.getLogger(__name__)
 
 _SAFE_IDENTIFIER_RE = re.compile(r"^[^\W\d]\w*$", re.UNICODE)
+_AGGREGATE_CALL_RE = re.compile(r"\b(sum|count|avg|max|min|variance|stddev)\s*\(", re.IGNORECASE)
 _SUMMARY_TO_AGGREGATE = {
     "sum": "SUM",
     "avg": "AVG",
@@ -597,6 +598,9 @@ class ChartService:
                 if column not in group_by_parts:
                     group_by_parts.append(column)
                 continue
+            if self._field_ext_type(metric) == 2 and self._expression_contains_aggregate(column):
+                select_parts.append(f"{column} AS {alias}")
+                continue
             aggregate = _SUMMARY_TO_AGGREGATE.get(summary, "SUM")
             expression = "COUNT(*)" if aggregate == "COUNT" and col_name in {"*", ""} else f"{aggregate}({column})"
             select_parts.append(f"{expression} AS {alias}")
@@ -663,6 +667,10 @@ class ChartService:
         return f'chart_source.{self._quote_identifier(identifier)}'
 
     @staticmethod
+    def _expression_contains_aggregate(expression: str) -> bool:
+        return bool(_AGGREGATE_CALL_RE.search(expression))
+
+    @staticmethod
     def _field_ext_type(field: dict[str, Any]) -> int:
         ext_field = field.get("extField", 0)
         if isinstance(ext_field, str):
@@ -685,10 +693,21 @@ class ChartService:
         raw_origin = field.get("originName") or field.get("origin_name")
         if not isinstance(raw_origin, str) or not raw_origin:
             return None
-        try:
-            decoded = base64.b64decode(raw_origin).decode("utf-8")
-        except Exception:
+        decoded = raw_origin
+        decoded_at_least_once = False
+        for _ in range(3):
+            try:
+                candidate = base64.b64decode(decoded).decode("utf-8")
+            except Exception:
+                break
+            decoded = candidate
+            decoded_at_least_once = True
+            if re.search(r"\[\d+\]", decoded) or not re.fullmatch(r"[A-Za-z0-9+/=\s]+", decoded.strip()):
+                break
+
+        if not decoded_at_least_once:
             return None
+
         field_id_map: dict[str, dict[str, Any]] = {}
         for f in all_fields:
             fid = str(f.get("id", ""))
@@ -699,10 +718,21 @@ class ChartService:
         for part in pattern_parts:
             if part in field_id_map:
                 ref_field = field_id_map[part]
-                ref_col = str(ref_field.get("originName") or ref_field.get("name") or ref_field.get("dataeaseName") or "")
-                if not ref_col:
-                    return None
-                result_parts.append(self._column_reference(ref_col))
+                if self._field_ext_type(ref_field) == 2:
+                    nested_expression = self._resolve_computed_expression(ref_field, all_fields)
+                    if nested_expression is None:
+                        return None
+                    result_parts.append(nested_expression)
+                else:
+                    ref_col = str(
+                        ref_field.get("originName")
+                        or ref_field.get("name")
+                        or ref_field.get("dataeaseName")
+                        or ""
+                    )
+                    if not ref_col:
+                        return None
+                    result_parts.append(self._column_reference(ref_col))
             else:
                 result_parts.append(part)
         return "".join(result_parts)

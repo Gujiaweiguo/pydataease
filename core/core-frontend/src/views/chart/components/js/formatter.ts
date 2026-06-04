@@ -51,10 +51,13 @@ export function getUnitTypeValue(lang, value) {
 }
 
 export function initFormatCfgUnit(cfg) {
-  if (cfg && cfg.unitLanguage === undefined) {
+  if (!cfg) {
+    return
+  }
+  if (cfg.unitLanguage === undefined) {
     cfg.unitLanguage = 'ch'
   }
-  if (cfg && isEnLocal) {
+  if (isEnLocal) {
     cfg.unitLanguage = 'en'
   }
   onChangeFormatCfgUnitLanguage(cfg, cfg.unitLanguage)

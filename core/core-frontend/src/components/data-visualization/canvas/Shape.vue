@@ -1134,7 +1134,7 @@ const htmlToImage = () => {
   setTimeout(() => {
     activeWatermarkCheckUser(viewDemoInnerId.value, 'canvas-main', scale.value)
     const dom = document.getElementById(viewDemoInnerId.value)
-    downloadCanvas2('img', dom, '图表', () => {
+    downloadCanvas2('img', dom, t('visualization.view'), () => {
       // do callback
       removeActiveWatermark(viewDemoInnerId.value)
       downLoading.value = false

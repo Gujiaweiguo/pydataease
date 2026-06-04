@@ -1,8 +1,20 @@
 import { Base64 } from 'js-base64'
 
+const isBase64Encoded = (value: string) => {
+  try {
+    return Base64.encode(Base64.decode(value)) === value
+  } catch {
+    return false
+  }
+}
+
 const originNameHandle = (arr = []) => {
   arr.forEach(ele => {
-    if (ele.extField === 2) {
+    if (
+      ele.extField === 2 &&
+      typeof ele.originName === 'string' &&
+      !isBase64Encoded(ele.originName)
+    ) {
       ele.originName = Base64.encode(ele.originName)
     }
   })

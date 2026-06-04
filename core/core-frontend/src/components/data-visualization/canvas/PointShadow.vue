@@ -3,7 +3,9 @@
     <div class="point-shadow-content">
       <div id="point-shadow-component" class="point-shadow-component" />
       <div class="point-shadow-tips" :style="tipsStyleInfo">
-        <div style="width: 100%; text-align: center">组件将被移出Tab</div>
+        <div style="width: 100%; text-align: center">
+          {{ t('visualization.component_move_out_tab') }}
+        </div>
       </div>
     </div>
   </div>
@@ -11,10 +13,12 @@
 
 <script lang="ts" setup>
 import { dvMainStoreWithOut } from '@/store/modules/data-visualization/dvMain'
+import { useI18n } from '@/hooks/web/useI18n'
 import { storeToRefs } from 'pinia'
 import { computed } from 'vue'
 
 const dvMainStore = dvMainStoreWithOut()
+const { t } = useI18n()
 const { mousePointShadowMap, canvasStyleData } = storeToRefs(dvMainStore)
 defineProps({
   canvasId: {

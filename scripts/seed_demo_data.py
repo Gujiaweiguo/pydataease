@@ -512,7 +512,142 @@ def build_pg_sql() -> str:
         (985192540313620480, "总销售额", DG_ORDER, "rich-text"),
     ]
 
+    # Light-theme defaults for dashboard chart custom_attr / custom_style.
+    # Rich-text charts keep empty objects — they don't use chart rendering.
+    _LIGHT_COLORS = ["#5B8FF9", "#5AD8A6", "#F6BD16", "#E86452", "#6DC8EC",
+                     "#945FB9", "#FF9845", "#1E9493", "#FF99C3"]
+
+    _LIGHT_AXIS = {
+        "name": "", "show": True, "color": "#333333",
+        "axisLine": {"show": True, "lineStyle": {"color": "#999999", "style": "solid", "width": 1}},
+        "axisTick": {"show": False, "length": 5, "lineStyle": {"color": "#999999", "type": "solid", "width": 1}},
+        "axisLabel": {"show": True, "color": "#333333", "rotate": 0, "fontSize": 12,
+                      "formatter": "{value}", "lengthLimit": 10},
+        "axisValue": {"max": 100, "min": 10, "auto": True, "split": 10, "splitCount": 10},
+        "splitArea": {"show": False},
+        "splitLine": {"show": True, "lineStyle": {"color": "#E6E7E4", "type": "dashed", "width": 1}},
+        "splitNumber": 5,
+    }
+
+    _LIGHT_TEXT = {
+        "show": True, "color": "#333333", "remark": "", "fontSize": 18,
+        "isBolder": False, "isItalic": False, "hPosition": "left", "vPosition": "top",
+        "fontFamily": "Microsoft YaHei", "fontShadow": False, "remarkShow": False,
+        "letterSpace": "0", "remarkBackgroundColor": "#ffffff",
+    }
+
+    _LIGHT_LEGEND = {
+        "icon": "circle", "show": True, "size": 4, "sort": "none",
+        "color": "#333333", "orient": "horizontal", "fontSize": 12,
+        "hPosition": "center", "showRange": True, "vPosition": "bottom", "customSort": [],
+    }
+
+    _LIGHT_MISC = {
+        "color": "#333333", "axisLine": {"show": True, "lineStyle": {"color": "#999999", "type": "solid", "width": 1}},
+        "axisTick": {"show": False, "length": 5, "lineStyle": {"color": "#999999", "type": "solid", "width": 1}},
+        "axisLabel": {"show": False, "color": "#333333", "margin": 8, "rotate": 0,
+                      "fontSize": "12", "formatter": "{value}"},
+        "axisValue": {"max": 100, "min": 10, "auto": True, "split": 10, "splitCount": 10},
+        "splitArea": {"show": False},
+        "splitLine": {"show": True, "lineStyle": {"color": "#E6E7E4", "type": "dashed", "width": 1}},
+        "splitNumber": 5,
+    }
+
+    _LIGHT_FMT = {"type": "value", "name": "ENABLE", "unit": 1, "decimalCount": 2, "thousandSeparator": True}
+
+    def _dash_style(ctype: str) -> dict[str, Any]:
+        if ctype == "rich-text":
+            return {}
+        base = {
+            "text": dict(_LIGHT_TEXT),
+            "legend": dict(_LIGHT_LEGEND),
+            "misc": dict(_LIGHT_MISC),
+            "xAxis": dict(_LIGHT_AXIS),
+            "yAxis": dict(_LIGHT_AXIS),
+            "yAxisExt": dict(_LIGHT_AXIS),
+        }
+        if ctype in ("pie-donut", "pie"):
+            base.pop("xAxis", None)
+            base.pop("yAxis", None)
+            base.pop("yAxisExt", None)
+        return base
+
+    def _dash_attr(ctype: str) -> dict[str, Any]:
+        if ctype == "rich-text":
+            return {}
+        base_colors = {"colors": _LIGHT_COLORS, "alpha": 100, "gradient": True}
+        return {
+            "basicStyle": {**base_colors, "barGap": 0.4, "barWidth": 40, "lineWidth": 2,
+                           "lineType": "solid", "lineSmooth": True, "lineSymbol": "circle",
+                           "lineSymbolSize": 4, "radius": 100, "innerRadius": 60,
+                           "barDefault": True, "gaugeStyle": "default", "mapStyle": "normal",
+                           "mapSymbol": "circle", "mapVendor": "amap", "suspension": True,
+                           "colorScheme": "default", "areaBaseColor": "#FFFFFF",
+                           "areaBorderColor": "#303133", "mapSymbolSize": 20,
+                           "mapSymbolOpacity": 0.7, "mapSymbolStrokeWidth": 2,
+                           "scatterSymbol": "circle", "scatterSymbolSize": 8,
+                           "tablePageMode": "page", "tablePageSize": 20,
+                           "tableColumnMode": "adapt", "tableColumnWidth": 100,
+                           "tableBorderColor": "#E6E7E4", "tableScrollBarColor": "#00000024",
+                           "radiusColumnBar": "rightAngle", "columnWidthRatio": 60,
+                           "columnBarRightAngleRadius": 20},
+            "misc": {
+                "gaugeMax": 100, "gaugeMin": 0, "mapPitch": 0, "showName": True,
+                "hPosition": "center", "liquidMax": 100, "radarSize": 80,
+                "vPosition": "center", "liquidSize": 80, "radarShape": "polygon",
+                "liquidShape": "circle", "mapLineType": "arc", "gaugeMaxType": "fix",
+                "gaugeMinType": "fix", "mapLineWidth": 1, "nameFontSize": 14,
+                "treemapWidth": 80, "gaugeEndAngle": -45,
+                "gaugeMaxField": {"id": "", "summary": ""},
+                "gaugeMinField": {"id": "", "summary": ""},
+                "liquidMaxType": "fix", "nameFontColor": "#333333",
+                "treemapHeight": 80, "valueFontSize": 18,
+                "liquidMaxField": {"id": "", "summary": ""},
+                "nameFontFamily": "Microsoft YaHei", "nameFontShadow": False,
+                "nameValueSpace": 10, "pieInnerRadius": 0, "pieOuterRadius": 80,
+                "valueFontColor": "#5B8FF9", "gaugeStartAngle": 225,
+                "mapLineGradient": False, "nameLetterSpace": "0",
+                "valueFontFamily": "Microsoft YaHei", "valueFontShadow": False,
+                "nameFontIsBolder": False, "nameFontIsItalic": False,
+                "valueLetterSpace": 0, "valueFontIsBolder": True,
+                "valueFontIsItalic": False,
+                "mapLineSourceColor": "#146C94", "mapLineTargetColor": "#576CBC",
+                "mapLineAnimateDuration": 3,
+            },
+            "label": {"show": False, "color": "#333333", "fontSize": 10, "position": "top",
+                      "formatter": "", "labelLine": {"show": True}, "showQuota": False,
+                      "labelShadow": False, "labelBgColor": "", "showDimension": True,
+                      "labelFormatter": dict(_LIGHT_FMT), "showProportion": True,
+                      "labelShadowColor": "", "quotaLabelFormatter": dict(_LIGHT_FMT),
+                      "reserveDecimalCount": 2, "seriesLabelFormatter": []},
+            "tooltip": {"show": True, "color": "#333333", "confine": True, "trigger": "item",
+                        "fontSize": 12, "backgroundColor": "#ffffff",
+                        "tooltipFormatter": dict(_LIGHT_FMT), "seriesTooltipFormatter": []},
+            "tableCell": {"tableFontColor": "#333333", "tableItemAlign": "right",
+                          "tableItemHeight": 36, "tableItemBgColor": "#ffffff",
+                          "tableItemFontSize": 12},
+            "tableHeader": {"showIndex": False, "indexLabel": "序号", "tableHeaderAlign": "left",
+                            "tableTitleHeight": 36, "tableHeaderBgColor": "#f5f7fa",
+                            "tableTitleFontSize": 12, "tableHeaderFontColor": "#333333"},
+            "tableTotal": {"col": {"label": "总计", "subLabel": "小计", "totalSort": "none",
+                           "calcTotals": {"aggregation": "SUM"},
+                           "calcSubTotals": {"aggregation": "SUM"},
+                           "reverseLayout": False, "showSubTotals": True,
+                           "totalSortField": "", "showGrandTotals": True,
+                           "reverseSubLayout": False, "subTotalsDimensions": []},
+                           "row": {"label": "总计", "subLabel": "小计", "totalSort": "none",
+                           "calcTotals": {"aggregation": "SUM"},
+                           "calcSubTotals": {"aggregation": "SUM"},
+                           "reverseLayout": False, "showSubTotals": True,
+                           "totalSortField": "", "showGrandTotals": True,
+                           "reverseSubLayout": False, "subTotalsDimensions": []}},
+            "map": {"id": "", "level": "world"},
+            "modifyName": "gradient",
+        }
+
     for cid, title, table_id, ctype in chart_stubs:
+        attr_json = json.dumps(_dash_attr(ctype), ensure_ascii=False).replace("'", "''")
+        style_json = json.dumps(_dash_style(ctype), ensure_ascii=False).replace("'", "''")
         lines.append(
             f"INSERT INTO core_chart_view "
             f"(id, title, scene_id, table_id, type, render, result_count, result_mode, "
@@ -526,7 +661,7 @@ def build_pg_sql() -> str:
             f"CASE WHEN '{ctype}' = 'rich-text' THEN 'custom' ELSE 'antv' END, "
             f"1000, 'all', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, "
             f"'[]'::jsonb, '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, "
-            f"'{{}}'::jsonb, '{{}}'::jsonb, '{{}}'::jsonb, "
+            f"'{attr_json}'::jsonb, '{style_json}'::jsonb, '{{}}'::jsonb, "
             f"'[]'::jsonb, '{{}}'::jsonb, '1', {now_ms}, {now_ms}, NULL, "
             f"'panel', 'private', false, 'dataset', '[]'::jsonb, "
             f"false, 'minute', 5, false, false, NULL, NULL);"
@@ -1094,8 +1229,10 @@ def _build_screen_chart_configs(now_ms: int) -> tuple[list[str], str]:
     }
 
     def _chart_style(ctype: str) -> dict[str, Any]:
-        if ctype in ("rich-text", "indicator"):
+        if ctype == "rich-text":
             return {}
+        if ctype == "indicator":
+            return {"text": dict(_DARK_TEXT)}
         base = {
             "text": dict(_DARK_TEXT),
             "legend": dict(_DARK_LEGEND),

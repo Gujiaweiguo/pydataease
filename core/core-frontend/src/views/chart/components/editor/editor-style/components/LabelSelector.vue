@@ -355,7 +355,7 @@ const showPositionH = computed(() => {
     if (props.chart?.type !== 'bidirectional-bar') {
       return true
     }
-    return props.chart.customAttr.basicStyle.layout === 'horizontal'
+    return props.chart?.customAttr?.basicStyle?.layout === 'horizontal'
   }
   return false
 })
@@ -364,13 +364,13 @@ const showPositionV = computed(() => {
     if (props.chart?.type !== 'bidirectional-bar' && props.chart?.type !== 'bar-group') {
       return true
     }
-    return props.chart.customAttr.basicStyle.layout === 'vertical'
+    return props.chart?.customAttr?.basicStyle?.layout === 'vertical'
   }
   return false
 })
 function initBidirectionalBarPosition() {
   if (chartType.value === 'bidirectional-bar') {
-    const layout = props.chart.customAttr.basicStyle.layout
+    const layout = props.chart?.customAttr?.basicStyle?.layout
     const oldPosition = state?.labelForm?.position
     if (state?.labelForm?.position === 'inner' || state?.labelForm?.position === 'outer') {
       state.labelForm.position = 'middle'
@@ -430,7 +430,7 @@ function initPosition() {
 }
 
 watch(
-  () => props.chart.customAttr.basicStyle.layout,
+  () => props.chart?.customAttr?.basicStyle?.layout,
   () => {
     initBidirectionalBarPosition()
   },

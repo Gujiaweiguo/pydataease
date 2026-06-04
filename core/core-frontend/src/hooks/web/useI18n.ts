@@ -11,6 +11,20 @@ type I18nGlobalTranslation = {
 
 type I18nTranslationRestParameters = [string, any]
 
+const translate = (namespace: string | undefined, key: string, ...arg: unknown[]) => {
+  if (!key) return ''
+  if (!key.includes('.') && !namespace) return key
+  if (!i18n) {
+    return getKey(namespace, key)
+  }
+
+  const { t } = i18n.global
+  return (t as I18nGlobalTranslation)(
+    getKey(namespace, key),
+    ...(arg as I18nTranslationRestParameters)
+  )
+}
+
 const getKey = (namespace: string | undefined, key: string) => {
   if (!namespace) {
     return key
@@ -26,27 +40,21 @@ export const useI18n = (
 ): {
   t: I18nGlobalTranslation
 } => {
-  const normalFn = {
-    t: (key: string) => {
-      return getKey(namespace, key)
-    }
+  const tFn: I18nGlobalTranslation = (key: string, ...arg: any[]) => {
+    return translate(namespace, key, ...arg)
   }
 
   if (!i18n) {
-    return normalFn
+    return {
+      t: tFn
+    }
   }
 
-  const { t, ...methods } = i18n.global
-
-  const tFn: I18nGlobalTranslation = (key: string, ...arg: any[]) => {
-    if (!key) return ''
-    if (!key.includes('.') && !namespace) return key
-    return (t as any)(getKey(namespace, key), ...(arg as I18nTranslationRestParameters))
-  }
+  const { ...methods } = i18n.global
   return {
     ...methods,
     t: tFn
   }
 }
 
-export const t = (key: string) => key
+export const t = (key: string) => translate(undefined, key)

@@ -3151,6 +3151,11 @@ export default {
     enable_event_binding: '開啟事件綁定',
     event_binding_tips:
       '事件綁定需退出編輯模式後生效，富文字、指標卡開啟綁定事件則內部點擊事件失效',
+    add_event: '添加事件',
+    input_full_url: '請輸入完整的 URL',
+    input_alert_content: '請輸入要 alert 的內容',
+    component_move_out_tab: '組件將被移出Tab',
+    jump_no_dashboard_tips: '未指定跳轉儀表板',
     input_url_tips: '請輸入跳轉地址',
     edit_title: '編輯標題',
     custom_sort: '自定義排序',

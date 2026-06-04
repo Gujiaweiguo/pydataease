@@ -85,6 +85,46 @@ describe('API: chart', () => {
     })
   })
 
+  it('getData only decodes computed fields from the successful response payload', async () => {
+    mockRequest.post.mockResolvedValue({
+      code: 0,
+      data: {
+        xAxis: [],
+        xAxisExt: [],
+        yAxis: [],
+        yAxisExt: [],
+        extBubble: [],
+        extLabel: [],
+        extStack: [],
+        extTooltip: [],
+        extColor: [],
+        data: {
+          fields: [{ extField: 2, originName: 'encoded-field' }],
+          sourceFields: [{ extField: 2, originName: 'encoded-source-field' }]
+        }
+      }
+    })
+
+    await getData({ id: 'chart-4', xAxis: [], extColor: [] })
+
+    expect(originNameHandleWithArr).toHaveBeenCalledTimes(1)
+    expect(originNameHandleBackWithArr).toHaveBeenCalledWith(expect.any(Object), [
+      'xAxis',
+      'xAxisExt',
+      'yAxis',
+      'yAxisExt',
+      'extBubble',
+      'extLabel',
+      'extStack',
+      'extTooltip',
+      'extColor'
+    ])
+    expect(originNameHandleBackWithArr).toHaveBeenCalledWith(expect.any(Object), [
+      'fields',
+      'sourceFields'
+    ])
+  })
+
   it('innerExportDetails posts blob export options with loading enabled', async () => {
     const payload = { chartId: 'chart-4' }
 
