@@ -10,26 +10,25 @@
         'create-area': !canCreateCurrentTemplate
       }"
     >
-      <el-row class="demonstration">
-        <span class="template-title-text">{{ template.title }}</span>
-        <span class="template-action-icons">
-          <el-tooltip :content="t('template_manage.export_template')" placement="top">
-            <el-icon class="action-icon" @click.stop="handleDownload"><Download /></el-icon>
-          </el-tooltip>
-          <el-tooltip :content="t('commons.delete')" placement="top">
-            <el-icon class="action-icon action-icon-danger" @click.stop="handleDelete"
-              ><Delete
-            /></el-icon>
-          </el-tooltip>
-        </span>
-      </el-row>
+      <el-row class="demonstration"> {{ template.title }} </el-row>
       <el-row class="template-button" v-show="canCreateCurrentTemplate">
-        <el-button secondary style="width: calc(50% - 18px)" @click="templateInnerPreview">{{
+        <el-button secondary style="width: calc(25% - 12px)" @click="templateInnerPreview">{{
           t('visualization.preview')
         }}</el-button>
-        <el-button style="width: calc(50% - 18px)" type="primary" @click="apply">{{
+        <el-button style="width: calc(25% - 12px)" type="primary" @click="apply">{{
           t('visualization.apply')
         }}</el-button>
+        <el-button secondary style="width: calc(25% - 12px)" @click.stop="handleDownload">
+          <template #icon><Download /></template>
+        </el-button>
+        <el-button
+          secondary
+          style="width: calc(25% - 12px)"
+          class="delete-btn"
+          @click.stop="handleDelete"
+        >
+          <template #icon><Delete /></template>
+        </el-button>
       </el-row>
     </el-row>
   </div>
@@ -164,37 +163,10 @@ const handleDelete = () => {
   width: 100%;
   padding-bottom: 8px;
   display: none;
-}
+  gap: 4px;
 
-.template-title-text {
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.template-action-icons {
-  display: none;
-  align-items: center;
-  gap: 6px;
-  margin-left: 8px;
-  flex-shrink: 0;
-
-  .action-icon {
-    font-size: 16px;
-    cursor: pointer;
-    color: var(--TextSecondary, #646a73);
-    padding: 4px;
-    border-radius: 4px;
-
-    &:hover {
-      background: rgba(31, 35, 41, 0.1);
-      color: var(--TextPrimary, #1f2329);
-    }
-
-    &.action-icon-danger:hover {
-      color: var(--ed-color-danger, #f54a45);
-    }
+  .delete-btn:hover {
+    color: var(--ed-color-danger, #f54a45);
   }
 }
 
@@ -223,9 +195,6 @@ const handleDelete = () => {
 }
 .testcase-template:hover {
   .template-button {
-    display: block;
-  }
-  .template-action-icons {
     display: flex;
   }
 }
