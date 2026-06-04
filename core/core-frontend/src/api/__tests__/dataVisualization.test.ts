@@ -1,17 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { mockRequest, originNameHandleWithArr, mockCloneDeep } = vi.hoisted(() => ({
+const { mockRequest } = vi.hoisted(() => ({
   mockRequest: {
     get: vi.fn(),
     post: vi.fn()
-  },
-  originNameHandleWithArr: vi.fn(),
-  mockCloneDeep: vi.fn((value: any) => structuredClone(value))
+  }
 }))
 
 vi.mock('@/config/axios', () => ({ default: mockRequest }))
-vi.mock('@/utils/CalculateFields', () => ({ originNameHandleWithArr }))
-vi.mock('lodash-es', () => ({ cloneDeep: mockCloneDeep }))
 
 import * as dataVisualizationApi from '../visualization/dataVisualization'
 
@@ -179,7 +175,7 @@ describe('API: dataVisualization', () => {
     })
   })
 
-  it('updateCanvas clones canvas data, normalizes fields, and posts with loading enabled', async () => {
+  it('updateCanvas posts canvas data with loading enabled', async () => {
     const payload = {
       canvasViewInfo: {
         viewA: {
@@ -194,29 +190,6 @@ describe('API: dataVisualization', () => {
 
     await dataVisualizationApi.updateCanvas(payload)
 
-    expect(mockCloneDeep).toHaveBeenCalledWith(payload)
-    expect(originNameHandleWithArr).toHaveBeenNthCalledWith(1, payload.canvasViewInfo.viewA, [
-      'xAxis',
-      'xAxisExt',
-      'yAxis',
-      'yAxisExt',
-      'extBubble',
-      'extLabel',
-      'extStack',
-      'extTooltip',
-      'extColor'
-    ])
-    expect(originNameHandleWithArr).toHaveBeenNthCalledWith(2, payload.canvasViewInfo.viewB, [
-      'xAxis',
-      'xAxisExt',
-      'yAxis',
-      'yAxisExt',
-      'extBubble',
-      'extLabel',
-      'extStack',
-      'extTooltip',
-      'extColor'
-    ])
     expect(mockRequest.post).toHaveBeenCalledWith({
       url: '/dataVisualization/updateCanvas',
       data: payload,

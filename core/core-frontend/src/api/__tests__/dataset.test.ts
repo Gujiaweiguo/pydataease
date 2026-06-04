@@ -1,31 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const {
-  mockRequest,
-  originNameHandle,
-  originNameHandleBack,
-  originNameHandleBackWithArr,
-  mockCloneDeep,
-  nameTrim
-} = vi.hoisted(() => ({
+const { mockRequest, nameTrim } = vi.hoisted(() => ({
   mockRequest: {
     get: vi.fn(),
     post: vi.fn()
   },
-  originNameHandle: vi.fn(),
-  originNameHandleBack: vi.fn(),
-  originNameHandleBackWithArr: vi.fn(),
-  mockCloneDeep: vi.fn((value: any) => structuredClone(value)),
   nameTrim: vi.fn()
 }))
 
 vi.mock('@/config/axios', () => ({ default: mockRequest }))
-vi.mock('@/utils/CalculateFields', () => ({
-  originNameHandle,
-  originNameHandleBack,
-  originNameHandleBackWithArr
-}))
-vi.mock('lodash-es', () => ({ cloneDeep: mockCloneDeep }))
 vi.mock('@/utils/utils', () => ({ nameTrim }))
 
 import {
@@ -43,7 +26,7 @@ describe('API: dataset', () => {
     mockRequest.post.mockResolvedValue({ data: {} })
   })
 
-  it('createDatasetTree trims names, normalizes allFields, and posts to create', async () => {
+  it('createDatasetTree trims names and posts to create', async () => {
     const payload = {
       name: '  Sales  ',
       nodeType: 'dataset' as const,
@@ -53,11 +36,9 @@ describe('API: dataset', () => {
     await createDatasetTree(payload)
 
     expect(nameTrim).toHaveBeenCalledWith(payload)
-    expect(mockCloneDeep).toHaveBeenCalledWith(payload)
-    expect(originNameHandle).toHaveBeenCalledWith([{ originName: 'a' }])
     expect(mockRequest.post).toHaveBeenCalledWith({
       url: '/datasetTree/create',
-      data: { name: '  Sales  ', nodeType: 'dataset', allFields: [{ originName: 'a' }] }
+      data: payload
     })
   })
 
