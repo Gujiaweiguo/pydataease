@@ -151,22 +151,30 @@ onMounted(() => {
     </el-menu>
     <div class="operate-setting" v-if="!desktop">
       <XpackComponent jsname="c3dpdGNoZXI=" />
-      <el-tooltip offset="6" effect="dark" content="SQLBot" placement="bottom">
-        <el-icon style="margin: 0 10px" class="ai-icon copilot-icon" v-if="sqlbotEnabled">
+      <el-tooltip
+        v-if="sqlbotEnabled"
+        :offset="6"
+        effect="dark"
+        content="SQLBot"
+        placement="bottom"
+      >
+        <el-icon style="margin: 0 10px" class="ai-icon copilot-icon">
           <Icon name="copilot"><logo_sqlbot @click="handleSQLBotClick" class="svg-icon" /></Icon>
         </el-icon>
       </el-tooltip>
-      <el-tooltip offset="10" effect="dark" :content="t('commons.assistant')" placement="bottom">
-        <el-icon
-          style="margin: 0 10px"
-          class="ai-icon"
-          v-if="aiBaseUrl && !showOverlay && appearanceStore.getShowAi"
-        >
+      <el-tooltip
+        v-if="aiBaseUrl && !showOverlay && appearanceStore.getShowAi"
+        :offset="10"
+        effect="dark"
+        :content="t('commons.assistant')"
+        placement="bottom"
+      >
+        <el-icon style="margin: 0 10px" class="ai-icon">
           <Icon name="dv-ai"><dvAi @click="handleAiClick" class="svg-icon" /></Icon>
         </el-icon>
       </el-tooltip>
       <el-tooltip
-        offset="10"
+        :offset="10"
         effect="dark"
         :content="t('data_export.export_center')"
         placement="bottom"
@@ -191,7 +199,7 @@ onMounted(() => {
       <el-tooltip
         v-if="showMsg"
         effect="dark"
-        offset="10"
+        :offset="10"
         :content="$t('v_query.msg_center')"
         placement="bottom"
       >

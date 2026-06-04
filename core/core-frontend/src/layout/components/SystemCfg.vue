@@ -17,7 +17,7 @@ const redirectUser = () => {
 
 <template>
   <el-tooltip
-    offset="10"
+    :offset="10"
     class="box-item"
     effect="dark"
     :content="$t('toolbox.org_center')"
@@ -31,9 +31,7 @@ const redirectUser = () => {
       }"
     >
       <el-icon @click="redirectUser">
-        <Icon class="icon-setting" name="icon-setting"
-          ><iconSetting class="svg-icon icon-setting"
-        /></Icon>
+        <Icon name="icon-setting"><iconSetting class="svg-icon icon-setting" /></Icon>
       </el-icon>
     </div>
   </el-tooltip>
