@@ -1,7 +1,6 @@
-import { useI18n } from '@/hooks/web/useI18n'
+import { t } from '@/hooks/web/useI18n'
 import request from '@/config/axios'
 import { normalizeShortcutRow } from '@/utils/visualizationResource'
-const { t } = useI18n()
 export interface ShortcutRequest {
   keyword?: string
   type?: string

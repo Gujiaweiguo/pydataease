@@ -1,4 +1,4 @@
-import { useI18n } from '@/hooks/web/useI18n'
+import { t } from '@/hooks/web/useI18n'
 
 export interface ShareInfo {
   id: string
@@ -10,8 +10,6 @@ export interface ShareInfo {
 }
 
 export const SHARE_BASE = '/de-link/'
-
-const { t } = useI18n()
 
 export const shortcuts = [
   {

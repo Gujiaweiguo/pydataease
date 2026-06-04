@@ -4,7 +4,6 @@ import { useCache } from '@/hooks/web/useCache'
 import { useLocaleStoreWithOut } from './locale'
 import { useLocale } from '@/hooks/web/useLocale'
 const { wsCache } = useCache()
-const { changeLocale } = useLocale()
 
 interface UserState {
   token: string
@@ -102,6 +101,7 @@ export const userStore = defineStore('user', {
     },
     setLanguage(language: string) {
       const locale = useLocaleStoreWithOut()
+      const { changeLocale } = useLocale()
       if (!language || language === 'zh_CN') {
         language = 'zh-CN'
       }
