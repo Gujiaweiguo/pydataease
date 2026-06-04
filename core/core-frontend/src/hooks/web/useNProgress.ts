@@ -4,9 +4,8 @@ import NProgress from 'nprogress'
 import 'nprogress/nprogress.css'
 import { useCssVar } from '@vueuse/core'
 
-const primaryColor = useCssVar('--el-color-primary', document.documentElement)
-
 export const useNProgress = () => {
+  const primaryColor = useCssVar('--el-color-primary', document.documentElement)
   NProgress.configure({ showSpinner: false } as NProgressOptions)
 
   const initColor = async () => {
