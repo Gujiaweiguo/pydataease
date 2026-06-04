@@ -18,6 +18,7 @@ import { isMobile, getLocale } from '@/utils/utils'
 import { useRequestStoreWithOut } from '@/store/modules/request'
 import { clearCache } from '@/utils/cacheUtil'
 import { securityConfig } from './hmac'
+import { encodeCalculatedFieldsDeep, decodeCalculatedFieldsDeep } from './calculateFieldTransform'
 
 type AxiosErrorWidthLoading<T> = T & {
   config: {
@@ -102,6 +103,9 @@ service.interceptors.request.use(
       config = await config
     }
     await securityConfig(config, service.getUri(config))
+    if (config.data && typeof config.data === 'object' && !(config.data instanceof FormData)) {
+      config.data = encodeCalculatedFieldsDeep(config.data)
+    }
     if (
       config.method === 'post' &&
       (config.headers as AxiosRequestHeaders)['Content-Type'] ===
@@ -180,6 +184,7 @@ service.interceptors.response.use(
       // 如果是文件流，直接过
       return response
     } else if (response.data.code === result_code || response.data.code === 50002) {
+      response.data = decodeCalculatedFieldsDeep(response.data)
       return response.data
     } else if (response.config.url.match(/^\/map|geo\/\d{3}\/\d+\.json$/)) {
       //   TODO 处理静态文件

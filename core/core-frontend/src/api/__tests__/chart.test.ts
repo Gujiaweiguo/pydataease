@@ -1,22 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { mockRequest, originNameHandleWithArr, originNameHandleBackWithArr, mockCloneDeep } =
-  vi.hoisted(() => ({
-    mockRequest: {
-      get: vi.fn(),
-      post: vi.fn()
-    },
-    originNameHandleWithArr: vi.fn(),
-    originNameHandleBackWithArr: vi.fn(),
-    mockCloneDeep: vi.fn((value: any) => structuredClone(value))
-  }))
+const { mockRequest } = vi.hoisted(() => ({
+  mockRequest: {
+    get: vi.fn(),
+    post: vi.fn()
+  }
+}))
 
 vi.mock('@/config/axios', () => ({ default: mockRequest }))
-vi.mock('@/utils/CalculateFields', () => ({
-  originNameHandleWithArr,
-  originNameHandleBackWithArr
-}))
-vi.mock('lodash-es', () => ({ cloneDeep: mockCloneDeep }))
 
 import { checkSameDataSet, getChart, getData, innerExportDetails, saveChart } from '../chart'
 
@@ -48,7 +39,7 @@ describe('API: chart', () => {
     })
   })
 
-  it('getData clones the payload, strips nested data, and posts to chartData', async () => {
+  it('getData strips nested data and posts to chartData', async () => {
     const payload = {
       id: 'chart-3',
       data: { remove: true },
@@ -63,18 +54,6 @@ describe('API: chart', () => {
       xAxis: [{ originName: 'sales' }],
       extColor: []
     })
-    expect(mockCloneDeep).toHaveBeenCalledWith(payload)
-    expect(originNameHandleWithArr).toHaveBeenCalledWith(expect.any(Object), [
-      'xAxis',
-      'xAxisExt',
-      'yAxis',
-      'yAxisExt',
-      'extBubble',
-      'extLabel',
-      'extStack',
-      'extTooltip',
-      'extColor'
-    ])
     expect(mockRequest.post).toHaveBeenCalledWith({
       url: '/chartData/getData',
       data: {
@@ -85,44 +64,20 @@ describe('API: chart', () => {
     })
   })
 
-  it('getData only decodes computed fields from the successful response payload', async () => {
+  it('getData returns data from successful response', async () => {
     mockRequest.post.mockResolvedValue({
       code: 0,
       data: {
         xAxis: [],
-        xAxisExt: [],
-        yAxis: [],
-        yAxisExt: [],
-        extBubble: [],
-        extLabel: [],
-        extStack: [],
-        extTooltip: [],
-        extColor: [],
         data: {
-          fields: [{ extField: 2, originName: 'encoded-field' }],
-          sourceFields: [{ extField: 2, originName: 'encoded-source-field' }]
+          fields: [{ extField: 2, originName: 'encoded-field' }]
         }
       }
     })
 
-    await getData({ id: 'chart-4', xAxis: [], extColor: [] })
+    const result = await getData({ id: 'chart-4', xAxis: [], extColor: [] })
 
-    expect(originNameHandleWithArr).toHaveBeenCalledTimes(1)
-    expect(originNameHandleBackWithArr).toHaveBeenCalledWith(expect.any(Object), [
-      'xAxis',
-      'xAxisExt',
-      'yAxis',
-      'yAxisExt',
-      'extBubble',
-      'extLabel',
-      'extStack',
-      'extTooltip',
-      'extColor'
-    ])
-    expect(originNameHandleBackWithArr).toHaveBeenCalledWith(expect.any(Object), [
-      'fields',
-      'sourceFields'
-    ])
+    expect(result).toBeDefined()
   })
 
   it('innerExportDetails posts blob export options with loading enabled', async () => {

@@ -1,11 +1,5 @@
 import request from '@/config/axios'
-import {
-  originNameHandle,
-  originNameHandleBack,
-  originNameHandleBackWithArr
-} from '@/utils/CalculateFields'
 import { type Field } from '@/api/chart'
-import { cloneDeep } from 'lodash-es'
 import type { BusiTreeRequest } from '@/models/tree/TreeNode'
 import { nameTrim } from '@/utils/utils'
 export interface DatasetOrFolder {
@@ -83,12 +77,7 @@ export interface Table {
 // edit
 export const saveDatasetTree = async (data: DatasetOrFolder): Promise<IResponse> => {
   nameTrim(data)
-  const copyData = cloneDeep(data)
-  originNameHandle(copyData.allFields)
-  return request.post({ url: '/datasetTree/save', data: copyData }).then(res => {
-    if (res?.data?.allFields?.length) {
-      originNameHandleBack(res?.data?.allFields)
-    }
+  return request.post({ url: '/datasetTree/save', data }).then(res => {
     return res?.data
   })
 }
@@ -96,12 +85,7 @@ export const saveDatasetTree = async (data: DatasetOrFolder): Promise<IResponse>
 // create
 export const createDatasetTree = async (data: DatasetOrFolder): Promise<IResponse> => {
   nameTrim(data)
-  const copyData = cloneDeep(data)
-  originNameHandle(copyData.allFields)
-  return request.post({ url: '/datasetTree/create', data: copyData }).then(res => {
-    if (res?.data?.allFields?.length) {
-      originNameHandleBack(res?.data?.allFields)
-    }
+  return request.post({ url: '/datasetTree/create', data }).then(res => {
     return res?.data
   })
 }
@@ -196,16 +180,7 @@ export const getTableField = async (data): Promise<IResponse> => {
 }
 
 export const getPreviewData = async (data): Promise<IResponse> => {
-  const copyData = cloneDeep(data)
-  originNameHandle(copyData.allFields)
-  return request.post({ url: '/datasetData/previewData', data: copyData }).then(res => {
-    if (res?.data?.allFields?.length) {
-      originNameHandleBack(res?.data?.allFields)
-    }
-
-    if (res?.data?.data?.fields?.length) {
-      originNameHandleBack(res?.data?.data?.fields)
-    }
+  return request.post({ url: '/datasetData/previewData', data }).then(res => {
     return res?.data
   })
 }
@@ -224,9 +199,6 @@ export const getDatasetTotal = async (id): Promise<FieldData> => {
 
 export const getDatasetDetails = async (id): Promise<Dataset> => {
   return request.post({ url: `/datasetTree/details/${id}`, data: {} }).then(res => {
-    if (res?.data?.allFields?.length) {
-      originNameHandleBack(res?.data?.allFields)
-    }
     return res?.data
   })
 }
@@ -250,9 +222,6 @@ export const getDsDetails = async (data): Promise<DatasetDetail[]> => {
 }
 export const getDsDetailsWithPerm = async (data): Promise<DatasetDetail[]> => {
   return request.post({ url: '/datasetTree/detailWithPerm', data }).then(res => {
-    ;(res?.data || []).forEach(ele => {
-      originNameHandleBackWithArr(ele, ['dimensionList', 'quotaList'])
-    })
     return res?.data
   })
 }
@@ -272,7 +241,6 @@ export const rowPermissionTargetObjList = (datasetId: number, type: string) =>
 
 export const listFieldByDatasetGroup = (datasetId: number | string) => {
   return request.post({ url: '/datasetField/listByDatasetGroup/' + datasetId }).then(res => {
-    originNameHandleBack(res?.data)
     return res
   })
 }
@@ -283,7 +251,6 @@ export const multFieldValuesForPermissions = (data = {}) => {
 
 export const listFieldsWithPermissions = (datasetId: number) => {
   return request.get({ url: '/datasetField/listWithPermissions/' + datasetId }).then(res => {
-    originNameHandleBack(res?.data)
     return res
   })
 }
