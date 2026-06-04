@@ -3,13 +3,16 @@ import { useCache } from '@/hooks/web/useCache'
 import { isNull } from '@/utils/utils'
 import { useEmbedded } from '@/store/modules/embedded'
 const { wsCache } = useCache()
-const embeddedStore = useEmbedded()
 const basePath = import.meta.env.VITE_API_BASEPATH
 const embeddedBasePath =
   basePath.startsWith('./') && basePath.length > 2 ? basePath.substring(2) : basePath
-export const PATH_URL = embeddedStore.baseUrl ? embeddedStore?.baseUrl + embeddedBasePath : basePath
 
-const remoteTsUrl = PATH_URL + '/DEXPackTs.umd.js'
+const getPathUrl = () => {
+  const embeddedStore = useEmbedded()
+  return embeddedStore.baseUrl ? embeddedStore.baseUrl + embeddedBasePath : basePath
+}
+
+export const PATH_URL = basePath
 const loadXpackTs = (url: string) => {
   return new Promise<void>(function (resolve, reject) {
     const scriptId = 'de-fit2cloud-script-xpack-ts-id'
@@ -34,6 +37,7 @@ const loadXpackTs = (url: string) => {
 }
 
 export const importXpackTool = async (methodName: string) => {
+  const pathUrl = getPathUrl()
   const jsname = 'L3Rvb2xzL0htYWNUb29s'
   const key = 'xpack-model-distributed'
   let distributed = false
@@ -57,7 +61,7 @@ export const importXpackTool = async (methodName: string) => {
       window['de_hmac_promise'] = null
     }
     if (!window['de_hmac_promise']) {
-      window['de_hmac_promise'] = loadXpackTs(remoteTsUrl)
+      window['de_hmac_promise'] = loadXpackTs(pathUrl + '/DEXPackTs.umd.js')
         .then(() => {
           return window['DEXPackTs']
         })

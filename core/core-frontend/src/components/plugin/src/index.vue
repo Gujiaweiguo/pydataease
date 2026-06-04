@@ -169,12 +169,8 @@ onMounted(async () => {
 
 <template>
   <configGlobal>
-    <component
-      :key="attrs.jsname"
-      ref="pluginProxy"
-      :is="plugin"
-      v-loading="loading"
-      v-bind="attrs"
-    ></component>
+    <div v-loading="loading">
+      <component :key="attrs.jsname" ref="pluginProxy" :is="plugin" v-bind="attrs"></component>
+    </div>
   </configGlobal>
 </template>
