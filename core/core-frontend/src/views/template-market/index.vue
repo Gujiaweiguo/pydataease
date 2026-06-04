@@ -89,8 +89,8 @@
               :value="item.value"
             />
           </el-select>
-          <el-button class="import-manage-button" secondary @click="openTemplateManage">
-            {{ t('template_manage.open_import_entry') }}
+          <el-button class="import-manage-button" secondary @click="showImportDialog">
+            {{ t('template_manage.import_template') }}
           </el-button>
           <template v-if="['branchCreate', 'create'].includes(state.curPosition)">
             <el-divider class="custom-divider-line" direction="vertical" />
@@ -149,6 +149,8 @@
                 :create-auth="createAuth"
                 @templateApply="templateApply"
                 @templatePreview="templatePreview"
+                @templateDownload="handleTemplateDownload"
+                @templateDelete="handleTemplateDelete"
               />
             </el-row>
             <el-row v-show="state.marketActiveTab === t('work_branch.recommend')">
@@ -172,6 +174,8 @@
                   :create-auth="createAuth"
                   @templateApply="templateApply"
                   @templatePreview="templatePreview"
+                  @templateDownload="handleTemplateDownload"
+                  @templateDelete="handleTemplateDelete"
                 />
               </el-row>
             </el-row>
@@ -192,24 +196,42 @@
       </el-row>
     </el-row>
   </el-row>
+  <el-dialog
+    v-model="importDialogVisible"
+    :title="t('template_manage.import_template')"
+    width="600px"
+    :close-on-click-modal="false"
+    destroy-on-close
+  >
+    <de-template-import
+      v-if="importDialogVisible"
+      pid="0"
+      :template-categories="importCategories"
+      opt-type="insert"
+      @closeEditTemplateDialog="importDialogVisible = false"
+      @refresh="handleImportRefresh"
+    />
+  </el-dialog>
   <XpackComponent ref="openHandler" jsname="L2NvbXBvbmVudC9lbWJlZGRlZC1pZnJhbWUvT3BlbkhhbmRsZXI=" />
 </template>
 
 <script setup lang="ts">
 import no_result from '@/assets/svg/no_result.svg'
 import { searchMarket } from '@/api/templateMarket'
+import { exportTemplate, templateDelete, findOne, findCategories } from '@/api/template'
+import FileSaver from 'file-saver'
 import { useEmbedded } from '@/store/modules/embedded'
 import { useAppStoreWithOut } from '@/store/modules/app'
 import elementResizeDetectorMaker from 'element-resize-detector'
 import { nextTick, reactive, watch, onMounted, ref, computed } from 'vue'
 import { useI18n } from '@/hooks/web/useI18n'
-import { ElMessage } from 'element-plus-secondary'
+import { ElMessage, ElMessageBox } from 'element-plus-secondary'
 import { useCache } from '@/hooks/web/useCache'
-import { useRouter } from 'vue-router'
 import MarketPreviewV2 from '@/views/template-market/component/MarketPreviewV2.vue'
 import { imgUrlTrans } from '@/utils/imgUtils'
 import CategoryTemplateV2 from '@/views/template-market/component/CategoryTemplateV2.vue'
 import TemplateSkeleton from '@/views/template-market/component/TemplateSkeleton.vue'
+import DeTemplateImport from '@/views/template/component/DeTemplateImport.vue'
 import { interactiveStoreWithOut } from '@/store/modules/interactive'
 import { XpackComponent } from '@/components/plugin'
 import { useEmitt } from '@/hooks/web/useEmitt'
@@ -221,7 +243,6 @@ import {
   matchesTemplateType
 } from '@/utils/visualizationResource'
 const { t } = useI18n()
-const router = useRouter()
 const { wsCache } = useCache()
 const embeddedStore = useEmbedded()
 const appStore = useAppStoreWithOut()
@@ -229,7 +250,7 @@ const interactiveStore = interactiveStoreWithOut()
 
 type TreeNodeData = { label: string }
 
-const props = defineProps({
+defineProps({
   isDialog: {
     type: Boolean,
     default: false
@@ -443,17 +464,55 @@ const closePreview = () => {
   previewModel.value = 'full'
 }
 
-const openTemplateManage = () => {
-  const templateManageHref = `${window.location.origin}${window.location.pathname}#/template-manage`
-  if (props.isDialog) {
-    window.open(templateManageHref, '_blank')
-    return
+const importDialogVisible = ref(false)
+const importCategories = ref([])
+
+const showImportDialog = async () => {
+  try {
+    const res = await findCategories({})
+    importCategories.value = res.data || []
+  } catch {
+    importCategories.value = []
   }
-  if (router) {
-    router.push({ name: 'template-manage' })
-    return
+  importDialogVisible.value = true
+}
+
+const handleImportRefresh = () => {
+  importDialogVisible.value = false
+  initMarketTemplate()
+}
+
+const handleTemplateDownload = async (template: { id: string; title: string }) => {
+  try {
+    const res = await exportTemplate(template.id)
+    const templateData = typeof res.data?.name === 'string' ? res.data : res.data
+    if (!templateData) return
+    const blob = new Blob([JSON.stringify(templateData)], { type: '' })
+    FileSaver.saveAs(blob, `${template.title}-TEMPLATE.DET2`)
+  } catch {
+    ElMessage.error(t('template_manage.delete_hint'))
   }
-  window.location.href = templateManageHref
+}
+
+const handleTemplateDelete = async (template: { id: string; title: string }) => {
+  try {
+    await ElMessageBox.confirm(t('template_manage.delete_hint'), {
+      tip: '',
+      confirmButtonType: 'danger',
+      type: 'warning',
+      confirmButtonText: t('common.delete'),
+      autofocus: false,
+      showClose: false
+    })
+    const fullRes = await findOne(template.id)
+    const categories = fullRes.data?.categories || []
+    const categoryId = categories.length > 0 ? categories[0].id : '0'
+    await templateDelete(template.id, categoryId)
+    ElMessage.success(t('commons.delete_success'))
+    initMarketTemplate()
+  } catch {
+    // cancelled or error — do nothing
+  }
 }
 
 const initMarketTemplate = async () => {
