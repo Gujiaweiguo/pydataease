@@ -176,19 +176,20 @@ const handleDelete = () => {
 .template-action-icons {
   display: none;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   margin-left: 8px;
   flex-shrink: 0;
 
   .action-icon {
-    font-size: 14px;
+    font-size: 16px;
     cursor: pointer;
     color: var(--TextSecondary, #646a73);
-    padding: 2px;
+    padding: 4px;
     border-radius: 4px;
 
     &:hover {
       background: rgba(31, 35, 41, 0.1);
+      color: var(--TextPrimary, #1f2329);
     }
 
     &.action-icon-danger:hover {

@@ -218,7 +218,7 @@
 <script setup lang="ts">
 import no_result from '@/assets/svg/no_result.svg'
 import { searchMarket } from '@/api/templateMarket'
-import { exportTemplate, templateDelete, findOne, findCategories } from '@/api/template'
+import { exportTemplate, templateDelete, findCategories, findCategoriesByTemplateIds } from '@/api/template'
 import FileSaver from 'file-saver'
 import { useEmbedded } from '@/store/modules/embedded'
 import { useAppStoreWithOut } from '@/store/modules/app'
@@ -504,9 +504,9 @@ const handleTemplateDelete = async (template: { id: string; title: string }) => 
       autofocus: false,
       showClose: false
     })
-    const fullRes = await findOne(template.id)
-    const categories = fullRes.data?.categories || []
-    const categoryId = categories.length > 0 ? categories[0].id : '0'
+    const catRes = await findCategoriesByTemplateIds({ templateIds: [template.id] })
+    const categoryIds: string[] = catRes.data || []
+    const categoryId = categoryIds.length > 0 ? categoryIds[0] : '0'
     await templateDelete(template.id, categoryId)
     ElMessage.success(t('commons.delete_success'))
     initMarketTemplate()
