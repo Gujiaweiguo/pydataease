@@ -222,6 +222,30 @@ const createDatasource = () => {
   window.open(baseUrl, openType)
 }
 
+const handleBusiCountClick = (item, index: number) => {
+  if (!item?.menuAuth) {
+    return
+  }
+
+  switch (index) {
+    case 0:
+      window.open('#/panel/index', '_self')
+      break
+    case 1:
+      window.open('#/screen/index', '_self')
+      break
+    case 2:
+      push('/data/dataset')
+      break
+    default:
+      break
+  }
+}
+
+const isClickableBusiCount = (item, index: number) => {
+  return Boolean(item?.menuAuth) && index < 3
+}
+
 const templatePreview = previewId => {
   wsCache.set(`template-preview-id`, previewId)
   toTemplateMarket()
@@ -329,14 +353,26 @@ loadShareBase()
         </div>
         <div
           class="item"
-          :class="{ 'de-item-hidden': !item['menuAuth'] }"
+          :class="{
+            'de-item-hidden': !item['menuAuth']
+          }"
           v-for="(item, index) in busiCountCardList"
           :key="index"
         >
           <span class="name">
             {{ t(`auth.${quickCreationList[index].name}`) }}
           </span>
-          <span class="num"> {{ item['menuAuth'] ? item['leafNodeCount'] : '*' }} </span>
+          <el-tooltip
+            v-if="isClickableBusiCount(item, index)"
+            effect="dark"
+            :content="t(`auth.${quickCreationList[index].name}`)"
+            placement="top"
+          >
+            <span class="num count-card-clickable" @click="handleBusiCountClick(item, index)">
+              {{ item['leafNodeCount'] }}
+            </span>
+          </el-tooltip>
+          <span v-else class="num"> {{ item['menuAuth'] ? item['leafNodeCount'] : '*' }} </span>
         </div>
       </div>
 
@@ -647,6 +683,50 @@ loadShareBase()
           }
         }
       }
+    }
+  }
+
+  .count-card-clickable {
+    cursor: pointer;
+    display: inline-flex;
+    position: relative;
+    width: fit-content;
+    color: var(--ed-color-primary);
+    text-decoration: none;
+    transition: color 0.2s ease, transform 0.2s ease;
+
+    &::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      bottom: -1px;
+      width: 100%;
+      height: 1px;
+      border-radius: 999px;
+      background: currentColor;
+      opacity: 0.5;
+      transform: scaleX(0.45);
+      transform-origin: left center;
+      transition: transform 0.2s ease, opacity 0.2s ease;
+    }
+
+    &:hover,
+    &:focus-visible {
+      color: var(--ed-color-primary-dark-2, #2b5fd9);
+      transform: translateY(-1px);
+
+      &::after {
+        opacity: 1;
+        transform: scaleX(1);
+      }
+    }
+
+    &:active {
+      transform: translateY(0) scale(0.98);
+    }
+
+    &:focus-visible {
+      outline: none;
     }
   }
 
