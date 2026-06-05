@@ -552,6 +552,9 @@ const initStyle = () => {
     if (!tree?.firstElementChild) {
       return
     }
+    if (tree.querySelector('.custom-line')) {
+      return
+    }
     // 创建横线元素
     const line = document.createElement('hr')
     line.classList.add('custom-line')
