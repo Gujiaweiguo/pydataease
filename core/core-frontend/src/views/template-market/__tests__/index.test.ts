@@ -231,4 +231,101 @@ describe('template-market index', () => {
     expect(vm.state.marketTabs).toEqual([{ label: '大屏模板' }])
     expect(vm.state.marketActiveTab).toBe('大屏模板')
   })
+
+  it('stays on the current category when it still exists after delete refresh', async () => {
+    mockConfirm.mockResolvedValue(undefined)
+    mockSuccess.mockImplementation(() => undefined)
+    mockFindCategoriesByTemplateIds.mockResolvedValue({ data: ['dashboard-category'] })
+    mockTemplateDelete.mockResolvedValue({})
+    mockGetActiveCategories.mockImplementation(contents => {
+      return new Set(
+        contents.flatMap((item: any) => item.categories.map((category: any) => category.name))
+      )
+    })
+    mockSearchMarket
+      .mockResolvedValueOnce({
+        data: {
+          baseUrl: '',
+          categories: [{ label: '推荐' }, { label: '仪表板模板' }, { label: '大屏模板' }],
+          contents: [
+            {
+              id: 'panel-template-a',
+              title: 'Dashboard Save QA 20260603-A',
+              templateType: 'PANEL',
+              source: 'manage',
+              classify: '推荐',
+              showFlag: true,
+              categoryNames: ['仪表板模板'],
+              categories: [{ name: '仪表板模板' }]
+            },
+            {
+              id: 'panel-template-b',
+              title: 'Dashboard Save QA 20260603-B',
+              templateType: 'PANEL',
+              source: 'manage',
+              classify: '推荐',
+              showFlag: true,
+              categoryNames: ['仪表板模板'],
+              categories: [{ name: '仪表板模板' }]
+            },
+            {
+              id: 'screen-template',
+              title: 'Screen Save QA 20260603-A',
+              templateType: 'SCREEN',
+              source: 'manage',
+              classify: '推荐',
+              showFlag: true,
+              categoryNames: ['大屏模板'],
+              categories: [{ name: '大屏模板' }]
+            }
+          ]
+        }
+      })
+      .mockResolvedValueOnce({
+        data: {
+          baseUrl: '',
+          categories: [{ label: '推荐' }, { label: '仪表板模板' }, { label: '大屏模板' }],
+          contents: [
+            {
+              id: 'panel-template-b',
+              title: 'Dashboard Save QA 20260603-B',
+              templateType: 'PANEL',
+              source: 'manage',
+              classify: '推荐',
+              showFlag: true,
+              categoryNames: ['仪表板模板'],
+              categories: [{ name: '仪表板模板' }]
+            },
+            {
+              id: 'screen-template',
+              title: 'Screen Save QA 20260603-A',
+              templateType: 'SCREEN',
+              source: 'manage',
+              classify: '推荐',
+              showFlag: true,
+              categoryNames: ['大屏模板'],
+              categories: [{ name: '大屏模板' }]
+            }
+          ]
+        }
+      })
+
+    const wrapper = shallowMount(TemplateMarketIndex, {
+      global: { stubs }
+    })
+    await flushPromises()
+
+    const vm = wrapper.vm as any
+
+    vm.state.marketActiveTab = '仪表板模板'
+    await vm.handleTemplateDelete({ id: 'panel-template-a', title: 'Dashboard Save QA 20260603-A' })
+    await flushPromises()
+
+    expect(mockFindCategoriesByTemplateIds).toHaveBeenCalledWith({
+      templateIds: ['panel-template-a']
+    })
+    expect(mockTemplateDelete).toHaveBeenCalledWith('panel-template-a', 'dashboard-category')
+    expect(vm.state.marketTabs).toEqual([{ label: '仪表板模板' }, { label: '大屏模板' }])
+    expect(vm.state.marketActiveTab).toBe('仪表板模板')
+  })
 })
