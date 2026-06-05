@@ -1,5 +1,21 @@
 import { flushPromises, shallowMount } from '@vue/test-utils'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+const {
+  mockSearchMarket,
+  mockFindCategoriesByTemplateIds,
+  mockTemplateDelete,
+  mockConfirm,
+  mockSuccess,
+  mockGetActiveCategories
+} = vi.hoisted(() => ({
+  mockSearchMarket: vi.fn(),
+  mockFindCategoriesByTemplateIds: vi.fn(),
+  mockTemplateDelete: vi.fn(),
+  mockConfirm: vi.fn(),
+  mockSuccess: vi.fn(),
+  mockGetActiveCategories: vi.fn()
+}))
 
 vi.mock('@/hooks/web/useI18n', () => ({
   useI18n: () => ({ t: (k: string) => k })
@@ -12,16 +28,30 @@ vi.mock('@/hooks/web/useCache', () => ({
 }))
 
 vi.mock('@/api/templateMarket', () => ({
-  searchMarket: vi.fn(() =>
-    Promise.resolve({
-      data: {
-        baseUrl: '',
-        categories: [],
-        contents: []
-      }
-    })
-  )
+  searchMarket: mockSearchMarket
 }))
+
+vi.mock('@/api/template', () => ({
+  exportTemplate: vi.fn(),
+  templateDelete: mockTemplateDelete,
+  findCategories: vi.fn(() => Promise.resolve({ data: [] })),
+  findCategoriesByTemplateIds: mockFindCategoriesByTemplateIds
+}))
+
+vi.mock('element-plus-secondary', async importOriginal => {
+  const actual = (await importOriginal()) as Record<string, unknown>
+  return {
+    ...actual,
+    ElMessageBox: {
+      confirm: mockConfirm
+    },
+    ElMessage: {
+      success: mockSuccess,
+      error: vi.fn(),
+      warning: vi.fn()
+    }
+  }
+})
 
 vi.mock('@/store/modules/interactive', () => ({
   interactiveStoreWithOut: () => ({
@@ -54,7 +84,7 @@ vi.mock('@/utils/utils', async importOriginal => {
   const actual = (await importOriginal()) as Record<string, unknown>
   return {
     ...actual,
-    getActiveCategories: () => new Set()
+    getActiveCategories: mockGetActiveCategories
   }
 })
 
@@ -100,7 +130,21 @@ describe('template-market index', () => {
     ElIcon: { template: '<i><slot /></i>' }
   }
 
+  const emptySearchMarketResponse = {
+    data: {
+      baseUrl: '',
+      categories: [],
+      contents: []
+    }
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
   it('handles empty categories without throwing', async () => {
+    mockSearchMarket.mockResolvedValue(emptySearchMarketResponse)
+    mockGetActiveCategories.mockReturnValue(new Set())
     const wrapper = shallowMount(TemplateMarketIndex, {
       global: { stubs }
     })
@@ -109,5 +153,82 @@ describe('template-market index', () => {
     expect(vm).toBeTruthy()
     expect(vm.state.marketTabs).toEqual([])
     expect(vm.state.marketActiveTab).toBe(null)
+  })
+
+  it('keeps the remaining category active after deleting the last dashboard template', async () => {
+    mockConfirm.mockResolvedValue(undefined)
+    mockSuccess.mockImplementation(() => undefined)
+    mockFindCategoriesByTemplateIds.mockResolvedValue({ data: ['dashboard-category'] })
+    mockTemplateDelete.mockResolvedValue({})
+    mockGetActiveCategories.mockImplementation(contents => {
+      return new Set(
+        contents.flatMap((item: any) => item.categories.map((category: any) => category.name))
+      )
+    })
+    mockSearchMarket
+      .mockResolvedValueOnce({
+        data: {
+          baseUrl: '',
+          categories: [{ label: '推荐' }, { label: '仪表板模板' }, { label: '大屏模板' }],
+          contents: [
+            {
+              id: 'panel-template',
+              title: 'Dashboard Save QA 20260603-C',
+              templateType: 'PANEL',
+              source: 'manage',
+              classify: '推荐',
+              showFlag: true,
+              categoryNames: ['仪表板模板'],
+              categories: [{ name: '仪表板模板' }]
+            },
+            {
+              id: 'screen-template',
+              title: 'Screen Save QA 20260603-A',
+              templateType: 'SCREEN',
+              source: 'manage',
+              classify: '推荐',
+              showFlag: true,
+              categoryNames: ['大屏模板'],
+              categories: [{ name: '大屏模板' }]
+            }
+          ]
+        }
+      })
+      .mockResolvedValueOnce({
+        data: {
+          baseUrl: '',
+          categories: [{ label: '推荐' }, { label: '大屏模板' }],
+          contents: [
+            {
+              id: 'screen-template',
+              title: 'Screen Save QA 20260603-A',
+              templateType: 'SCREEN',
+              source: 'manage',
+              classify: '推荐',
+              showFlag: true,
+              categoryNames: ['大屏模板'],
+              categories: [{ name: '大屏模板' }]
+            }
+          ]
+        }
+      })
+
+    const wrapper = shallowMount(TemplateMarketIndex, {
+      global: { stubs }
+    })
+    await flushPromises()
+
+    const vm = wrapper.vm as any
+
+    vm.state.marketActiveTab = '仪表板模板'
+    await vm.handleTemplateDelete({ id: 'panel-template', title: 'Dashboard Save QA 20260603-C' })
+    await flushPromises()
+
+    expect(mockFindCategoriesByTemplateIds).toHaveBeenCalledWith({
+      templateIds: ['panel-template']
+    })
+    expect(mockTemplateDelete).toHaveBeenCalledWith('panel-template', 'dashboard-category')
+    expect(vm.state.marketTabs).toEqual([{ label: '大屏模板' }])
+    expect(vm.state.marketActiveTab).toBe('大屏模板')
   })
 })
