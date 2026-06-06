@@ -43,7 +43,7 @@
         </div>
       </aside>
 
-      <section class="table-panel" aria-label="角色成员管理">
+      <section class="table-panel" aria-label="角色详情">
         <template v-if="currentRole">
           <div class="table-panel-header">
             <div class="panel-copy">
@@ -68,55 +68,87 @@
               >
                 删除角色
               </el-button>
-              <el-button @click="openMemberDialog">挂载组织内用户</el-button>
-              <el-button @click="openExternalDialog">挂载外部用户</el-button>
-              <el-button :disabled="selectedMemberIds.length === 0" @click="handleBatchUnMountUser">
-                批量卸载
-              </el-button>
             </div>
           </div>
 
-          <div class="table-panel-body">
-            <div class="table-wrap">
-              <el-table
-                :data="members"
-                border
-                height="100%"
-                @selection-change="handleMemberSelectionChange"
-              >
-                <el-table-column type="selection" width="48" />
-                <el-table-column prop="account" label="账号" min-width="140" />
-                <el-table-column prop="name" label="姓名" min-width="120" />
-                <el-table-column prop="email" label="邮箱" min-width="180" />
-                <el-table-column prop="phone" label="手机号" min-width="140" />
-                <el-table-column label="状态" width="100">
-                  <template #default="scope">
-                    {{ scope.row.enable ? '启用' : '停用' }}
-                  </template>
-                </el-table-column>
-                <el-table-column label="操作" width="100" fixed="right">
-                  <template #default="scope">
-                    <el-button link type="danger" @click="handleUnMountUser(scope.row)"
-                      >卸载</el-button
-                    >
-                  </template>
-                </el-table-column>
-              </el-table>
-            </div>
+          <el-tabs v-model="activeTab" class="role-detail-tabs">
+            <el-tab-pane label="成员管理" name="members">
+              <div class="tab-toolbar">
+                <el-button @click="openMemberDialog">挂载组织内用户</el-button>
+                <el-button @click="openExternalDialog">挂载外部用户</el-button>
+                <el-button :disabled="selectedMemberIds.length === 0" @click="handleBatchUnMountUser">
+                  批量卸载
+                </el-button>
+              </div>
+              <div class="table-panel-body">
+                <div class="table-wrap">
+                  <el-table
+                    :data="members"
+                    border
+                    height="100%"
+                    @selection-change="handleMemberSelectionChange"
+                  >
+                    <el-table-column type="selection" width="48" />
+                    <el-table-column prop="account" label="账号" min-width="140" />
+                    <el-table-column prop="name" label="姓名" min-width="120" />
+                    <el-table-column prop="email" label="邮箱" min-width="180" />
+                    <el-table-column prop="phone" label="手机号" min-width="140" />
+                    <el-table-column label="状态" width="100">
+                      <template #default="scope">
+                        {{ scope.row.enable ? '启用' : '停用' }}
+                      </template>
+                    </el-table-column>
+                    <el-table-column label="操作" width="100" fixed="right">
+                      <template #default="scope">
+                        <el-button link type="danger" @click="handleUnMountUser(scope.row)"
+                          >卸载</el-button
+                        >
+                      </template>
+                    </el-table-column>
+                  </el-table>
+                </div>
 
-            <div class="pagination-wrap">
-              <el-pagination
-                v-model:current-page="memberPage"
-                v-model:page-size="memberPageSize"
-                background
-                layout="total, prev, pager, next, sizes"
-                :page-sizes="[10, 20, 50, 100]"
-                :total="memberTotal"
-                @current-change="loadMembers"
-                @size-change="handleMemberSizeChange"
-              />
-            </div>
-          </div>
+                <div class="pagination-wrap">
+                  <el-pagination
+                    v-model:current-page="memberPage"
+                    v-model:page-size="memberPageSize"
+                    background
+                    layout="total, prev, pager, next, sizes"
+                    :page-sizes="[10, 20, 50, 100]"
+                    :total="memberTotal"
+                    @current-change="loadMembers"
+                    @size-change="handleMemberSizeChange"
+                  />
+                </div>
+              </div>
+            </el-tab-pane>
+
+            <el-tab-pane label="权限配置" name="permissions" lazy>
+              <div v-loading="permLoading" class="perm-panel">
+                <div class="perm-groups">
+                  <div v-for="group in PERM_GROUPS" :key="group.label" class="perm-group">
+                    <div class="perm-group-label">{{ group.label }}</div>
+                    <div class="perm-group-items">
+                      <el-checkbox
+                        v-for="key in group.keys"
+                        :key="key"
+                        :model-value="checkedPerms.has(key)"
+                        :disabled="currentRole.type === 0"
+                        :label="PERM_LABELS[key] || key"
+                        @change="(val: boolean) => togglePerm(key, val)"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div v-if="currentRole.type === 1" class="perm-actions">
+                  <el-button type="primary" :loading="permSaving" @click="savePermissions">
+                    保存权限
+                  </el-button>
+                </div>
+                <div v-else class="perm-readonly-hint">内置角色权限为系统预设，不可修改</div>
+              </div>
+            </el-tab-pane>
+          </el-tabs>
         </template>
         <div v-else class="empty-panel">
           <el-empty description="请选择角色查看成员详情" />
@@ -253,6 +285,8 @@ import {
   roleCreateApi,
   roleDelApi,
   roleEditApi,
+  rolePermissionDetailApi,
+  roleSetPermsApi,
   searchExternalUserApi,
   searchRoleApi,
   unMountUserApi,
@@ -297,6 +331,34 @@ const formRef = ref<FormInstance>()
 const memberPage = ref(1)
 const memberPageSize = ref(10)
 const memberTotal = ref(0)
+const activeTab = ref('members')
+const permLoading = ref(false)
+const permSaving = ref(false)
+const checkedPerms = ref<Set<string>>(new Set())
+
+const PERM_LABELS: Record<string, string> = {
+  'menu:workbranch:use': '工作台',
+  'menu:panel:use': '仪表板',
+  'menu:screen:use': '数据大屏',
+  'menu:dataset:use': '数据集',
+  'menu:data-filing:use': '数据填报',
+  'menu:datasource:use': '数据源',
+  'menu:org-management:use': '组织管理',
+  'menu:user-management:use': '用户管理',
+  'menu:role-management:use': '角色管理',
+  'menu:permission-management:use': '权限管理',
+  'menu:auth-provider:use': '认证设置',
+  'menu:parameter:use': '系统参数',
+  'menu:watermark:use': '水印设置',
+  'menu:sys-variable:use': '系统变量'
+}
+
+const PERM_GROUPS = [
+  { label: '基础功能', keys: ['menu:workbranch:use', 'menu:panel:use', 'menu:screen:use', 'menu:dataset:use', 'menu:data-filing:use'] },
+  { label: '数据管理', keys: ['menu:datasource:use'] },
+  { label: '系统管理', keys: ['menu:org-management:use', 'menu:user-management:use', 'menu:role-management:use', 'menu:permission-management:use'] },
+  { label: '系统设置', keys: ['menu:auth-provider:use', 'menu:parameter:use', 'menu:watermark:use', 'menu:sys-variable:use'] }
+]
 
 const form = reactive({
   id: undefined as number | undefined,
@@ -415,7 +477,9 @@ const handleRoleSelect = async (row: RoleItem | undefined) => {
   currentRole.value = row
   selectedMemberIds.value = []
   memberPage.value = 1
+  activeTab.value = 'members'
   await loadMembers()
+  await loadPermissions()
 }
 
 const handleMemberSizeChange = async (size: number) => {
@@ -542,6 +606,41 @@ const handleBatchUnMountUser = async () => {
   selectedMemberIds.value = []
   await loadMembers()
   await loadRoles()
+}
+
+const loadPermissions = async () => {
+  if (!currentRole.value) return
+  permLoading.value = true
+  try {
+    const res = await rolePermissionDetailApi(currentRole.value.id)
+    const perms: { name: string; granted: boolean }[] = res.data?.permissions || []
+    checkedPerms.value = new Set(perms.filter(p => p.granted && p.name).map(p => p.name))
+  } finally {
+    permLoading.value = false
+  }
+}
+
+const togglePerm = (key: string, val: boolean) => {
+  const next = new Set(checkedPerms.value)
+  if (val) {
+    next.add(key)
+  } else {
+    next.delete(key)
+  }
+  checkedPerms.value = next
+}
+
+const savePermissions = async () => {
+  if (!currentRole.value) return
+  permSaving.value = true
+  try {
+    await roleSetPermsApi(currentRole.value.id, {
+      permissionPointNames: Array.from(checkedPerms.value)
+    })
+    ElMessage.success('权限保存成功')
+  } finally {
+    permSaving.value = false
+  }
 }
 
 onMounted(() => {
@@ -722,6 +821,68 @@ onMounted(() => {
   :deep(.role-table .el-table__body td.el-table__cell) {
     padding-top: 10px;
     padding-bottom: 10px;
+  }
+
+  .role-detail-tabs {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+
+    :deep(.el-tabs__content) {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+    }
+
+    :deep(.el-tab-pane) {
+      height: 100%;
+    }
+  }
+
+  .tab-toolbar {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .perm-panel {
+    padding: 4px 0;
+  }
+
+  .perm-groups {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .perm-group {
+    .perm-group-label {
+      margin-bottom: 8px;
+      color: #1f2329;
+      font-size: 14px;
+      font-weight: 500;
+      line-height: 22px;
+    }
+
+    .perm-group-items {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px 24px;
+      padding-left: 4px;
+    }
+  }
+
+  .perm-actions {
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid #ebedf0;
+  }
+
+  .perm-readonly-hint {
+    margin-top: 16px;
+    color: #8f959e;
+    font-size: 13px;
   }
 }
 </style>

@@ -56,6 +56,14 @@ export const searchExternalUserApi = keyword =>
 
 export const mountExternalUserApi = data => request.post({ url: '/role/mountExternalUser', data })
 
+export const rolePermissionDetailApi = (rid: number | string) =>
+  request.get({ url: `/role/permissionDetail/${rid}` })
+
+export const roleSetPermsApi = (rid: number | string, data) =>
+  request.post({ url: `/role/setPerms/${rid}`, data })
+
+export const roleCreateWithPermsApi = data => request.post({ url: '/role/createWithPerms', data })
+
 export const switchLangApi = data => request.post({ url: '/user/switchLanguage', data })
 
 export const downExcelTemplateApi = () =>
