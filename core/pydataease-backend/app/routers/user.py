@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.dependencies.auth import get_current_user
 from app.dependencies.database import get_db
+from app.dependencies.permission import require_menu_permission
 from app.models.sys_variable import CoreSysVariable, CoreSysVariableValue
 from app.schemas.auth import TokenUser
 from app.schemas.auth_permission import UserOrgOptionResponse
@@ -32,12 +33,15 @@ from app.services.user_service import UserService, get_user_service
 
 router = APIRouter(tags=["user"])
 
+_USER_MGMT_PERM = require_menu_permission("menu:user-management:use")
+
 
 @router.post("/user/pager/{page}/{limit}")
 async def user_pager(
     page: int,
     limit: int,
     payload: UserPagerRequest | None = None,
+    _menu: None = Depends(_USER_MGMT_PERM),
     user: TokenUser = Depends(get_current_user),
     service: UserService = Depends(get_user_service),
 ) -> UserPagerResponse:
@@ -47,6 +51,7 @@ async def user_pager(
 @router.post("/user/create")
 async def create_user(
     payload: UserCreateRequest,
+    _menu: None = Depends(_USER_MGMT_PERM),
     user: TokenUser = Depends(get_current_user),
     service: UserService = Depends(get_user_service),
 ) -> UserDetailResponse:
@@ -56,6 +61,7 @@ async def create_user(
 @router.post("/user/edit")
 async def edit_user(
     payload: UserEditRequest,
+    _menu: None = Depends(_USER_MGMT_PERM),
     user: TokenUser = Depends(get_current_user),
     service: UserService = Depends(get_user_service),
 ) -> UserDetailResponse:
@@ -82,6 +88,7 @@ async def person_edit(
 @router.post("/user/delete/{uid}")
 async def delete_user(
     uid: int,
+    _menu: None = Depends(_USER_MGMT_PERM),
     user: TokenUser = Depends(get_current_user),
     service: UserService = Depends(get_user_service),
 ) -> None:
@@ -91,6 +98,7 @@ async def delete_user(
 @router.post("/user/enable")
 async def enable_user(
     payload: UserEnableRequest,
+    _menu: None = Depends(_USER_MGMT_PERM),
     user: TokenUser = Depends(get_current_user),
     service: UserService = Depends(get_user_service),
 ) -> None:
@@ -100,6 +108,7 @@ async def enable_user(
 @router.post("/user/resetPwd/{uid}")
 async def reset_user_password(
     uid: int,
+    _menu: None = Depends(_USER_MGMT_PERM),
     user: TokenUser = Depends(get_current_user),
     service: UserService = Depends(get_user_service),
 ) -> None:
@@ -149,6 +158,7 @@ async def person_sys_variable_info(
 @router.get("/user/queryById/{uid}")
 async def query_user_by_id(
     uid: int,
+    _menu: None = Depends(_USER_MGMT_PERM),
     user: TokenUser = Depends(get_current_user),
     service: UserService = Depends(get_user_service),
 ) -> UserDetailResponse:
@@ -168,6 +178,7 @@ async def users_selected_for_role(
     page: int,
     limit: int,
     payload: UserRoleSelectedRequest,
+    _menu: None = Depends(_USER_MGMT_PERM),
     user: TokenUser = Depends(get_current_user),
     service: UserService = Depends(get_user_service),
 ) -> UserPagerResponse:
@@ -177,6 +188,7 @@ async def users_selected_for_role(
 @router.post("/user/byCurOrg")
 async def users_by_current_org(
     payload: UserByCurrentOrgRequest | None = None,
+    _menu: None = Depends(_USER_MGMT_PERM),
     user: TokenUser = Depends(get_current_user),
     service: UserService = Depends(get_user_service),
 ) -> list[UserListItemResponse]:
@@ -186,6 +198,7 @@ async def users_by_current_org(
 @router.post("/user/batchDel")
 async def batch_delete(
     payload: UserBatchDeleteRequest,
+    _menu: None = Depends(_USER_MGMT_PERM),
     user: TokenUser = Depends(get_current_user),
     service: UserService = Depends(get_user_service),
 ) -> None:
@@ -195,6 +208,7 @@ async def batch_delete(
 @router.post("/user/batchImport")
 async def batch_import(
     file: UploadFile = File(...),
+    _menu: None = Depends(_USER_MGMT_PERM),
     _user: TokenUser = Depends(get_current_user),
 ) -> UserImportResponse:
     _ = file.filename, _user.user_id
@@ -202,7 +216,10 @@ async def batch_import(
 
 
 @router.post("/user/excelTemplate")
-async def excel_template(_: TokenUser = Depends(get_current_user)) -> StreamingResponse:
+async def excel_template(
+    _menu: None = Depends(_USER_MGMT_PERM),
+    _: TokenUser = Depends(get_current_user),
+) -> StreamingResponse:
     return StreamingResponse(
         io.BytesIO(b""),
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -211,7 +228,11 @@ async def excel_template(_: TokenUser = Depends(get_current_user)) -> StreamingR
 
 
 @router.get("/user/errorRecord/{key}")
-async def error_record(key: str, _: TokenUser = Depends(get_current_user)) -> StreamingResponse:
+async def error_record(
+    key: str,
+    _menu: None = Depends(_USER_MGMT_PERM),
+    _: TokenUser = Depends(get_current_user),
+) -> StreamingResponse:
     return StreamingResponse(
         io.BytesIO(b""),
         media_type="application/octet-stream",
@@ -220,7 +241,11 @@ async def error_record(key: str, _: TokenUser = Depends(get_current_user)) -> St
 
 
 @router.get("/user/clearErrorRecord/{key}")
-async def clear_error_record(_key: str, _: TokenUser = Depends(get_current_user)) -> dict[str, bool]:
+async def clear_error_record(
+    _key: str,
+    _menu: None = Depends(_USER_MGMT_PERM),
+    _: TokenUser = Depends(get_current_user),
+) -> dict[str, bool]:
     return {"success": True}
 
 

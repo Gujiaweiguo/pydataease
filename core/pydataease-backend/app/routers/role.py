@@ -3,6 +3,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends
 
 from app.dependencies.auth import get_current_user
+from app.dependencies.permission import require_menu_permission
 from app.schemas.auth import TokenUser
 from app.schemas.role import (
     RoleBeforeUnmountRequest,
@@ -21,10 +22,13 @@ from app.services.role_service import RoleService, get_role_service
 
 router = APIRouter(tags=["role"])
 
+_ROLE_PERM = require_menu_permission("menu:role-management:use")
+
 
 @router.post("/role/query")
 async def query_roles(
     payload: RoleQueryRequest | None = None,
+    _menu: None = Depends(_ROLE_PERM),
     user: TokenUser = Depends(get_current_user),
     service: RoleService = Depends(get_role_service),
 ) -> list[RoleDetailResponse]:
@@ -34,6 +38,7 @@ async def query_roles(
 @router.post("/role/create")
 async def create_role(
     payload: RoleCreateRequest,
+    _menu: None = Depends(_ROLE_PERM),
     user: TokenUser = Depends(get_current_user),
     service: RoleService = Depends(get_role_service),
 ) -> RoleResponse:
@@ -43,6 +48,7 @@ async def create_role(
 @router.post("/role/edit")
 async def edit_role(
     payload: RoleEditRequest,
+    _menu: None = Depends(_ROLE_PERM),
     user: TokenUser = Depends(get_current_user),
     service: RoleService = Depends(get_role_service),
 ) -> RoleResponse:
@@ -52,6 +58,7 @@ async def edit_role(
 @router.get("/role/detail/{rid}")
 async def role_detail(
     rid: int,
+    _menu: None = Depends(_ROLE_PERM),
     user: TokenUser = Depends(get_current_user),
     service: RoleService = Depends(get_role_service),
 ) -> RoleDetailResponse:
@@ -61,6 +68,7 @@ async def role_detail(
 @router.post("/role/delete/{rid}")
 async def delete_role(
     rid: int,
+    _menu: None = Depends(_ROLE_PERM),
     user: TokenUser = Depends(get_current_user),
     service: RoleService = Depends(get_role_service),
 ) -> None:
@@ -70,6 +78,7 @@ async def delete_role(
 @router.post("/role/user/option")
 async def role_user_option(
     payload: RoleUserOptionRequest | None = None,
+    _menu: None = Depends(_ROLE_PERM),
     user: TokenUser = Depends(get_current_user),
     service: RoleService = Depends(get_role_service),
 ) -> list[RoleUserOptionResponse]:
@@ -79,6 +88,7 @@ async def role_user_option(
 @router.get("/role/searchExternalUser/{keyword}")
 async def search_external_user(
     keyword: str,
+    _menu: None = Depends(_ROLE_PERM),
     user: TokenUser = Depends(get_current_user),
     service: RoleService = Depends(get_role_service),
 ) -> list[RoleUserOptionResponse]:
@@ -88,6 +98,7 @@ async def search_external_user(
 @router.post("/role/mountUser")
 async def mount_user(
     payload: RoleMountRequest,
+    _menu: None = Depends(_ROLE_PERM),
     user: TokenUser = Depends(get_current_user),
     service: RoleService = Depends(get_role_service),
 ) -> None:
@@ -97,6 +108,7 @@ async def mount_user(
 @router.post("/role/beforeUnmountInfo")
 async def before_unmount_info(
     payload: RoleBeforeUnmountRequest,
+    _menu: None = Depends(_ROLE_PERM),
     user: TokenUser = Depends(get_current_user),
     service: RoleService = Depends(get_role_service),
 ) -> object:
@@ -106,6 +118,7 @@ async def before_unmount_info(
 @router.post("/role/mountExternalUser")
 async def mount_external_user(
     payload: RoleMountExternalRequest,
+    _menu: None = Depends(_ROLE_PERM),
     user: TokenUser = Depends(get_current_user),
     service: RoleService = Depends(get_role_service),
 ) -> object:
@@ -115,6 +128,7 @@ async def mount_external_user(
 @router.post("/role/unMountUser")
 async def unmount_user(
     payload: RoleUnmountRequest,
+    _menu: None = Depends(_ROLE_PERM),
     user: TokenUser = Depends(get_current_user),
     service: RoleService = Depends(get_role_service),
 ) -> None:
@@ -124,6 +138,7 @@ async def unmount_user(
 @router.post("/role/byCurOrg")
 async def roles_by_current_org(
     payload: RoleQueryRequest | None = None,
+    _menu: None = Depends(_ROLE_PERM),
     user: TokenUser = Depends(get_current_user),
     service: RoleService = Depends(get_role_service),
 ) -> list[RoleResponse]:

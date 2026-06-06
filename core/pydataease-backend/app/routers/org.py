@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.dependencies.auth import get_current_user
 from app.dependencies.database import get_db
+from app.dependencies.permission import require_menu_permission
 from app.repositories.org_repo import OrgRepository
 from app.schemas.auth import TokenUser
 from app.schemas.org import OrgCreateRequest, OrgEditRequest, OrgMountedRequest, OrgTreeRequest
@@ -12,6 +13,8 @@ from app.settings.config import get_settings
 from app.services.org_service import OrgService, get_org_service
 
 router = APIRouter(prefix="/org", tags=["org"])
+
+_ORG_MGMT_PERM = require_menu_permission("menu:org-management:use")
 
 
 def require_org_management_enabled() -> None:
@@ -23,6 +26,7 @@ def require_org_management_enabled() -> None:
 async def org_tree(
     _payload: OrgTreeRequest | None = None,
     _org_management_enabled: None = Depends(require_org_management_enabled),
+    _menu: None = Depends(_ORG_MGMT_PERM),
     user: TokenUser = Depends(get_current_user),
     service: OrgService = Depends(get_org_service),
 ) -> object:
@@ -33,6 +37,7 @@ async def org_tree(
 async def create_org(
     payload: OrgCreateRequest,
     _org_management_enabled: None = Depends(require_org_management_enabled),
+    _menu: None = Depends(_ORG_MGMT_PERM),
     _user: TokenUser = Depends(get_current_user),
     service: OrgService = Depends(get_org_service),
 ) -> object:
@@ -43,6 +48,7 @@ async def create_org(
 async def edit_org(
     payload: OrgEditRequest,
     _org_management_enabled: None = Depends(require_org_management_enabled),
+    _menu: None = Depends(_ORG_MGMT_PERM),
     _user: TokenUser = Depends(get_current_user),
     service: OrgService = Depends(get_org_service),
 ) -> object:
@@ -53,6 +59,7 @@ async def edit_org(
 async def delete_org(
     oid: int,
     _org_management_enabled: None = Depends(require_org_management_enabled),
+    _menu: None = Depends(_ORG_MGMT_PERM),
     _user: TokenUser = Depends(get_current_user),
     service: OrgService = Depends(get_org_service),
 ) -> None:
@@ -63,6 +70,7 @@ async def delete_org(
 async def resource_exist(
     oid: int,
     _org_management_enabled: None = Depends(require_org_management_enabled),
+    _menu: None = Depends(_ORG_MGMT_PERM),
     _user: TokenUser = Depends(get_current_user),
     service: OrgService = Depends(get_org_service),
 ) -> bool:
@@ -73,6 +81,7 @@ async def resource_exist(
 async def mounted_orgs(
     payload: OrgMountedRequest | None = None,
     _org_management_enabled: None = Depends(require_org_management_enabled),
+    _menu: None = Depends(_ORG_MGMT_PERM),
     user: TokenUser = Depends(get_current_user),
     session: AsyncSession = Depends(get_db),
 ) -> list[dict[str, object]]:
