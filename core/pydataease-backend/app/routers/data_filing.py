@@ -5,11 +5,14 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException
 
 from app.dependencies.auth import get_current_user  # pyright: ignore[reportImplicitRelativeImport]
+from app.dependencies.permission import require_menu_permission  # pyright: ignore[reportImplicitRelativeImport]
 from app.schemas.auth import TokenUser  # pyright: ignore[reportImplicitRelativeImport]
 from app.schemas.data_filing import FilingConfigCreateRequest, FilingConfigUpdateRequest, FilingSubmitRequest
 from app.services.data_filing_service import DataFilingService, get_data_filing_service
 
 router = APIRouter(tags=["data-filing"])
+
+_DATA_FILING_PERM = require_menu_permission("menu:data-filing:use")
 
 
 # --- Admin routes (require auth) ---
@@ -18,6 +21,7 @@ router = APIRouter(tags=["data-filing"])
 @router.get("/data-filing/config/list")
 async def list_configs(
     status: str | None = None,
+    _menu: None = Depends(_DATA_FILING_PERM),
     user: TokenUser = Depends(get_current_user),
     service: DataFilingService = Depends(get_data_filing_service),
 ) -> list[dict[str, Any]]:
@@ -28,6 +32,7 @@ async def list_configs(
 @router.get("/data-filing/config/{filing_id}")
 async def get_config(
     filing_id: int,
+    _menu: None = Depends(_DATA_FILING_PERM),
     user: TokenUser = Depends(get_current_user),
     service: DataFilingService = Depends(get_data_filing_service),
 ) -> dict[str, Any]:
@@ -41,6 +46,7 @@ async def get_config(
 @router.post("/data-filing/config/create")
 async def create_config(
     payload: FilingConfigCreateRequest,
+    _menu: None = Depends(_DATA_FILING_PERM),
     user: TokenUser = Depends(get_current_user),
     service: DataFilingService = Depends(get_data_filing_service),
 ) -> dict[str, Any]:
@@ -57,6 +63,7 @@ async def create_config(
 async def update_config(
     filing_id: int,
     payload: FilingConfigUpdateRequest,
+    _menu: None = Depends(_DATA_FILING_PERM),
     user: TokenUser = Depends(get_current_user),
     service: DataFilingService = Depends(get_data_filing_service),
 ) -> dict[str, Any]:
@@ -70,6 +77,7 @@ async def update_config(
 @router.delete("/data-filing/config/{filing_id}")
 async def delete_config(
     filing_id: int,
+    _menu: None = Depends(_DATA_FILING_PERM),
     user: TokenUser = Depends(get_current_user),
     service: DataFilingService = Depends(get_data_filing_service),
 ) -> bool:
@@ -83,6 +91,7 @@ async def delete_config(
 @router.post("/data-filing/config/{filing_id}/publish")
 async def publish_config(
     filing_id: int,
+    _menu: None = Depends(_DATA_FILING_PERM),
     user: TokenUser = Depends(get_current_user),
     service: DataFilingService = Depends(get_data_filing_service),
 ) -> dict[str, Any]:
@@ -96,6 +105,7 @@ async def publish_config(
 @router.post("/data-filing/config/{filing_id}/disable")
 async def disable_config(
     filing_id: int,
+    _menu: None = Depends(_DATA_FILING_PERM),
     user: TokenUser = Depends(get_current_user),
     service: DataFilingService = Depends(get_data_filing_service),
 ) -> dict[str, Any]:
