@@ -15,9 +15,11 @@ from tests.fixtures.test_factories import timestamp_ms as _timestamp_ms  # pyrig
 
 from app.models.chart import CoreChartView  # pyright: ignore[reportImplicitRelativeImport]
 from app.models.store import CoreStore  # pyright: ignore[reportImplicitRelativeImport]
+from app.models.template import VisualizationTemplate  # pyright: ignore[reportImplicitRelativeImport]
 from app.models.visualization import DataVisualizationInfo  # pyright: ignore[reportImplicitRelativeImport]
 from app.repositories.chart_repo import ChartRepository  # pyright: ignore[reportImplicitRelativeImport]
 from app.repositories.store_repo import StoreRepository  # pyright: ignore[reportImplicitRelativeImport]
+from app.repositories.template_repo import TemplateRepository  # pyright: ignore[reportImplicitRelativeImport]
 from app.repositories.visualization_repo import VisualizationRepository  # pyright: ignore[reportImplicitRelativeImport]
 from app.schemas.auth import TokenUser  # pyright: ignore[reportImplicitRelativeImport]
 from app.schemas.visualization import (  # pyright: ignore[reportImplicitRelativeImport]
@@ -139,11 +141,14 @@ async def _cleanup_entities(
     visualization_ids: list[int],
     chart_ids: list[int],
     store_resource_ids: list[int],
+    template_ids: list[str] | None = None,
 ) -> None:
     if chart_ids:
         await session.execute(delete(CoreChartView).where(CoreChartView.id.in_(chart_ids)))
     if store_resource_ids:
         await session.execute(delete(CoreStore).where(CoreStore.resource_id.in_(store_resource_ids)))
+    if template_ids:
+        await session.execute(delete(VisualizationTemplate).where(VisualizationTemplate.id.in_(template_ids)))
     if visualization_ids:
         await session.execute(delete(DataVisualizationInfo).where(DataVisualizationInfo.id.in_(visualization_ids)))
     await session.commit()
@@ -559,6 +564,80 @@ class TestVisualizationServiceIntegration:
             assert await service.app_canvas_name_check(VisualizationAppCanvasNameCheckRequest()) == "success"
         finally:
             await _cleanup_entities(db_session, visualization_ids=created_ids, chart_ids=[], store_resource_ids=[])
+
+    async def test_decompression_resolves_inner_template_payload_and_falls_back_to_source_visualization(
+        self,
+        db_session: AsyncSession,
+    ) -> None:
+        service = VisualizationService(db_session)
+        repo = VisualizationRepository(db_session)
+        chart_repo = ChartRepository(db_session)
+        template_repo = TemplateRepository(db_session)
+        stamp = _stamp()
+        created_ids: list[int] = []
+        chart_ids: list[int] = []
+        template_ids: list[str] = []
+        try:
+            visualization = await repo.create(
+                _viz_payload(
+                    stamp,
+                    name="screen-source",
+                    type_value="screen",
+                    component_data=[{"id": "chart-1", "component": "UserView", "innerType": "bar"}],
+                    canvas_style_data={"width": 1920, "height": 1080},
+                )
+            )
+            created_ids.append(visualization.id)
+            chart = await chart_repo.create(
+                _chart_payload(
+                    chart_id=_stamp(),
+                    scene_id=visualization.id,
+                    title="Sales",
+                    custom_attr={"label": {"show": True}},
+                )
+            )
+            chart_ids.append(chart.id)
+
+            template = await template_repo.create({
+                "id": str(_stamp()),
+                "name": f"inner-template-{stamp}",
+                "pid": "0",
+                "level": 0,
+                "dv_type": "dataV",
+                "node_type": "template",
+                "create_by": "7",
+                "create_time": _timestamp_ms(),
+                "snapshot": "snap",
+                "template_type": "self",
+                "template_style": {"width": 1920, "height": 1080},
+                "template_data": [{"id": "placeholder"}],
+                "dynamic_data": {str(chart.id): {"sceneId": str(visualization.id)}},
+            })
+            template_ids.append(template.id)
+
+            result = await service.decompression(
+                VisualizationDecompressionRequest(
+                    data={"data": {"newFrom": "new_inner_template", "templateId": template.id}}
+                )
+            )
+
+            canvas_style = json.loads(cast(str, result["canvasStyleData"]))
+            component_data = json.loads(cast(str, result["componentData"]))
+            canvas_view_info = cast(dict[str, Any], result["canvasViewInfo"])
+
+            assert result["name"] == template.name
+            assert canvas_style["component"]["seniorStyleSetting"]
+            assert component_data[0]["id"] == "chart-1"
+            assert str(chart.id) in canvas_view_info
+            assert canvas_view_info[str(chart.id)]["title"] == "Sales"
+        finally:
+            await _cleanup_entities(
+                db_session,
+                visualization_ids=created_ids,
+                chart_ids=chart_ids,
+                store_resource_ids=[],
+                template_ids=template_ids,
+            )
 
     async def test_store_and_query_stores_cover_filters_and_remove(self, db_session: AsyncSession) -> None:
         service = VisualizationService(db_session)
