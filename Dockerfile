@@ -4,6 +4,8 @@
 
 FROM python:3.12-slim AS builder
 
+ARG VERSION=dev
+
 WORKDIR /app
 # TODO: Replace ghcr.io mirror with self-hosted registry
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
@@ -21,6 +23,8 @@ FROM python:3.12-slim AS runtime
 
 WORKDIR /app
 
+ARG VERSION=dev
+
 RUN mkdir -p /app/logs /app/static
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -37,6 +41,8 @@ COPY --from=builder /app/pyproject.toml /app/pyproject.toml
 COPY --from=builder /app/uv.lock /app/uv.lock
 
 RUN chmod +x /app/scripts/entrypoint.sh
+
+RUN echo "$VERSION" > /app/VERSION
 
 EXPOSE 8100
 

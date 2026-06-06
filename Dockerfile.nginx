@@ -1,0 +1,23 @@
+# PyDataEase — 前端 + Nginx Docker 镜像
+#
+# 两种构建模式：
+#   模式 1（推荐）：本地构建前端后直接打包
+#     cd core/core-frontend && npm install && npm run build:distributed
+#     docker build -f Dockerfile.nginx -t pydataease-nginx:2.10 .
+#
+#   模式 2：在 Docker 内完整构建（需要额外配置）
+#     设置 BUILD_IN_DOCKER=1 构建参数
+
+ARG BUILD_IN_DOCKER=0
+
+# ---- 模式 1：直接复制本地构建产物 ----
+FROM nginx:stable-alpine AS prebuilt
+
+ARG BUILD_IN_DOCKER=0
+
+RUN rm /etc/nginx/conf.d/default.conf
+COPY conf/nginx/default.conf /etc/nginx/conf.d/default.conf
+COPY core/core-frontend/dist /usr/share/nginx/html
+
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]

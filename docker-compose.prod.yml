@@ -1,4 +1,6 @@
 # PyDataEase — Production deployment
+# 推荐使用方式：复制 conf/install.env.example 为 conf/install.env，修改后执行 ./install.sh
+# 此文件仅用于从项目根目录直接构建启动的开发/测试场景
 # Usage: docker compose -f docker-compose.prod.yml up -d
 #
 # Required env vars (set in .env or shell):
@@ -7,14 +9,30 @@
 #   DE_PG_PASSWORD         — PostgreSQL password (default: dataease)
 
 services:
+  pydataease-nginx:
+    build:
+      context: .
+      dockerfile: Dockerfile.nginx
+    container_name: pydataease-nginx
+    restart: unless-stopped
+    ports:
+      - "${DE_PORT:-8100}:80"
+    depends_on:
+      pydataease-app:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
   pydataease-app:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: pydataease-app
     restart: unless-stopped
-    ports:
-      - "${DE_PORT:-8100}:8000"
     env_file:
       - core/pydataease-backend/.env
     environment:
@@ -36,7 +54,7 @@ services:
       - static_resources:/app/static
 
   pydataease-pg:
-    image: postgres:16
+    image: pgvector/pgvector:pg16
     container_name: pydataease-pg
     restart: unless-stopped
     environment:

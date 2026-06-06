@@ -6,6 +6,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class BaseConfig(BaseSettings):
     app_name: str = "DataEase API"
     version: str = "0.1.0"
+    app_version: str = "2.10"
     debug: bool = False
     database_url: str = "postgresql+asyncpg://dataease:dataease@localhost:5432/dataease"
     db_pool_size: int = 10
@@ -22,6 +23,24 @@ class BaseConfig(BaseSettings):
     row_column_permission_enabled: bool = True
     rsa_private_key_path: str = ""
     log_level: str = "INFO"
+    admin_password: str = ""
+
+    # Database mode
+    pg_mode: str = "builtin"  # builtin | external
+
+    # External database fields
+    database_host: str = ""
+    database_port: int = 5432
+    database_name: str = "dataease"
+    database_user: str = ""
+    database_password: str = ""
+    database_sslmode: str = "prefer"
+
+    # PG init control
+    pg_allow_init: bool = False
+
+    # Install directory (for reference, not used by app itself)
+    install_dir: str = "/opt/module/pydataease"
 
     model_config: ClassVar[SettingsConfigDict] = SettingsConfigDict(env_file=".env", env_prefix="DE_")
 

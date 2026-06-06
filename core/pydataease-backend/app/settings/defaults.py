@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+
 # pyright: reportMissingImports=false
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -40,7 +42,7 @@ SETTINGS_DEFAULTS: SettingsDefaults = SettingsDefaults({
     "about.expired": "",
     "about.count": "",
     "about.edition": "社区版",
-    "about.version": "2.10",
+    "about.version": os.environ.get("DE_APP_VERSION", "2.10"),
     "about.serialNo": "",
     "about.remark": "",
     "ui.cacheVersion": "0",

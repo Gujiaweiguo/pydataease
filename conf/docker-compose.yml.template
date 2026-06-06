@@ -1,13 +1,12 @@
-# PyDataEase — Production deployment (alternative entrypoint from backend dir)
-# Prefer: 使用项目根目录的 install.sh 安装（推荐方式）
-# 此文件仅用于从 backend 目录直接启动的开发/测试场景
-# Usage from this dir: docker compose -f docker-compose.prod.yml up -d
+# PyDataEase — Production Docker Compose 模板
+# 由 install.sh 根据配置生成最终 docker-compose.yml
+#
+# 此文件为 builtin 模式模板（包含 PG 容器）
+# install.sh 在 external 模式下会移除 PG 服务和相关依赖
 
 services:
   pydataease-nginx:
-    build:
-      context: ../../
-      dockerfile: Dockerfile.nginx
+    image: pydataease-nginx:${DE_APP_VERSION}
     container_name: pydataease-nginx
     restart: unless-stopped
     ports:
@@ -23,18 +22,14 @@ services:
       start_period: 20s
 
   pydataease-app:
-    build:
-      context: ../../
-      dockerfile: Dockerfile
+    image: pydataease-app:${DE_APP_VERSION}
     container_name: pydataease-app
     restart: unless-stopped
-    env_file:
-      - .env
     environment:
       DE_ENV: prod
-      DE_DATABASE_URL: postgresql+asyncpg://dataease:${DE_PG_PASSWORD:-dataease}@pydataease-pg:5432/dataease
-      DE_SECRET_KEY: ${DE_SECRET_KEY:?DE_SECRET_KEY is required}
-      DE_SHARE_SECRET_KEY: ${DE_SHARE_SECRET_KEY:?DE_SHARE_SECRET_KEY is required}
+      DE_DATABASE_URL: "postgresql+asyncpg://dataease:${DE_PG_PASSWORD}@pydataease-pg:5432/dataease"
+      DE_SECRET_KEY: "${DE_SECRET_KEY}"
+      DE_SHARE_SECRET_KEY: "${DE_SHARE_SECRET_KEY}"
     depends_on:
       pydataease-pg:
         condition: service_healthy
@@ -45,9 +40,10 @@ services:
       retries: 5
       start_period: 30s
     volumes:
-      - app_logs:/app/logs
-      - static_resources:/app/static
+      - "${DE_INSTALL_DIR}/logs/app:/app/logs"
+      - "${DE_INSTALL_DIR}/static:/app/static"
 
+  # --- PG_BUILTIN_START ---
   pydataease-pg:
     image: pgvector/pgvector:pg16
     container_name: pydataease-pg
@@ -55,16 +51,12 @@ services:
     environment:
       POSTGRES_DB: dataease
       POSTGRES_USER: dataease
-      POSTGRES_PASSWORD: ${DE_PG_PASSWORD:-dataease}
+      POSTGRES_PASSWORD: "${DE_PG_PASSWORD}"
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - "${DE_INSTALL_DIR}/data/postgres:/var/lib/postgresql/data"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U dataease"]
       interval: 5s
       timeout: 5s
       retries: 5
-
-volumes:
-  pgdata:
-  app_logs:
-  static_resources:
+  # --- PG_BUILTIN_END ---

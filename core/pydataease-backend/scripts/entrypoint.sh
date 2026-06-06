@@ -10,8 +10,8 @@ term_handler() {
 
 trap term_handler TERM INT
 
-echo "Running Alembic migrations..."
-alembic upgrade head
+# 注意：数据库迁移（alembic upgrade head）已由 install.sh / upgrade.sh
+# 在独立的一次性容器中执行，不再由 entrypoint 自动运行。
 echo "Starting FastAPI application..."
 uvicorn app.main:app --host 0.0.0.0 --port "${DE_PORT:-8000}" &
 child_pid=$!
