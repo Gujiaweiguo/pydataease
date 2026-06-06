@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - dev-v2
+      - main
     paths:
       - 'core/core-frontend/**'
   pull_request:
