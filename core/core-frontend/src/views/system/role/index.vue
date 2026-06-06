@@ -76,7 +76,10 @@
               <div class="tab-toolbar">
                 <el-button @click="openMemberDialog">挂载组织内用户</el-button>
                 <el-button @click="openExternalDialog">挂载外部用户</el-button>
-                <el-button :disabled="selectedMemberIds.length === 0" @click="handleBatchUnMountUser">
+                <el-button
+                  :disabled="selectedMemberIds.length === 0"
+                  @click="handleBatchUnMountUser"
+                >
                   批量卸载
                 </el-button>
               </div>
@@ -159,21 +162,11 @@
     <el-dialog
       v-model="dialogVisible"
       :title="dialogMode === 'create' ? '新增角色' : '编辑角色'"
-      width="520px"
+      width="620px"
       append-to-body
       :before-close="closeDialog"
     >
       <el-form ref="formRef" :model="form" :rules="formRules" label-position="top">
-        <el-form-item v-if="dialogMode === 'create'" label="继承内置角色" prop="inheritRoleId">
-          <el-select v-model="form.inheritRoleId" placeholder="请选择内置角色" style="width: 100%">
-            <el-option
-              v-for="role in builtinRoleOptions"
-              :key="role.id"
-              :label="role.name"
-              :value="role.id"
-            />
-          </el-select>
-        </el-form-item>
         <el-form-item label="角色名称" prop="name">
           <el-input v-model="form.name" maxlength="255" />
         </el-form-item>
@@ -181,15 +174,28 @@
           <el-input
             v-model="form.description"
             type="textarea"
-            :rows="4"
+            :rows="3"
             maxlength="500"
             show-word-limit
           />
         </el-form-item>
+        <el-form-item v-if="dialogMode === 'create'" label="初始权限">
+          <div class="dialog-perm-groups">
+            <div v-for="group in PERM_GROUPS" :key="group.label" class="dialog-perm-group">
+              <div class="dialog-perm-group-label">{{ group.label }}</div>
+              <div class="dialog-perm-group-items">
+                <el-checkbox
+                  v-for="key in group.keys"
+                  :key="key"
+                  :model-value="formPerms.has(key)"
+                  :label="PERM_LABELS[key] || key"
+                  @change="(val: boolean) => toggleFormPerm(key, val)"
+                />
+              </div>
+            </div>
+          </div>
+        </el-form-item>
       </el-form>
-      <div v-if="dialogMode === 'create'" class="dialog-tip">
-        当前仅记录继承来源，权限配置将在后续权限中心中完善。
-      </div>
       <template #footer>
         <el-button @click="closeDialog">取消</el-button>
         <el-button type="primary" @click="submitForm">确定</el-button>
@@ -275,14 +281,14 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import { onMounted, reactive, ref } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus-secondary'
 import { ElMessage, ElMessageBox } from 'element-plus-secondary'
 import {
   beforeUnmountInfoApi,
   mountExternalUserApi,
   mountUserApi,
-  roleCreateApi,
+  roleCreateWithPermsApi,
   roleDelApi,
   roleEditApi,
   rolePermissionDetailApi,
@@ -335,6 +341,7 @@ const activeTab = ref('members')
 const permLoading = ref(false)
 const permSaving = ref(false)
 const checkedPerms = ref<Set<string>>(new Set())
+const formPerms = ref<Set<string>>(new Set())
 
 const PERM_LABELS: Record<string, string> = {
   'menu:workbranch:use': '工作台',
@@ -354,25 +361,46 @@ const PERM_LABELS: Record<string, string> = {
 }
 
 const PERM_GROUPS = [
-  { label: '基础功能', keys: ['menu:workbranch:use', 'menu:panel:use', 'menu:screen:use', 'menu:dataset:use', 'menu:data-filing:use'] },
+  {
+    label: '基础功能',
+    keys: [
+      'menu:workbranch:use',
+      'menu:panel:use',
+      'menu:screen:use',
+      'menu:dataset:use',
+      'menu:data-filing:use'
+    ]
+  },
   { label: '数据管理', keys: ['menu:datasource:use'] },
-  { label: '系统管理', keys: ['menu:org-management:use', 'menu:user-management:use', 'menu:role-management:use', 'menu:permission-management:use'] },
-  { label: '系统设置', keys: ['menu:auth-provider:use', 'menu:parameter:use', 'menu:watermark:use', 'menu:sys-variable:use'] }
+  {
+    label: '系统管理',
+    keys: [
+      'menu:org-management:use',
+      'menu:user-management:use',
+      'menu:role-management:use',
+      'menu:permission-management:use'
+    ]
+  },
+  {
+    label: '系统设置',
+    keys: [
+      'menu:auth-provider:use',
+      'menu:parameter:use',
+      'menu:watermark:use',
+      'menu:sys-variable:use'
+    ]
+  }
 ]
 
 const form = reactive({
   id: undefined as number | undefined,
   name: '',
-  description: '',
-  inheritRoleId: undefined as number | undefined
+  description: ''
 })
 
 const formRules: FormRules = {
-  name: [{ required: true, message: '请输入角色名称', trigger: 'blur' }],
-  inheritRoleId: [{ required: true, message: '请选择内置角色', trigger: 'change' }]
+  name: [{ required: true, message: '请输入角色名称', trigger: 'blur' }]
 }
-
-const builtinRoleOptions = computed(() => roles.value.filter(role => role.type === 0))
 
 const loadRoles = async () => {
   loading.value = true
@@ -394,7 +422,7 @@ const resetForm = () => {
   form.id = undefined
   form.name = ''
   form.description = ''
-  form.inheritRoleId = undefined
+  formPerms.value = new Set()
 }
 
 const closeDialog = () => {
@@ -421,6 +449,16 @@ const openEditDialog = (row: RoleItem) => {
   dialogVisible.value = true
 }
 
+const toggleFormPerm = (key: string, val: boolean) => {
+  const next = new Set(formPerms.value)
+  if (val) {
+    next.add(key)
+  } else {
+    next.delete(key)
+  }
+  formPerms.value = next
+}
+
 const submitForm = async () => {
   await formRef.value?.validate()
   const payload = {
@@ -428,7 +466,10 @@ const submitForm = async () => {
     description: form.description.trim() || undefined
   }
   if (dialogMode.value === 'create') {
-    await roleCreateApi(payload)
+    await roleCreateWithPermsApi({
+      ...payload,
+      permissionPointNames: Array.from(formPerms.value)
+    })
     ElMessage.success('新增成功')
   } else if (form.id) {
     await roleEditApi({ id: form.id, ...payload })
@@ -883,6 +924,31 @@ onMounted(() => {
     margin-top: 16px;
     color: #8f959e;
     font-size: 13px;
+  }
+
+  .dialog-perm-groups {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    max-height: 340px;
+    overflow-y: auto;
+    padding: 8px 0;
+  }
+
+  .dialog-perm-group {
+    .dialog-perm-group-label {
+      margin-bottom: 6px;
+      color: #1f2329;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .dialog-perm-group-items {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 20px;
+      padding-left: 2px;
+    }
   }
 }
 </style>
