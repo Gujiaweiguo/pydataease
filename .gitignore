@@ -49,6 +49,7 @@ build/
 
 # E2E / browser screenshots (root-level only — nested PNGs are legit assets)
 /*.png
+!big-screen-visual-polish.png
 /findById-response.json
 /e2e-browser-console*.log
 /e2e-browser-network.txt
