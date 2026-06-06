@@ -303,9 +303,14 @@ class TestServiceRepositoryBehavior:
             del user, target_type, target_id
             return False
 
+        async def _menu_grant_oid(_self, target_type: str, user: TokenUser, target_id: int) -> int:
+            del target_type, user, target_id
+            return 0
+
         service._infer_target_type = MethodType(_infer_target_type, service)
         service._assert_target_in_scope = MethodType(_assert_target_in_scope, service)
         service._can_manage_auth = MethodType(_can_manage_auth, service)
+        service._menu_grant_oid = MethodType(_menu_grant_oid, service)
         service.repo.get_menu_point_grants = MethodType(
             lambda self, target_type, target_id, oid: _get_menu_point_grants(),
             service.repo,
