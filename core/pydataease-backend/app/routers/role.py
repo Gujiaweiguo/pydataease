@@ -8,12 +8,15 @@ from app.schemas.auth import TokenUser
 from app.schemas.role import (
     RoleBeforeUnmountRequest,
     RoleCreateRequest,
+    RoleCreateWithPermsRequest,
     RoleDetailResponse,
     RoleEditRequest,
     RoleMountExternalRequest,
     RoleMountRequest,
+    RolePermissionDetailResponse,
     RoleQueryRequest,
     RoleResponse,
+    RoleSetPermsRequest,
     RoleUnmountRequest,
     RoleUserOptionRequest,
     RoleUserOptionResponse,
@@ -143,3 +146,34 @@ async def roles_by_current_org(
     service: RoleService = Depends(get_role_service),
 ) -> list[RoleResponse]:
     return await service.by_org(payload, user)
+
+
+@router.post("/role/createWithPerms")
+async def create_role_with_permissions(
+    payload: RoleCreateWithPermsRequest,
+    _menu: None = Depends(_ROLE_PERM),
+    user: TokenUser = Depends(get_current_user),
+    service: RoleService = Depends(get_role_service),
+) -> RolePermissionDetailResponse:
+    return await service.create_with_permissions(payload, user)
+
+
+@router.get("/role/permissionDetail/{rid}")
+async def role_permission_detail(
+    rid: int,
+    _menu: None = Depends(_ROLE_PERM),
+    user: TokenUser = Depends(get_current_user),
+    service: RoleService = Depends(get_role_service),
+) -> RolePermissionDetailResponse:
+    return await service.get_role_permissions(rid, user)
+
+
+@router.post("/role/setPerms/{rid}")
+async def set_role_permissions(
+    rid: int,
+    payload: RoleSetPermsRequest,
+    _menu: None = Depends(_ROLE_PERM),
+    user: TokenUser = Depends(get_current_user),
+    service: RoleService = Depends(get_role_service),
+) -> RolePermissionDetailResponse:
+    return await service.set_role_permissions(rid, payload, user)

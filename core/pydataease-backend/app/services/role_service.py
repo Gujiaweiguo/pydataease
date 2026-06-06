@@ -9,7 +9,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.dependencies.database import get_db
 from app.models.role import CoreRole
+from app.models.role_permission import CoreRolePermission
 from app.models.role_user import CoreRoleUser
+from app.models.permission_point import CorePermissionPoint
 from app.models.user import CoreUser
 from app.models.user_org import CoreUserOrg
 from app.repositories.org_repo import OrgRepository
@@ -19,15 +21,19 @@ from app.schemas.auth import TokenUser
 from app.schemas.role import (
     RoleBeforeUnmountRequest,
     RoleCreateRequest,
+    RoleCreateWithPermsRequest,
     RoleDetailResponse,
     RoleEditRequest,
     RoleMountExternalRequest,
     RoleMountRequest,
+    RolePermissionDetailResponse,
     RoleQueryRequest,
     RoleResponse,
+    RoleSetPermsRequest,
     RoleUnmountRequest,
     RoleUserOptionRequest,
     RoleUserOptionResponse,
+    PermissionPointVO,
 )
 
 
@@ -227,6 +233,81 @@ class RoleService:
 
     async def by_org(self, payload: RoleQueryRequest | None, user: TokenUser) -> list[RoleResponse]:
         return await self.query(payload, user)
+
+    async def create_with_permissions(
+        self, payload: RoleCreateWithPermsRequest, user: TokenUser
+    ) -> RolePermissionDetailResponse:
+        self._require_current_org(user)
+        role_response = await self.create(
+            RoleCreateRequest(name=payload.name, description=payload.description), user
+        )
+        await self._grant_permission_points(role_response.id, user.oid, payload.permission_point_names)
+        for user_id in list(dict.fromkeys(payload.user_ids)):
+            await self._get_bindable_user(user_id, user)
+            if not await self.role_repo.is_user_in_role(user_id, role_response.id, user.oid):
+                await self.role_repo.bind_user(role_response.id, user_id, user.oid)
+        return await self._build_permission_detail(role_response.id, role_response.name)
+
+    async def get_role_permissions(self, rid: int, user: TokenUser) -> RolePermissionDetailResponse:
+        role = await self._get_visible_role(rid, user)
+        return await self._build_permission_detail(role.id, role.name)
+
+    async def set_role_permissions(self, rid: int, payload: RoleSetPermsRequest, user: TokenUser) -> RolePermissionDetailResponse:
+        role = await self._get_manageable_role(rid, user)
+        await self.session.execute(
+            delete(CoreRolePermission).where(CoreRolePermission.role_id == role.id)
+        )
+        await self.session.commit()
+        await self._grant_permission_points(role.id, role.oid, payload.permission_point_names)
+        return await self._build_permission_detail(role.id, role.name)
+
+    async def _grant_permission_points(self, role_id: int, oid: int, point_names: list[str]) -> None:
+        if not point_names:
+            return
+        rows = (
+            await self.session.execute(
+                select(CorePermissionPoint).where(CorePermissionPoint.name.in_(point_names))
+            )
+        ).scalars().all()
+        found_names = {r.name for r in rows}
+        unknown = set(point_names) - found_names
+        if unknown:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Unknown permission points: {', '.join(sorted(unknown))}",
+            )
+        now = _timestamp_ms()
+        for row in rows:
+            self.session.add(
+                CoreRolePermission(
+                    id=time.time_ns(),
+                    role_id=role_id,
+                    permission_point_id=row.id,
+                    oid=oid,
+                    granted=True,
+                    create_time=now,
+                )
+            )
+        await self.session.commit()
+
+    async def _build_permission_detail(self, role_id: int, role_name: str) -> RolePermissionDetailResponse:
+        rows = (
+            await self.session.execute(
+                select(CoreRolePermission, CorePermissionPoint)
+                .join(CorePermissionPoint, CorePermissionPoint.id == CoreRolePermission.permission_point_id)
+                .where(CoreRolePermission.role_id == role_id)
+            )
+        ).all()
+        permissions = [
+            PermissionPointVO(
+                id=int(rp.permission_point_id),
+                name=pp.name,
+                permission_type=pp.permission_type,
+                granted=bool(rp.granted),
+            )
+            for rp, pp in rows
+        ]
+        return RolePermissionDetailResponse(role_id=role_id, role_name=role_name, permissions=permissions)
 
     async def _get_visible_role(self, rid: int, user: TokenUser) -> CoreRole:
         role = await self.role_repo.get_by_id(rid)
