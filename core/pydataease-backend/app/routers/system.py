@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from app.middleware.bigint_json import BigIntJSONResponse  # pyright: ignore[reportImplicitRelativeImport]
 
 from app.dependencies.auth import get_current_user  # pyright: ignore[reportImplicitRelativeImport]
+from app.dependencies.permission import require_menu_permission  # pyright: ignore[reportImplicitRelativeImport]
 from app.schemas.auth import TokenUser  # pyright: ignore[reportImplicitRelativeImport]
 from app.schemas.system import OnlineMapSaveRequest  # pyright: ignore[reportImplicitRelativeImport]
 from app.services.menu_service import MenuService, get_menu_service  # pyright: ignore[reportImplicitRelativeImport]
@@ -17,12 +18,15 @@ from app.settings.defaults import is_feature_enabled  # pyright: ignore[reportIm
 
 router = APIRouter(tags=["system"])
 
+_PARAM_PERM = require_menu_permission("menu:parameter:use")
+
 
 # ── Online Map ───────────────────────────────────────────────────────────────
 
 
 @router.get("/sysParameter/queryOnlineMap")
 async def query_online_map(
+    _menu: None = Depends(_PARAM_PERM),
     _: TokenUser = Depends(get_current_user),
     service: SystemService = Depends(get_system_service),
 ) -> object:
@@ -32,6 +36,7 @@ async def query_online_map(
 @router.get("/sysParameter/queryOnlineMap/{map_type}")
 async def query_online_map_by_type(
     map_type: str,
+    _menu: None = Depends(_PARAM_PERM),
     _: TokenUser = Depends(get_current_user),
     service: SystemService = Depends(get_system_service),
 ) -> object:
@@ -41,6 +46,7 @@ async def query_online_map_by_type(
 @router.post("/sysParameter/saveOnlineMap")
 async def save_online_map(
     payload: OnlineMapSaveRequest,
+    _menu: None = Depends(_PARAM_PERM),
     _: TokenUser = Depends(get_current_user),
     service: SystemService = Depends(get_system_service),
 ) -> object:
@@ -52,6 +58,7 @@ async def save_online_map(
 
 @router.get("/sysParameter/basic/query")
 async def query_basic_settings(
+    _menu: None = Depends(_PARAM_PERM),
     _: TokenUser = Depends(get_current_user),
     service: SystemService = Depends(get_system_service),
 ) -> list[dict[str, str]]:
@@ -61,6 +68,7 @@ async def query_basic_settings(
 @router.post("/sysParameter/basic/save")
 async def save_basic_settings(
     items: list[dict[str, str]],
+    _menu: None = Depends(_PARAM_PERM),
     _: TokenUser = Depends(get_current_user),
     service: SystemService = Depends(get_system_service),
 ) -> None:
@@ -72,6 +80,7 @@ async def save_basic_settings(
 @router.post("/sysParameter/feature/toggle")
 async def toggle_feature_flag(
     payload: dict[str, str | bool],
+    _menu: None = Depends(_PARAM_PERM),
     _: TokenUser = Depends(get_current_user),
     service: SysSettingService = Depends(get_sys_setting_service),
 ) -> dict[str, str | bool]:
@@ -90,6 +99,7 @@ async def toggle_feature_flag(
 @router.post("/sysParameter/appearance/save")
 async def save_appearance_settings(
     payload: list[dict[str, str]],
+    _menu: None = Depends(_PARAM_PERM),
     _: TokenUser = Depends(get_current_user),
     service: SysSettingService = Depends(get_sys_setting_service),
 ) -> dict[str, str]:
@@ -120,6 +130,7 @@ async def save_appearance_settings(
 
 @router.get("/engine/getEngine")
 async def get_engine(
+    _menu: None = Depends(_PARAM_PERM),
     _: TokenUser = Depends(get_current_user),
     service: SystemService = Depends(get_system_service),
 ) -> dict[str, object]:
@@ -129,6 +140,7 @@ async def get_engine(
 @router.post("/engine/save")
 async def save_engine(
     payload: dict[str, object],
+    _menu: None = Depends(_PARAM_PERM),
     _: TokenUser = Depends(get_current_user),
     service: SystemService = Depends(get_system_service),
 ) -> None:
@@ -138,6 +150,7 @@ async def save_engine(
 @router.post("/engine/validate")
 async def validate_engine(
     payload: dict[str, object],
+    _menu: None = Depends(_PARAM_PERM),
     _: TokenUser = Depends(get_current_user),
     service: SystemService = Depends(get_system_service),
 ) -> None:
@@ -147,6 +160,7 @@ async def validate_engine(
 @router.post("/engine/validate/{engine_id}")
 async def validate_engine_by_id(
     engine_id: str,
+    _menu: None = Depends(_PARAM_PERM),
     _: TokenUser = Depends(get_current_user),
     service: SystemService = Depends(get_system_service),
 ) -> None:

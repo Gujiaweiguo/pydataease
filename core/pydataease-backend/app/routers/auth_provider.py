@@ -5,14 +5,18 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.dependencies.auth import get_current_user, get_optional_user  # pyright: ignore[reportImplicitRelativeImport]
 from app.dependencies.database import get_db  # pyright: ignore[reportImplicitRelativeImport]
+from app.dependencies.permission import require_menu_permission  # pyright: ignore[reportImplicitRelativeImport]
 from app.schemas.auth import TokenUser  # pyright: ignore[reportImplicitRelativeImport]
 from app.services.auth_provider_service import AuthProviderService, get_auth_provider_service
 
 router = APIRouter(tags=["auth-provider"])
 
+_AUTH_PROVIDER_PERM = require_menu_permission("menu:auth-provider:use")
+
 
 @router.get("/auth-provider/list")
 async def list_providers(
+    _menu: None = Depends(_AUTH_PROVIDER_PERM),
     user: TokenUser = Depends(get_current_user),
     service: AuthProviderService = Depends(get_auth_provider_service),
 ) -> list[dict]:
@@ -23,6 +27,7 @@ async def list_providers(
 @router.get("/auth-provider/{provider_id}")
 async def get_provider(
     provider_id: int,
+    _menu: None = Depends(_AUTH_PROVIDER_PERM),
     user: TokenUser = Depends(get_current_user),
     service: AuthProviderService = Depends(get_auth_provider_service),
 ) -> dict:
@@ -36,6 +41,7 @@ async def get_provider(
 @router.post("/auth-provider/create")
 async def create_provider(
     payload: dict,
+    _menu: None = Depends(_AUTH_PROVIDER_PERM),
     user: TokenUser = Depends(get_current_user),
     service: AuthProviderService = Depends(get_auth_provider_service),
 ) -> dict:
@@ -50,6 +56,7 @@ async def create_provider(
 async def update_provider(
     provider_id: int,
     payload: dict,
+    _menu: None = Depends(_AUTH_PROVIDER_PERM),
     user: TokenUser = Depends(get_current_user),
     service: AuthProviderService = Depends(get_auth_provider_service),
 ) -> dict:
@@ -63,6 +70,7 @@ async def update_provider(
 @router.delete("/auth-provider/{provider_id}")
 async def delete_provider(
     provider_id: int,
+    _menu: None = Depends(_AUTH_PROVIDER_PERM),
     user: TokenUser = Depends(get_current_user),
     service: AuthProviderService = Depends(get_auth_provider_service),
 ) -> dict:
@@ -77,6 +85,7 @@ async def delete_provider(
 async def toggle_provider(
     provider_id: int,
     payload: dict,
+    _menu: None = Depends(_AUTH_PROVIDER_PERM),
     user: TokenUser = Depends(get_current_user),
     service: AuthProviderService = Depends(get_auth_provider_service),
 ) -> dict:
@@ -91,6 +100,7 @@ async def toggle_provider(
 @router.post("/auth-provider/{provider_id}/default")
 async def set_default_provider(
     provider_id: int,
+    _menu: None = Depends(_AUTH_PROVIDER_PERM),
     user: TokenUser = Depends(get_current_user),
     service: AuthProviderService = Depends(get_auth_provider_service),
 ) -> dict:
@@ -145,6 +155,7 @@ async def provider_callback(
 async def test_provider(
     provider_id: int,
     payload: dict,
+    _menu: None = Depends(_AUTH_PROVIDER_PERM),
     user: TokenUser = Depends(get_current_user),
     service: AuthProviderService = Depends(get_auth_provider_service),
 ) -> dict:

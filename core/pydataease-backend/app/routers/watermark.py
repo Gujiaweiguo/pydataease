@@ -7,12 +7,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.dependencies.auth import get_current_user, get_optional_user  # pyright: ignore[reportImplicitRelativeImport]
 from app.dependencies.database import get_db  # pyright: ignore[reportImplicitRelativeImport]
+from app.dependencies.permission import require_menu_permission  # pyright: ignore[reportImplicitRelativeImport]
 from app.schemas.auth import TokenUser  # pyright: ignore[reportImplicitRelativeImport]
 from app.schemas.watermark import WatermarkSaveRequest  # pyright: ignore[reportImplicitRelativeImport]
 from app.settings.defaults import is_feature_enabled  # pyright: ignore[reportImplicitRelativeImport]
 from app.services.watermark_service import WatermarkService, get_watermark_service  # pyright: ignore[reportImplicitRelativeImport]
 
 router = APIRouter(tags=["watermark"])
+
+_WATERMARK_PERM = require_menu_permission("menu:watermark:use")
 
 
 @router.get("/watermark/find")
@@ -29,6 +32,7 @@ async def get_watermark_info(
 @router.post("/watermark/save")
 async def save_watermark_info(
     payload: WatermarkSaveRequest,
+    _menu: None = Depends(_WATERMARK_PERM),
     user: TokenUser = Depends(get_current_user),
     session: AsyncSession = Depends(get_db),
     service: WatermarkService = Depends(get_watermark_service),
