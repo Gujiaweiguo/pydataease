@@ -97,6 +97,14 @@ def check_ok(result: subprocess.CompletedProcess[str], label: str):
             print(f"FAIL [{label}]: {'; '.join(errors)}", file=sys.stderr)
             sys.exit(1)
 
+
+def _tea_screen_snapshot_data_url() -> str:
+    repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    preview_path = os.path.join(repo_root, "big-screen-visual-polish.png")
+    with open(preview_path, "rb") as image_file:
+        encoded = base64.b64encode(image_file.read()).decode("ascii")
+    return f"data:image/png;base64,{encoded}"
+
 # ── Step 1: PostgreSQL demo schema data ────────────────────────────
 
 DEMO_SCHEMA_SQL = """\
@@ -1487,6 +1495,7 @@ def build_screen_sql() -> str:
         "color": "#ffffff",
         "backgroundColor": "rgba(13,26,56,1)",
     }, ensure_ascii=False)
+    template_snapshot = _tea_screen_snapshot_data_url().replace("'", "''")
 
     components = _build_screen_components()
     component_data = json.dumps(components, ensure_ascii=False)
@@ -1529,7 +1538,7 @@ def build_screen_sql() -> str:
         f"snapshot, template_type, template_style, template_data, dynamic_data) VALUES ("
         f"'{TEMPLATE_ID}', '连锁茶饮销售大屏', '{TEMPLATE_CATEGORY_ID}', 0, 'dataV', 'template', "
         f"'1', {now_ms}, "
-        f"'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', "
+        f"'{template_snapshot}', "
         f"'self', "
         f"'{screen_style}'::jsonb, "
         f"'{component_data}'::jsonb, "
