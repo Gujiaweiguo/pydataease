@@ -14,6 +14,7 @@ from app.models.chart import CoreChartView
 from app.models.visualization import DataVisualizationInfo
 from app.repositories.chart_repo import ChartRepository
 from app.repositories.store_repo import StoreRepository
+from app.repositories.template_repo import TemplateRepository
 from app.repositories.visualization_repo import VisualizationRepository
 from app.utils.id_utils import _sid
 from app.schemas.auth import TokenUser
@@ -626,6 +627,23 @@ class VisualizationService:
         self.visualization_repo = VisualizationRepository(session)
         self.store_repo = StoreRepository(session)
         self.chart_repo = ChartRepository(session)
+        self.template_repo = TemplateRepository(session)
+
+    def _normalize_decompression_payload(self, payload: dict[str, object]) -> dict[str, object]:
+        normalized = dict(payload)
+
+        component_data = normalized.get("componentData")
+        if isinstance(component_data, (dict, list)):
+            normalized["componentData"] = _json.dumps(component_data, ensure_ascii=False)
+
+        canvas_style_data = normalized.get("canvasStyleData")
+        if isinstance(canvas_style_data, (dict, list)):
+            normalized["canvasStyleData"] = _json.dumps(canvas_style_data, ensure_ascii=False)
+
+        if "canvasViewInfo" not in normalized and "dynamicData" in normalized:
+            normalized["canvasViewInfo"] = normalized.get("dynamicData")
+
+        return normalized
 
     async def tree(self, payload: VisualizationTreeRequest) -> object:
         items = await self.visualization_repo.list_all_ordered()
@@ -950,9 +968,66 @@ class VisualizationService:
         return "success"
 
     async def decompression(self, payload: dict[str, object] | VisualizationDecompressionRequest) -> dict[str, object]:
-        if isinstance(payload, VisualizationDecompressionRequest):
-            return payload.data
-        return payload
+        data = payload.data if isinstance(payload, VisualizationDecompressionRequest) else payload
+        if not isinstance(data, dict):
+            return {}
+
+        if isinstance(data.get("data"), dict):
+            data = data["data"]
+        if not isinstance(data, dict):
+            return {}
+
+        new_from = data.get("newFrom")
+        template_id = data.get("templateId")
+        if new_from == "new_inner_template" and isinstance(template_id, str) and template_id:
+            tpl = await self.template_repo.get_by_id(template_id)
+            if tpl is None:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Template not found")
+            canvas_style_data = tpl.template_style or {}
+            component_data = tpl.template_data or []
+            canvas_view_info = tpl.dynamic_data or {}
+
+            if isinstance(canvas_style_data, dict) and "component" not in canvas_style_data and isinstance(canvas_view_info, dict):
+                scene_id = next(
+                    (
+                        item.get("sceneId")
+                        for item in canvas_view_info.values()
+                        if isinstance(item, dict) and item.get("sceneId")
+                    ),
+                    None,
+                )
+                if scene_id not in (None, "", "0"):
+                    try:
+                        source_result = await self.find_by_id(
+                            VisualizationFindByIdRequest(id=int(scene_id), busi_flag=tpl.dv_type or None)
+                        )
+                    except (HTTPException, ValueError, TypeError):
+                        source_result = None
+                    if isinstance(source_result, dict):
+                        source_canvas_style = source_result.get("canvasStyleData")
+                        source_component_data = source_result.get("componentData")
+                        source_canvas_view_info = source_result.get("canvasViewInfo")
+                        if source_canvas_style:
+                            canvas_style_data = source_canvas_style
+                        if source_component_data:
+                            component_data = source_component_data
+                        if source_canvas_view_info:
+                            canvas_view_info = source_canvas_view_info
+
+            return self._normalize_decompression_payload({
+                "name": tpl.name or "",
+                "type": tpl.dv_type or "PANEL",
+                "dvType": tpl.dv_type or "PANEL",
+                "nodeType": tpl.node_type or "template",
+                "snapshot": tpl.snapshot or "",
+                "canvasStyleData": canvas_style_data,
+                "componentData": component_data,
+                "dynamicData": canvas_view_info,
+                "canvasViewInfo": canvas_view_info,
+                "version": 3,
+            })
+
+        return self._normalize_decompression_payload(data)
 
     async def delete(self, visualization_id: int, user: TokenUser) -> VisualizationResponse:
         existing = await self._get_visualization(visualization_id)
