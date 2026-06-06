@@ -105,6 +105,42 @@ class PermissionService:
         if not has:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
 
+    async def has_menu_permission(self, user: TokenUser, permission_name: str) -> bool:
+        """Check if a user has a specific menu permission point by name.
+
+        Looks up the permission point by name (e.g. "menu:role-management:use"),
+        then checks role-based, user-direct, and org-level grants.
+        """
+        if not self._enforcement_enabled():
+            return True
+        if user.user_id == 1:
+            return True
+
+        point_stmt = select(CorePermissionPoint.id).where(
+            CorePermissionPoint.name == permission_name,
+        )
+        point_id = (await self.session.execute(point_stmt)).scalar_one_or_none()
+        if point_id is None:
+            return False
+
+        role_ids = await self._get_role_ids(user)
+        allowed, denied = await self._check_point_based_permission(point_id, user, role_ids)
+        if allowed:
+            return True
+        if denied:
+            return False
+
+        return False
+
+    async def require_menu_permission(self, user: TokenUser, permission_name: str) -> None:
+        """Raise 403 if user lacks the specified menu permission."""
+        if not self._enforcement_enabled():
+            return
+        if user.user_id == 1:
+            return
+        if not await self.has_menu_permission(user, permission_name):
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+
     @staticmethod
     def _enforcement_enabled() -> bool:
         return get_settings().permission_enforcement_enabled
