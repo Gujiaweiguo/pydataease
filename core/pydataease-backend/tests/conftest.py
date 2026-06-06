@@ -40,6 +40,12 @@ class FakePermissionService:
     async def has_resource_permission(self, user, resource_type: str, permission_type: str = "use") -> bool:
         return True
 
+    async def require_menu_permission(self, user, permission_name: str) -> None:
+        return None
+
+    async def has_menu_permission(self, user, permission_name: str) -> bool:
+        return True
+
     async def get_effective_menu_ids(self, user_id: int, oid: int) -> set[int]:
         return set()
 

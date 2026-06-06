@@ -202,32 +202,26 @@ class TestAuthServiceCoverage:
 
 
 class TestPermissionServiceCoverage:
-    async def test_get_effective_menu_ids_combines_role_user_deny_and_org_permissions(self) -> None:
+    async def test_get_effective_menu_ids_returns_role_grants_only(self) -> None:
         service = _permission_service(
             [
                 FakeRowsResult([(11,), (12,)]),
                 FakeRowsResult([(100,), (101,), (101,)]),
-                FakeRowsResult([(102,), (103,)]),
-                FakeRowsResult([(101,), (999,)]),
-                FakeRowsResult([(200,), (103,)]),
             ]
         )
 
         menu_ids = await service.get_effective_menu_ids(7, 9)
 
-        assert menu_ids == {100, 102, 103, 200}
+        assert menu_ids == {100, 101}
 
     async def test_get_effective_menu_ids_skips_role_query_when_user_has_no_roles(self) -> None:
         service = _permission_service(
             [
                 FakeRowsResult([]),
-                FakeRowsResult([(5,)]),
-                FakeRowsResult([]),
-                FakeRowsResult([(6,)]),
             ]
         )
 
-        assert await service.get_effective_menu_ids(7, 9) == {5, 6}
+        assert await service.get_effective_menu_ids(7, 9) == set()
 
     async def test_has_resource_permission_returns_true_when_enforcement_disabled(
         self,
