@@ -386,58 +386,103 @@ async def test_task_retry_non_failed():
 
 # ===========================================================================
 # TemplateMarketService - unit tests
-# ===========================================================================
+# ---------------------------------------------------------------------------
+
+
+def _mock_scalars_all(items):
+    result = MagicMock()
+    result.scalars.return_value.all.return_value = items
+    return result
+
+
+def _make_template(**overrides):
+    defaults = dict(id="t1", name="Template", node_type="template", snapshot="", dv_type="PANEL", create_time=1)
+    defaults.update(overrides)
+    return SimpleNamespace(**defaults)
+
+
+def _make_category(**overrides):
+    defaults = dict(id="c1", name="推荐")
+    defaults.update(overrides)
+    return SimpleNamespace(**defaults)
+
+
+def _make_category_map(**overrides):
+    defaults = dict(template_id="t1", category_id="c1")
+    defaults.update(overrides)
+    return SimpleNamespace(**defaults)
 
 
 async def test_template_market_search_recommend():
-    session = cast(AsyncSession, SimpleNamespace())
+    session = AsyncMock()
+    templates = [_make_template()]
+    cat_maps = [_make_category_map()]
+    cats = [_make_category()]
+    session.execute.side_effect = [_mock_scalars_all(templates), _mock_scalars_all(cat_maps), _mock_scalars_all(cats)]
     svc = TemplateMarketService(session)
-    # Mock the inner SysSettingService to avoid DB
-    svc.settings.get_setting = AsyncMock(return_value="http://tpl.local")  # type: ignore[attr-defined]
     result = await svc.search_recommend()
-    assert result["baseUrl"] == "http://tpl.local"
-    assert result["contents"] == []
+    assert result["baseUrl"] == ""
+    assert len(result["contents"]) == 1
+    assert result["contents"][0]["title"] == "Template"
 
 
 async def test_template_market_search():
-    session = cast(AsyncSession, SimpleNamespace())
+    session = AsyncMock()
+    templates = [_make_template()]
+    cat_maps = [_make_category_map()]
+    cats = [_make_category()]
+    # _fetch_templates → _build_category_map (cat_maps + cats) → _fetch_categories_with_templates
+    session.execute.side_effect = [_mock_scalars_all(templates), _mock_scalars_all(cat_maps), _mock_scalars_all(cats), _mock_scalars_all(cats)]
     svc = TemplateMarketService(session)
-    svc.settings.get_setting = AsyncMock(return_value="")  # type: ignore[attr-defined]
     result = await svc.search()
     assert result["baseUrl"] == ""
-    assert result["categories"] == []
-    assert result["contents"] == []
+    assert len(result["categories"]) == 1
+    assert len(result["contents"]) == 1
 
 
 async def test_template_market_search_preview():
-    session = cast(AsyncSession, SimpleNamespace())
+    session = AsyncMock()
+    templates = [_make_template()]
+    cat_maps = [_make_category_map()]
+    cats = [_make_category()]
+    # search() internally: _fetch_templates → _build_category_map (cat_maps + cats) → _fetch_categories_with_templates
+    session.execute.side_effect = [_mock_scalars_all(templates), _mock_scalars_all(cat_maps), _mock_scalars_all(cats), _mock_scalars_all(cats)]
     svc = TemplateMarketService(session)
-    svc.settings.get_setting = AsyncMock(return_value="http://preview")  # type: ignore[attr-defined]
     result = await svc.search_preview()
-    assert result["baseUrl"] == "http://preview"
+    assert result["baseUrl"] == ""
 
 
 async def test_template_market_get_categories():
-    session = cast(AsyncSession, SimpleNamespace())
+    session = AsyncMock()
+    cats = [_make_category(name="Dashboard")]
+    session.execute.return_value = _mock_scalars_all(cats)
     svc = TemplateMarketService(session)
     result = await svc.get_categories()
-    assert result == []
+    assert result == ["Dashboard"]
 
 
 async def test_template_market_get_categories_object():
-    session = cast(AsyncSession, SimpleNamespace())
+    session = AsyncMock()
+    cats = [_make_category(id="c2", name="Charts")]
+    session.execute.return_value = _mock_scalars_all(cats)
     svc = TemplateMarketService(session)
     result = await svc.get_categories_object()
-    assert len(result) == 2
+    assert len(result) == 3  # 2 fixed + 1 from DB
     assert result[0]["value"] == "recent"
     assert result[1]["value"] == "suggest"
+    assert result[2]["value"] == "c2"
+    assert result[2]["label"] == "Charts"
 
 
 async def test_template_market_get_base_url_error():
-    session = cast(AsyncSession, SimpleNamespace())
+    session = AsyncMock()
+    templates = [_make_template()]
+    cat_maps = [_make_category_map()]
+    cats = [_make_category()]
+    session.execute.side_effect = [_mock_scalars_all(templates), _mock_scalars_all(cat_maps), _mock_scalars_all(cats)]
     svc = TemplateMarketService(session)
-    svc.settings.get_setting = AsyncMock(side_effect=Exception("db error"))  # type: ignore[attr-defined]
     result = await svc.search_recommend()
+    # baseUrl is always "" in the refactored service
     assert result["baseUrl"] == ""
 
 
