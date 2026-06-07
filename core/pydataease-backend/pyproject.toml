@@ -29,6 +29,8 @@ dev = [
     "pytest",
     "pytest-asyncio",
     "pytest-cov>=7.1.0",
+    "pytest-timeout>=2.4.0",
+    "pytest-xdist>=3.8.0",
     "requests>=2.34.2",
     "ruff",
 ]
@@ -92,3 +94,5 @@ known-first-party = ["app", "tests"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+timeout = 120
+addopts = "--timeout=120 -n auto --dist=worksteal"
