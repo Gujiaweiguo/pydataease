@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from collections.abc import Generator
 
 import pytest
@@ -13,6 +14,11 @@ from app.schemas.auth import TokenUser  # pyright: ignore[reportImplicitRelative
 from app.services.sys_setting_service import get_sys_setting_service  # pyright: ignore[reportImplicitRelativeImport]
 from app.settings.defaults import SETTINGS_DEFAULTS, is_feature_enabled  # pyright: ignore[reportImplicitRelativeImport]
 from tests.fixtures.auth_fixtures import _build_token  # pyright: ignore[reportImplicitRelativeImport]
+
+skip_no_db = pytest.mark.skipif(
+    os.getenv("DE_E2E") != "1",
+    reason="Requires PostgreSQL (set DE_E2E=1)",
+)
 
 
 FEATURE_KEYS = [key for key in SETTINGS_DEFAULTS if key.startswith("feature.")]
@@ -59,6 +65,7 @@ async def _restore_settings(session, snapshot: dict[str, tuple[str | None, str |
     await session.commit()
 
 
+@skip_no_db
 @pytest.mark.asyncio
 async def test_is_feature_enabled_returns_true_for_true_value(db_session) -> None:
     key = "feature.watermark.enabled"
@@ -74,6 +81,7 @@ async def test_is_feature_enabled_returns_true_for_true_value(db_session) -> Non
         await _restore_settings(db_session, snapshot, [key])
 
 
+@skip_no_db
 @pytest.mark.asyncio
 async def test_is_feature_enabled_returns_false_for_false_value(db_session) -> None:
     key = "feature.watermark.enabled"
@@ -89,6 +97,7 @@ async def test_is_feature_enabled_returns_false_for_false_value(db_session) -> N
         await _restore_settings(db_session, snapshot, [key])
 
 
+@skip_no_db
 @pytest.mark.asyncio
 async def test_is_feature_enabled_falls_back_to_defaults_when_missing(db_session) -> None:
     key = "feature.embedding.enabled"
@@ -102,6 +111,7 @@ async def test_is_feature_enabled_falls_back_to_defaults_when_missing(db_session
         await _restore_settings(db_session, snapshot, [key])
 
 
+@skip_no_db
 @pytest.mark.asyncio
 async def test_is_feature_enabled_returns_false_for_unknown_key(db_session) -> None:
     assert await is_feature_enabled(db_session, "feature.unknown.enabled") is False

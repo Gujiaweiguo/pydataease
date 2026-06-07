@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from collections.abc import Generator
 
 import pytest
@@ -13,6 +14,11 @@ from app.schemas.auth import TokenUser  # pyright: ignore[reportImplicitRelative
 from app.services.sys_setting_service import SysSettingService, get_sys_setting_service  # pyright: ignore[reportImplicitRelativeImport]
 from app.settings.defaults import SETTINGS_DEFAULTS  # pyright: ignore[reportImplicitRelativeImport]
 from tests.fixtures.auth_fixtures import _build_token  # pyright: ignore[reportImplicitRelativeImport]
+
+skip_no_db = pytest.mark.skipif(
+    os.getenv("DE_E2E") != "1",
+    reason="Requires PostgreSQL (set DE_E2E=1)",
+)
 
 APPEARANCE_KEYS = [key for key in SETTINGS_DEFAULTS if key.startswith("ui.") or key.startswith("about.")]
 APPEARANCE_KEYS_WITH_SITE = [*APPEARANCE_KEYS, "basic.siteName"]
@@ -88,6 +94,7 @@ async def test_public_read_returns_all_appearance_keys_with_defaults(
     assert response.json()["data"] == {key: SETTINGS_DEFAULTS[key] for key in APPEARANCE_KEYS_WITH_SITE}
 
 
+@skip_no_db
 @pytest.mark.asyncio
 async def test_admin_save_persists_values_and_increments_cache_version(
     client: AsyncClient,
@@ -137,6 +144,7 @@ async def test_admin_save_requires_auth(client: AsyncClient) -> None:
     assert response.status_code == 401
 
 
+@skip_no_db
 @pytest.mark.asyncio
 async def test_admin_save_rejects_non_ui_keys(
     client: AsyncClient,
@@ -160,6 +168,7 @@ async def test_admin_save_rejects_non_ui_keys(
         await _restore_settings(db_session, snapshot, keys)
 
 
+@skip_no_db
 @pytest.mark.asyncio
 async def test_feature_flag_disabled_blocks_save(
     client: AsyncClient,
