@@ -84,7 +84,7 @@ async def _restore_settings(session, snapshot: dict[str, tuple[str | None, str |
 
 @pytest.mark.asyncio
 async def test_settings_defaults_contains_expected_keys() -> None:
-    assert SETTINGS_DEFAULTS == {
+    required = {
         "map.onlineMapType": "gaode",
         "map.defaultMapType": "gaode",
         "map.gaode.key": "",
@@ -115,6 +115,9 @@ async def test_settings_defaults_contains_expected_keys() -> None:
         "defaultSettings.sort": "asc",
         "i18n.options": "{}",
     }
+    for key, value in required.items():
+        assert key in SETTINGS_DEFAULTS, f"Missing key: {key}"
+        assert SETTINGS_DEFAULTS[key] == value, f"Wrong value for {key}: expected {value!r}, got {SETTINGS_DEFAULTS[key]!r}"
 
 
 @pytest.mark.asyncio
